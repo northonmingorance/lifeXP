@@ -933,12 +933,12 @@
 
 
 <script>
-    "use strict";
+"use strict";
 
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.5'; // Updated version for new app
+    const STORAGE_KEY = 'lifeXpData_v1.9.6'; // Updated version for title fetching
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -1079,8 +1079,8 @@
         iconPositions: {}, 
         customBgImage: null,
         customBgColor: null,
-        playJockeyPlaylist: [], // Added for PlayJockey
-        playJockeyCurrentVideo: null // Added to track current playing video in PlayJockey
+        playJockeyPlaylist: [], 
+        playJockeyCurrentVideo: null 
     };
     
     let lastNormalStates = {}; 
@@ -1156,9 +1156,9 @@
         initWindowInteractions('playJockeyWindow');
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
-        renderPlayJockeyPlaylist(); // Render initial playlist
-        if (appData.playJockeyCurrentVideo) { // Restore player state if a video was playing
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay on load
+        renderPlayJockeyPlaylist(); 
+        if (appData.playJockeyCurrentVideo) { 
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
         }
 
 
@@ -1575,7 +1575,7 @@
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, .playjockey-playlist-item'))) { // Added .playjockey-playlist-item to exclusions
+                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, .playjockey-playlist-item'))) { 
                  bringToFront(windowElement);
             }
         }, true); 
@@ -1938,10 +1938,10 @@
             if (appData.windowStates.playJockeyWindow) {
                 appData.windowStates.playJockeyWindow.hiddenByUser = true;
             }
-            DOM.playJockeyPlayer.src = 'about:blank'; // Stop video on close
+            DOM.playJockeyPlayer.src = 'about:blank'; 
             appData.playJockeyCurrentVideo = null;
             saveWindowState('playJockeyWindow');
-            saveData(); // Save that current video is null
+            saveData(); 
         });
         
         DOM.playJockeyAddBtn.addEventListener('click', addYouTubeLinkToPlayJockey);
@@ -2195,7 +2195,7 @@
             state = appData.windowStates[windowId];
             setWindowDefaults(windowId, false);
             
-            if (!state.zIndex || state.zIndex <= 5) { // Ensure initial zIndex is high enough
+            if (!state.zIndex || state.zIndex <= 5) { 
                  let newZ = highestZIndex + 1;
                  win.style.zIndex = newZ;
                  state.zIndex = newZ;
@@ -2290,7 +2290,7 @@
             windowStates: { 
                 xpMainWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false }, 
                 textEditorWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
-                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true } // Default hidden
+                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true } 
             },
             iconPositions: { 
                 trackerIcon: { x: 0, y: 0 }, 
@@ -2517,10 +2517,10 @@
                     <button class="xp-button delete-area-btn" data-area-name="${area.name}" title="Delete ${area.name}">X</button>
                 </div>
                 <div class="area-stats">
-                    <span>Level:&#160;<span class="area-level">${area.level}</span></span>
+                    <span>Level: <span class="area-level">${area.level}</span></span>
                     <div class="xp-bar-container">
                         <div class="xp-bar" style="width: ${getXpPercentage(area)}%;"></div>
-                        <div class="xp-bar-text"><span class="area-xp">${area.xp}</span>&#160;/ ${xpForNextLevel(area.level)} XP</div>
+                        <div class="xp-bar-text"><span class="area-xp">${area.xp}</span> / ${xpForNextLevel(area.level)} XP</div>
                     </div>
                 </div>`;
             tr.appendChild(nameTd);
@@ -3135,13 +3135,12 @@
     // --- PlayJockey Functions ---
     function extractYouTubeVideoId(url) {
         if (!url) return null;
-        // Regex to capture video ID from various YouTube URL formats
         const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = url.match(regex);
         return match ? match[1] : null;
     }
 
-    function addYouTubeLinkToPlayJockey() {
+    async function addYouTubeLinkToPlayJockey() {
         const link = DOM.playJockeyLinkInput.value.trim();
         if (!link) {
             alert("Please enter a YouTube link.");
@@ -3153,25 +3152,54 @@
             return;
         }
 
-        // Check if video already exists
         if (appData.playJockeyPlaylist.some(video => video.videoId === videoId)) {
             alert("This video is already in the playlist.");
+            DOM.playJockeyLinkInput.value = ''; 
             return;
+        }
+        
+        DOM.playJockeyAddBtn.disabled = true; // Disable button while fetching
+        DOM.playJockeyAddBtn.textContent = "Adding...";
+
+
+        let videoTitle = link; // Default title is the link itself
+        try {
+            // Using api.allorigins.win as a CORS proxy
+            const oEmbedUrl = `http://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(oEmbedUrl)}`;
+            
+            const response = await fetch(proxyUrl);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.title) {
+                    videoTitle = data.title;
+                } else {
+                     console.warn(`Title not found in oEmbed response for ${videoId}.`);
+                }
+            } else {
+                console.warn(`Failed to fetch title for ${videoId} via oEmbed. Status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("Error fetching video title:", error);
+            // Falls back to using the link as title if an error occurs
         }
 
         const videoEntry = {
-            id: 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7), // Unique ID for playlist item
+            id: 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
             originalUrl: link,
             videoId: videoId,
-            title: link // For now, use URL as title, could fetch actual title later
+            title: videoTitle 
         };
 
         appData.playJockeyPlaylist.push(videoEntry);
-        DOM.playJockeyLinkInput.value = ''; // Clear input
+        DOM.playJockeyLinkInput.value = ''; 
         renderPlayJockeyPlaylist();
         saveData();
+        
+        DOM.playJockeyAddBtn.disabled = false; // Re-enable button
+        DOM.playJockeyAddBtn.textContent = "Add";
 
-        // Optionally, play the newly added video
+
         if (appData.playJockeyPlaylist.length === 1 || !DOM.playJockeyPlayer.src || DOM.playJockeyPlayer.src === 'about:blank') {
             playYouTubeVideoById(videoId, true);
         }
@@ -3192,8 +3220,11 @@
         appData.playJockeyPlaylist.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
-            item.textContent = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
-            item.title = video.originalUrl;
+            // Display the fetched title, or the original URL as a fallback if title is same as URL
+            item.textContent = video.title && video.title !== video.originalUrl 
+                               ? (video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title)
+                               : (video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl);
+            item.title = video.title && video.title !== video.originalUrl ? video.title : video.originalUrl; // Full title/URL on hover
             item.dataset.videoId = video.videoId;
             item.dataset.playlistItemId = video.id;
 
@@ -3211,7 +3242,6 @@
         const currentVideoEntry = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
         appData.playJockeyCurrentVideo = currentVideoEntry ? { videoId: currentVideoEntry.videoId, originalUrl: currentVideoEntry.originalUrl, title: currentVideoEntry.title, id: currentVideoEntry.id } : null;
         
-        // Update 'playing' class in playlist
         const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
             item.classList.remove('playing');
@@ -3219,7 +3249,7 @@
                 item.classList.add('playing');
             }
         });
-        saveData(); // Save current playing video
+        saveData(); 
     }
 
 
