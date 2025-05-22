@@ -615,24 +615,19 @@
 
         .playjockey-controls-bar {
             display: flex;
-            justify-content: center; 
+            justify-content: center;
             padding: 0px 0px 5px 0px;   
             flex-shrink: 0;
-            gap: 5px; /* ADDED: Adds a small space between buttons */
         }
-        #playJockeyAutoPlayBtn,
-        #playJockeyRandomBtn,  /* ADDED */
-        #playJockeyRepeatBtn { /* ADDED */
-            min-width: 90px;  /* Adjusted min-width for potentially shorter text */
+        #playJockeyAutoPlayBtn {
+            min-width: 100px; 
             padding: 3px 8px;
             font-size: 11px;
         }
-        
-        #playJockeyAutoPlayBtn.autoplay-on,
-        #playJockeyRandomBtn.random-on,    /* ADDED */
-        #playJockeyRepeatBtn.repeat-active { /* ADDED: Generic class for active repeat state */
-            border-style: inset; 
-            font-weight: bold; 
+
+        #playJockeyAutoPlayBtn.autoplay-on {
+            border-style: inset;
+            font-weight: bold;
         }
 
         .playjockey-playlist-area {
@@ -792,9 +787,7 @@
                     <div id="playJockeyPlayer"></div> 
                 </div>
                 <div class="playjockey-controls-bar">
-                    <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
                     <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: Off</button>
-                    <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
                 </div>
                 <div class="playjockey-playlist-area" id="playJockeyPlaylist">
                 </div>
@@ -1061,8 +1054,6 @@
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
         playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), // ADDED
-        playJockeyRandomBtn: getById('playJockeyRandomBtn'),   // ADDED
-        playJockeyRepeatBtn: getById('playJockeyRepeatBtn'),   // ADDED
 
         textEditorIcon: getById('textEditorIcon'), 
         trackerIcon: getById('trackerIcon'),
@@ -1121,9 +1112,7 @@
         customBgColor: null,
         playJockeyPlaylist: [], 
         playJockeyCurrentVideo: null,
-        playJockeyAutoPlayEnabled: false, // ADDED: Auto Play State
-        playJockeyRandomEnabled: false,      // ADDED
-        playJockeyRepeatState: "off"         // ADDED ("off", "playlist", "song")
+        playJockeyAutoPlayEnabled: false // ADDED: Auto Play State
     };
     
     let lastNormalStates = {}; 
@@ -1209,8 +1198,6 @@
         updateMinMaxButtonStates('playJockeyWindow');
         renderPlayJockeyPlaylist(); 
         updatePlayJockeyAutoPlayButtonState(); // ADDED: Update button on init
-        updatePlayJockeyRandomButtonState(); // ADDED
-        updatePlayJockeyRepeatButtonState(); // ADDED
 
         // MODIFIED: Only attempt to load YT video if API is ready or will be soon
         // The onYouTubeIframeAPIReady function will handle initial playback if needed
@@ -2024,9 +2011,9 @@
         DOM.playJockeyPlaylist.addEventListener('drop', handlePjDrop);
         DOM.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu);
         
-        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay); // ADDED
-        DOM.playJockeyRandomBtn.addEventListener('click', togglePlayJockeyRandom); // ADDED
-        DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeatState); // ADDED
+        // ADDED: Auto Play Button Listener
+        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
+        // END ADDED
 
 
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
@@ -2385,9 +2372,7 @@
             customBgColor: null,
             playJockeyPlaylist: [],
             playJockeyCurrentVideo: null,
-            playJockeyAutoPlayEnabled: false,
-            playJockeyRandomEnabled: false,      // ADDED
-            playJockeyRepeatState: "off"         // ADDED
+            playJockeyAutoPlayEnabled: false // ADDED default
         };
         if (storedData) {
             try {
@@ -2403,9 +2388,7 @@
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
                     playJockeyPlaylist: loadedData.playJockeyPlaylist || [],
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo || null,
-                    playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : false,
-                    playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : false, // ADDED
-                    playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : "off" // ADDED with validation
+                    playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : false // Ensure it's a boolean
                 };
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
@@ -3377,76 +3360,38 @@
 
     function playNextPjVideo() {
         if (!appData.playJockeyCurrentVideo || appData.playJockeyPlaylist.length === 0) {
-            return; 
-        }
-
-        const currentVideoPlayingId = appData.playJockeyCurrentVideo.videoId; // Video ID that just ENDED
-        const currentVideoPlayingUniqueId = appData.playJockeyCurrentVideo.id; // Unique ID of the video that just ENDED
-
-        // 1. Handle Repeat Song
-        if (appData.playJockeyRepeatState === "song") {
-            playYouTubeVideoById(currentVideoPlayingId, true); // Replay the same video
             return;
         }
-
-        // If playlist has only one video:
-        // - and "repeat playlist" is on, it effectively becomes "repeat song".
-        // - and "repeat off", autoplay stops.
-        // - and "random on", it will pick the same song.
-        if (appData.playJockeyPlaylist.length === 1) {
-            if (appData.playJockeyRepeatState === "playlist" || appData.playJockeyRandomEnabled) {
-                playYouTubeVideoById(currentVideoPlayingId, true); // Replay the only song
-            }
-            // If repeat is "off" and only one song, autoplay effectively stops here.
-            return;
-        }
-
-        // 2. Handle Random (if not repeating the current song and playlist has more than one item)
-        if (appData.playJockeyRandomEnabled) {
-            let PjPlaylistWithoutCurrent = appData.playJockeyPlaylist.filter(v => v.id !== currentVideoPlayingUniqueId);
-            // If, for some reason, filtering results in an empty list (e.g., corruption or unexpected state),
-            // fall back to the full playlist to prevent errors. This shouldn't happen with >1 items.
-            if (PjPlaylistWithoutCurrent.length === 0) {
-                 PjPlaylistWithoutCurrent = [...appData.playJockeyPlaylist]; // Use a copy
-            }
-            const randomVideo = PjPlaylistWithoutCurrent[Math.floor(Math.random() * PjPlaylistWithoutCurrent.length)];
-            
-            if (randomVideo) {
-                playYouTubeVideoById(randomVideo.videoId, true);
-            }
-            return;
-        }
-
-        // 3. Handle Sequential / Repeat Playlist (if not random and not repeat song)
         const currentIndex = appData.playJockeyPlaylist.findIndex(
-            item => item.id === currentVideoPlayingUniqueId
+            item => item.id === appData.playJockeyCurrentVideo.id
         );
 
-        if (currentIndex === -1) { // Should not happen with consistent data
-            console.error("Could not find current video in playlist for sequential playback.");
-            return;
-        }
+        if (currentIndex === -1) return; // Should not happen
 
         let nextIndex = currentIndex + 1;
+        if (nextIndex >= appData.playJockeyPlaylist.length) {
+            nextIndex = 0; // Loop to the first video
+        }
 
-        if (nextIndex >= appData.playJockeyPlaylist.length) { // Reached end of playlist
-            if (appData.playJockeyRepeatState === "playlist") {
-                nextIndex = 0; // Loop to the first video
-            } else { // Repeat is "off"
-                // Autoplay stops here as the last video finished.
-                updatePlayingClassInPlaylist(null); // Clear playing highlight
-                return; 
+        if (appData.playJockeyPlaylist.length > 0) {
+            const nextVideo = appData.playJockeyPlaylist[nextIndex];
+            if (nextVideo) {
+                 playYouTubeVideoById(nextVideo.videoId, true);
             }
         }
-        
-        // Ensure nextIndex is valid before trying to play
-        if (nextIndex < appData.playJockeyPlaylist.length && nextIndex >=0) {
-            const nextVideo = appData.playJockeyPlaylist[nextIndex];
-            playYouTubeVideoById(nextVideo.videoId, true);
-        } else if (appData.playJockeyPlaylist.length > 0 && appData.playJockeyRepeatState === "playlist") {
-            // Fallback for safety, if nextIndex somehow became invalid but should loop
-            playYouTubeVideoById(appData.playJockeyPlaylist[0].videoId, true);
-        }
+    }
+    // END ADDED
+
+    // MODIFIED to use unique playlist item ID for 'playing' class
+    function updatePlayingClassInPlaylist(playingItemId) {
+        const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
+        items.forEach(item => {
+            if (item.dataset.playlistItemId === playingItemId) {
+                item.classList.add('playing');
+            } else {
+                item.classList.remove('playing');
+            }
+        });
     }
 
 
@@ -3642,63 +3587,6 @@
         } else {
             DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: Off';
             DOM.playJockeyAutoPlayBtn.classList.remove('autoplay-on');
-        }
-    }
-    // END ADDED
-
-    // ADDED: Random Button Functions
-    function togglePlayJockeyRandom() {
-        appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        updatePlayJockeyRandomButtonState();
-        saveData();
-    }
-
-    function updatePlayJockeyRandomButtonState() {
-        if (appData.playJockeyRandomEnabled) {
-            DOM.playJockeyRandomBtn.textContent = 'Random: On';
-            DOM.playJockeyRandomBtn.classList.add('random-on');
-        } else {
-            DOM.playJockeyRandomBtn.textContent = 'Random: Off';
-            DOM.playJockeyRandomBtn.classList.remove('random-on');
-        }
-    }
-    // END ADDED
-
-    // ADDED: Repeat Button Functions
-    function cyclePlayJockeyRepeatState() {
-        switch (appData.playJockeyRepeatState) {
-            case "off":
-                appData.playJockeyRepeatState = "playlist";
-                break;
-            case "playlist":
-                appData.playJockeyRepeatState = "song";
-                break;
-            case "song":
-                appData.playJockeyRepeatState = "off";
-                break;
-            default:
-                appData.playJockeyRepeatState = "off";
-        }
-        updatePlayJockeyRepeatButtonState();
-        saveData();
-    }
-
-    function updatePlayJockeyRepeatButtonState() {
-        const btn = DOM.playJockeyRepeatBtn;
-        btn.classList.remove('repeat-active'); // Remove generic active class first
-
-        switch (appData.playJockeyRepeatState) {
-            case "off":
-                btn.textContent = 'Repeat: Off';
-                break;
-            case "playlist":
-                btn.textContent = 'Repeat: List';
-                btn.classList.add('repeat-active');
-                break;
-            case "song":
-                btn.textContent = 'Repeat: Song';
-                btn.classList.add('repeat-active');
-                break;
         }
     }
     // END ADDED
