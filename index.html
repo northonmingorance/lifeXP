@@ -8,7 +8,6 @@
         body {
             font-family: "Tahoma", "Geneva", sans-serif;
             font-size: 11px;
-            /* Default background, will be overridden by JS if custom values are set */
             background-color: #3A6EA5;
             background-image: url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png');
             background-size: cover;
@@ -18,7 +17,7 @@
             padding: 0;
             min-height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* Prevent scrollbars from desktop icons if they go too far */
+            overflow: hidden; 
         }
 
         .xp-window {
@@ -33,11 +32,11 @@
         }
 
         .xp-window.disable-selection,
-        .xp-window.disable-selection * { /* Apply to the window and all its children */
+        .xp-window.disable-selection * {
             user-select: none;
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none;    /* Firefox */
-            -ms-user-select: none;     /* IE/Edge */
+            -webkit-user-select: none; 
+            -moz-user-select: none;    
+            -ms-user-select: none;     
         }
 
         .title-bar {
@@ -90,28 +89,25 @@
         }
 
         .window-body {
-            padding: 15px; /* Default padding, TextEditor iframe will override for its content */
+            padding: 15px; 
             flex-grow: 1;
             overflow-y: auto;
             opacity: 1;
             transition: max-height 0.3s ease-out, padding 0.3s ease-out, opacity 0.2s ease-out;
             display: flex;
             flex-direction: column;
-            /* For iframe to fill body */
             padding: 0;
-            overflow: hidden; /* important for iframe to not cause double scroll */
+            overflow: hidden; 
         }
         
-        /* Specific padding for Tracker's window-body */
         #xpMainWindow .window-body {
              padding: 15px;
              overflow-y: auto;
         }
         
-        /* Specific styling for PlayJockey window body */
         #playJockeyWindow .window-body {
-            padding: 0; /* PlayJockey's internal container will handle padding */
-            display: flex; /* To allow child to fill height */
+            padding: 0; 
+            display: flex; 
         }
 
 
@@ -124,7 +120,7 @@
             border-top: none !important;
         }
         .xp-window.minimized {
-            min-height: 28px !important; /* Title bar height */
+            min-height: 28px !important; 
             height: 28px !important;
             overflow: hidden;
         }
@@ -183,7 +179,7 @@
         .xp-button:hover {
             border-color: #005CFE;
         }
-        .xp-button-small { /* For edit/delete achievement buttons */
+        .xp-button-small { 
             padding: 2px 5px;
             font-size: 10px;
             min-width: auto;
@@ -296,8 +292,8 @@
             border-radius: 3px;
             word-wrap: break-word;
             box-sizing: border-box;
-            position: relative; /* For actions */
-            padding-bottom: 22px; /* Space for action buttons */
+            position: relative; 
+            padding-bottom: 22px; 
         }
         .achievement-content img {
             max-width: 100%;
@@ -313,7 +309,7 @@
             display: flex;
             gap: 3px;
         }
-        .achievement-add-btn-cell { /* Class for the cell's main add button */
+        .achievement-add-btn-cell { 
             display: block;
             width: 99.5%;
             box-sizing: border-box;
@@ -324,7 +320,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000; /* Modals on top of windows AND icons */
+            z-index: 1000; 
             left: 0;
             top: 0;
             width: 100%;
@@ -395,7 +391,7 @@
         .modal-body label {
             display: block;
             margin-bottom: 5px;
-            margin-top: 12px; /* Increased top margin for labels */
+            margin-top: 12px; 
         }
         .modal-body input[type="text"],
         .modal-body input[type="number"],
@@ -504,7 +500,7 @@
             right: 0;
             bottom: 0;
             cursor: nwse-resize;
-            z-index: 10; /* On top within its own window */
+            z-index: 10; 
             box-sizing: border-box;
             opacity: 0.6;
             background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10L10 7' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M3 10L10 3' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -521,7 +517,6 @@
             display: none;
         }
 
-        /* Styles for color swatches */
         .color-swatch-item {
             box-sizing: border-box;
             transition: transform 0.1s ease-out;
@@ -532,7 +527,6 @@
             transform: scale(1.1);
         }
 
-        /* Desktop Icon Styles */
         .desktop-icon {
             position: absolute;
             width: 90px; 
@@ -549,7 +543,7 @@
             justify-content: flex-start; 
             padding-top: 10px; 
             box-sizing: border-box;
-            z-index: 5; /* Below windows but above body background */
+            z-index: 5; 
         }
         .desktop-icon:active {
             cursor: grabbing;
@@ -570,9 +564,9 @@
         .playjockey-body-container {
             display: flex;
             flex-direction: column;
-            width: 100%; /* Fill the window-body */
-            height: 100%; /* Fill the window-body */
-            background-color: #D4D0C8; /* Classic app background color */
+            width: 100%; 
+            height: 100%; 
+            background-color: #D4D0C8; 
             padding: 5px;
             box-sizing: border-box;
         }
@@ -581,11 +575,11 @@
             display: flex;
             margin-bottom: 5px;
             padding: 5px;
-            background-color: #C0C0C0; /* Silver/Grey panel */
+            background-color: #C0C0C0; 
             border: 1px outset #FFFFFF;
             border-right-color: #808080;
             border-bottom-color: #808080;
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0; 
         }
 
         #playJockeyLinkInput {
@@ -598,7 +592,7 @@
             background-color: #FFFFFF;
         }
 
-        #playJockeyAddBtn { /* Leverage xp-button and make it smaller */
+        #playJockeyAddBtn { 
             min-width: 60px;
             padding: 3px 8px;
             font-size: 11px;
@@ -606,11 +600,11 @@
 
         .playjockey-player-area {
             flex-grow: 1;
-            margin-bottom: 5px;
+            margin-bottom: 5px; /* MODIFIED: Reduced margin for autoplay button */
             border: 2px inset #808080;
-            background-color: black; /* Placeholder if iframe is slow to load */
-            min-height: 150px; /* Minimum player height */
-            overflow: hidden; /* Ensure iframe fits */
+            background-color: black; 
+            min-height: 150px; 
+            overflow: hidden; 
         }
 
         #playJockeyPlayer {
@@ -619,32 +613,50 @@
             border: none;
         }
 
+        /* ADDED: PlayJockey Controls Bar (for Auto Play button) */
+        .playjockey-controls-bar {
+            display: flex;
+            justify-content: flex-end; /* Align button to the right */
+            padding: 0px 0px 5px 0px;   /* Padding around the button */
+            flex-shrink: 0;
+        }
+        #playJockeyAutoPlayBtn {
+            min-width: 100px; /* Give it a bit more width */
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+        #playJockeyAutoPlayBtn.autoplay-on {
+            border-style: inset; /* Indicate 'on' state */
+            background-color: #C0DCC0; /* A light green to indicate 'on' */
+        }
+        /* END ADDED */
+
         .playjockey-playlist-area {
-            height: 120px; /* Fixed height for playlist */
+            height: 120px; 
             overflow-y: auto;
             border: 1px inset #7F7F7F;
             background-color: #FFFFFF;
             padding: 3px;
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0; 
         }
 
         .playjockey-playlist-item {
             padding: 4px 6px;
-            cursor: pointer; /* Will change to grab for draggable items */
+            cursor: grab; /* MODIFIED: Default to grab for draggable items */
             border-bottom: 1px solid #ECE9D8;
             font-size: 10px;
-            color: #000080; /* Navy text */
+            color: #000080; 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            user-select: none; /* Prevent text selection during drag */
+            user-select: none; 
         }
         .playjockey-playlist-item:hover {
-            background-color: #000080; /* Navy selection */
+            background-color: #000080; 
             color: white;
         }
         .playjockey-playlist-item.playing {
-            background-color: #005CFE; /* Brighter blue for currently playing */
+            background-color: #005CFE; 
             color: white;
             font-weight: bold;
         }
@@ -652,16 +664,11 @@
             border-bottom: none;
         }
         
-        /* ADDED: Styles for PlayJockey drag-and-drop and context menu */
         .playjockey-playlist-item.dragging {
             opacity: 0.5;
-            background-color: #AED6F1; /* Light blue when dragging */
+            background-color: #AED6F1; 
         }
-        .playjockey-playlist-item.drag-over-target {
-            background-color: #D4E6F1 !important; /* Slightly different blue for drop target */
-            /* border-top: 2px solid #005CFE; */ /* Example: top border indicator */
-        }
-         .playjockey-playlist-item.drag-over-target-before {
+        .playjockey-playlist-item.drag-over-target-before {
             border-top: 2px dashed #005CFE;
         }
         .playjockey-playlist-item.drag-over-target-after {
@@ -675,7 +682,7 @@
             background-color: #ECE9D8;
             border: 1px solid #000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            z-index: 2000; /* Above everything */
+            z-index: 2000; 
             padding: 3px 0;
             min-width: 120px;
             font-family: "Tahoma", "Geneva", sans-serif;
@@ -690,7 +697,6 @@
             background-color: #005CFE;
             color: white;
         }
-        /* END ADDED */
 
     </style>
 </head>
@@ -779,10 +785,13 @@
                     <button id="playJockeyAddBtn" class="xp-button">Add</button>
                 </div>
                 <div class="playjockey-player-area">
-                    <iframe id="playJockeyPlayer" src="about:blank" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                    <div id="playJockeyPlayer"></div> 
+                </div>
+                <div class="playjockey-controls-bar">
+                    <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: Off</button>
                 </div>
                 <div class="playjockey-playlist-area" id="playJockeyPlaylist">
-                    </div>
+                </div>
             </div>
         </div>
         <div class="resize-handle" id="playJockeyResizeHandle"></div>
@@ -954,7 +963,9 @@
         <div class="context-modal-item" id="pjContextRename">Rename</div>
         <div class="context-modal-item" id="pjContextRemove">Remove</div>
     </div>
-    <script>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
     "use strict";
 
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -1002,7 +1013,6 @@
     const getById = (id) => document.getElementById(id);
 
     const DOM = {
-        // Habit Tracker (formerly XP Tracker) Window Elements
         xpMainWindow: getById('xpMainWindow'),
         xpMainWindowTitleBar: getById('xpMainWindowTitleBar'),
         xpMainWindowResizeHandle: getById('xpMainWindowResizeHandle'),
@@ -1021,7 +1031,6 @@
         showQuestsBtn: getById('showQuestsBtn'),
         controlsBar: getById('controlsBar'),
 
-        // Jotter (formerly Text Editor) Window Elements
         textEditorWindow: getById('textEditorWindow'),
         textEditorWindowTitleBar: getById('textEditorWindowTitleBar'),
         textEditorWindowBody: getById('textEditorWindowBody'),
@@ -1031,7 +1040,6 @@
         textEditorMaximizeBtn: getById('textEditorMaximizeBtn'),
         textEditorCloseBtn: getById('textEditorCloseBtn'),
 
-        // PlayJockey Window Elements
         playJockeyWindow: getById('playJockeyWindow'),
         playJockeyTitleBar: getById('playJockeyTitleBar'),
         playJockeyWindowBody: getById('playJockeyWindowBody'),
@@ -1041,20 +1049,17 @@
         playJockeyCloseBtn: getById('playJockeyCloseBtn'),
         playJockeyLinkInput: getById('playJockeyLinkInput'),
         playJockeyAddBtn: getById('playJockeyAddBtn'),
-        playJockeyPlayer: getById('playJockeyPlayer'),
+        playJockeyPlayer: getById('playJockeyPlayer'), // This is now a div container for YT player
         playJockeyPlaylist: getById('playJockeyPlaylist'),
-        // ADDED: PlayJockey Context Menu elements
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
-        // END ADDED
+        playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), // ADDED
 
-        // Desktop Icons
         textEditorIcon: getById('textEditorIcon'), 
         trackerIcon: getById('trackerIcon'),
         playJockeyIcon: getById('playJockeyIcon'),
 
-        // Modal Elements (shared)
         newAreaModal: getById(MODAL_IDS.NEW_AREA),
         newAreaNameInput: getById('newAreaName'),
         saveNewAreaBtn: getById('saveNewAreaBtn'),
@@ -1107,7 +1112,8 @@
         customBgImage: null,
         customBgColor: null,
         playJockeyPlaylist: [], 
-        playJockeyCurrentVideo: null 
+        playJockeyCurrentVideo: null,
+        playJockeyAutoPlayEnabled: false // ADDED: Auto Play State
     };
     
     let lastNormalStates = {}; 
@@ -1121,8 +1127,12 @@
     let activeDragIcon = null;
     let iconDragOffsetX, iconDragOffsetY;
 
-    // ADDED: Variables for PlayJockey drag & drop
     let pjDraggedItem = null; 
+
+    // ADDED: YouTube Player API variables
+    let ytPlayerInstance = null;
+    let isYouTubeApiReady = false;
+    let pendingVideoToLoad = null; // { videoId, autoplayIntent }
     // END ADDED
 
 
@@ -1188,8 +1198,15 @@
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         renderPlayJockeyPlaylist(); 
-        if (appData.playJockeyCurrentVideo) { 
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
+        updatePlayJockeyAutoPlayButtonState(); // ADDED: Update button on init
+
+        // MODIFIED: Only attempt to load YT video if API is ready or will be soon
+        // The onYouTubeIframeAPIReady function will handle initial playback if needed
+        if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // false = don't autoplay on initial load unless specifically intended
+        } else if (appData.playJockeyCurrentVideo) {
+            // Queue it if API isn't ready yet but a video is set
+            pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: false };
         }
 
 
@@ -1203,7 +1220,7 @@
 
 
         addEventListeners(); 
-        initPlayJockeyContextMenu(); // ADDED: Initialize context menu listeners
+        initPlayJockeyContextMenu(); 
 
         updateViewControls();
         updateDateDisplay();
@@ -1407,7 +1424,12 @@
             if (appData.windowStates[windowId]) {
                 appData.windowStates[windowId].hiddenByUser = false;
             }
+             // ADDED: If PlayJockey window is opened, ensure player is initialized if a video is current
+            if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
+                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay, just load
+            }
         }
+
 
         if (windowElement.classList.contains('minimized')) {
             maximizeWindow(windowId); 
@@ -1603,11 +1625,11 @@
         }
         
         windowElement.addEventListener('mousedown', (e) => {
-             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; // MODIFIED: Ignore context menu clicks for bringToFront
+             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; 
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, .playjockey-playlist-item'))) { 
+                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item'))) { // MODIFIED: #playJockeyPlayer is now a div
                  bringToFront(windowElement);
             }
         }, true); 
@@ -1939,7 +1961,6 @@
         });
         DOM.confirmRefreshQuestBtn.addEventListener('click', confirmAndRefreshQuest);
 
-        // Window control buttons
         DOM.xpMainWindowMinimizeBtn.addEventListener('click', () => minimizeWindow('xpMainWindow'));
         DOM.xpMainWindowMaximizeBtn.addEventListener('click', () => maximizeWindow('xpMainWindow'));
         DOM.xpMainWindowCloseBtn.addEventListener('click', () => { 
@@ -1970,8 +1991,11 @@
             if (appData.windowStates.playJockeyWindow) {
                 appData.windowStates.playJockeyWindow.hiddenByUser = true;
             }
-            DOM.playJockeyPlayer.src = 'about:blank'; 
-            appData.playJockeyCurrentVideo = null;
+            // MODIFIED: Stop player via API if it exists
+            if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+                ytPlayerInstance.stopVideo();
+            }
+            appData.playJockeyCurrentVideo = null; // Still useful to clear this
             saveWindowState('playJockeyWindow');
             saveData(); 
         });
@@ -1980,16 +2004,16 @@
         DOM.playJockeyLinkInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addYouTubeLinkToPlayJockey();
         });
-        // MODIFIED: Click listener for playlist item (for playing video) is now handled inside renderPlayJockeyPlaylist
-        // to re-attach after re-renders. Context menu listener added below.
         
-        // ADDED: PlayJockey Playlist Event Listeners for drag-and-drop and context menu
         DOM.playJockeyPlaylist.addEventListener('dragstart', handlePjDragStart);
         DOM.playJockeyPlaylist.addEventListener('dragend', handlePjDragEnd);
         DOM.playJockeyPlaylist.addEventListener('dragover', handlePjDragOver);
-        DOM.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave); // For better highlight clearing
+        DOM.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave); 
         DOM.playJockeyPlaylist.addEventListener('drop', handlePjDrop);
         DOM.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu);
+        
+        // ADDED: Auto Play Button Listener
+        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
         // END ADDED
 
 
@@ -2028,15 +2052,13 @@
             setWindowDefaults('playJockeyWindow', true);
         });
 
-        // ADDED: Global click listener to hide PlayJockey context menu
         document.addEventListener('click', (e) => {
             if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
-                if (!e.target.closest('.playjockey-playlist-item')) { // Don't hide if click is on playlist item (contextmenu handles that)
+                if (!e.target.closest('.playjockey-playlist-item')) { 
                      hidePjContextMenu();
                 }
             }
         });
-        // END ADDED
     }
     
     function minimizeWindow(windowId) {
@@ -2350,7 +2372,8 @@
             customBgImage: null,
             customBgColor: null,
             playJockeyPlaylist: [],
-            playJockeyCurrentVideo: null
+            playJockeyCurrentVideo: null,
+            playJockeyAutoPlayEnabled: false // ADDED default
         };
         if (storedData) {
             try {
@@ -2365,7 +2388,8 @@
                     },
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
                     playJockeyPlaylist: loadedData.playJockeyPlaylist || [],
-                    playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo || null
+                    playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo || null,
+                    playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : false // Ensure it's a boolean
                 };
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
@@ -3180,6 +3204,22 @@
     }
 
     // --- PlayJockey Functions ---
+
+    // ADDED: YouTube Iframe API Ready Callback
+    function onYouTubeIframeAPIReady() {
+        isYouTubeApiReady = true;
+        // If a video was pending to be loaded (e.g. from init), load it now.
+        if (pendingVideoToLoad) {
+            playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
+            pendingVideoToLoad = null;
+        } else if (appData.playJockeyCurrentVideo && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
+            // This handles the case where the page loads, a video is current,
+            // and the PlayJockey window is visible. We should initialize the player.
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay on initial load unless specifically clicked
+        }
+    }
+    // END ADDED
+
     function extractYouTubeVideoId(url) {
         if (!url) return null;
         const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -3216,7 +3256,8 @@
         renderPlayJockeyPlaylist();
         saveData();
 
-        if (appData.playJockeyPlaylist.length === 1 || !DOM.playJockeyPlayer.src || DOM.playJockeyPlayer.src === 'about:blank') {
+        // If this is the first video added or player isn't initialized, play it.
+        if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
             playYouTubeVideoById(videoId, true);
         }
     }
@@ -3239,19 +3280,17 @@
             item.textContent = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
             item.title = video.originalUrl;
             item.dataset.videoId = video.videoId;
-            item.dataset.playlistItemId = video.id; // Used for context menu and drag/drop
-            item.draggable = true; // ADDED: Make item draggable
+            item.dataset.playlistItemId = video.id; 
+            item.draggable = true; 
 
-            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.videoId === video.videoId) {
+            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) { // MODIFIED: Compare by unique ID
                 item.classList.add('playing');
             }
-            // MODIFIED: Attaching click listener for playing here, after creation
             item.addEventListener('click', (event) => {
-                 // Prevent playing if a drag operation might be starting or context menu is the target
                 if (event.target.closest('.context-modal')) return;
-                if (item.classList.contains('dragging')) return; // Don't play if dragging starts
+                if (item.classList.contains('dragging')) return; 
 
-                const clickedItem = event.currentTarget; // Use currentTarget for the div itself
+                const clickedItem = event.currentTarget; 
                 if (clickedItem && clickedItem.dataset.videoId) {
                     playYouTubeVideoById(clickedItem.dataset.videoId, true);
                 }
@@ -3260,25 +3299,103 @@
         });
     }
 
-    function playYouTubeVideoById(videoId, autoplay = true) {
+    // MODIFIED: playYouTubeVideoById to use YT Player API
+    function playYouTubeVideoById(videoId, autoplayIntent = true) {
         if (!videoId) return;
-        // MODIFIED: Use a more robust embed URL, enabling JS API for potential future controls
-        DOM.playJockeyPlayer.src = `https://www.youtube.com/embed/${videoId}${autoplay ? '?autoplay=1' : ''}&enablejsapi=1&origin=${window.location.origin}`;
-        
-        const currentVideoEntry = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
-        appData.playJockeyCurrentVideo = currentVideoEntry ? { ...currentVideoEntry } : null; // MODIFIED: Store a copy
-        
-        const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
-        items.forEach(item => {
-            item.classList.remove('playing');
-            if (item.dataset.videoId === videoId) {
-                item.classList.add('playing');
+
+        const videoToPlay = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
+        appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
+        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); // Pass unique ID
+        saveData();
+
+        if (!isYouTubeApiReady) {
+            pendingVideoToLoad = { videoId, autoplayIntent };
+            console.log("YouTube API not ready, video load queued:", videoId);
+            return;
+        }
+
+        if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
+            ytPlayerInstance.loadVideoById({
+                'videoId': videoId,
+                // 'startSeconds': 0, // Optional: if you want to start from a specific time
+            });
+            // The YT API's loadVideoById usually autoplays.
+            // If !autoplayIntent, one might try to immediately pause, but it's racy.
+            // For now, this will mostly result in autoplay for subsequent videos.
+        } else {
+            // Ensure the placeholder div is empty if we are creating a new player
+            if (DOM.playJockeyPlayer.firstChild) {
+                DOM.playJockeyPlayer.innerHTML = ''; // Clear out old iframe if any
             }
-        });
-        saveData(); 
+            ytPlayerInstance = new YT.Player('playJockeyPlayer', { // Target the div
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'autoplay': autoplayIntent ? 1 : 0,
+                    'controls': 1,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin,
+                    'modestbranding': 1, // Less YouTube branding
+                    'rel': 0 // Don't show related videos
+                },
+                events: {
+                    // 'onReady': onPlayerReady, // Can be used if specific actions needed on ready
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
     }
 
-    // --- ADDED: PlayJockey Context Menu Functions ---
+    // ADDED: YT Player event handlers
+    // function onPlayerReady(event) {
+        // Example: event.target.playVideo();
+        // This is called when the player is ready. Autoplay is handled by playerVars.
+    // }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED && appData.playJockeyAutoPlayEnabled) {
+            playNextPjVideo();
+        }
+    }
+
+    function playNextPjVideo() {
+        if (!appData.playJockeyCurrentVideo || appData.playJockeyPlaylist.length === 0) {
+            return;
+        }
+        const currentIndex = appData.playJockeyPlaylist.findIndex(
+            item => item.id === appData.playJockeyCurrentVideo.id
+        );
+
+        if (currentIndex === -1) return; // Should not happen
+
+        let nextIndex = currentIndex + 1;
+        if (nextIndex >= appData.playJockeyPlaylist.length) {
+            nextIndex = 0; // Loop to the first video
+        }
+
+        if (appData.playJockeyPlaylist.length > 0) {
+            const nextVideo = appData.playJockeyPlaylist[nextIndex];
+            if (nextVideo) {
+                 playYouTubeVideoById(nextVideo.videoId, true);
+            }
+        }
+    }
+    // END ADDED
+
+    // MODIFIED to use unique playlist item ID for 'playing' class
+    function updatePlayingClassInPlaylist(playingItemId) {
+        const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
+        items.forEach(item => {
+            if (item.dataset.playlistItemId === playingItemId) {
+                item.classList.add('playing');
+            } else {
+                item.classList.remove('playing');
+            }
+        });
+    }
+
+
     function initPlayJockeyContextMenu() {
         DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
         DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
@@ -3286,12 +3403,11 @@
 
     function showPjContextMenu(e) {
         e.preventDefault();
-        hidePjContextMenu(); // Hide any existing one first
+        hidePjContextMenu(); 
 
         const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item');
         if (clickedPlaylistItem) {
             DOM.playJockeyContextMenu.style.display = 'block';
-            // Position relative to viewport, adjust if it goes off-screen
             let x = e.clientX;
             let y = e.clientY;
             const menuWidth = DOM.playJockeyContextMenu.offsetWidth;
@@ -3300,10 +3416,10 @@
             const viewportHeight = window.innerHeight;
 
             if (x + menuWidth > viewportWidth) {
-                x = viewportWidth - menuWidth - 5; // 5px buffer
+                x = viewportWidth - menuWidth - 5; 
             }
             if (y + menuHeight > viewportHeight) {
-                y = viewportHeight - menuHeight - 5; // 5px buffer
+                y = viewportHeight - menuHeight - 5; 
             }
             DOM.playJockeyContextMenu.style.left = `${x}px`;
             DOM.playJockeyContextMenu.style.top = `${y}px`;
@@ -3340,15 +3456,17 @@
         if (itemIndex > -1) {
             const removedItem = appData.playJockeyPlaylist.splice(itemIndex, 1)[0];
             
-            // If the removed video was the one currently playing
             if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) {
-                DOM.playJockeyPlayer.src = 'about:blank'; // Stop player
+                if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+                    ytPlayerInstance.stopVideo();
+                }
+                // DOM.playJockeyPlayer.src = 'about:blank'; // No longer direct src manipulation
                 appData.playJockeyCurrentVideo = null;
-                // Optionally, play the next video if available
-                if (appData.playJockeyPlaylist.length > 0) {
-                    // Play the video now at the removed item's index, or the first if it was the last
+                if (appData.playJockeyAutoPlayEnabled && appData.playJockeyPlaylist.length > 0) {
                     const nextVideoIndex = Math.min(itemIndex, appData.playJockeyPlaylist.length - 1);
                     if (nextVideoIndex >=0) playYouTubeVideoById(appData.playJockeyPlaylist[nextVideoIndex].videoId, true);
+                } else if (appData.playJockeyPlaylist.length > 0) {
+                     // If not autoplaying, but something is next, perhaps just update current video to null
                 }
             }
             renderPlayJockeyPlaylist();
@@ -3356,19 +3474,17 @@
         }
         hidePjContextMenu();
     }
-    // --- END ADDED: PlayJockey Context Menu Functions ---
-
-    // --- ADDED: PlayJockey Drag and Drop Functions ---
+    
     function handlePjDragStart(e) {
         const target = e.target.closest('.playjockey-playlist-item');
         if (target) {
             pjDraggedItem = target;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
-            setTimeout(() => { // Timeout to allow DOM to update before applying class
+            setTimeout(() => { 
                 target.classList.add('dragging');
             }, 0);
-            hidePjContextMenu(); // Hide context menu if it's open
+            hidePjContextMenu(); 
         }
     }
 
@@ -3376,7 +3492,6 @@
         if (pjDraggedItem) {
             pjDraggedItem.classList.remove('dragging');
         }
-        // Clear all drag-over highlights
         DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => {
             item.classList.remove('drag-over-target-before', 'drag-over-target-after');
         });
@@ -3408,9 +3523,9 @@
     
     function handlePjDragLeave(e) {
         const relatedTargetIsChild = DOM.playJockeyPlaylist.contains(e.relatedTarget);
-        if (!relatedTargetIsChild) { // If mouse leaves the playlist area entirely
+        if (!relatedTargetIsChild) { 
              clearPjDragOverHighlights();
-        } else { // If moving between items, dragOver on the new item will handle it
+        } else { 
             const targetItem = e.target.closest('.playjockey-playlist-item');
             if (targetItem) {
                  targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after');
@@ -3431,7 +3546,7 @@
         if (draggedItemIndex === -1) return;
 
         const itemToMove = appData.playJockeyPlaylist[draggedItemIndex];
-        appData.playJockeyPlaylist.splice(draggedItemIndex, 1); // Remove item from old position
+        appData.playJockeyPlaylist.splice(draggedItemIndex, 1); 
 
         let targetIndex = -1;
 
@@ -3439,13 +3554,10 @@
             const targetItemId = targetItemElement.dataset.playlistItemId;
             targetIndex = appData.playJockeyPlaylist.findIndex(item => item.id === targetItemId);
 
-            // Determine if dropping before or after the targetItemElement based on mouse position
             const rect = targetItemElement.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
             if (e.clientY < midpointY) {
-                // Insert before targetIndex
             } else {
-                // Insert after targetIndex
                 targetIndex++;
             }
         }
@@ -3453,8 +3565,6 @@
         if (targetIndex !== -1) {
             appData.playJockeyPlaylist.splice(targetIndex, 0, itemToMove);
         } else {
-            // If not dropped on a specific item, or dropped on itself (which shouldn't happen if filtered),
-            // append to the end of the list (or handle based on cursor position if more complex logic is needed)
             appData.playJockeyPlaylist.push(itemToMove);
         }
         
@@ -3463,7 +3573,24 @@
         pjDraggedItem = null; 
     }
 
-    // --- END ADDED: PlayJockey Drag and Drop Functions ---
+
+    // ADDED: PlayJockey Auto Play Functions
+    function togglePlayJockeyAutoPlay() {
+        appData.playJockeyAutoPlayEnabled = !appData.playJockeyAutoPlayEnabled;
+        updatePlayJockeyAutoPlayButtonState();
+        saveData();
+    }
+
+    function updatePlayJockeyAutoPlayButtonState() {
+        if (appData.playJockeyAutoPlayEnabled) {
+            DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: On';
+            DOM.playJockeyAutoPlayBtn.classList.add('autoplay-on');
+        } else {
+            DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: Off';
+            DOM.playJockeyAutoPlayBtn.classList.remove('autoplay-on');
+        }
+    }
+    // END ADDED
 
 
     function openModal(modalId) {
