@@ -630,13 +630,14 @@
 
         .playjockey-playlist-item {
             padding: 4px 6px;
-            cursor: pointer;
+            cursor: pointer; /* Will change to grab for draggable items */
             border-bottom: 1px solid #ECE9D8;
             font-size: 10px;
             color: #000080; /* Navy text */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            user-select: none; /* Prevent text selection during drag */
         }
         .playjockey-playlist-item:hover {
             background-color: #000080; /* Navy selection */
@@ -650,6 +651,46 @@
         .playjockey-playlist-item:last-child {
             border-bottom: none;
         }
+        
+        /* ADDED: Styles for PlayJockey drag-and-drop and context menu */
+        .playjockey-playlist-item.dragging {
+            opacity: 0.5;
+            background-color: #AED6F1; /* Light blue when dragging */
+        }
+        .playjockey-playlist-item.drag-over-target {
+            background-color: #D4E6F1 !important; /* Slightly different blue for drop target */
+            /* border-top: 2px solid #005CFE; */ /* Example: top border indicator */
+        }
+         .playjockey-playlist-item.drag-over-target-before {
+            border-top: 2px dashed #005CFE;
+        }
+        .playjockey-playlist-item.drag-over-target-after {
+            border-bottom: 2px dashed #005CFE;
+        }
+
+
+        .context-modal {
+            display: none;
+            position: fixed;
+            background-color: #ECE9D8;
+            border: 1px solid #000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 2000; /* Above everything */
+            padding: 3px 0;
+            min-width: 120px;
+            font-family: "Tahoma", "Geneva", sans-serif;
+            font-size: 11px;
+        }
+        .context-modal-item {
+            padding: 5px 12px;
+            cursor: default;
+            color: black;
+        }
+        .context-modal-item:hover {
+            background-color: #005CFE;
+            color: white;
+        }
+        /* END ADDED */
 
     </style>
 </head>
@@ -659,12 +700,10 @@
         <div class="icon-image">📄</div>
         <div class="icon-label">Jotter</div>
     </div>
-
     <div class="desktop-icon" id="trackerIcon" data-window-id="xpMainWindow">
         <div class="icon-image">📅</div>
         <div class="icon-label">Habit Tracker</div>
     </div>
-
     <div class="desktop-icon" id="playJockeyIcon" data-window-id="playJockeyWindow">
         <div class="icon-image">▶️</div>
         <div class="icon-label">PlayJockey</div>
@@ -682,9 +721,9 @@
         <div class="window-body">
             <div class="controls-bar" id="controlsBar">
                 <div class="week-navigation">
-                    <button id="prevWeekBtn" class="xp-button">&lt; Prev Week</button>
+                    <button id="prevWeekBtn" class="xp-button">< Prev Week</button>
                     <button id="thisWeekBtn" class="xp-button">This Week</button>
-                    <button id="nextWeekBtn" class="xp-button">Next Week &gt;</button>
+                    <button id="nextWeekBtn" class="xp-button">Next Week ></button>
                 </div>
                 <div class="controls-group">
                     <span id="currentWeekDisplay">Week X</span>
@@ -696,7 +735,6 @@
                     <button id="addAreaBtn" class="xp-button">New Area</button>
                 </div>
             </div>
-
             <table id="gridTable">
                 <thead>
                     <tr id="weekdayHeaders">
@@ -750,7 +788,6 @@
         <div class="resize-handle" id="playJockeyResizeHandle"></div>
     </div>
 
-
     <div id="newAreaModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -767,7 +804,6 @@
             </div>
         </div>
     </div>
-
     <div id="addEditAchievementModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -779,13 +815,10 @@
                 <input type="hidden" id="achievementDayIndex">
                 <input type="hidden" id="editingAchievementKey">
                 <input type="hidden" id="editingAchievementId">
-
-
                 <label>Type:</label>
                 <input type="radio" name="achievementType" value="text" id="typeText" checked> Text
                 <input type="radio" name="achievementType" value="image" id="typeImage"> Image
                 <br><br>
-
                 <div id="textInputDiv">
                     <label for="achievementText">Description:</label>
                     <textarea id="achievementText" rows="3"></textarea>
@@ -802,7 +835,6 @@
             </div>
         </div>
     </div>
-
     <div id="questsModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -817,7 +849,6 @@
             </div>
         </div>
     </div>
-
     <div id="confirmRemoveAreaModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -833,7 +864,6 @@
             </div>
         </div>
     </div>
-
     <div id="confirmDeleteAchievementModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -849,7 +879,6 @@
             </div>
         </div>
     </div>
-
     <div id="createQuestModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -859,13 +888,10 @@
             <div class="modal-body">
                 <label for="newQuestAreaName">Area:</label>
                 <select id="newQuestAreaName"></select>
-
                 <label for="newQuestDescription">Description:</label>
                 <textarea id="newQuestDescription" rows="2" placeholder="e.g., Read 2 chapters"></textarea>
-
                 <label for="newQuestTargetXP">Target XP to Earn in Area for Quest:</label>
                 <input type="number" id="newQuestTargetXP" min="1" value="30">
-
                 <label for="newQuestRewardXP">Quest Reward XP:</label>
                 <input type="number" id="newQuestRewardXP" min="1" value="50">
             </div>
@@ -875,7 +901,6 @@
             </div>
         </div>
     </div>
-
     <div id="confirmRefreshQuestModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -891,7 +916,6 @@
             </div>
         </div>
     </div>
-
     <div id="changeBgImageModal" class="modal">
         <div class="modal-content" style="max-width: 550px;"> <div class="modal-title-bar">
                 <span>Change Background</span>
@@ -899,25 +923,20 @@
             </div>
             <div class="modal-body">
                 <p>Choose a background type for the application:</p>
-                
                 <div>
                     <label for="newBgImageInput">1. Upload image file:</label>
                     <input type="file" id="newBgImageInput" accept="image/*">
                      <p><small>Max 5MB recommended for file uploads due to browser storage limits.</small></p>
                     <button id="uploadBgImageBtn" class="xp-button" style="margin-top: 5px;">Upload File & Apply</button>
                 </div>
-
                 <hr>
-
                 <div>
                     <label for="bgImageUrlInput">2. Enter image URL:</label>
                     <input type="text" id="bgImageUrlInput" placeholder="https://example.com/image.png">
                     <p><small>Using a URL is recommended for very large images from the web.</small></p>
                     <button id="applyBgImageUrlBtn" class="xp-button" style="margin-top: 5px;">Apply URL</button>
                 </div>
-                
                 <hr>
-
                 <div>
                     <label>3. Pick a solid color:</label>
                     <div id="bgColorSwatchesContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; justify-content: center;">
@@ -931,14 +950,17 @@
         </div>
     </div>
 
-
-<script>
-"use strict";
+    <div id="playJockeyContextMenu" class="context-modal">
+        <div class="context-modal-item" id="pjContextRename">Rename</div>
+        <div class="context-modal-item" id="pjContextRemove">Remove</div>
+    </div>
+    <script>
+    "use strict";
 
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.6'; // Updated version for title fetching
+    const STORAGE_KEY = 'lifeXpData_v1.9.5'; 
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -1021,6 +1043,11 @@
         playJockeyAddBtn: getById('playJockeyAddBtn'),
         playJockeyPlayer: getById('playJockeyPlayer'),
         playJockeyPlaylist: getById('playJockeyPlaylist'),
+        // ADDED: PlayJockey Context Menu elements
+        playJockeyContextMenu: getById('playJockeyContextMenu'),
+        pjContextRenameBtn: getById('pjContextRename'),
+        pjContextRemoveBtn: getById('pjContextRemove'),
+        // END ADDED
 
         // Desktop Icons
         textEditorIcon: getById('textEditorIcon'), 
@@ -1093,6 +1120,10 @@
 
     let activeDragIcon = null;
     let iconDragOffsetX, iconDragOffsetY;
+
+    // ADDED: Variables for PlayJockey drag & drop
+    let pjDraggedItem = null; 
+    // END ADDED
 
 
     function parseYYYYMMDDToLocalDate(dateString) {
@@ -1172,7 +1203,8 @@
 
 
         addEventListeners(); 
-        
+        initPlayJockeyContextMenu(); // ADDED: Initialize context menu listeners
+
         updateViewControls();
         updateDateDisplay();
         renderWeekdayHeaders();
@@ -1571,7 +1603,7 @@
         }
         
         windowElement.addEventListener('mousedown', (e) => {
-             if (e.target.closest('.desktop-icon')) return; 
+             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; // MODIFIED: Ignore context menu clicks for bringToFront
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
@@ -1948,12 +1980,17 @@
         DOM.playJockeyLinkInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addYouTubeLinkToPlayJockey();
         });
-        DOM.playJockeyPlaylist.addEventListener('click', (event) => {
-            const item = event.target.closest('.playjockey-playlist-item');
-            if (item && item.dataset.videoId) {
-                playYouTubeVideoById(item.dataset.videoId, true);
-            }
-        });
+        // MODIFIED: Click listener for playlist item (for playing video) is now handled inside renderPlayJockeyPlaylist
+        // to re-attach after re-renders. Context menu listener added below.
+        
+        // ADDED: PlayJockey Playlist Event Listeners for drag-and-drop and context menu
+        DOM.playJockeyPlaylist.addEventListener('dragstart', handlePjDragStart);
+        DOM.playJockeyPlaylist.addEventListener('dragend', handlePjDragEnd);
+        DOM.playJockeyPlaylist.addEventListener('dragover', handlePjDragOver);
+        DOM.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave); // For better highlight clearing
+        DOM.playJockeyPlaylist.addEventListener('drop', handlePjDrop);
+        DOM.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu);
+        // END ADDED
 
 
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
@@ -1990,6 +2027,16 @@
             setWindowDefaults('textEditorWindow', true);
             setWindowDefaults('playJockeyWindow', true);
         });
+
+        // ADDED: Global click listener to hide PlayJockey context menu
+        document.addEventListener('click', (e) => {
+            if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
+                if (!e.target.closest('.playjockey-playlist-item')) { // Don't hide if click is on playlist item (contextmenu handles that)
+                     hidePjContextMenu();
+                }
+            }
+        });
+        // END ADDED
     }
     
     function minimizeWindow(windowId) {
@@ -3140,7 +3187,7 @@
         return match ? match[1] : null;
     }
 
-    async function addYouTubeLinkToPlayJockey() {
+    function addYouTubeLinkToPlayJockey() {
         const link = DOM.playJockeyLinkInput.value.trim();
         if (!link) {
             alert("Please enter a YouTube link.");
@@ -3154,51 +3201,20 @@
 
         if (appData.playJockeyPlaylist.some(video => video.videoId === videoId)) {
             alert("This video is already in the playlist.");
-            DOM.playJockeyLinkInput.value = ''; 
             return;
-        }
-        
-        DOM.playJockeyAddBtn.disabled = true; // Disable button while fetching
-        DOM.playJockeyAddBtn.textContent = "Adding...";
-
-
-        let videoTitle = link; // Default title is the link itself
-        try {
-            // Using api.allorigins.win as a CORS proxy
-            const oEmbedUrl = `http://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(oEmbedUrl)}`;
-            
-            const response = await fetch(proxyUrl);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.title) {
-                    videoTitle = data.title;
-                } else {
-                     console.warn(`Title not found in oEmbed response for ${videoId}.`);
-                }
-            } else {
-                console.warn(`Failed to fetch title for ${videoId} via oEmbed. Status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error("Error fetching video title:", error);
-            // Falls back to using the link as title if an error occurs
         }
 
         const videoEntry = {
-            id: 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
+            id: 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7), 
             originalUrl: link,
             videoId: videoId,
-            title: videoTitle 
+            title: link 
         };
 
         appData.playJockeyPlaylist.push(videoEntry);
         DOM.playJockeyLinkInput.value = ''; 
         renderPlayJockeyPlaylist();
         saveData();
-        
-        DOM.playJockeyAddBtn.disabled = false; // Re-enable button
-        DOM.playJockeyAddBtn.textContent = "Add";
-
 
         if (appData.playJockeyPlaylist.length === 1 || !DOM.playJockeyPlayer.src || DOM.playJockeyPlayer.src === 'about:blank') {
             playYouTubeVideoById(videoId, true);
@@ -3220,27 +3236,37 @@
         appData.playJockeyPlaylist.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
-            // Display the fetched title, or the original URL as a fallback if title is same as URL
-            item.textContent = video.title && video.title !== video.originalUrl 
-                               ? (video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title)
-                               : (video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl);
-            item.title = video.title && video.title !== video.originalUrl ? video.title : video.originalUrl; // Full title/URL on hover
+            item.textContent = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
+            item.title = video.originalUrl;
             item.dataset.videoId = video.videoId;
-            item.dataset.playlistItemId = video.id;
+            item.dataset.playlistItemId = video.id; // Used for context menu and drag/drop
+            item.draggable = true; // ADDED: Make item draggable
 
             if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.videoId === video.videoId) {
                 item.classList.add('playing');
             }
+            // MODIFIED: Attaching click listener for playing here, after creation
+            item.addEventListener('click', (event) => {
+                 // Prevent playing if a drag operation might be starting or context menu is the target
+                if (event.target.closest('.context-modal')) return;
+                if (item.classList.contains('dragging')) return; // Don't play if dragging starts
+
+                const clickedItem = event.currentTarget; // Use currentTarget for the div itself
+                if (clickedItem && clickedItem.dataset.videoId) {
+                    playYouTubeVideoById(clickedItem.dataset.videoId, true);
+                }
+            });
             DOM.playJockeyPlaylist.appendChild(item);
         });
     }
 
     function playYouTubeVideoById(videoId, autoplay = true) {
         if (!videoId) return;
+        // MODIFIED: Use a more robust embed URL, enabling JS API for potential future controls
         DOM.playJockeyPlayer.src = `https://www.youtube.com/embed/${videoId}${autoplay ? '?autoplay=1' : ''}&enablejsapi=1&origin=${window.location.origin}`;
         
         const currentVideoEntry = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
-        appData.playJockeyCurrentVideo = currentVideoEntry ? { videoId: currentVideoEntry.videoId, originalUrl: currentVideoEntry.originalUrl, title: currentVideoEntry.title, id: currentVideoEntry.id } : null;
+        appData.playJockeyCurrentVideo = currentVideoEntry ? { ...currentVideoEntry } : null; // MODIFIED: Store a copy
         
         const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
@@ -3251,6 +3277,193 @@
         });
         saveData(); 
     }
+
+    // --- ADDED: PlayJockey Context Menu Functions ---
+    function initPlayJockeyContextMenu() {
+        DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
+        DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
+    }
+
+    function showPjContextMenu(e) {
+        e.preventDefault();
+        hidePjContextMenu(); // Hide any existing one first
+
+        const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item');
+        if (clickedPlaylistItem) {
+            DOM.playJockeyContextMenu.style.display = 'block';
+            // Position relative to viewport, adjust if it goes off-screen
+            let x = e.clientX;
+            let y = e.clientY;
+            const menuWidth = DOM.playJockeyContextMenu.offsetWidth;
+            const menuHeight = DOM.playJockeyContextMenu.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            if (x + menuWidth > viewportWidth) {
+                x = viewportWidth - menuWidth - 5; // 5px buffer
+            }
+            if (y + menuHeight > viewportHeight) {
+                y = viewportHeight - menuHeight - 5; // 5px buffer
+            }
+            DOM.playJockeyContextMenu.style.left = `${x}px`;
+            DOM.playJockeyContextMenu.style.top = `${y}px`;
+            DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId;
+        }
+    }
+
+    function hidePjContextMenu() {
+        DOM.playJockeyContextMenu.style.display = 'none';
+        delete DOM.playJockeyContextMenu.dataset.currentItemId;
+    }
+
+    function handlePjContextRename() {
+        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
+        if (!itemId) return;
+
+        const itemToRename = appData.playJockeyPlaylist.find(video => video.id === itemId);
+        if (itemToRename) {
+            const newName = prompt("Enter new name for the video:", itemToRename.title);
+            if (newName !== null && newName.trim() !== "") {
+                itemToRename.title = newName.trim();
+                renderPlayJockeyPlaylist();
+                saveData();
+            }
+        }
+        hidePjContextMenu();
+    }
+
+    function handlePjContextRemove() {
+        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
+        if (!itemId) return;
+
+        const itemIndex = appData.playJockeyPlaylist.findIndex(video => video.id === itemId);
+        if (itemIndex > -1) {
+            const removedItem = appData.playJockeyPlaylist.splice(itemIndex, 1)[0];
+            
+            // If the removed video was the one currently playing
+            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) {
+                DOM.playJockeyPlayer.src = 'about:blank'; // Stop player
+                appData.playJockeyCurrentVideo = null;
+                // Optionally, play the next video if available
+                if (appData.playJockeyPlaylist.length > 0) {
+                    // Play the video now at the removed item's index, or the first if it was the last
+                    const nextVideoIndex = Math.min(itemIndex, appData.playJockeyPlaylist.length - 1);
+                    if (nextVideoIndex >=0) playYouTubeVideoById(appData.playJockeyPlaylist[nextVideoIndex].videoId, true);
+                }
+            }
+            renderPlayJockeyPlaylist();
+            saveData();
+        }
+        hidePjContextMenu();
+    }
+    // --- END ADDED: PlayJockey Context Menu Functions ---
+
+    // --- ADDED: PlayJockey Drag and Drop Functions ---
+    function handlePjDragStart(e) {
+        const target = e.target.closest('.playjockey-playlist-item');
+        if (target) {
+            pjDraggedItem = target;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
+            setTimeout(() => { // Timeout to allow DOM to update before applying class
+                target.classList.add('dragging');
+            }, 0);
+            hidePjContextMenu(); // Hide context menu if it's open
+        }
+    }
+
+    function handlePjDragEnd(e) {
+        if (pjDraggedItem) {
+            pjDraggedItem.classList.remove('dragging');
+        }
+        // Clear all drag-over highlights
+        DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => {
+            item.classList.remove('drag-over-target-before', 'drag-over-target-after');
+        });
+        pjDraggedItem = null;
+    }
+    
+    function clearPjDragOverHighlights() {
+        DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => {
+            item.classList.remove('drag-over-target-before', 'drag-over-target-after');
+        });
+    }
+
+    function handlePjDragOver(e) {
+        e.preventDefault(); 
+        const targetItem = e.target.closest('.playjockey-playlist-item');
+        
+        clearPjDragOverHighlights();
+
+        if (targetItem && pjDraggedItem && targetItem !== pjDraggedItem) {
+            const rect = targetItem.getBoundingClientRect();
+            const midpointY = rect.top + rect.height / 2;
+            if (e.clientY < midpointY) {
+                targetItem.classList.add('drag-over-target-before');
+            } else {
+                targetItem.classList.add('drag-over-target-after');
+            }
+        }
+    }
+    
+    function handlePjDragLeave(e) {
+        const relatedTargetIsChild = DOM.playJockeyPlaylist.contains(e.relatedTarget);
+        if (!relatedTargetIsChild) { // If mouse leaves the playlist area entirely
+             clearPjDragOverHighlights();
+        } else { // If moving between items, dragOver on the new item will handle it
+            const targetItem = e.target.closest('.playjockey-playlist-item');
+            if (targetItem) {
+                 targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after');
+            }
+        }
+    }
+
+
+    function handlePjDrop(e) {
+        e.preventDefault();
+        clearPjDragOverHighlights();
+        if (!pjDraggedItem) return;
+
+        const draggedItemId = e.dataTransfer.getData('text/plain');
+        const targetItemElement = e.target.closest('.playjockey-playlist-item');
+        
+        const draggedItemIndex = appData.playJockeyPlaylist.findIndex(item => item.id === draggedItemId);
+        if (draggedItemIndex === -1) return;
+
+        const itemToMove = appData.playJockeyPlaylist[draggedItemIndex];
+        appData.playJockeyPlaylist.splice(draggedItemIndex, 1); // Remove item from old position
+
+        let targetIndex = -1;
+
+        if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) {
+            const targetItemId = targetItemElement.dataset.playlistItemId;
+            targetIndex = appData.playJockeyPlaylist.findIndex(item => item.id === targetItemId);
+
+            // Determine if dropping before or after the targetItemElement based on mouse position
+            const rect = targetItemElement.getBoundingClientRect();
+            const midpointY = rect.top + rect.height / 2;
+            if (e.clientY < midpointY) {
+                // Insert before targetIndex
+            } else {
+                // Insert after targetIndex
+                targetIndex++;
+            }
+        }
+
+        if (targetIndex !== -1) {
+            appData.playJockeyPlaylist.splice(targetIndex, 0, itemToMove);
+        } else {
+            // If not dropped on a specific item, or dropped on itself (which shouldn't happen if filtered),
+            // append to the end of the list (or handle based on cursor position if more complex logic is needed)
+            appData.playJockeyPlaylist.push(itemToMove);
+        }
+        
+        renderPlayJockeyPlaylist();
+        saveData();
+        pjDraggedItem = null; 
+    }
+
+    // --- END ADDED: PlayJockey Drag and Drop Functions ---
 
 
     function openModal(modalId) {
