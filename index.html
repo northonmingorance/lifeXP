@@ -3258,14 +3258,15 @@
             id: tempId,
             originalUrl: link,
             videoId: videoId,
-            title: "Loading title..." // Placeholder
+            title: "Loading title...", // Placeholder
+            artist: null // Placeholder for artist
         };
 
         appData.playJockeyPlaylist.push(videoEntry);
         renderPlayJockeyPlaylist(); 
         DOM.playJockeyLinkInput.value = '';
         
-        fetchYouTubeTitle(videoEntry); // Asynchronously fetch and update title
+        fetchYouTubeTitle(videoEntry); // Asynchronously fetch and update title and artist
 
         if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
             playYouTubeVideoById(videoId, true, true); // isManualPlay = true for initial add as user initiated it
@@ -3274,24 +3275,30 @@
 
     async function fetchYouTubeTitle(videoEntryToUpdate) {
         try {
-            const oEmbedUrl = `https://noembed.com/embed?url=http://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
+            const oEmbedUrl = `https://noembed.com/embed?url=http://www.youtube.com/watch?v=$${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl; 
+            let newArtist = null;
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.title) {
                     newTitle = data.title;
-                } else if (data.error) {
-                    console.warn(`Error fetching title via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
+                }
+                if (data.author_name) {
+                    newArtist = data.author_name.replace(/ - Topic$/, "").trim();
+                }
+                 if (data.error) {
+                    console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
                 }
             } else {
-                console.warn(`Failed to fetch title for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
+                console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
             }
 
             const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
             if (itemInPlaylist) {
                 itemInPlaylist.title = newTitle;
+                itemInPlaylist.artist = newArtist;
                 renderPlayJockeyPlaylist(); 
                 saveData(); 
             }
@@ -3301,6 +3308,7 @@
             const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
             if (itemInPlaylist && itemInPlaylist.title === "Loading title...") { 
                 itemInPlaylist.title = videoEntryToUpdate.originalUrl;
+                // itemInPlaylist.artist remains null or its previous value
                 renderPlayJockeyPlaylist();
                 saveData();
             }
@@ -3323,16 +3331,17 @@
         appData.playJockeyPlaylist.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
-            // Display fetched title, or URL if title is still "Loading title..." or the URL itself
-            let displayTitle = video.title;
-            if (video.title === "Loading title..." || video.title === video.originalUrl) {
-                displayTitle = video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl;
-            } else {
-                 displayTitle = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
-            }
-            item.textContent = displayTitle;
-            item.title = video.title !== "Loading title..." ? video.title : video.originalUrl; // Tooltip shows full fetched title or URL
             
+            let displayString = video.title;
+            if (video.title === "Loading title..." || video.title === video.originalUrl) {
+                 displayString = video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl;
+            } else if (video.artist) {
+                displayString = `${video.title} - ${video.artist}`;
+            }
+            item.textContent = displayString.length > 60 ? displayString.substring(0, 57) + '...' : displayString;
+            item.title = (video.title && video.title !== "Loading title..." ? video.title : video.originalUrl) + (video.artist ? ` - ${video.artist}` : "");
+
+
             item.dataset.videoId = video.videoId;
             item.dataset.playlistItemId = video.id; 
             item.draggable = true; 
@@ -3560,9 +3569,23 @@
 
         const itemToRename = appData.playJockeyPlaylist.find(video => video.id === itemId);
         if (itemToRename) {
-            const newName = prompt("Enter new name for the video:", itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title);
-            if (newName !== null && newName.trim() !== "") {
-                itemToRename.title = newName.trim();
+            let currentDisplayName = itemToRename.title;
+            if (itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title...") {
+                currentDisplayName = ""; // Prompt with empty if it's just the URL or loading
+            } else if (itemToRename.artist) {
+                currentDisplayName = `${itemToRename.title} - ${itemToRename.artist}`;
+            }
+
+            const newNameFull = prompt("Enter new display name (e.g., Title - Artist):", currentDisplayName);
+            
+            if (newNameFull !== null && newNameFull.trim() !== "") {
+                const parts = newNameFull.split(/ - /); // Split by " - "
+                itemToRename.title = parts[0].trim();
+                if (parts.length > 1) {
+                    itemToRename.artist = parts.slice(1).join(" - ").trim(); // Join back if artist name had " - "
+                } else {
+                    itemToRename.artist = null; // No artist provided or no separator
+                }
                 renderPlayJockeyPlaylist();
                 saveData();
             }
