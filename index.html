@@ -571,59 +571,6 @@
             box-sizing: border-box;
         }
 
-        .playjockey-tabs-bar {
-            display: flex;
-            flex-wrap: nowrap; /* Prevent wrapping of tabs */
-            overflow-x: auto; /* Allow horizontal scrolling if too many tabs */
-            overflow-y: hidden;
-            padding: 3px 3px 0 3px;
-            background-color: #C0C0C0;
-            border-bottom: 1px solid #808080;
-            margin-bottom: 5px;
-            flex-shrink: 0;
-        }
-        .playjockey-tab {
-            padding: 6px 10px;
-            margin-right: 2px;
-            background-color: #B0B0B0; /* Slightly darker than default button */
-            border: 1px outset #FFFFFF;
-            border-bottom: none; /* Remove bottom border for tab look */
-            border-top-left-radius: 3px;
-            border-top-right-radius: 3px;
-            cursor: default;
-            font-size: 10px;
-            white-space: nowrap;
-            color: #333;
-            user-select: none;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .playjockey-tab:hover:not(.active):not(.add-playlist-tab) {
-            background-color: #BCBCBC;
-        }
-        .playjockey-tab.active {
-            background-color: #ECE9D8; /* Same as window body */
-            border-color: #7F7F7F;
-            border-bottom-color: #ECE9D8; /* Makes it look connected */
-            position: relative;
-            top: 1px; /* Slight lift */
-            font-weight: bold;
-            color: #000;
-        }
-        .playjockey-tab.add-playlist-tab {
-            font-weight: bold;
-            padding: 6px 8px;
-             background-color: #A0CFA0;
-        }
-        .playjockey-tab.add-playlist-tab:hover {
-             background-color: #80BF80;
-        }
-         .playjockey-tab.add-playlist-tab:active {
-            border-style: inset;
-        }
-
-
         .playjockey-input-bar {
             display: flex;
             margin-bottom: 5px;
@@ -664,13 +611,54 @@
             width: 100%;
             height: 100%;
         }
+        
+        .playjockey-tabs-bar {
+            display: flex;
+            flex-wrap: nowrap; /* Prevent tabs from wrapping to next line */
+            overflow-x: auto; /* Allow horizontal scrolling if too many tabs */
+            background-color: #C0C0C0;
+            padding: 3px 3px 0 3px;
+            border-bottom: 1px solid #808080;
+            flex-shrink: 0;
+        }
+        .playjockey-tab {
+            padding: 6px 10px;
+            margin-right: 2px;
+            border: 1px outset #FFFFFF;
+            border-bottom: none;
+            background-color: #D4D0C8;
+            cursor: default;
+            font-size: 10px;
+            white-space: nowrap;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+        .playjockey-tab:hover {
+            background-color: #E0E0E0;
+        }
+        .playjockey-tab.active {
+            background-color: #F0F0F0; /* Lighter for active tab */
+            border-style: inset;
+            border-bottom: 1px solid #F0F0F0; /* Make bottom border blend with playlist area */
+            position: relative;
+            z-index: 1; /* Bring active tab to front slightly */
+            font-weight: bold;
+        }
+        .playjockey-add-tab-btn {
+            padding: 6px 8px;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
 
         .playjockey-controls-bar {
             display: flex;
             justify-content: center; 
-            padding: 0px 0px 5px 0px;   
+            padding: 5px 0px 5px 0px;   
             flex-shrink: 0;
             gap: 5px; 
+            border-top: 1px solid #ACA899;
+            background-color: #F0F0F0;
         }
         #playJockeyRandomBtn,
         #playJockeyAutoPlayBtn,
@@ -688,12 +676,15 @@
         
 
         .playjockey-playlist-area {
-            height: 120px; 
+            height: 100px; /* Adjusted height for tabs */
             overflow-y: auto;
             border: 1px inset #7F7F7F;
             background-color: #FFFFFF;
             padding: 3px;
             flex-shrink: 0; 
+            border-top: none; /* Remove top border as tabs bar has bottom border */
+            position: relative;
+            z-index: 0;
         }
 
         .playjockey-playlist-item {
@@ -836,8 +827,6 @@
         </div>
         <div class="window-body" id="playJockeyWindowBody">
             <div class="playjockey-body-container">
-                <div class="playjockey-tabs-bar" id="playJockeyTabsBar">
-                    </div>
                 <div class="playjockey-input-bar">
                     <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link Here">
                     <button id="playJockeyAddBtn" class="xp-button">Add</button>
@@ -845,12 +834,14 @@
                 <div class="playjockey-player-area">
                     <div id="playJockeyPlayer"></div> 
                 </div>
+                 <div class="playjockey-tabs-bar" id="playJockeyTabsBar">
+                    </div>
+                <div class="playjockey-playlist-area" id="playJockeyPlaylist">
+                </div>
                 <div class="playjockey-controls-bar">
                     <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
                     <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button> 
                     <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
-                </div>
-                <div class="playjockey-playlist-area" id="playJockeyPlaylist">
                 </div>
             </div>
         </div>
@@ -1020,8 +1011,8 @@
     </div>
 
     <div id="playJockeyContextMenu" class="context-modal">
-        <div class="context-modal-item" id="pjContextRename">Rename Video</div>
-        <div class="context-modal-item" id="pjContextRemove">Remove Video</div>
+        <div class="context-modal-item" id="pjContextRename">Rename Track</div>
+        <div class="context-modal-item" id="pjContextRemove">Remove Track</div>
     </div>
     <div id="playJockeyTabContextMenu" class="context-modal">
         <div class="context-modal-item" id="pjTabContextRename">Rename Playlist</div>
@@ -1046,7 +1037,7 @@
     const MIN_TEXTEDITOR_WIDTH = 450; 
     const MIN_TEXTEDITOR_HEIGHT = 300; 
     const MIN_PLAYJOCKEY_WIDTH = 480;
-    const MIN_PLAYJOCKEY_HEIGHT = 400; // Height might need adjustment due to tabs bar
+    const MIN_PLAYJOCKEY_HEIGHT = 425; // Increased slightly for tabs
 
 
     const STANDARD_COLORS = [
@@ -1113,17 +1104,17 @@
         playJockeyMinimizeBtn: getById('playJockeyMinimizeBtn'),
         playJockeyMaximizeBtn: getById('playJockeyMaximizeBtn'),
         playJockeyCloseBtn: getById('playJockeyCloseBtn'),
-        playJockeyTabsBar: getById('playJockeyTabsBar'), // New
         playJockeyLinkInput: getById('playJockeyLinkInput'),
         playJockeyAddBtn: getById('playJockeyAddBtn'),
         playJockeyPlayer: getById('playJockeyPlayer'), 
-        playJockeyPlaylist: getById('playJockeyPlaylist'),
+        playJockeyTabsBar: getById('playJockeyTabsBar'),
+        playJockeyPlaylist: getById('playJockeyPlaylist'), // This is the display area for tracks
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
-        playJockeyTabContextMenu: getById('playJockeyTabContextMenu'), // New
-        pjTabContextRenameBtn: getById('pjTabContextRename'), // New
-        pjTabContextRemoveBtn: getById('pjTabContextRemove'), // New
+        playJockeyTabContextMenu: getById('playJockeyTabContextMenu'),
+        pjTabContextRenameBtn: getById('pjTabContextRename'),
+        pjTabContextRemoveBtn: getById('pjTabContextRemove'),
         playJockeyRandomBtn: getById('playJockeyRandomBtn'), 
         playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), 
         playJockeyRepeatBtn: getById('playJockeyRepeatBtn'), 
@@ -1184,13 +1175,13 @@
         iconPositions: {}, 
         customBgImage: null,
         customBgColor: null,
-        playJockeyPlaylists: [],      // New: Array of playlist objects
-        playJockeyActivePlaylistId: null, // New: ID of the active playlist
+        playJockeyPlaylists: [], // Array of playlist objects
+        playJockeyCurrentPlaylistId: null,
         playJockeyCurrentVideo: null,
         playJockeyAutoPlayEnabled: true, 
         playJockeyRandomEnabled: false,  
         playJockeyRepeatState: "off",
-        playJockeyRandomHistories: {} // New: Object to store history per playlist { playlistId: [] }
+        playJockeyRandomHistory: [] // Will be reset on playlist switch for now
     };
     
     let lastNormalStates = {}; 
@@ -1237,7 +1228,7 @@
     }
 
     function init() {
-        loadData(); // This will now also handle playlist initialization/migration
+        loadData();
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons(); 
@@ -1273,7 +1264,7 @@
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         
-        renderPlayJockeyTabs(); // New: Render tabs first
+        renderPlayJockeyTabs(); // Render tabs first
         renderPlayJockeyPlaylist(); // Then render the active playlist's content
         updatePlayJockeyAutoPlayButtonState(); 
         updatePlayJockeyRandomButtonState(); 
@@ -1281,16 +1272,19 @@
 
 
         if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
-            // Ensure current video is from active playlist or handle appropriately
-            const activePlaylist = getActivePlayJockeyPlaylist();
-            if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
-            } else {
-                // Current video is not in active playlist, maybe clear it or load first from active
-                appData.playJockeyCurrentVideo = null; 
+            const currentPlaylist = getCurrentPlayJockeyPlaylist();
+            if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
+            } else { // Current video not in active playlist, clear it
+                appData.playJockeyCurrentVideo = null;
             }
         } else if (appData.playJockeyCurrentVideo) {
-            pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: appData.playJockeyAutoPlayEnabled };
+            const currentPlaylist = getCurrentPlayJockeyPlaylist();
+             if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: appData.playJockeyAutoPlayEnabled };
+            } else {
+                appData.playJockeyCurrentVideo = null;
+            }
         }
 
 
@@ -1305,7 +1299,8 @@
 
         addEventListeners(); 
         initPlayJockeyContextMenu(); 
-        initPlayJockeyTabContextMenu(); // New
+        initPlayJockeyTabContextMenu();
+
 
         updateViewControls();
         updateDateDisplay();
@@ -1510,10 +1505,7 @@
                 appData.windowStates[windowId].hiddenByUser = false;
             }
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                const activePlaylist = getActivePlayJockeyPlaylist();
-                if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                    playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
-                }
+                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
             }
         }
 
@@ -1712,11 +1704,11 @@
         }
         
         windowElement.addEventListener('mousedown', (e) => {
-             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal') || e.target.closest('.playjockey-tab')) return; 
+             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; 
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item'))) { 
+                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab'))) { 
                  bringToFront(windowElement);
             }
         }, true); 
@@ -1840,7 +1832,7 @@
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH;
             currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
             defaultWidth = 520; 
-            defaultHeight = 450;
+            defaultHeight = MIN_PLAYJOCKEY_HEIGHT; // Use min height as default
             defaultOffsetX = 100; 
             defaultOffsetY = 100; 
         } else {
@@ -2139,14 +2131,15 @@
         });
 
         document.addEventListener('click', (e) => {
-            const isVideoContext = DOM.playJockeyContextMenu.contains(e.target) || (e.target.closest && e.target.closest('.playjockey-playlist-item'));
-            const isTabContext = DOM.playJockeyTabContextMenu.contains(e.target) || (e.target.closest && e.target.closest('.playjockey-tab'));
-
-            if (!isVideoContext && DOM.playJockeyContextMenu.style.display === 'block') {
-                 hidePjContextMenu();
+            if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
+                if (!e.target.closest('.playjockey-playlist-item')) { 
+                     hidePjContextMenu();
+                }
             }
-            if (!isTabContext && DOM.playJockeyTabContextMenu.style.display === 'block') {
-                 hidePjTabContextMenu();
+            if (!DOM.playJockeyTabContextMenu.contains(e.target) && DOM.playJockeyTabContextMenu.style.display === 'block') {
+                 if (!e.target.closest('.playjockey-tab')) {
+                    hidePjTabContextMenu();
+                 }
             }
         });
     }
@@ -2393,7 +2386,7 @@
             let minW, minH, defaultW, defaultH, defaultX, defaultY;
             if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = 905; defaultH = 645; defaultX = window.innerWidth * 0.05; defaultY = 20;}
             else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = 450; defaultH = 600; defaultX = 50; defaultY = 50;}
-            else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = 520; defaultH = 450; defaultX = 100; defaultY = 100;}
+            else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = 520; defaultH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
             
             lastNormalStates[windowId] = { 
                 width: (state.width ? Math.max(minW, state.width) : defaultW) + 'px', 
@@ -2443,6 +2436,7 @@
 
     function loadData() {
         const storedData = localStorage.getItem(STORAGE_KEY);
+        const defaultPlaylistId = 'playlist_default_0';
         const defaultAppData = {
             viewMode: 'week', 
             selectedDayIndex: 0, 
@@ -2461,13 +2455,13 @@
             quests: {}, 
             customBgImage: null,
             customBgColor: null,
-            playJockeyPlaylists: [],      
-            playJockeyActivePlaylistId: null, 
+            playJockeyPlaylists: [{id: defaultPlaylistId, name: "Playlist", videos: []}],
+            playJockeyCurrentPlaylistId: defaultPlaylistId,
             playJockeyCurrentVideo: null,
             playJockeyAutoPlayEnabled: true, 
             playJockeyRandomEnabled: false,
             playJockeyRepeatState: "off",
-            playJockeyRandomHistories: {} 
+            playJockeyRandomHistory: [] 
         };
         if (storedData) {
             try {
@@ -2481,8 +2475,16 @@
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) }
                     },
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
-                    playJockeyPlaylists: loadedData.playJockeyPlaylists || [], // Load new structure
-                    playJockeyActivePlaylistId: loadedData.playJockeyActivePlaylistId || null,
+                    playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0) 
+                        ? loadedData.playJockeyPlaylists.map(pl => ({
+                            ...pl,
+                            videos: (pl.videos || []).map(video => ({
+                                ...video,
+                                artist: video.artist || ""
+                            }))
+                          }))
+                        : [{id: defaultPlaylistId, name: "Playlist", videos: []}],
+                    playJockeyCurrentPlaylistId: loadedData.playJockeyCurrentPlaylistId || defaultPlaylistId,
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo ? {
                         ...(loadedData.playJockeyCurrentVideo),
                         artist: loadedData.playJockeyCurrentVideo.artist || ""
@@ -2490,35 +2492,21 @@
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
-                    playJockeyRandomHistories: loadedData.playJockeyRandomHistories || {} // Load new structure
+                    playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [] 
                 };
+
+                if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
+                    appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
+                     if (appData.playJockeyPlaylists.length === 0) { // Should not happen if above logic is correct
+                        appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
+                        appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
+                    }
+                }
+
+
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
                 appData.quests = appData.quests || {};
-
-                // Migration from old playJockeyPlaylist and playJockeyRandomHistory (flat structure)
-                if (loadedData.hasOwnProperty('playJockeyPlaylist') && (!appData.playJockeyPlaylists || appData.playJockeyPlaylists.length === 0)) {
-                    console.log("Migrating old PlayJockey data to new playlist structure.");
-                    const defaultPlaylistId = 'pj_playlist_default_' + Date.now();
-                    appData.playJockeyPlaylists = [{
-                        id: defaultPlaylistId,
-                        name: "Playlist",
-                        videos: (loadedData.playJockeyPlaylist || []).map(video => ({ ...video, artist: video.artist || "" }))
-                    }];
-                    appData.playJockeyActivePlaylistId = defaultPlaylistId;
-                    if (!appData.playJockeyRandomHistories[defaultPlaylistId]) {
-                         appData.playJockeyRandomHistories[defaultPlaylistId] = loadedData.playJockeyRandomHistory || [];
-                    }
-                    // Clean up old properties after migration attempt
-                    delete appData.playJockeyPlaylist; 
-                    delete appData.playJockeyRandomHistory;
-                }
-                
-                // Ensure all playlist videos have the artist property
-                appData.playJockeyPlaylists.forEach(playlist => {
-                    playlist.videos = playlist.videos.map(video => ({ ...video, artist: video.artist || "" }));
-                });
-
 
                 if (typeof appData.selectedDayIndex !== 'number' || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
                     appData.selectedDayIndex = 0;
@@ -2528,31 +2516,10 @@
                 }
             } catch (error) {
                 console.error("Error parsing stored data:", error);
-                appData = {...defaultAppData, currentWeekStartDate: getMonday(new Date()).toISOString().split('T')[0]};
+                appData = {...defaultAppData};
             }
         } else {
-             appData = { ...defaultAppData, currentWeekStartDate: getMonday(new Date()).toISOString().split('T')[0]};
-        }
-
-        // If no playlists exist after loading (or for a fresh start), create a default one.
-        if (!appData.playJockeyPlaylists || appData.playJockeyPlaylists.length === 0) {
-            const defaultPlaylistId = 'pj_playlist_initial_' + Date.now();
-            appData.playJockeyPlaylists = [{
-                id: defaultPlaylistId,
-                name: "Playlist",
-                videos: []
-            }];
-            appData.playJockeyActivePlaylistId = defaultPlaylistId;
-            appData.playJockeyRandomHistories[defaultPlaylistId] = [];
-        }
-
-        // Ensure activePlaylistId is valid, otherwise set to the first playlist
-        if (!appData.playJockeyActivePlaylistId || !appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyActivePlaylistId)) {
-            appData.playJockeyActivePlaylistId = appData.playJockeyPlaylists[0] ? appData.playJockeyPlaylists[0].id : null;
-        }
-        // Ensure random history exists for active playlist
-        if (appData.playJockeyActivePlaylistId && !appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
+             appData = { ...defaultAppData};
         }
     }
 
@@ -3351,32 +3318,29 @@
 
     // --- PlayJockey Functions ---
 
-    function getActivePlayJockeyPlaylist() {
-        if (!appData.playJockeyActivePlaylistId) return null;
-        return appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyActivePlaylistId) || null;
-    }
-
-    function getActivePlayJockeyRandomHistory() {
-        if (!appData.playJockeyActivePlaylistId) return [];
-        if (!appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
+    function getCurrentPlayJockeyPlaylist() {
+        if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
+            if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
+                appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
+            } else {
+                 // This case should ideally be handled by ensuring a default playlist always exists
+                return null;
+            }
         }
-        return appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId];
+        return appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyCurrentPlaylistId);
     }
 
 
     function onYouTubeIframeAPIReady() {
         isYouTubeApiReady = true;
-        if (pendingVideoToLoad) {
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.playJockeyCurrentVideo?.id);
+
+        if (pendingVideoToLoad && currentVideoInPlaylist) { // Ensure pending video is still valid for current playlist
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
-        } else if (appData.playJockeyCurrentVideo && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
-             const activePlaylist = getActivePlayJockeyPlaylist();
-             if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
-             } else {
-                appData.playJockeyCurrentVideo = null; // Clear if not in active playlist
-             }
+        } else if (appData.playJockeyCurrentVideo && currentVideoInPlaylist && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
         }
     }
 
@@ -3388,12 +3352,6 @@
     }
 
     function addYouTubeLinkToPlayJockey() {
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!activePlaylist) {
-            alert("No active playlist. Please create or select a playlist first.");
-            return;
-        }
-
         const link = DOM.playJockeyLinkInput.value.trim();
         if (!link) {
             alert("Please enter a YouTube link.");
@@ -3405,12 +3363,18 @@
             return;
         }
 
-        if (activePlaylist.videos.some(video => video.videoId === videoId)) {
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!currentPlaylist) {
+            alert("Error: No active playlist found.");
+            return;
+        }
+
+        if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
             alert("This video is already in the current playlist.");
             return;
         }
 
-        const tempId = 'pj_video_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
+        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7); // Prefix for video id
         const videoEntry = {
             id: tempId,
             originalUrl: link,
@@ -3419,19 +3383,19 @@
             artist: "" 
         };
 
-        activePlaylist.videos.push(videoEntry);
+        currentPlaylist.videos.push(videoEntry);
         renderPlayJockeyPlaylist(); 
         DOM.playJockeyLinkInput.value = '';
         
-        fetchYouTubeTitle(videoEntry, appData.playJockeyActivePlaylistId); 
+        fetchYouTubeTitle(videoEntry, currentPlaylist.id); 
 
-        if (!ytPlayerInstance || activePlaylist.videos.length === 1) {
+        if (!ytPlayerInstance || currentPlaylist.videos.length === 1) {
             playYouTubeVideoById(videoId, true, true); 
         }
         saveData();
     }
 
-    async function fetchYouTubeTitle(videoEntryToUpdate, playlistIdForUpdate) {
+    async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
         try {
             const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v={videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
@@ -3451,13 +3415,13 @@
                 newTitle = videoEntryToUpdate.originalUrl; newArtist = "";
             }
             
-            const targetPlaylist = appData.playJockeyPlaylists.find(p => p.id === playlistIdForUpdate);
+            const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
                     itemInPlaylist.title = newTitle;
                     itemInPlaylist.artist = newArtist;
-                    if (playlistIdForUpdate === appData.playJockeyActivePlaylistId) { // Only re-render if it's the active one
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) { // Only re-render if it's the active playlist
                         renderPlayJockeyPlaylist(); 
                     }
                     saveData(); 
@@ -3465,14 +3429,14 @@
             }
         } catch (error) {
             console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
-            const targetPlaylist = appData.playJockeyPlaylists.find(p => p.id === playlistIdForUpdate);
-             if (targetPlaylist) {
+             const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
+            if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
                     if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                    itemInPlaylist.artist = ""; 
-                     if (playlistIdForUpdate === appData.playJockeyActivePlaylistId) {
-                        renderPlayJockeyPlaylist();
+                    itemInPlaylist.artist = "";
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) {
+                         renderPlayJockeyPlaylist();
                     }
                     saveData();
                 }
@@ -3483,84 +3447,83 @@
     function renderPlayJockeyTabs() {
         DOM.playJockeyTabsBar.innerHTML = '';
         appData.playJockeyPlaylists.forEach(playlist => {
-            const tab = document.createElement('span');
+            const tab = document.createElement('div');
             tab.className = 'playjockey-tab';
             tab.textContent = playlist.name;
             tab.title = playlist.name;
             tab.dataset.playlistId = playlist.id;
-            if (playlist.id === appData.playJockeyActivePlaylistId) {
+            if (playlist.id === appData.playJockeyCurrentPlaylistId) {
                 tab.classList.add('active');
             }
-            tab.addEventListener('click', () => switchPlayJockeyTab(playlist.id));
+            tab.addEventListener('click', () => switchPlayJockeyPlaylist(playlist.id));
             tab.addEventListener('contextmenu', (e) => showPjTabContextMenu(e, playlist.id));
             DOM.playJockeyTabsBar.appendChild(tab);
         });
 
-        const addTab = document.createElement('span');
-        addTab.className = 'playjockey-tab add-playlist-tab';
-        addTab.textContent = '+';
-        addTab.title = 'Add New Playlist';
-        addTab.id = 'playJockeyAddPlaylistTab';
-        addTab.addEventListener('click', addNewPlayJockeyPlaylist);
-        DOM.playJockeyTabsBar.appendChild(addTab);
+        const addTabBtn = document.createElement('button');
+        addTabBtn.className = 'playjockey-tab playjockey-add-tab-btn xp-button xp-button-small';
+        addTabBtn.textContent = '+';
+        addTabBtn.title = "New Playlist";
+        addTabBtn.addEventListener('click', addNewPlayJockeyPlaylist);
+        DOM.playJockeyTabsBar.appendChild(addTabBtn);
     }
     
-    function switchPlayJockeyTab(playlistId) {
-        if (appData.playJockeyActivePlaylistId === playlistId) return;
-
-        appData.playJockeyActivePlaylistId = playlistId;
-        if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
-            ytPlayerInstance.stopVideo();
-        }
-        appData.playJockeyCurrentVideo = null; 
-        // Ensure random history array exists for the new active playlist
-        if (!appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
-        }
-
-        renderPlayJockeyTabs();
-        renderPlayJockeyPlaylist();
-        updatePlayJockeyRandomButtonState(); // Random state might differ per playlist view
-        saveData();
-    }
-
     function addNewPlayJockeyPlaylist() {
         let newPlaylistName = "Playlist";
-        let counter = 1;
+        let counter = appData.playJockeyPlaylists.length; // Start with current length for "Playlist N"
         const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase());
-        while (existingNames.includes(newPlaylistName.toLowerCase())) {
-            newPlaylistName = `Playlist ${counter}`;
-            counter++;
-        }
 
-        const newPlaylistId = 'pj_playlist_' + Date.now();
-        const newPlaylist = {
+        if (existingNames.includes(newPlaylistName.toLowerCase())) {
+            counter = 1;
+            while (existingNames.includes(`${newPlaylistName} ${counter}`.toLowerCase())) {
+                counter++;
+            }
+            newPlaylistName = `${newPlaylistName} ${counter}`;
+        }
+        
+        const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
+        appData.playJockeyPlaylists.push({
             id: newPlaylistId,
             name: newPlaylistName,
             videos: []
-        };
-        appData.playJockeyPlaylists.push(newPlaylist);
-        appData.playJockeyRandomHistories[newPlaylistId] = []; // Initialize history for new playlist
-        switchPlayJockeyTab(newPlaylistId); // This will save data
+        });
+        switchPlayJockeyPlaylist(newPlaylistId); // Switches, re-renders tabs and playlist, saves
+    }
+
+    function switchPlayJockeyPlaylist(playlistId) {
+        if (appData.playJockeyCurrentPlaylistId === playlistId) return;
+
+        appData.playJockeyCurrentPlaylistId = playlistId;
+        appData.playJockeyCurrentVideo = null; // Reset current video
+        appData.playJockeyRandomHistory = []; // Reset random history
+
+        if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+            ytPlayerInstance.stopVideo();
+             // Consider if player should be destroyed or just stopped. 
+             // For now, stopping. A new video will load it if needed.
+        }
+        
+        renderPlayJockeyTabs();
+        renderPlayJockeyPlaylist();
+        saveData();
     }
 
 
     function renderPlayJockeyPlaylist() {
-        DOM.playJockeyPlaylist.innerHTML = '';
-        const activePlaylist = getActivePlayJockeyPlaylist();
+        DOM.playJockeyPlaylist.innerHTML = ''; // Playlist item container
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
-        if (!activePlaylist || activePlaylist.videos.length === 0) {
+        if (!currentPlaylist || currentPlaylist.videos.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.textContent = "Playlist is empty. Add some YouTube links!";
             emptyMsg.style.padding = "10px";
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
             DOM.playJockeyPlaylist.appendChild(emptyMsg);
-            updatePlayingClassInPlaylist(null); // Clear any playing styles
             return;
         }
 
-        activePlaylist.videos.forEach(video => {
+        currentPlaylist.videos.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
             
@@ -3601,21 +3564,21 @@
             });
             DOM.playJockeyPlaylist.appendChild(item);
         });
-        // Update playing class based on current video and active playlist
-        if (appData.playJockeyCurrentVideo && activePlaylist && activePlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
-             updatePlayingClassInPlaylist(appData.playJockeyCurrentVideo.id);
-        } else {
-            updatePlayingClassInPlaylist(null);
-        }
     }
 
     function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { 
         if (!videoId) return;
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!activePlaylist) return;
 
-        const videoToPlay = activePlaylist.videos.find(v => v.videoId === videoId);
-        const currentRandomHistory = getActivePlayJockeyRandomHistory();
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!currentPlaylist) return;
+        
+        const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
+        if (!videoToPlay) { // Video not in current playlist
+            appData.playJockeyCurrentVideo = null;
+            updatePlayingClassInPlaylist(null);
+            if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
+            return;
+        }
         
         if (
             isManualPlay && 
@@ -3623,13 +3586,13 @@
             appData.playJockeyRandomEnabled &&
             appData.playJockeyAutoPlayEnabled && 
             appData.playJockeyRepeatState === "off" &&
-            activePlaylist.videos.length > 0 &&
-            new Set(currentRandomHistory).size >= new Set(activePlaylist.videos.map(v => v.id)).size
+            currentPlaylist.videos.length > 0 &&
+            new Set(appData.playJockeyRandomHistory).size >= new Set(currentPlaylist.videos.map(v => v.id)).size
         ) {
-            console.log("Manual play after random cycle (Repeat:Off). Resetting random history for new pass.");
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [videoToPlay.id]; 
+            appData.playJockeyRandomHistory = [videoToPlay.id]; 
         }
         
+
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
         updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
         saveData(); 
@@ -3680,45 +3643,43 @@
     }
 
     function playNextPjVideo() {
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !activePlaylist || activePlaylist.videos.length === 0) {
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) {
             return; 
         }
 
         let nextVideoItem = null;
         const currentVideoUniqueId = appData.playJockeyCurrentVideo.id;
-        let currentRandomHistory = getActivePlayJockeyRandomHistory();
+        const activePlaylistVideos = currentPlaylist.videos;
 
 
         if (appData.playJockeyRepeatState === "song") {
-            nextVideoItem = activePlaylist.videos.find(item => item.id === currentVideoUniqueId);
+            nextVideoItem = activePlaylistVideos.find(item => item.id === currentVideoUniqueId);
         } else if (appData.playJockeyRandomEnabled) {
-            if (activePlaylist.videos.length === 0) return; 
+            if (activePlaylistVideos.length === 0) return; 
             
-            if (activePlaylist.videos.length === 1) {
+            if (activePlaylistVideos.length === 1) {
                 if (appData.playJockeyRepeatState === "off") {
-                    if (currentRandomHistory.includes(currentVideoUniqueId)) return; 
-                    nextVideoItem = activePlaylist.videos[0];
+                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; 
+                    nextVideoItem = activePlaylistVideos[0];
                 } else { 
-                    nextVideoItem = activePlaylist.videos[0];
+                    nextVideoItem = activePlaylistVideos[0];
                 }
             } else { 
-                let eligibleVideos = activePlaylist.videos.filter(
-                    video => !currentRandomHistory.includes(video.id)
+                let eligibleVideos = activePlaylistVideos.filter(
+                    video => !appData.playJockeyRandomHistory.includes(video.id)
                 );
 
                 if (eligibleVideos.length === 0) { 
                     if (appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [currentVideoUniqueId]; 
-                        currentRandomHistory = appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]; // refresh local copy
-                        eligibleVideos = activePlaylist.videos.filter(video => video.id !== currentVideoUniqueId);
+                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
+                        eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                         if (eligibleVideos.length === 0 ) { 
-                             eligibleVideos = [...activePlaylist.videos.filter(v => v.id !== currentVideoUniqueId)]; 
-                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylist.videos[0]]; 
+                             eligibleVideos = [...activePlaylistVideos.filter(v => v.id !== currentVideoUniqueId)]; 
+                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylistVideos[0]]; 
                         }
                     } else { 
-                        console.log("Random cycle complete with Repeat: Off. Stopping playback.");
-                        appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = []; 
+                        appData.playJockeyRandomHistory = []; 
                         return; 
                     }
                 }
@@ -3730,31 +3691,31 @@
             }
             
             if (nextVideoItem) {
-                if (!currentRandomHistory.includes(nextVideoItem.id)) {
-                     currentRandomHistory.push(nextVideoItem.id);
+                if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) {
+                     appData.playJockeyRandomHistory.push(nextVideoItem.id);
                 }
                 if (appData.playJockeyRepeatState === "playlist") {
-                    const maxHistorySize = Math.max(0, activePlaylist.videos.length - 1);
-                    while (currentRandomHistory.length > maxHistorySize && maxHistorySize > 0 && currentRandomHistory.length >= activePlaylist.videos.length) {
-                        currentRandomHistory.shift(); 
+                    const maxHistorySize = Math.max(0, activePlaylistVideos.length - 1);
+                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) {
+                        appData.playJockeyRandomHistory.shift(); 
                     }
                 }
             }
 
         } else { 
-            const currentIndex = activePlaylist.videos.findIndex(item => item.id === currentVideoUniqueId);
+            const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId);
             if (currentIndex === -1) return;
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= activePlaylist.videos.length) { 
+            if (nextIndex >= activePlaylistVideos.length) { 
                 if (appData.playJockeyRepeatState === "playlist") {
                     nextIndex = 0; 
                 } else { 
                     return; 
                 }
             }
-            if (activePlaylist.videos[nextIndex]) {
-                nextVideoItem = activePlaylist.videos[nextIndex];
+            if (activePlaylistVideos[nextIndex]) {
+                nextVideoItem = activePlaylistVideos[nextIndex];
             }
         }
 
@@ -3774,17 +3735,18 @@
         });
     }
 
-    function initPlayJockeyContextMenu() {
+
+    function initPlayJockeyContextMenu() { // For playlist items
         DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
         DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
     }
-     function initPlayJockeyTabContextMenu() {
+    function initPlayJockeyTabContextMenu() { // For playlist tabs
         DOM.pjTabContextRenameBtn.addEventListener('click', handlePjTabContextRename);
         DOM.pjTabContextRemoveBtn.addEventListener('click', handlePjTabContextRemove);
     }
 
 
-    function showPjContextMenu(e) {
+    function showPjContextMenu(e) { // For playlist items
         e.preventDefault();
         hidePjContextMenu(); 
         hidePjTabContextMenu();
@@ -3801,6 +3763,7 @@
 
             if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; 
             if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; 
+            
             DOM.playJockeyContextMenu.style.left = `${x}px`;
             DOM.playJockeyContextMenu.style.top = `${y}px`;
             DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId;
@@ -3811,8 +3774,8 @@
         DOM.playJockeyContextMenu.style.display = 'none';
         delete DOM.playJockeyContextMenu.dataset.currentItemId;
     }
-
-    function showPjTabContextMenu(e, playlistId) {
+    
+    function showPjTabContextMenu(e, playlistId) { // For playlist tabs
         e.preventDefault();
         hidePjContextMenu();
         hidePjTabContextMenu();
@@ -3827,6 +3790,7 @@
 
         if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5;
         if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5;
+
         DOM.playJockeyTabContextMenu.style.left = `${x}px`;
         DOM.playJockeyTabContextMenu.style.top = `${y}px`;
         DOM.playJockeyTabContextMenu.dataset.playlistId = playlistId;
@@ -3838,16 +3802,15 @@
     }
 
 
-    function handlePjContextRename() { // Renames a video
+    function handlePjContextRename() { // For playlist items
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
-        if (!itemId) return;
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!activePlaylist) return;
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!itemId || !currentPlaylist) return;
 
-        const itemToRename = activePlaylist.videos.find(video => video.id === itemId);
+        const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
             const currentDisplayTitle = itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title;
-            const newName = prompt("Enter new name for the video:", currentDisplayTitle);
+            const newName = prompt("Enter new name for the track:", currentDisplayTitle);
             if (newName !== null && newName.trim() !== "") {
                 itemToRename.title = newName.trim();
                  if (itemToRename.artist === "" && newName.includes(" - ")) { 
@@ -3864,20 +3827,18 @@
         hidePjContextMenu();
     }
 
-    function handlePjContextRemove() { // Removes a video
+    function handlePjContextRemove() { // For playlist items
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
-        if (!itemId) return;
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!activePlaylist) return;
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!itemId || !currentPlaylist) return;
 
-        const itemIndex = activePlaylist.videos.findIndex(video => video.id === itemId);
+        const itemIndex = currentPlaylist.videos.findIndex(video => video.id === itemId);
         if (itemIndex > -1) {
-            const removedItem = activePlaylist.videos.splice(itemIndex, 1)[0];
+            const removedItem = currentPlaylist.videos.splice(itemIndex, 1)[0];
             
-            const currentRandomHistory = getActivePlayJockeyRandomHistory();
-            const historyIndex = currentRandomHistory.indexOf(removedItem.id);
+            const historyIndex = appData.playJockeyRandomHistory.indexOf(removedItem.id);
             if (historyIndex > -1) {
-                currentRandomHistory.splice(historyIndex, 1);
+                appData.playJockeyRandomHistory.splice(historyIndex, 1);
             }
 
             if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) {
@@ -3885,7 +3846,7 @@
                     ytPlayerInstance.stopVideo();
                 }
                 appData.playJockeyCurrentVideo = null;
-                if (appData.playJockeyAutoPlayEnabled && activePlaylist.videos.length > 0) {
+                if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) {
                     playNextPjVideo(); 
                 }
             }
@@ -3898,17 +3859,11 @@
     function handlePjTabContextRename() {
         const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
         if (!playlistId) return;
-
-        const playlistToRename = appData.playJockeyPlaylists.find(p => p.id === playlistId);
+        const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
             const newName = prompt("Enter new name for the playlist:", playlistToRename.name);
             if (newName !== null && newName.trim() !== "") {
-                const trimmedNewName = newName.trim();
-                if (appData.playJockeyPlaylists.some(p => p.id !== playlistId && p.name.toLowerCase() === trimmedNewName.toLowerCase())) {
-                    alert("A playlist with this name already exists.");
-                    return;
-                }
-                playlistToRename.name = trimmedNewName;
+                playlistToRename.name = newName.trim();
                 renderPlayJockeyTabs();
                 saveData();
             }
@@ -3920,31 +3875,42 @@
         const playlistIdToRemove = DOM.playJockeyTabContextMenu.dataset.playlistId;
         if (!playlistIdToRemove) return;
 
-        if (appData.playJockeyPlaylists.length <= 1) {
-            alert("Cannot remove the last playlist.");
+        if (!confirm(`Are you sure you want to remove the playlist "${appData.playJockeyPlaylists.find(p=>p.id === playlistIdToRemove)?.name}"?`)) {
             hidePjTabContextMenu();
             return;
         }
 
-        const playlistToRemove = appData.playJockeyPlaylists.find(p => p.id === playlistIdToRemove);
-        if (playlistToRemove && confirm(`Are you sure you want to remove the playlist "${playlistToRemove.name}"?`)) {
-            appData.playJockeyPlaylists = appData.playJockeyPlaylists.filter(p => p.id !== playlistIdToRemove);
-            delete appData.playJockeyRandomHistories[playlistIdToRemove];
+        const playlistIndex = appData.playJockeyPlaylists.findIndex(pl => pl.id === playlistIdToRemove);
+        if (playlistIndex > -1) {
+            appData.playJockeyPlaylists.splice(playlistIndex, 1);
 
-            if (appData.playJockeyActivePlaylistId === playlistIdToRemove) {
+            if (appData.playJockeyCurrentPlaylistId === playlistIdToRemove) {
                 if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                     ytPlayerInstance.stopVideo();
                 }
                 appData.playJockeyCurrentVideo = null;
-                appData.playJockeyActivePlaylistId = appData.playJockeyPlaylists[0] ? appData.playJockeyPlaylists[0].id : null;
-                 if (!appData.playJockeyActivePlaylistId) { // Should not happen if we prevent last removal
-                    addNewPlayJockeyPlaylist(); // Creates a new default if all were somehow removed
-                 }
+                appData.playJockeyRandomHistory = [];
+
+                if (appData.playJockeyPlaylists.length > 0) {
+                    appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
+                } else {
+                    // If all playlists are removed, create a new default one
+                    const defaultPlaylistId = 'playlist_default_' + Date.now();
+                    appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
+                    appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
+                }
             }
-            renderPlayJockeyTabs();
-            renderPlayJockeyPlaylist(); // Re-render based on new active playlist
-            saveData();
         }
+         if (appData.playJockeyPlaylists.length === 0) { // Should be caught by above, but as a fallback
+            const defaultPlaylistId = 'playlist_default_' + Date.now();
+            appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
+            appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
+        }
+
+
+        renderPlayJockeyTabs();
+        renderPlayJockeyPlaylist();
+        saveData();
         hidePjTabContextMenu();
     }
 
@@ -3959,7 +3925,6 @@
                 target.classList.add('dragging');
             }, 0);
             hidePjContextMenu(); 
-            hidePjTabContextMenu();
         }
     }
 
@@ -4012,39 +3977,36 @@
     function handlePjDrop(e) {
         e.preventDefault();
         clearPjDragOverHighlights();
-        if (!pjDraggedItem) return;
-
-        const activePlaylist = getActivePlayJockeyPlaylist();
-        if (!activePlaylist) return;
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!pjDraggedItem || !currentPlaylist) return;
 
         const draggedItemId = e.dataTransfer.getData('text/plain');
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
         
-        const draggedItemIndex = activePlaylist.videos.findIndex(item => item.id === draggedItemId);
+        const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId);
         if (draggedItemIndex === -1) return;
 
-        const itemToMove = activePlaylist.videos[draggedItemIndex];
-        activePlaylist.videos.splice(draggedItemIndex, 1); 
+        const itemToMove = currentPlaylist.videos[draggedItemIndex];
+        currentPlaylist.videos.splice(draggedItemIndex, 1); 
 
         let targetIndex = -1;
 
         if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) {
             const targetItemId = targetItemElement.dataset.playlistItemId;
-            targetIndex = activePlaylist.videos.findIndex(item => item.id === targetItemId);
+            targetIndex = currentPlaylist.videos.findIndex(item => item.id === targetItemId);
 
             const rect = targetItemElement.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
-            if (e.clientY < midpointY) {
-                // Insert before target
-            } else {
-                targetIndex++; // Insert after target
+            if (e.clientY >= midpointY) { // If dropping on bottom half, insert after
+                targetIndex++;
             }
         }
 
-        if (targetIndex !== -1) {
-            activePlaylist.videos.splice(targetIndex, 0, itemToMove);
-        } else { // If no specific target, or dropped at the end
-            activePlaylist.videos.push(itemToMove);
+
+        if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) {
+            currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
+        } else { // If no target or invalid targetIndex, add to end
+            currentPlaylist.videos.push(itemToMove);
         }
         
         renderPlayJockeyPlaylist();
@@ -4071,15 +4033,11 @@
 
     function togglePlayJockeyRandom() {
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        if (appData.playJockeyActivePlaylistId) {
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = []; 
-            if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo) {
-                const activePlaylist = getActivePlayJockeyPlaylist();
-                if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                    if (activePlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
-                         appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId].push(appData.playJockeyCurrentVideo.id);
-                    }
-                }
+        appData.playJockeyRandomHistory = []; 
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
+             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
+                 appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
         }
         updatePlayJockeyRandomButtonState();
@@ -4104,15 +4062,11 @@
         } else { 
             appData.playJockeyRepeatState = "off";
         }
-        if (appData.playJockeyActivePlaylistId) {
-            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
-            if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo) {
-                const activePlaylist = getActivePlayJockeyPlaylist();
-                 if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                    if (activePlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
-                         appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId].push(appData.playJockeyCurrentVideo.id);
-                    }
-                }
+        appData.playJockeyRandomHistory = []; // Reset history when repeat mode changes
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
+             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") { // Only add if it makes sense
+                 appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
         }
         updatePlayJockeyRepeatButtonState();
