@@ -620,18 +620,19 @@
             padding: 3px 3px 0 3px;
             border-bottom: 1px solid #808080;
             flex-shrink: 0;
+            gap: 2px; /* MODIFIED: Added gap for consistent spacing */
         }
         .playjockey-tab {
             padding: 6px 10px;
-            margin-right: 2px;
+            /* margin-right: 2px; REMOVED: Spacing handled by gap on parent */
             border: 1px outset #FFFFFF;
             border-bottom: none;
             background-color: #D4D0C8;
             cursor: default;
             font-size: 10px;
             white-space: nowrap;
-            border-top-left-radius: 3px;
-            border-top-right-radius: 3px;
+            border-top-left-radius: 3px; /* Ensures top corners are rounded */
+            border-top-right-radius: 3px; /* Ensures top corners are rounded */
         }
         .playjockey-tab:hover {
             background-color: #E0E0E0;
@@ -644,9 +645,9 @@
             z-index: 1; /* Bring active tab to front slightly */
             font-weight: bold;
         }
-        .playjockey-add-tab-btn {
+        .playjockey-add-tab-btn { /* This button also has .playjockey-tab class */
             padding: 6px 8px;
-            margin-left: 5px;
+            /* margin-left: 5px; REMOVED: Spacing handled by gap on parent */
             font-weight: bold;
         }
 
@@ -837,7 +838,7 @@
                  <div class="playjockey-tabs-bar" id="playJockeyTabsBar">
                     </div>
                 <div class="playjockey-playlist-area" id="playJockeyPlaylist">
-                </div>
+                    </div>
                 <div class="playjockey-controls-bar">
                     <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
                     <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button> 
@@ -1019,6 +1020,39 @@
         <div class="context-modal-item" id="pjTabContextRemove">Remove Playlist</div>
     </div>
 
+    <div id="renamePlaylistModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Rename Playlist</span>
+                <span class="close-button" data-modal-id="renamePlaylistModal">r</span>
+            </div>
+            <div class="modal-body">
+                <label for="playlistNewNameInput">New playlist name:</label>
+                <input type="text" id="playlistNewNameInput" placeholder="Enter playlist name">
+            </div>
+            <div class="modal-footer">
+                <button id="saveRenamedPlaylistBtn" class="xp-button">Save</button>
+                <button class="xp-button" data-modal-id="renamePlaylistModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmRemovePlaylistModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Confirm Playlist Deletion</span>
+                <span class="close-button" data-modal-id="confirmRemovePlaylistModal">r</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmRemovePlaylistMessage">Are you sure you want to remove this playlist?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmFinalPlaylistRemoveBtn" class="xp-button">Delete</button>
+                <button class="xp-button" data-modal-id="confirmRemovePlaylistModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -1064,7 +1098,10 @@
         CONFIRM_DELETE_ACHIEVEMENT: 'confirmDeleteAchievementModal',
         CREATE_QUEST: 'createQuestModal',
         CONFIRM_REFRESH_QUEST: 'confirmRefreshQuestModal',
-        CHANGE_BG_IMAGE: 'changeBgImageModal'
+        CHANGE_BG_IMAGE: 'changeBgImageModal',
+        // MODIFIED: Added new modal IDs for PlayJockey tab management
+        RENAME_PLAYLIST: 'renamePlaylistModal',
+        CONFIRM_REMOVE_PLAYLIST: 'confirmRemovePlaylistModal'
     };
 
     const getById = (id) => document.getElementById(id);
@@ -1108,13 +1145,13 @@
         playJockeyAddBtn: getById('playJockeyAddBtn'),
         playJockeyPlayer: getById('playJockeyPlayer'), 
         playJockeyTabsBar: getById('playJockeyTabsBar'),
-        playJockeyPlaylist: getById('playJockeyPlaylist'), // This is the display area for tracks
+        playJockeyPlaylist: getById('playJockeyPlaylist'), 
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
         playJockeyTabContextMenu: getById('playJockeyTabContextMenu'),
-        pjTabContextRenameBtn: getById('pjTabContextRename'),
-        pjTabContextRemoveBtn: getById('pjTabContextRemove'),
+        pjTabContextRenameBtn: getById('pjTabContextRename'), // This button in the context menu will now open a modal
+        pjTabContextRemoveBtn: getById('pjTabContextRemove'), // This button in the context menu will now open a modal
         playJockeyRandomBtn: getById('playJockeyRandomBtn'), 
         playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), 
         playJockeyRepeatBtn: getById('playJockeyRepeatBtn'), 
@@ -1150,7 +1187,6 @@
         saveNewQuestBtn: getById('saveNewQuestBtn'),
         confirmRefreshQuestModal: getById(MODAL_IDS.CONFIRM_REFRESH_QUEST),
         confirmRefreshQuestBtn: getById('confirmRefreshQuestBtn'),
-        modalCloseButtons: document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]'),
         confirmRemoveAreaModal: getById(MODAL_IDS.CONFIRM_REMOVE_AREA),
         confirmRemoveAreaMessage: getById('confirmRemoveAreaMessage'),
         confirmRemoveBtn: getById('confirmRemoveBtn'),
@@ -1161,8 +1197,20 @@
         uploadBgImageBtn: getById('uploadBgImageBtn'),
         bgImageUrlInput: getById('bgImageUrlInput'),        
         applyBgImageUrlBtn: getById('applyBgImageUrlBtn'),
-        bgColorSwatchesContainer: getById('bgColorSwatchesContainer')
+        bgColorSwatchesContainer: getById('bgColorSwatchesContainer'),
+
+        // MODIFIED: Added DOM elements for new PlayJockey tab modals
+        renamePlaylistModal: getById(MODAL_IDS.RENAME_PLAYLIST),
+        playlistNewNameInput: getById('playlistNewNameInput'),
+        saveRenamedPlaylistBtn: getById('saveRenamedPlaylistBtn'),
+        confirmRemovePlaylistModal: getById(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST),
+        confirmRemovePlaylistMessage: getById('confirmRemovePlaylistMessage'),
+        confirmFinalPlaylistRemoveBtn: getById('confirmFinalPlaylistRemoveBtn'),
+        modalCloseButtons: null // Will be querySelected later
     };
+    // Initialize modalCloseButtons after all modals are in DOM
+    DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
+
 
     let appData = {
         areas: [],
@@ -1175,13 +1223,13 @@
         iconPositions: {}, 
         customBgImage: null,
         customBgColor: null,
-        playJockeyPlaylists: [], // Array of playlist objects
+        playJockeyPlaylists: [], 
         playJockeyCurrentPlaylistId: null,
         playJockeyCurrentVideo: null,
         playJockeyAutoPlayEnabled: true, 
         playJockeyRandomEnabled: false,  
         playJockeyRepeatState: "off",
-        playJockeyRandomHistory: [] // Will be reset on playlist switch for now
+        playJockeyRandomHistory: [] 
     };
     
     let lastNormalStates = {}; 
@@ -1264,8 +1312,8 @@
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         
-        renderPlayJockeyTabs(); // Render tabs first
-        renderPlayJockeyPlaylist(); // Then render the active playlist's content
+        renderPlayJockeyTabs(); 
+        renderPlayJockeyPlaylist(); 
         updatePlayJockeyAutoPlayButtonState(); 
         updatePlayJockeyRandomButtonState(); 
         updatePlayJockeyRepeatButtonState(); 
@@ -1275,7 +1323,7 @@
             const currentPlaylist = getCurrentPlayJockeyPlaylist();
             if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
                  playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
-            } else { // Current video not in active playlist, clear it
+            } else { 
                 appData.playJockeyCurrentVideo = null;
             }
         } else if (appData.playJockeyCurrentVideo) {
@@ -2095,6 +2143,7 @@
         DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat); 
 
 
+        // MODIFIED: Re-select modalCloseButtons after all modals are in DOM.
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
         DOM.modalCloseButtons.forEach(button => {
             button.addEventListener('click', (event) => {
@@ -2122,6 +2171,13 @@
                 closeModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT);
             }
         });
+
+        // MODIFIED: Add event listeners for new PlayJockey tab modals
+        DOM.saveRenamedPlaylistBtn.addEventListener('click', saveRenamedPlaylist);
+        DOM.playlistNewNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveRenamedPlaylist();
+        });
+        DOM.confirmFinalPlaylistRemoveBtn.addEventListener('click', executePlaylistDeletion);
 
 
         window.addEventListener('resize', () => {
@@ -2497,7 +2553,7 @@
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
-                     if (appData.playJockeyPlaylists.length === 0) { // Should not happen if above logic is correct
+                     if (appData.playJockeyPlaylists.length === 0) { 
                         appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
                         appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
                     }
@@ -3323,7 +3379,6 @@
             if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
                 appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
             } else {
-                 // This case should ideally be handled by ensuring a default playlist always exists
                 return null;
             }
         }
@@ -3336,7 +3391,7 @@
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.playJockeyCurrentVideo?.id);
 
-        if (pendingVideoToLoad && currentVideoInPlaylist) { // Ensure pending video is still valid for current playlist
+        if (pendingVideoToLoad && currentVideoInPlaylist) { 
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (appData.playJockeyCurrentVideo && currentVideoInPlaylist && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
@@ -3365,16 +3420,40 @@
 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!currentPlaylist) {
-            alert("Error: No active playlist found.");
-            return;
+            alert("Error: No active playlist found. Please create one first.");
+            // Optionally, create a default playlist here if none exist
+            if (appData.playJockeyPlaylists.length === 0) {
+                addNewPlayJockeyPlaylist(); // This will also switch to it
+                // Re-get currentPlaylist as addNewPlayJockeyPlaylist would have created it
+                const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
+                if (!newCurrentPlaylist) { // Should not happen
+                    console.error("Failed to create/get playlist after attempting to add a link to an empty set.");
+                    return;
+                }
+                 // Now try to add the video to this newly created playlist
+                const videoEntryFirst = { id: 'pjv_' + Date.now(), originalUrl: link, videoId: videoId, title: "Loading title...", artist: "" };
+                newCurrentPlaylist.videos.push(videoEntryFirst);
+                fetchYouTubeTitle(videoEntryFirst, newCurrentPlaylist.id);
+                if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
+                   playYouTubeVideoById(videoId, true, true);
+                }
+                renderPlayJockeyPlaylist();
+                DOM.playJockeyLinkInput.value = '';
+                saveData();
+                return; // Exit after handling this special case
+            } else { // A playlist exists but somehow currentPlaylistId is null
+                 alert("Error: No active playlist selected.");
+                 return;
+            }
         }
+
 
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
             alert("This video is already in the current playlist.");
             return;
         }
 
-        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7); // Prefix for video id
+        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7); 
         const videoEntry = {
             id: tempId,
             originalUrl: link,
@@ -3397,7 +3476,7 @@
 
     async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
         try {
-            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v={videoEntryToUpdate.videoId}`;
+            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl; 
             let newArtist = "";
@@ -3421,7 +3500,7 @@
                 if (itemInPlaylist) {
                     itemInPlaylist.title = newTitle;
                     itemInPlaylist.artist = newArtist;
-                    if (appData.playJockeyCurrentPlaylistId === playlistId) { // Only re-render if it's the active playlist
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) { 
                         renderPlayJockeyPlaylist(); 
                     }
                     saveData(); 
@@ -3461,6 +3540,7 @@
         });
 
         const addTabBtn = document.createElement('button');
+        // MODIFIED: Ensure add button also has playjockey-tab for consistent styling by gap
         addTabBtn.className = 'playjockey-tab playjockey-add-tab-btn xp-button xp-button-small';
         addTabBtn.textContent = '+';
         addTabBtn.title = "New Playlist";
@@ -3470,7 +3550,7 @@
     
     function addNewPlayJockeyPlaylist() {
         let newPlaylistName = "Playlist";
-        let counter = appData.playJockeyPlaylists.length; // Start with current length for "Playlist N"
+        let counter = appData.playJockeyPlaylists.length; 
         const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase());
 
         if (existingNames.includes(newPlaylistName.toLowerCase())) {
@@ -3487,20 +3567,18 @@
             name: newPlaylistName,
             videos: []
         });
-        switchPlayJockeyPlaylist(newPlaylistId); // Switches, re-renders tabs and playlist, saves
+        switchPlayJockeyPlaylist(newPlaylistId); 
     }
 
     function switchPlayJockeyPlaylist(playlistId) {
         if (appData.playJockeyCurrentPlaylistId === playlistId) return;
 
         appData.playJockeyCurrentPlaylistId = playlistId;
-        appData.playJockeyCurrentVideo = null; // Reset current video
-        appData.playJockeyRandomHistory = []; // Reset random history
+        appData.playJockeyCurrentVideo = null; 
+        appData.playJockeyRandomHistory = []; 
 
         if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
             ytPlayerInstance.stopVideo();
-             // Consider if player should be destroyed or just stopped. 
-             // For now, stopping. A new video will load it if needed.
         }
         
         renderPlayJockeyTabs();
@@ -3510,7 +3588,7 @@
 
 
     function renderPlayJockeyPlaylist() {
-        DOM.playJockeyPlaylist.innerHTML = ''; // Playlist item container
+        DOM.playJockeyPlaylist.innerHTML = ''; 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!currentPlaylist || currentPlaylist.videos.length === 0) {
@@ -3573,7 +3651,7 @@
         if (!currentPlaylist) return;
         
         const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
-        if (!videoToPlay) { // Video not in current playlist
+        if (!videoToPlay) { 
             appData.playJockeyCurrentVideo = null;
             updatePlayingClassInPlaylist(null);
             if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
@@ -3736,17 +3814,18 @@
     }
 
 
-    function initPlayJockeyContextMenu() { // For playlist items
+    function initPlayJockeyContextMenu() { 
         DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
         DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
     }
-    function initPlayJockeyTabContextMenu() { // For playlist tabs
-        DOM.pjTabContextRenameBtn.addEventListener('click', handlePjTabContextRename);
-        DOM.pjTabContextRemoveBtn.addEventListener('click', handlePjTabContextRemove);
+    function initPlayJockeyTabContextMenu() { 
+        // MODIFIED: Context menu items now open modals instead of direct action
+        DOM.pjTabContextRenameBtn.addEventListener('click', openRenamePlaylistModalFromContextMenu);
+        DOM.pjTabContextRemoveBtn.addEventListener('click', openConfirmRemovePlaylistModalFromContextMenu);
     }
 
 
-    function showPjContextMenu(e) { // For playlist items
+    function showPjContextMenu(e) { 
         e.preventDefault();
         hidePjContextMenu(); 
         hidePjTabContextMenu();
@@ -3775,7 +3854,7 @@
         delete DOM.playJockeyContextMenu.dataset.currentItemId;
     }
     
-    function showPjTabContextMenu(e, playlistId) { // For playlist tabs
+    function showPjTabContextMenu(e, playlistId) { 
         e.preventDefault();
         hidePjContextMenu();
         hidePjTabContextMenu();
@@ -3802,7 +3881,7 @@
     }
 
 
-    function handlePjContextRename() { // For playlist items
+    function handlePjContextRename() { 
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) return;
@@ -3827,7 +3906,7 @@
         hidePjContextMenu();
     }
 
-    function handlePjContextRemove() { // For playlist items
+    function handlePjContextRemove() { 
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) return;
@@ -3856,29 +3935,54 @@
         hidePjContextMenu();
     }
 
-    function handlePjTabContextRename() {
+    // MODIFIED: Functions to open modals for renaming/removing playlist tabs
+    function openRenamePlaylistModalFromContextMenu() {
         const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
         if (!playlistId) return;
         const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
-            const newName = prompt("Enter new name for the playlist:", playlistToRename.name);
-            if (newName !== null && newName.trim() !== "") {
-                playlistToRename.name = newName.trim();
-                renderPlayJockeyTabs();
-                saveData();
-            }
+            DOM.playlistNewNameInput.value = playlistToRename.name;
+            DOM.saveRenamedPlaylistBtn.dataset.playlistId = playlistId; // Store ID for save function
+            openModal(MODAL_IDS.RENAME_PLAYLIST);
+            DOM.playlistNewNameInput.focus();
         }
         hidePjTabContextMenu();
     }
 
-    function handlePjTabContextRemove() {
-        const playlistIdToRemove = DOM.playJockeyTabContextMenu.dataset.playlistId;
-        if (!playlistIdToRemove) return;
+    function saveRenamedPlaylist() {
+        const playlistId = DOM.saveRenamedPlaylistBtn.dataset.playlistId;
+        const newName = DOM.playlistNewNameInput.value.trim();
 
-        if (!confirm(`Are you sure you want to remove the playlist "${appData.playJockeyPlaylists.find(p=>p.id === playlistIdToRemove)?.name}"?`)) {
-            hidePjTabContextMenu();
+        if (!playlistId || !newName) {
+            alert("Playlist name cannot be empty.");
             return;
         }
+        const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
+        if (playlistToRename) {
+            playlistToRename.name = newName;
+            renderPlayJockeyTabs();
+            saveData();
+        }
+        closeModal(MODAL_IDS.RENAME_PLAYLIST);
+        delete DOM.saveRenamedPlaylistBtn.dataset.playlistId; // Clean up
+    }
+
+
+    function openConfirmRemovePlaylistModalFromContextMenu() {
+        const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
+        if (!playlistId) return;
+        const playlistToRemove = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
+        if (playlistToRemove) {
+            DOM.confirmRemovePlaylistMessage.textContent = `Are you sure you want to remove the playlist "${playlistToRemove.name}"? This action cannot be undone.`;
+            DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId; // Store ID for confirm function
+            openModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
+        }
+        hidePjTabContextMenu();
+    }
+
+    function executePlaylistDeletion() {
+        const playlistIdToRemove = DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId;
+        if (!playlistIdToRemove) return;
 
         const playlistIndex = appData.playJockeyPlaylists.findIndex(pl => pl.id === playlistIdToRemove);
         if (playlistIndex > -1) {
@@ -3901,17 +4005,17 @@
                 }
             }
         }
-         if (appData.playJockeyPlaylists.length === 0) { // Should be caught by above, but as a fallback
+         if (appData.playJockeyPlaylists.length === 0) { 
             const defaultPlaylistId = 'playlist_default_' + Date.now();
             appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
             appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
         }
 
-
         renderPlayJockeyTabs();
-        renderPlayJockeyPlaylist();
+        renderPlayJockeyPlaylist(); // Update the playlist view as well
         saveData();
-        hidePjTabContextMenu();
+        closeModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
+        delete DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId; // Clean up
     }
 
     
@@ -3997,7 +4101,7 @@
 
             const rect = targetItemElement.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
-            if (e.clientY >= midpointY) { // If dropping on bottom half, insert after
+            if (e.clientY >= midpointY) { 
                 targetIndex++;
             }
         }
@@ -4005,7 +4109,7 @@
 
         if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) {
             currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
-        } else { // If no target or invalid targetIndex, add to end
+        } else { 
             currentPlaylist.videos.push(itemToMove);
         }
         
@@ -4062,10 +4166,10 @@
         } else { 
             appData.playJockeyRepeatState = "off";
         }
-        appData.playJockeyRandomHistory = []; // Reset history when repeat mode changes
+        appData.playJockeyRandomHistory = []; 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
-             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") { // Only add if it makes sense
+             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") { 
                  appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
         }
