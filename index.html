@@ -977,7 +977,7 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.8'; // Incremented version
+    const STORAGE_KEY = 'lifeXpData_v1.9.8'; 
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -3253,22 +3253,60 @@
             return;
         }
 
+        const tempId = 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
         const videoEntry = {
-            id: 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7), 
+            id: tempId,
             originalUrl: link,
             videoId: videoId,
-            title: link 
+            title: "Loading title..." // Placeholder
         };
 
         appData.playJockeyPlaylist.push(videoEntry);
-        DOM.playJockeyLinkInput.value = ''; 
-        renderPlayJockeyPlaylist();
-        saveData();
+        renderPlayJockeyPlaylist(); 
+        DOM.playJockeyLinkInput.value = '';
+        
+        fetchYouTubeTitle(videoEntry); // Asynchronously fetch and update title
 
         if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
-            playYouTubeVideoById(videoId, true); 
+            playYouTubeVideoById(videoId, true, true); // isManualPlay = true for initial add as user initiated it
         }
     }
+
+    async function fetchYouTubeTitle(videoEntryToUpdate) {
+        try {
+            const oEmbedUrl = `https://noembed.com/embed?url=http://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
+            const response = await fetch(oEmbedUrl);
+            let newTitle = videoEntryToUpdate.originalUrl; 
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.title) {
+                    newTitle = data.title;
+                } else if (data.error) {
+                    console.warn(`Error fetching title via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
+                }
+            } else {
+                console.warn(`Failed to fetch title for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
+            }
+
+            const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
+            if (itemInPlaylist) {
+                itemInPlaylist.title = newTitle;
+                renderPlayJockeyPlaylist(); 
+                saveData(); 
+            }
+
+        } catch (error) {
+            console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
+            const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
+            if (itemInPlaylist && itemInPlaylist.title === "Loading title...") { 
+                itemInPlaylist.title = videoEntryToUpdate.originalUrl;
+                renderPlayJockeyPlaylist();
+                saveData();
+            }
+        }
+    }
+
 
     function renderPlayJockeyPlaylist() {
         DOM.playJockeyPlaylist.innerHTML = '';
@@ -3285,8 +3323,16 @@
         appData.playJockeyPlaylist.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
-            item.textContent = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
-            item.title = video.originalUrl;
+            // Display fetched title, or URL if title is still "Loading title..." or the URL itself
+            let displayTitle = video.title;
+            if (video.title === "Loading title..." || video.title === video.originalUrl) {
+                displayTitle = video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl;
+            } else {
+                 displayTitle = video.title.length > 60 ? video.title.substring(0, 57) + '...' : video.title;
+            }
+            item.textContent = displayTitle;
+            item.title = video.title !== "Loading title..." ? video.title : video.originalUrl; // Tooltip shows full fetched title or URL
+            
             item.dataset.videoId = video.videoId;
             item.dataset.playlistItemId = video.id; 
             item.draggable = true; 
@@ -3300,36 +3346,37 @@
 
                 const clickedItem = event.currentTarget; 
                 if (clickedItem && clickedItem.dataset.videoId) {
-                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true); // Pass true for manualPlay
+                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true); 
                 }
             });
             DOM.playJockeyPlaylist.appendChild(item);
         });
     }
 
-    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { // Added isManualPlay
+    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { 
         if (!videoId) return;
 
         const videoToPlay = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
         
-        // --- MODIFIED: Random history reset on manual play under specific conditions ---
         if (
-            isManualPlay && // True if called from a direct user click on a playlist item
+            isManualPlay && 
             videoToPlay &&    
             appData.playJockeyRandomEnabled &&
             appData.playJockeyAutoPlayEnabled && 
             appData.playJockeyRepeatState === "off" &&
             appData.playJockeyPlaylist.length > 0 &&
-            appData.playJockeyRandomHistory.length >= appData.playJockeyPlaylist.length 
+            // Check if all unique song IDs are in history (or history is at least as long as unique songs)
+            new Set(appData.playJockeyRandomHistory).size >= new Set(appData.playJockeyPlaylist.map(v => v.id)).size
         ) {
-            console.log("Manual play after random cycle (Repeat:Off). Resetting random history.");
+            console.log("Manual play after random cycle (Repeat:Off). Resetting random history for new pass.");
             appData.playJockeyRandomHistory = [videoToPlay.id]; 
         }
-        // --- END MODIFIED ---
+        
 
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
         updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
-        saveData();
+        // Save data after potential history change and current video update
+        saveData(); 
 
         if (!appData.playJockeyCurrentVideo && videoId) { 
              if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
@@ -3391,28 +3438,28 @@
             
             if (appData.playJockeyPlaylist.length === 1) {
                 if (appData.playJockeyRepeatState === "off") {
-                     // For a single song, "Repeat: Off" with random means play it once.
-                     // If it's already in history (it just played), then stop.
                     if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; 
                     nextVideoItem = appData.playJockeyPlaylist[0];
-                } else { // Repeat List or Song (for a single item, they are the same)
+                } else { 
                     nextVideoItem = appData.playJockeyPlaylist[0];
                 }
-            } else { // More than one song in playlist
+            } else { 
                 let eligibleVideos = appData.playJockeyPlaylist.filter(
                     video => !appData.playJockeyRandomHistory.includes(video.id)
                 );
 
-                if (eligibleVideos.length === 0) { // All songs are in history
+                if (eligibleVideos.length === 0) { 
                     if (appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; // Prime with current
+                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
                         eligibleVideos = appData.playJockeyPlaylist.filter(video => video.id !== currentVideoUniqueId);
-                        if (eligibleVideos.length === 0 && appData.playJockeyPlaylist.length > 0) { // Only duplicates of current or just 1 unique song left
-                             eligibleVideos = [...appData.playJockeyPlaylist.filter(v => v.id !== currentVideoUniqueId)]; // Try to pick other
-                             if (eligibleVideos.length === 0) eligibleVideos = [appData.playJockeyPlaylist[0]]; // Fallback if only 1 song actually
+                        if (eligibleVideos.length === 0 ) { // Should only happen if playlist had only 1 unique song effectively
+                             eligibleVideos = [...appData.playJockeyPlaylist.filter(v => v.id !== currentVideoUniqueId)]; 
+                             if (eligibleVideos.length === 0) eligibleVideos = [appData.playJockeyPlaylist[0]]; 
                         }
-                    } else { // Repeat is "off" - Random cycle complete, stop.
+                    } else { 
                         console.log("Random cycle complete with Repeat: Off. Stopping playback.");
+                        // Clear history so manual play can restart a cycle
+                        appData.playJockeyRandomHistory = []; 
                         return; 
                     }
                 }
@@ -3421,20 +3468,17 @@
                     const randomIndex = Math.floor(Math.random() * eligibleVideos.length);
                     nextVideoItem = eligibleVideos[randomIndex];
                 } 
-                // If eligibleVideos is still empty here (e.g. after reset for repeat-playlist, and playlist is tiny/duplicates)
-                // and nextVideoItem is still null, it will not proceed to play.
             }
             
             if (nextVideoItem) {
-                // Add to history if not already there (e.g., after reset)
-                // For "Repeat: Off", history just grows. For "Repeat: List", it's trimmed.
                 if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) {
                      appData.playJockeyRandomHistory.push(nextVideoItem.id);
                 }
-
                 if (appData.playJockeyRepeatState === "playlist") {
                     const maxHistorySize = Math.max(0, appData.playJockeyPlaylist.length - 1);
-                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0) {
+                     // If history now contains all unique songs due to this add, and repeat playlist is on,
+                     // the *next* call to this function (after this song ends) will trigger the reset condition.
+                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= appData.playJockeyPlaylist.length) {
                         appData.playJockeyRandomHistory.shift(); 
                     }
                 }
@@ -3458,7 +3502,7 @@
         }
 
         if (nextVideoItem && nextVideoItem.videoId) {
-            playYouTubeVideoById(nextVideoItem.videoId, true, false); // isManualPlay is false here
+            playYouTubeVideoById(nextVideoItem.videoId, true, false); 
         }
     }
     
@@ -3516,7 +3560,7 @@
 
         const itemToRename = appData.playJockeyPlaylist.find(video => video.id === itemId);
         if (itemToRename) {
-            const newName = prompt("Enter new name for the video:", itemToRename.title);
+            const newName = prompt("Enter new name for the video:", itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title);
             if (newName !== null && newName.trim() !== "") {
                 itemToRename.title = newName.trim();
                 renderPlayJockeyPlaylist();
@@ -3673,7 +3717,6 @@
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
         appData.playJockeyRandomHistory = []; 
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && appData.playJockeyPlaylist.length > 0) {
-             // Prime history only if current video exists and there's a playlist to be random with
             if (appData.playJockeyPlaylist.length > 1 || appData.playJockeyRepeatState !== "off") {
                 appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
