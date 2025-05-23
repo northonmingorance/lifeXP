@@ -977,7 +977,7 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.8'; 
+    const STORAGE_KEY = 'lifeXpData_v1.9.9'; 
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -2398,8 +2398,14 @@
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) }
                     },
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
-                    playJockeyPlaylist: loadedData.playJockeyPlaylist || [],
-                    playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo || null,
+                    playJockeyPlaylist: (loadedData.playJockeyPlaylist || []).map(video => ({
+                        ...video,
+                        artist: video.artist || "" // Ensure artist field exists
+                    })),
+                    playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo ? {
+                        ...(loadedData.playJockeyCurrentVideo),
+                        artist: loadedData.playJockeyCurrentVideo.artist || ""
+                    } : null,
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
@@ -3258,18 +3264,18 @@
             id: tempId,
             originalUrl: link,
             videoId: videoId,
-            title: "Loading title...", // Placeholder
-            artist: null // Placeholder for artist
+            title: "Loading title...",
+            artist: "" 
         };
 
         appData.playJockeyPlaylist.push(videoEntry);
         renderPlayJockeyPlaylist(); 
         DOM.playJockeyLinkInput.value = '';
         
-        fetchYouTubeTitle(videoEntry); // Asynchronously fetch and update title and artist
+        fetchYouTubeTitle(videoEntry); 
 
         if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
-            playYouTubeVideoById(videoId, true, true); // isManualPlay = true for initial add as user initiated it
+            playYouTubeVideoById(videoId, true, true); 
         }
     }
 
@@ -3278,7 +3284,7 @@
             const oEmbedUrl = `https://noembed.com/embed?url=http://www.youtube.com/watch?v=$${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl; 
-            let newArtist = null;
+            let newArtist = "";
 
             if (response.ok) {
                 const data = await response.json();
@@ -3286,9 +3292,9 @@
                     newTitle = data.title;
                 }
                 if (data.author_name) {
-                    newArtist = data.author_name.replace(/ - Topic$/, "").trim();
+                    newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
                 }
-                 if (data.error) {
+                if (data.error) {
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
                 }
             } else {
@@ -3306,9 +3312,9 @@
         } catch (error) {
             console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
             const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
-            if (itemInPlaylist && itemInPlaylist.title === "Loading title...") { 
-                itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                // itemInPlaylist.artist remains null or its previous value
+            if (itemInPlaylist) {
+                 if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
+                 itemInPlaylist.artist = ""; // Fallback to empty artist
                 renderPlayJockeyPlaylist();
                 saveData();
             }
@@ -3332,16 +3338,25 @@
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
             
-            let displayString = video.title;
+            let displayTitle = video.title;
             if (video.title === "Loading title..." || video.title === video.originalUrl) {
-                 displayString = video.originalUrl.length > 60 ? video.originalUrl.substring(0, 57) + '...' : video.originalUrl;
-            } else if (video.artist) {
-                displayString = `${video.title} - ${video.artist}`;
+                displayTitle = video.originalUrl.length > 40 ? video.originalUrl.substring(0, 37) + '...' : video.originalUrl;
+            } else {
+                 displayTitle = video.title.length > 40 ? video.title.substring(0, 37) + '...' : video.title;
             }
-            item.textContent = displayString.length > 60 ? displayString.substring(0, 57) + '...' : displayString;
-            item.title = (video.title && video.title !== "Loading title..." ? video.title : video.originalUrl) + (video.artist ? ` - ${video.artist}` : "");
 
+            let itemText = displayTitle;
+            let itemTooltip = video.title !== "Loading title..." ? video.title : video.originalUrl;
 
+            if (video.artist && video.artist.trim() !== "") {
+                const artistShort = video.artist.length > 20 ? video.artist.substring(0, 17) + '...' : video.artist;
+                itemText = `${displayTitle} - ${artistShort}`;
+                itemTooltip = `${itemTooltip} by ${video.artist}`;
+            }
+            
+            item.textContent = itemText;
+            item.title = itemTooltip;
+            
             item.dataset.videoId = video.videoId;
             item.dataset.playlistItemId = video.id; 
             item.draggable = true; 
@@ -3374,7 +3389,6 @@
             appData.playJockeyAutoPlayEnabled && 
             appData.playJockeyRepeatState === "off" &&
             appData.playJockeyPlaylist.length > 0 &&
-            // Check if all unique song IDs are in history (or history is at least as long as unique songs)
             new Set(appData.playJockeyRandomHistory).size >= new Set(appData.playJockeyPlaylist.map(v => v.id)).size
         ) {
             console.log("Manual play after random cycle (Repeat:Off). Resetting random history for new pass.");
@@ -3384,7 +3398,6 @@
 
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
         updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
-        // Save data after potential history change and current video update
         saveData(); 
 
         if (!appData.playJockeyCurrentVideo && videoId) { 
@@ -3461,13 +3474,12 @@
                     if (appData.playJockeyRepeatState === "playlist") {
                         appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
                         eligibleVideos = appData.playJockeyPlaylist.filter(video => video.id !== currentVideoUniqueId);
-                        if (eligibleVideos.length === 0 ) { // Should only happen if playlist had only 1 unique song effectively
+                        if (eligibleVideos.length === 0 ) { 
                              eligibleVideos = [...appData.playJockeyPlaylist.filter(v => v.id !== currentVideoUniqueId)]; 
                              if (eligibleVideos.length === 0) eligibleVideos = [appData.playJockeyPlaylist[0]]; 
                         }
                     } else { 
                         console.log("Random cycle complete with Repeat: Off. Stopping playback.");
-                        // Clear history so manual play can restart a cycle
                         appData.playJockeyRandomHistory = []; 
                         return; 
                     }
@@ -3485,15 +3497,13 @@
                 }
                 if (appData.playJockeyRepeatState === "playlist") {
                     const maxHistorySize = Math.max(0, appData.playJockeyPlaylist.length - 1);
-                     // If history now contains all unique songs due to this add, and repeat playlist is on,
-                     // the *next* call to this function (after this song ends) will trigger the reset condition.
                     while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= appData.playJockeyPlaylist.length) {
                         appData.playJockeyRandomHistory.shift(); 
                     }
                 }
             }
 
-        } else { // Ordered playback (Random is off)
+        } else { 
             const currentIndex = appData.playJockeyPlaylist.findIndex(item => item.id === currentVideoUniqueId);
             if (currentIndex === -1) return;
 
@@ -3569,22 +3579,16 @@
 
         const itemToRename = appData.playJockeyPlaylist.find(video => video.id === itemId);
         if (itemToRename) {
-            let currentDisplayName = itemToRename.title;
-            if (itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title...") {
-                currentDisplayName = ""; // Prompt with empty if it's just the URL or loading
-            } else if (itemToRename.artist) {
-                currentDisplayName = `${itemToRename.title} - ${itemToRename.artist}`;
-            }
-
-            const newNameFull = prompt("Enter new display name (e.g., Title - Artist):", currentDisplayName);
-            
-            if (newNameFull !== null && newNameFull.trim() !== "") {
-                const parts = newNameFull.split(/ - /); // Split by " - "
-                itemToRename.title = parts[0].trim();
-                if (parts.length > 1) {
-                    itemToRename.artist = parts.slice(1).join(" - ").trim(); // Join back if artist name had " - "
-                } else {
-                    itemToRename.artist = null; // No artist provided or no separator
+            const currentDisplayTitle = itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title;
+            const newName = prompt("Enter new name for the video:", currentDisplayTitle);
+            if (newName !== null && newName.trim() !== "") {
+                itemToRename.title = newName.trim();
+                 if (itemToRename.artist === "" && newName.includes(" - ")) { // Basic attempt to re-parse artist if not set
+                    const parts = newName.split(" - ");
+                    if (parts.length > 1) {
+                        itemToRename.title = parts.slice(0, -1).join(" - ").trim();
+                        itemToRename.artist = parts[parts.length - 1].trim().replace(/\s-\sTopic$/, '').trim();
+                    }
                 }
                 renderPlayJockeyPlaylist();
                 saveData();
