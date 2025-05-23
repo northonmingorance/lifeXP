@@ -3281,7 +3281,8 @@
 
     async function fetchYouTubeTitle(videoEntryToUpdate) {
         try {
-            const oEmbedUrl = `https://noembed.com/embed?url=http://www.youtube.com/watch?v=$${videoEntryToUpdate.videoId}`;
+            // Use direct noembed.com URL
+            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl; 
             let newArtist = "";
@@ -3294,11 +3295,18 @@
                 if (data.author_name) {
                     newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
                 }
+                // Noembed might return `error` field for certain videos (e.g. private, deleted)
                 if (data.error) {
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
+                    // Keep original URL as title if error
+                    newTitle = videoEntryToUpdate.originalUrl; 
+                    newArtist = "";
                 }
             } else {
                 console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
+                // Keep original URL as title on fetch failure
+                newTitle = videoEntryToUpdate.originalUrl; 
+                newArtist = "";
             }
 
             const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
