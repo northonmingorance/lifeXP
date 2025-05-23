@@ -624,14 +624,15 @@
         }
         .playjockey-tab {
             padding: 6px 10px;
+            /* margin-right: 2px; REMOVED: Spacing handled by gap on parent */
             border: 1px inset #FFFFFF;
             border-bottom: none;
             background-color: #D4D0C8;
             cursor: default;
             font-size: 10px;
             white-space: nowrap;
-            border-top-left-radius: 5px; /* Ensures top corners are rounded */
-            border-top-right-radius: 5px; /* Ensures top corners are rounded */
+            border-top-left-radius: 3px; /* Ensures top corners are rounded */
+            border-top-right-radius: 3px; /* Ensures top corners are rounded */
         }
         .playjockey-tab:hover {
             background-color: #E0E0E0;
@@ -646,7 +647,7 @@
         }
         .playjockey-add-tab-btn { /* This button also has .playjockey-tab class */
             padding: 6px 8px;
-            margin-left: 0px;
+            /* margin-left: 5px; REMOVED: Spacing handled by gap on parent */
             font-weight: bold;
         }
 
