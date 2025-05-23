@@ -600,35 +600,39 @@
 
         .playjockey-player-area {
             flex-grow: 1;
-            margin-bottom: 5px;
+            margin-bottom: 5px; 
             border: 2px inset #808080;
             background-color: black; 
             min-height: 150px; 
             overflow: hidden; 
         }
 
-        #playJockeyPlayer {
+        #playJockeyPlayer { /* This is now a div for YT API */
             width: 100%;
             height: 100%;
-            border: none;
         }
 
         .playjockey-controls-bar {
             display: flex;
-            justify-content: center;
+            justify-content: center; /* MODIFIED */
             padding: 0px 0px 5px 0px;   
             flex-shrink: 0;
+            gap: 5px; /* ADDED: Space between buttons */
         }
-        #playJockeyAutoPlayBtn {
-            min-width: 100px; 
+        #playJockeyRandomBtn,
+        #playJockeyAutoPlayBtn,
+        #playJockeyRepeatBtn {
+            min-width: 90px; /* Adjusted for consistent sizing */
             padding: 3px 8px;
             font-size: 11px;
         }
-
-        #playJockeyAutoPlayBtn.autoplay-on {
-            border-style: inset;
-            font-weight: bold;
+        #playJockeyRandomBtn.random-on, /* MODIFIED: Class name */
+        #playJockeyAutoPlayBtn.autoplay-on,
+        #playJockeyRepeatBtn.repeat-on { /* MODIFIED: Generic 'on' class for repeat */
+            border-style: inset; 
+            font-weight: bold; 
         }
+        
 
         .playjockey-playlist-area {
             height: 120px; 
@@ -641,7 +645,7 @@
 
         .playjockey-playlist-item {
             padding: 4px 6px;
-            cursor: grab;
+            cursor: grab; 
             border-bottom: 1px solid #ECE9D8;
             font-size: 10px;
             color: #000080; 
@@ -787,7 +791,10 @@
                     <div id="playJockeyPlayer"></div> 
                 </div>
                 <div class="playjockey-controls-bar">
-                    <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button>
+                    {/* ADDED: Random Button, MODIFIED: Auto Play, ADDED: Repeat Button */}
+                    <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
+                    <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button> 
+                    <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
                 </div>
                 <div class="playjockey-playlist-area" id="playJockeyPlaylist">
                 </div>
@@ -964,13 +971,14 @@
     </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
     "use strict";
 
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.5'; 
+    const STORAGE_KEY = 'lifeXpData_v1.9.6'; // Incremented version
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -1048,12 +1056,15 @@
         playJockeyCloseBtn: getById('playJockeyCloseBtn'),
         playJockeyLinkInput: getById('playJockeyLinkInput'),
         playJockeyAddBtn: getById('playJockeyAddBtn'),
-        playJockeyPlayer: getById('playJockeyPlayer'), // This is now a div container for YT player
+        playJockeyPlayer: getById('playJockeyPlayer'), 
         playJockeyPlaylist: getById('playJockeyPlaylist'),
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
-        playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), // ADDED
+        playJockeyRandomBtn: getById('playJockeyRandomBtn'), // ADDED
+        playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), 
+        playJockeyRepeatBtn: getById('playJockeyRepeatBtn'), // ADDED
+
 
         textEditorIcon: getById('textEditorIcon'), 
         trackerIcon: getById('trackerIcon'),
@@ -1112,7 +1123,9 @@
         customBgColor: null,
         playJockeyPlaylist: [], 
         playJockeyCurrentVideo: null,
-        playJockeyAutoPlayEnabled: true // ADDED: Auto Play State
+        playJockeyAutoPlayEnabled: true, // MODIFIED: Default to true
+        playJockeyRandomEnabled: false,  // ADDED
+        playJockeyRepeatState: "off"   // ADDED ("off", "playlist", "song")
     };
     
     let lastNormalStates = {}; 
@@ -1128,11 +1141,9 @@
 
     let pjDraggedItem = null; 
 
-    // ADDED: YouTube Player API variables
     let ytPlayerInstance = null;
     let isYouTubeApiReady = false;
-    let pendingVideoToLoad = null; // { videoId, autoplayIntent }
-    // END ADDED
+    let pendingVideoToLoad = null; 
 
 
     function parseYYYYMMDDToLocalDate(dateString) {
@@ -1197,15 +1208,15 @@
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         renderPlayJockeyPlaylist(); 
-        updatePlayJockeyAutoPlayButtonState(); // ADDED: Update button on init
+        updatePlayJockeyAutoPlayButtonState(); 
+        updatePlayJockeyRandomButtonState(); // ADDED
+        updatePlayJockeyRepeatButtonState(); // ADDED
 
-        // MODIFIED: Only attempt to load YT video if API is ready or will be soon
-        // The onYouTubeIframeAPIReady function will handle initial playback if needed
+
         if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // false = don't autoplay on initial load unless specifically intended
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); // Use current autoplay state
         } else if (appData.playJockeyCurrentVideo) {
-            // Queue it if API isn't ready yet but a video is set
-            pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: false };
+            pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: appData.playJockeyAutoPlayEnabled };
         }
 
 
@@ -1423,9 +1434,8 @@
             if (appData.windowStates[windowId]) {
                 appData.windowStates[windowId].hiddenByUser = false;
             }
-             // ADDED: If PlayJockey window is opened, ensure player is initialized if a video is current
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay, just load
+                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
             }
         }
 
@@ -1628,7 +1638,7 @@
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item'))) { // MODIFIED: #playJockeyPlayer is now a div
+                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item'))) { 
                  bringToFront(windowElement);
             }
         }, true); 
@@ -1990,11 +2000,10 @@
             if (appData.windowStates.playJockeyWindow) {
                 appData.windowStates.playJockeyWindow.hiddenByUser = true;
             }
-            // MODIFIED: Stop player via API if it exists
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo();
             }
-            appData.playJockeyCurrentVideo = null; // Still useful to clear this
+            appData.playJockeyCurrentVideo = null; 
             saveWindowState('playJockeyWindow');
             saveData(); 
         });
@@ -2011,9 +2020,9 @@
         DOM.playJockeyPlaylist.addEventListener('drop', handlePjDrop);
         DOM.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu);
         
-        // ADDED: Auto Play Button Listener
-        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
-        // END ADDED
+        DOM.playJockeyRandomBtn.addEventListener('click', togglePlayJockeyRandom); // ADDED
+        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay); 
+        DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat); // ADDED
 
 
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
@@ -2372,7 +2381,9 @@
             customBgColor: null,
             playJockeyPlaylist: [],
             playJockeyCurrentVideo: null,
-            playJockeyAutoPlayEnabled: false // ADDED default
+            playJockeyAutoPlayEnabled: true, // MODIFIED Default
+            playJockeyRandomEnabled: false,
+            playJockeyRepeatState: "off" 
         };
         if (storedData) {
             try {
@@ -2388,7 +2399,9 @@
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
                     playJockeyPlaylist: loadedData.playJockeyPlaylist || [],
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo || null,
-                    playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : false // Ensure it's a boolean
+                    playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
+                    playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
+                    playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState
                 };
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
@@ -3204,20 +3217,15 @@
 
     // --- PlayJockey Functions ---
 
-    // ADDED: YouTube Iframe API Ready Callback
     function onYouTubeIframeAPIReady() {
         isYouTubeApiReady = true;
-        // If a video was pending to be loaded (e.g. from init), load it now.
         if (pendingVideoToLoad) {
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (appData.playJockeyCurrentVideo && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
-            // This handles the case where the page loads, a video is current,
-            // and the PlayJockey window is visible. We should initialize the player.
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay on initial load unless specifically clicked
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
         }
     }
-    // END ADDED
 
     function extractYouTubeVideoId(url) {
         if (!url) return null;
@@ -3255,9 +3263,8 @@
         renderPlayJockeyPlaylist();
         saveData();
 
-        // If this is the first video added or player isn't initialized, play it.
         if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
-            playYouTubeVideoById(videoId, true);
+            playYouTubeVideoById(videoId, true); // Autoplay if it's the first or player isn't up
         }
     }
 
@@ -3282,7 +3289,7 @@
             item.dataset.playlistItemId = video.id; 
             item.draggable = true; 
 
-            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) { // MODIFIED: Compare by unique ID
+            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) { 
                 item.classList.add('playing');
             }
             item.addEventListener('click', (event) => {
@@ -3298,13 +3305,12 @@
         });
     }
 
-    // MODIFIED: playYouTubeVideoById to use YT Player API
     function playYouTubeVideoById(videoId, autoplayIntent = true) {
         if (!videoId) return;
 
         const videoToPlay = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
-        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); // Pass unique ID
+        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
         saveData();
 
         if (!isYouTubeApiReady) {
@@ -3314,19 +3320,16 @@
         }
 
         if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
-            ytPlayerInstance.loadVideoById({
-                'videoId': videoId,
-                // 'startSeconds': 0, // Optional: if you want to start from a specific time
-            });
-            // The YT API's loadVideoById usually autoplays.
-            // If !autoplayIntent, one might try to immediately pause, but it's racy.
-            // For now, this will mostly result in autoplay for subsequent videos.
+            ytPlayerInstance.loadVideoById({ 'videoId': videoId });
+            // Note: autoplay for loadVideoById is generally implicit.
+            // If !autoplayIntent and player is already playing something else, it will switch and play.
+            // If player is paused and !autoplayIntent, it might load but not play.
+            // For simplicity here, true means "ensure it plays", false means "load it, play if player configured to"
         } else {
-            // Ensure the placeholder div is empty if we are creating a new player
-            if (DOM.playJockeyPlayer.firstChild) {
-                DOM.playJockeyPlayer.innerHTML = ''; // Clear out old iframe if any
+            if (DOM.playJockeyPlayer.firstChild && DOM.playJockeyPlayer.firstChild.tagName === 'IFRAME') { // Clear old iframe if any
+                 DOM.playJockeyPlayer.innerHTML = '';
             }
-            ytPlayerInstance = new YT.Player('playJockeyPlayer', { // Target the div
+            ytPlayerInstance = new YT.Player('playJockeyPlayer', { 
                 height: '100%',
                 width: '100%',
                 videoId: videoId,
@@ -3335,22 +3338,15 @@
                     'controls': 1,
                     'enablejsapi': 1,
                     'origin': window.location.origin,
-                    'modestbranding': 1, // Less YouTube branding
-                    'rel': 0 // Don't show related videos
+                    'modestbranding': 1, 
+                    'rel': 0 
                 },
                 events: {
-                    // 'onReady': onPlayerReady, // Can be used if specific actions needed on ready
                     'onStateChange': onPlayerStateChange
                 }
             });
         }
     }
-
-    // ADDED: YT Player event handlers
-    // function onPlayerReady(event) {
-        // Example: event.target.playVideo();
-        // This is called when the player is ready. Autoplay is handled by playerVars.
-    // }
 
     function onPlayerStateChange(event) {
         if (event.data === YT.PlayerState.ENDED && appData.playJockeyAutoPlayEnabled) {
@@ -3359,30 +3355,47 @@
     }
 
     function playNextPjVideo() {
-        if (!appData.playJockeyCurrentVideo || appData.playJockeyPlaylist.length === 0) {
-            return;
-        }
-        const currentIndex = appData.playJockeyPlaylist.findIndex(
-            item => item.id === appData.playJockeyCurrentVideo.id
-        );
-
-        if (currentIndex === -1) return; // Should not happen
-
-        let nextIndex = currentIndex + 1;
-        if (nextIndex >= appData.playJockeyPlaylist.length) {
-            nextIndex = 0; // Loop to the first video
+        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || appData.playJockeyPlaylist.length === 0) {
+            return; 
         }
 
-        if (appData.playJockeyPlaylist.length > 0) {
-            const nextVideo = appData.playJockeyPlaylist[nextIndex];
-            if (nextVideo) {
-                 playYouTubeVideoById(nextVideo.videoId, true);
+        let nextVideoItem = null;
+        const currentVideoUniqueId = appData.playJockeyCurrentVideo.id;
+
+        if (appData.playJockeyRepeatState === "song") {
+            nextVideoItem = appData.playJockeyPlaylist.find(item => item.id === currentVideoUniqueId);
+        } else if (appData.playJockeyRandomEnabled) {
+            if (appData.playJockeyPlaylist.length === 1) {
+                nextVideoItem = appData.playJockeyPlaylist[0];
+            } else {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * appData.playJockeyPlaylist.length);
+                    nextVideoItem = appData.playJockeyPlaylist[randomIndex];
+                } while (nextVideoItem.id === currentVideoUniqueId);
+            }
+        } else { 
+            const currentIndex = appData.playJockeyPlaylist.findIndex(item => item.id === currentVideoUniqueId);
+            if (currentIndex === -1) return;
+
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= appData.playJockeyPlaylist.length) {
+                if (appData.playJockeyRepeatState === "playlist") {
+                    nextIndex = 0; 
+                } else { 
+                    return; // Repeat is "off", so stop.
+                }
+            }
+            if (appData.playJockeyPlaylist[nextIndex]) {
+                nextVideoItem = appData.playJockeyPlaylist[nextIndex];
             }
         }
-    }
-    // END ADDED
 
-    // MODIFIED to use unique playlist item ID for 'playing' class
+        if (nextVideoItem && nextVideoItem.videoId) {
+            playYouTubeVideoById(nextVideoItem.videoId, true);
+        }
+    }
+    
     function updatePlayingClassInPlaylist(playingItemId) {
         const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
@@ -3459,13 +3472,15 @@
                 if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                     ytPlayerInstance.stopVideo();
                 }
-                // DOM.playJockeyPlayer.src = 'about:blank'; // No longer direct src manipulation
                 appData.playJockeyCurrentVideo = null;
                 if (appData.playJockeyAutoPlayEnabled && appData.playJockeyPlaylist.length > 0) {
-                    const nextVideoIndex = Math.min(itemIndex, appData.playJockeyPlaylist.length - 1);
-                    if (nextVideoIndex >=0) playYouTubeVideoById(appData.playJockeyPlaylist[nextVideoIndex].videoId, true);
-                } else if (appData.playJockeyPlaylist.length > 0) {
-                     // If not autoplaying, but something is next, perhaps just update current video to null
+                    const nextVideoIndexToPlay = appData.playJockeyRandomEnabled ? 
+                        Math.floor(Math.random() * appData.playJockeyPlaylist.length) :
+                        Math.min(itemIndex, appData.playJockeyPlaylist.length - 1);
+                    
+                    if (nextVideoIndexToPlay >=0 && appData.playJockeyPlaylist[nextVideoIndexToPlay]) {
+                        playYouTubeVideoById(appData.playJockeyPlaylist[nextVideoIndexToPlay].videoId, true);
+                    }
                 }
             }
             renderPlayJockeyPlaylist();
@@ -3573,7 +3588,6 @@
     }
 
 
-    // ADDED: PlayJockey Auto Play Functions
     function togglePlayJockeyAutoPlay() {
         appData.playJockeyAutoPlayEnabled = !appData.playJockeyAutoPlayEnabled;
         updatePlayJockeyAutoPlayButtonState();
@@ -3587,6 +3601,52 @@
         } else {
             DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: Off';
             DOM.playJockeyAutoPlayBtn.classList.remove('autoplay-on');
+        }
+    }
+
+    // ADDED: Random and Repeat button functions
+    function togglePlayJockeyRandom() {
+        appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
+        updatePlayJockeyRandomButtonState();
+        saveData();
+    }
+
+    function updatePlayJockeyRandomButtonState() {
+        if (appData.playJockeyRandomEnabled) {
+            DOM.playJockeyRandomBtn.textContent = 'Random: On';
+            DOM.playJockeyRandomBtn.classList.add('random-on'); // Matches new CSS class
+        } else {
+            DOM.playJockeyRandomBtn.textContent = 'Random: Off';
+            DOM.playJockeyRandomBtn.classList.remove('random-on');
+        }
+    }
+
+    function cyclePlayJockeyRepeat() {
+        if (appData.playJockeyRepeatState === "off") {
+            appData.playJockeyRepeatState = "playlist";
+        } else if (appData.playJockeyRepeatState === "playlist") {
+            appData.playJockeyRepeatState = "song";
+        } else { // song
+            appData.playJockeyRepeatState = "off";
+        }
+        updatePlayJockeyRepeatButtonState();
+        saveData();
+    }
+
+    function updatePlayJockeyRepeatButtonState() {
+        DOM.playJockeyRepeatBtn.classList.remove('repeat-on'); // Remove class first
+        switch (appData.playJockeyRepeatState) {
+            case "off":
+                DOM.playJockeyRepeatBtn.textContent = 'Repeat: Off';
+                break;
+            case "playlist":
+                DOM.playJockeyRepeatBtn.textContent = 'Repeat: List';
+                DOM.playJockeyRepeatBtn.classList.add('repeat-on');
+                break;
+            case "song":
+                DOM.playJockeyRepeatBtn.textContent = 'Repeat: One';
+                DOM.playJockeyRepeatBtn.classList.add('repeat-on');
+                break;
         }
     }
     // END ADDED
