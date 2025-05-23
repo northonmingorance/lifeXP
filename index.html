@@ -571,6 +571,59 @@
             box-sizing: border-box;
         }
 
+        .playjockey-tabs-bar {
+            display: flex;
+            flex-wrap: nowrap; /* Prevent wrapping of tabs */
+            overflow-x: auto; /* Allow horizontal scrolling if too many tabs */
+            overflow-y: hidden;
+            padding: 3px 3px 0 3px;
+            background-color: #C0C0C0;
+            border-bottom: 1px solid #808080;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+        .playjockey-tab {
+            padding: 6px 10px;
+            margin-right: 2px;
+            background-color: #B0B0B0; /* Slightly darker than default button */
+            border: 1px outset #FFFFFF;
+            border-bottom: none; /* Remove bottom border for tab look */
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            cursor: default;
+            font-size: 10px;
+            white-space: nowrap;
+            color: #333;
+            user-select: none;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playjockey-tab:hover:not(.active):not(.add-playlist-tab) {
+            background-color: #BCBCBC;
+        }
+        .playjockey-tab.active {
+            background-color: #ECE9D8; /* Same as window body */
+            border-color: #7F7F7F;
+            border-bottom-color: #ECE9D8; /* Makes it look connected */
+            position: relative;
+            top: 1px; /* Slight lift */
+            font-weight: bold;
+            color: #000;
+        }
+        .playjockey-tab.add-playlist-tab {
+            font-weight: bold;
+            padding: 6px 8px;
+             background-color: #A0CFA0;
+        }
+        .playjockey-tab.add-playlist-tab:hover {
+             background-color: #80BF80;
+        }
+         .playjockey-tab.add-playlist-tab:active {
+            border-style: inset;
+        }
+
+
         .playjockey-input-bar {
             display: flex;
             margin-bottom: 5px;
@@ -783,6 +836,8 @@
         </div>
         <div class="window-body" id="playJockeyWindowBody">
             <div class="playjockey-body-container">
+                <div class="playjockey-tabs-bar" id="playJockeyTabsBar">
+                    </div>
                 <div class="playjockey-input-bar">
                     <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link Here">
                     <button id="playJockeyAddBtn" class="xp-button">Add</button>
@@ -965,9 +1020,14 @@
     </div>
 
     <div id="playJockeyContextMenu" class="context-modal">
-        <div class="context-modal-item" id="pjContextRename">Rename</div>
-        <div class="context-modal-item" id="pjContextRemove">Remove</div>
+        <div class="context-modal-item" id="pjContextRename">Rename Video</div>
+        <div class="context-modal-item" id="pjContextRemove">Remove Video</div>
     </div>
+    <div id="playJockeyTabContextMenu" class="context-modal">
+        <div class="context-modal-item" id="pjTabContextRename">Rename Playlist</div>
+        <div class="context-modal-item" id="pjTabContextRemove">Remove Playlist</div>
+    </div>
+
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -977,7 +1037,7 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.9.9'; 
+    const STORAGE_KEY = 'lifeXpData_v1.10.0'; 
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25; 
 
@@ -986,7 +1046,7 @@
     const MIN_TEXTEDITOR_WIDTH = 450; 
     const MIN_TEXTEDITOR_HEIGHT = 300; 
     const MIN_PLAYJOCKEY_WIDTH = 480;
-    const MIN_PLAYJOCKEY_HEIGHT = 400; 
+    const MIN_PLAYJOCKEY_HEIGHT = 400; // Height might need adjustment due to tabs bar
 
 
     const STANDARD_COLORS = [
@@ -1053,6 +1113,7 @@
         playJockeyMinimizeBtn: getById('playJockeyMinimizeBtn'),
         playJockeyMaximizeBtn: getById('playJockeyMaximizeBtn'),
         playJockeyCloseBtn: getById('playJockeyCloseBtn'),
+        playJockeyTabsBar: getById('playJockeyTabsBar'), // New
         playJockeyLinkInput: getById('playJockeyLinkInput'),
         playJockeyAddBtn: getById('playJockeyAddBtn'),
         playJockeyPlayer: getById('playJockeyPlayer'), 
@@ -1060,6 +1121,9 @@
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
+        playJockeyTabContextMenu: getById('playJockeyTabContextMenu'), // New
+        pjTabContextRenameBtn: getById('pjTabContextRename'), // New
+        pjTabContextRemoveBtn: getById('pjTabContextRemove'), // New
         playJockeyRandomBtn: getById('playJockeyRandomBtn'), 
         playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), 
         playJockeyRepeatBtn: getById('playJockeyRepeatBtn'), 
@@ -1120,12 +1184,13 @@
         iconPositions: {}, 
         customBgImage: null,
         customBgColor: null,
-        playJockeyPlaylist: [], 
+        playJockeyPlaylists: [],      // New: Array of playlist objects
+        playJockeyActivePlaylistId: null, // New: ID of the active playlist
         playJockeyCurrentVideo: null,
         playJockeyAutoPlayEnabled: true, 
         playJockeyRandomEnabled: false,  
         playJockeyRepeatState: "off",
-        playJockeyRandomHistory: [] 
+        playJockeyRandomHistories: {} // New: Object to store history per playlist { playlistId: [] }
     };
     
     let lastNormalStates = {}; 
@@ -1172,7 +1237,7 @@
     }
 
     function init() {
-        loadData();
+        loadData(); // This will now also handle playlist initialization/migration
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons(); 
@@ -1207,14 +1272,23 @@
         initWindowInteractions('playJockeyWindow');
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
-        renderPlayJockeyPlaylist(); 
+        
+        renderPlayJockeyTabs(); // New: Render tabs first
+        renderPlayJockeyPlaylist(); // Then render the active playlist's content
         updatePlayJockeyAutoPlayButtonState(); 
         updatePlayJockeyRandomButtonState(); 
         updatePlayJockeyRepeatButtonState(); 
 
 
         if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
+            // Ensure current video is from active playlist or handle appropriately
+            const activePlaylist = getActivePlayJockeyPlaylist();
+            if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
+            } else {
+                // Current video is not in active playlist, maybe clear it or load first from active
+                appData.playJockeyCurrentVideo = null; 
+            }
         } else if (appData.playJockeyCurrentVideo) {
             pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: appData.playJockeyAutoPlayEnabled };
         }
@@ -1231,6 +1305,7 @@
 
         addEventListeners(); 
         initPlayJockeyContextMenu(); 
+        initPlayJockeyTabContextMenu(); // New
 
         updateViewControls();
         updateDateDisplay();
@@ -1435,7 +1510,10 @@
                 appData.windowStates[windowId].hiddenByUser = false;
             }
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
+                const activePlaylist = getActivePlayJockeyPlaylist();
+                if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                    playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
+                }
             }
         }
 
@@ -1634,7 +1712,7 @@
         }
         
         windowElement.addEventListener('mousedown', (e) => {
-             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; 
+             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal') || e.target.closest('.playjockey-tab')) return; 
 
             if (e.target === windowElement || 
                 (e.target === titleBarElement && !e.target.closest('button')) ||
@@ -2061,10 +2139,14 @@
         });
 
         document.addEventListener('click', (e) => {
-            if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
-                if (!e.target.closest('.playjockey-playlist-item')) { 
-                     hidePjContextMenu();
-                }
+            const isVideoContext = DOM.playJockeyContextMenu.contains(e.target) || (e.target.closest && e.target.closest('.playjockey-playlist-item'));
+            const isTabContext = DOM.playJockeyTabContextMenu.contains(e.target) || (e.target.closest && e.target.closest('.playjockey-tab'));
+
+            if (!isVideoContext && DOM.playJockeyContextMenu.style.display === 'block') {
+                 hidePjContextMenu();
+            }
+            if (!isTabContext && DOM.playJockeyTabContextMenu.style.display === 'block') {
+                 hidePjTabContextMenu();
             }
         });
     }
@@ -2379,12 +2461,13 @@
             quests: {}, 
             customBgImage: null,
             customBgColor: null,
-            playJockeyPlaylist: [],
+            playJockeyPlaylists: [],      
+            playJockeyActivePlaylistId: null, 
             playJockeyCurrentVideo: null,
             playJockeyAutoPlayEnabled: true, 
             playJockeyRandomEnabled: false,
             playJockeyRepeatState: "off",
-            playJockeyRandomHistory: [] 
+            playJockeyRandomHistories: {} 
         };
         if (storedData) {
             try {
@@ -2398,10 +2481,8 @@
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) }
                     },
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
-                    playJockeyPlaylist: (loadedData.playJockeyPlaylist || []).map(video => ({
-                        ...video,
-                        artist: video.artist || "" // Ensure artist field exists
-                    })),
+                    playJockeyPlaylists: loadedData.playJockeyPlaylists || [], // Load new structure
+                    playJockeyActivePlaylistId: loadedData.playJockeyActivePlaylistId || null,
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo ? {
                         ...(loadedData.playJockeyCurrentVideo),
                         artist: loadedData.playJockeyCurrentVideo.artist || ""
@@ -2409,11 +2490,35 @@
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
-                    playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [] 
+                    playJockeyRandomHistories: loadedData.playJockeyRandomHistories || {} // Load new structure
                 };
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
                 appData.quests = appData.quests || {};
+
+                // Migration from old playJockeyPlaylist and playJockeyRandomHistory (flat structure)
+                if (loadedData.hasOwnProperty('playJockeyPlaylist') && (!appData.playJockeyPlaylists || appData.playJockeyPlaylists.length === 0)) {
+                    console.log("Migrating old PlayJockey data to new playlist structure.");
+                    const defaultPlaylistId = 'pj_playlist_default_' + Date.now();
+                    appData.playJockeyPlaylists = [{
+                        id: defaultPlaylistId,
+                        name: "Playlist",
+                        videos: (loadedData.playJockeyPlaylist || []).map(video => ({ ...video, artist: video.artist || "" }))
+                    }];
+                    appData.playJockeyActivePlaylistId = defaultPlaylistId;
+                    if (!appData.playJockeyRandomHistories[defaultPlaylistId]) {
+                         appData.playJockeyRandomHistories[defaultPlaylistId] = loadedData.playJockeyRandomHistory || [];
+                    }
+                    // Clean up old properties after migration attempt
+                    delete appData.playJockeyPlaylist; 
+                    delete appData.playJockeyRandomHistory;
+                }
+                
+                // Ensure all playlist videos have the artist property
+                appData.playJockeyPlaylists.forEach(playlist => {
+                    playlist.videos = playlist.videos.map(video => ({ ...video, artist: video.artist || "" }));
+                });
+
 
                 if (typeof appData.selectedDayIndex !== 'number' || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
                     appData.selectedDayIndex = 0;
@@ -2427,6 +2532,27 @@
             }
         } else {
              appData = { ...defaultAppData, currentWeekStartDate: getMonday(new Date()).toISOString().split('T')[0]};
+        }
+
+        // If no playlists exist after loading (or for a fresh start), create a default one.
+        if (!appData.playJockeyPlaylists || appData.playJockeyPlaylists.length === 0) {
+            const defaultPlaylistId = 'pj_playlist_initial_' + Date.now();
+            appData.playJockeyPlaylists = [{
+                id: defaultPlaylistId,
+                name: "Playlist",
+                videos: []
+            }];
+            appData.playJockeyActivePlaylistId = defaultPlaylistId;
+            appData.playJockeyRandomHistories[defaultPlaylistId] = [];
+        }
+
+        // Ensure activePlaylistId is valid, otherwise set to the first playlist
+        if (!appData.playJockeyActivePlaylistId || !appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyActivePlaylistId)) {
+            appData.playJockeyActivePlaylistId = appData.playJockeyPlaylists[0] ? appData.playJockeyPlaylists[0].id : null;
+        }
+        // Ensure random history exists for active playlist
+        if (appData.playJockeyActivePlaylistId && !appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
         }
     }
 
@@ -3225,13 +3351,32 @@
 
     // --- PlayJockey Functions ---
 
+    function getActivePlayJockeyPlaylist() {
+        if (!appData.playJockeyActivePlaylistId) return null;
+        return appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyActivePlaylistId) || null;
+    }
+
+    function getActivePlayJockeyRandomHistory() {
+        if (!appData.playJockeyActivePlaylistId) return [];
+        if (!appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
+        }
+        return appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId];
+    }
+
+
     function onYouTubeIframeAPIReady() {
         isYouTubeApiReady = true;
         if (pendingVideoToLoad) {
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (appData.playJockeyCurrentVideo && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
+             const activePlaylist = getActivePlayJockeyPlaylist();
+             if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
+             } else {
+                appData.playJockeyCurrentVideo = null; // Clear if not in active playlist
+             }
         }
     }
 
@@ -3243,6 +3388,12 @@
     }
 
     function addYouTubeLinkToPlayJockey() {
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!activePlaylist) {
+            alert("No active playlist. Please create or select a playlist first.");
+            return;
+        }
+
         const link = DOM.playJockeyLinkInput.value.trim();
         if (!link) {
             alert("Please enter a YouTube link.");
@@ -3254,12 +3405,12 @@
             return;
         }
 
-        if (appData.playJockeyPlaylist.some(video => video.videoId === videoId)) {
-            alert("This video is already in the playlist.");
+        if (activePlaylist.videos.some(video => video.videoId === videoId)) {
+            alert("This video is already in the current playlist.");
             return;
         }
 
-        const tempId = 'pj_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
+        const tempId = 'pj_video_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
         const videoEntry = {
             id: tempId,
             originalUrl: link,
@@ -3268,81 +3419,148 @@
             artist: "" 
         };
 
-        appData.playJockeyPlaylist.push(videoEntry);
+        activePlaylist.videos.push(videoEntry);
         renderPlayJockeyPlaylist(); 
         DOM.playJockeyLinkInput.value = '';
         
-        fetchYouTubeTitle(videoEntry); 
+        fetchYouTubeTitle(videoEntry, appData.playJockeyActivePlaylistId); 
 
-        if (!ytPlayerInstance || appData.playJockeyPlaylist.length === 1) {
+        if (!ytPlayerInstance || activePlaylist.videos.length === 1) {
             playYouTubeVideoById(videoId, true, true); 
         }
+        saveData();
     }
 
-    async function fetchYouTubeTitle(videoEntryToUpdate) {
+    async function fetchYouTubeTitle(videoEntryToUpdate, playlistIdForUpdate) {
         try {
-            // Use direct noembed.com URL
-            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
+            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v={videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl; 
             let newArtist = "";
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.title) {
-                    newTitle = data.title;
-                }
-                if (data.author_name) {
-                    newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
-                }
-                // Noembed might return `error` field for certain videos (e.g. private, deleted)
+                if (data.title) newTitle = data.title;
+                if (data.author_name) newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
                 if (data.error) {
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
-                    // Keep original URL as title if error
-                    newTitle = videoEntryToUpdate.originalUrl; 
-                    newArtist = "";
+                    newTitle = videoEntryToUpdate.originalUrl; newArtist = "";
                 }
             } else {
                 console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
-                // Keep original URL as title on fetch failure
-                newTitle = videoEntryToUpdate.originalUrl; 
-                newArtist = "";
+                newTitle = videoEntryToUpdate.originalUrl; newArtist = "";
             }
-
-            const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
-            if (itemInPlaylist) {
-                itemInPlaylist.title = newTitle;
-                itemInPlaylist.artist = newArtist;
-                renderPlayJockeyPlaylist(); 
-                saveData(); 
+            
+            const targetPlaylist = appData.playJockeyPlaylists.find(p => p.id === playlistIdForUpdate);
+            if (targetPlaylist) {
+                const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
+                if (itemInPlaylist) {
+                    itemInPlaylist.title = newTitle;
+                    itemInPlaylist.artist = newArtist;
+                    if (playlistIdForUpdate === appData.playJockeyActivePlaylistId) { // Only re-render if it's the active one
+                        renderPlayJockeyPlaylist(); 
+                    }
+                    saveData(); 
+                }
             }
-
         } catch (error) {
             console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
-            const itemInPlaylist = appData.playJockeyPlaylist.find(item => item.id === videoEntryToUpdate.id);
-            if (itemInPlaylist) {
-                 if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                 itemInPlaylist.artist = ""; // Fallback to empty artist
-                renderPlayJockeyPlaylist();
-                saveData();
+            const targetPlaylist = appData.playJockeyPlaylists.find(p => p.id === playlistIdForUpdate);
+             if (targetPlaylist) {
+                const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
+                if (itemInPlaylist) {
+                    if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
+                    itemInPlaylist.artist = ""; 
+                     if (playlistIdForUpdate === appData.playJockeyActivePlaylistId) {
+                        renderPlayJockeyPlaylist();
+                    }
+                    saveData();
+                }
             }
         }
+    }
+
+    function renderPlayJockeyTabs() {
+        DOM.playJockeyTabsBar.innerHTML = '';
+        appData.playJockeyPlaylists.forEach(playlist => {
+            const tab = document.createElement('span');
+            tab.className = 'playjockey-tab';
+            tab.textContent = playlist.name;
+            tab.title = playlist.name;
+            tab.dataset.playlistId = playlist.id;
+            if (playlist.id === appData.playJockeyActivePlaylistId) {
+                tab.classList.add('active');
+            }
+            tab.addEventListener('click', () => switchPlayJockeyTab(playlist.id));
+            tab.addEventListener('contextmenu', (e) => showPjTabContextMenu(e, playlist.id));
+            DOM.playJockeyTabsBar.appendChild(tab);
+        });
+
+        const addTab = document.createElement('span');
+        addTab.className = 'playjockey-tab add-playlist-tab';
+        addTab.textContent = '+';
+        addTab.title = 'Add New Playlist';
+        addTab.id = 'playJockeyAddPlaylistTab';
+        addTab.addEventListener('click', addNewPlayJockeyPlaylist);
+        DOM.playJockeyTabsBar.appendChild(addTab);
+    }
+    
+    function switchPlayJockeyTab(playlistId) {
+        if (appData.playJockeyActivePlaylistId === playlistId) return;
+
+        appData.playJockeyActivePlaylistId = playlistId;
+        if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+            ytPlayerInstance.stopVideo();
+        }
+        appData.playJockeyCurrentVideo = null; 
+        // Ensure random history array exists for the new active playlist
+        if (!appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]) {
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
+        }
+
+        renderPlayJockeyTabs();
+        renderPlayJockeyPlaylist();
+        updatePlayJockeyRandomButtonState(); // Random state might differ per playlist view
+        saveData();
+    }
+
+    function addNewPlayJockeyPlaylist() {
+        let newPlaylistName = "Playlist";
+        let counter = 1;
+        const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase());
+        while (existingNames.includes(newPlaylistName.toLowerCase())) {
+            newPlaylistName = `Playlist ${counter}`;
+            counter++;
+        }
+
+        const newPlaylistId = 'pj_playlist_' + Date.now();
+        const newPlaylist = {
+            id: newPlaylistId,
+            name: newPlaylistName,
+            videos: []
+        };
+        appData.playJockeyPlaylists.push(newPlaylist);
+        appData.playJockeyRandomHistories[newPlaylistId] = []; // Initialize history for new playlist
+        switchPlayJockeyTab(newPlaylistId); // This will save data
     }
 
 
     function renderPlayJockeyPlaylist() {
         DOM.playJockeyPlaylist.innerHTML = '';
-        if (!appData.playJockeyPlaylist || appData.playJockeyPlaylist.length === 0) {
+        const activePlaylist = getActivePlayJockeyPlaylist();
+
+        if (!activePlaylist || activePlaylist.videos.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.textContent = "Playlist is empty. Add some YouTube links!";
             emptyMsg.style.padding = "10px";
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
             DOM.playJockeyPlaylist.appendChild(emptyMsg);
+            updatePlayingClassInPlaylist(null); // Clear any playing styles
             return;
         }
 
-        appData.playJockeyPlaylist.forEach(video => {
+        activePlaylist.videos.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
             
@@ -3383,12 +3601,21 @@
             });
             DOM.playJockeyPlaylist.appendChild(item);
         });
+        // Update playing class based on current video and active playlist
+        if (appData.playJockeyCurrentVideo && activePlaylist && activePlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
+             updatePlayingClassInPlaylist(appData.playJockeyCurrentVideo.id);
+        } else {
+            updatePlayingClassInPlaylist(null);
+        }
     }
 
     function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { 
         if (!videoId) return;
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!activePlaylist) return;
 
-        const videoToPlay = appData.playJockeyPlaylist.find(v => v.videoId === videoId);
+        const videoToPlay = activePlaylist.videos.find(v => v.videoId === videoId);
+        const currentRandomHistory = getActivePlayJockeyRandomHistory();
         
         if (
             isManualPlay && 
@@ -3396,14 +3623,13 @@
             appData.playJockeyRandomEnabled &&
             appData.playJockeyAutoPlayEnabled && 
             appData.playJockeyRepeatState === "off" &&
-            appData.playJockeyPlaylist.length > 0 &&
-            new Set(appData.playJockeyRandomHistory).size >= new Set(appData.playJockeyPlaylist.map(v => v.id)).size
+            activePlaylist.videos.length > 0 &&
+            new Set(currentRandomHistory).size >= new Set(activePlaylist.videos.map(v => v.id)).size
         ) {
             console.log("Manual play after random cycle (Repeat:Off). Resetting random history for new pass.");
-            appData.playJockeyRandomHistory = [videoToPlay.id]; 
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [videoToPlay.id]; 
         }
         
-
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
         updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
         saveData(); 
@@ -3454,41 +3680,45 @@
     }
 
     function playNextPjVideo() {
-        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || appData.playJockeyPlaylist.length === 0) {
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !activePlaylist || activePlaylist.videos.length === 0) {
             return; 
         }
 
         let nextVideoItem = null;
         const currentVideoUniqueId = appData.playJockeyCurrentVideo.id;
+        let currentRandomHistory = getActivePlayJockeyRandomHistory();
+
 
         if (appData.playJockeyRepeatState === "song") {
-            nextVideoItem = appData.playJockeyPlaylist.find(item => item.id === currentVideoUniqueId);
+            nextVideoItem = activePlaylist.videos.find(item => item.id === currentVideoUniqueId);
         } else if (appData.playJockeyRandomEnabled) {
-            if (appData.playJockeyPlaylist.length === 0) return; 
+            if (activePlaylist.videos.length === 0) return; 
             
-            if (appData.playJockeyPlaylist.length === 1) {
+            if (activePlaylist.videos.length === 1) {
                 if (appData.playJockeyRepeatState === "off") {
-                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; 
-                    nextVideoItem = appData.playJockeyPlaylist[0];
+                    if (currentRandomHistory.includes(currentVideoUniqueId)) return; 
+                    nextVideoItem = activePlaylist.videos[0];
                 } else { 
-                    nextVideoItem = appData.playJockeyPlaylist[0];
+                    nextVideoItem = activePlaylist.videos[0];
                 }
             } else { 
-                let eligibleVideos = appData.playJockeyPlaylist.filter(
-                    video => !appData.playJockeyRandomHistory.includes(video.id)
+                let eligibleVideos = activePlaylist.videos.filter(
+                    video => !currentRandomHistory.includes(video.id)
                 );
 
                 if (eligibleVideos.length === 0) { 
                     if (appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
-                        eligibleVideos = appData.playJockeyPlaylist.filter(video => video.id !== currentVideoUniqueId);
+                        appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [currentVideoUniqueId]; 
+                        currentRandomHistory = appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId]; // refresh local copy
+                        eligibleVideos = activePlaylist.videos.filter(video => video.id !== currentVideoUniqueId);
                         if (eligibleVideos.length === 0 ) { 
-                             eligibleVideos = [...appData.playJockeyPlaylist.filter(v => v.id !== currentVideoUniqueId)]; 
-                             if (eligibleVideos.length === 0) eligibleVideos = [appData.playJockeyPlaylist[0]]; 
+                             eligibleVideos = [...activePlaylist.videos.filter(v => v.id !== currentVideoUniqueId)]; 
+                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylist.videos[0]]; 
                         }
                     } else { 
                         console.log("Random cycle complete with Repeat: Off. Stopping playback.");
-                        appData.playJockeyRandomHistory = []; 
+                        appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = []; 
                         return; 
                     }
                 }
@@ -3500,31 +3730,31 @@
             }
             
             if (nextVideoItem) {
-                if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) {
-                     appData.playJockeyRandomHistory.push(nextVideoItem.id);
+                if (!currentRandomHistory.includes(nextVideoItem.id)) {
+                     currentRandomHistory.push(nextVideoItem.id);
                 }
                 if (appData.playJockeyRepeatState === "playlist") {
-                    const maxHistorySize = Math.max(0, appData.playJockeyPlaylist.length - 1);
-                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= appData.playJockeyPlaylist.length) {
-                        appData.playJockeyRandomHistory.shift(); 
+                    const maxHistorySize = Math.max(0, activePlaylist.videos.length - 1);
+                    while (currentRandomHistory.length > maxHistorySize && maxHistorySize > 0 && currentRandomHistory.length >= activePlaylist.videos.length) {
+                        currentRandomHistory.shift(); 
                     }
                 }
             }
 
         } else { 
-            const currentIndex = appData.playJockeyPlaylist.findIndex(item => item.id === currentVideoUniqueId);
+            const currentIndex = activePlaylist.videos.findIndex(item => item.id === currentVideoUniqueId);
             if (currentIndex === -1) return;
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= appData.playJockeyPlaylist.length) { 
+            if (nextIndex >= activePlaylist.videos.length) { 
                 if (appData.playJockeyRepeatState === "playlist") {
                     nextIndex = 0; 
                 } else { 
                     return; 
                 }
             }
-            if (appData.playJockeyPlaylist[nextIndex]) {
-                nextVideoItem = appData.playJockeyPlaylist[nextIndex];
+            if (activePlaylist.videos[nextIndex]) {
+                nextVideoItem = activePlaylist.videos[nextIndex];
             }
         }
 
@@ -3544,15 +3774,20 @@
         });
     }
 
-
     function initPlayJockeyContextMenu() {
         DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
         DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
     }
+     function initPlayJockeyTabContextMenu() {
+        DOM.pjTabContextRenameBtn.addEventListener('click', handlePjTabContextRename);
+        DOM.pjTabContextRemoveBtn.addEventListener('click', handlePjTabContextRemove);
+    }
+
 
     function showPjContextMenu(e) {
         e.preventDefault();
         hidePjContextMenu(); 
+        hidePjTabContextMenu();
 
         const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item');
         if (clickedPlaylistItem) {
@@ -3564,12 +3799,8 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
-            if (x + menuWidth > viewportWidth) {
-                x = viewportWidth - menuWidth - 5; 
-            }
-            if (y + menuHeight > viewportHeight) {
-                y = viewportHeight - menuHeight - 5; 
-            }
+            if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; 
+            if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; 
             DOM.playJockeyContextMenu.style.left = `${x}px`;
             DOM.playJockeyContextMenu.style.top = `${y}px`;
             DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId;
@@ -3581,17 +3812,45 @@
         delete DOM.playJockeyContextMenu.dataset.currentItemId;
     }
 
-    function handlePjContextRename() {
+    function showPjTabContextMenu(e, playlistId) {
+        e.preventDefault();
+        hidePjContextMenu();
+        hidePjTabContextMenu();
+
+        DOM.playJockeyTabContextMenu.style.display = 'block';
+        let x = e.clientX;
+        let y = e.clientY;
+        const menuWidth = DOM.playJockeyTabContextMenu.offsetWidth;
+        const menuHeight = DOM.playJockeyTabContextMenu.offsetHeight;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5;
+        if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5;
+        DOM.playJockeyTabContextMenu.style.left = `${x}px`;
+        DOM.playJockeyTabContextMenu.style.top = `${y}px`;
+        DOM.playJockeyTabContextMenu.dataset.playlistId = playlistId;
+    }
+
+    function hidePjTabContextMenu() {
+        DOM.playJockeyTabContextMenu.style.display = 'none';
+        delete DOM.playJockeyTabContextMenu.dataset.playlistId;
+    }
+
+
+    function handlePjContextRename() { // Renames a video
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         if (!itemId) return;
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!activePlaylist) return;
 
-        const itemToRename = appData.playJockeyPlaylist.find(video => video.id === itemId);
+        const itemToRename = activePlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
             const currentDisplayTitle = itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title;
             const newName = prompt("Enter new name for the video:", currentDisplayTitle);
             if (newName !== null && newName.trim() !== "") {
                 itemToRename.title = newName.trim();
-                 if (itemToRename.artist === "" && newName.includes(" - ")) { // Basic attempt to re-parse artist if not set
+                 if (itemToRename.artist === "" && newName.includes(" - ")) { 
                     const parts = newName.split(" - ");
                     if (parts.length > 1) {
                         itemToRename.title = parts.slice(0, -1).join(" - ").trim();
@@ -3605,17 +3864,20 @@
         hidePjContextMenu();
     }
 
-    function handlePjContextRemove() {
+    function handlePjContextRemove() { // Removes a video
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         if (!itemId) return;
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!activePlaylist) return;
 
-        const itemIndex = appData.playJockeyPlaylist.findIndex(video => video.id === itemId);
+        const itemIndex = activePlaylist.videos.findIndex(video => video.id === itemId);
         if (itemIndex > -1) {
-            const removedItem = appData.playJockeyPlaylist.splice(itemIndex, 1)[0];
+            const removedItem = activePlaylist.videos.splice(itemIndex, 1)[0];
             
-            const historyIndex = appData.playJockeyRandomHistory.indexOf(removedItem.id);
+            const currentRandomHistory = getActivePlayJockeyRandomHistory();
+            const historyIndex = currentRandomHistory.indexOf(removedItem.id);
             if (historyIndex > -1) {
-                appData.playJockeyRandomHistory.splice(historyIndex, 1);
+                currentRandomHistory.splice(historyIndex, 1);
             }
 
             if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) {
@@ -3623,7 +3885,7 @@
                     ytPlayerInstance.stopVideo();
                 }
                 appData.playJockeyCurrentVideo = null;
-                if (appData.playJockeyAutoPlayEnabled && appData.playJockeyPlaylist.length > 0) {
+                if (appData.playJockeyAutoPlayEnabled && activePlaylist.videos.length > 0) {
                     playNextPjVideo(); 
                 }
             }
@@ -3632,6 +3894,60 @@
         }
         hidePjContextMenu();
     }
+
+    function handlePjTabContextRename() {
+        const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
+        if (!playlistId) return;
+
+        const playlistToRename = appData.playJockeyPlaylists.find(p => p.id === playlistId);
+        if (playlistToRename) {
+            const newName = prompt("Enter new name for the playlist:", playlistToRename.name);
+            if (newName !== null && newName.trim() !== "") {
+                const trimmedNewName = newName.trim();
+                if (appData.playJockeyPlaylists.some(p => p.id !== playlistId && p.name.toLowerCase() === trimmedNewName.toLowerCase())) {
+                    alert("A playlist with this name already exists.");
+                    return;
+                }
+                playlistToRename.name = trimmedNewName;
+                renderPlayJockeyTabs();
+                saveData();
+            }
+        }
+        hidePjTabContextMenu();
+    }
+
+    function handlePjTabContextRemove() {
+        const playlistIdToRemove = DOM.playJockeyTabContextMenu.dataset.playlistId;
+        if (!playlistIdToRemove) return;
+
+        if (appData.playJockeyPlaylists.length <= 1) {
+            alert("Cannot remove the last playlist.");
+            hidePjTabContextMenu();
+            return;
+        }
+
+        const playlistToRemove = appData.playJockeyPlaylists.find(p => p.id === playlistIdToRemove);
+        if (playlistToRemove && confirm(`Are you sure you want to remove the playlist "${playlistToRemove.name}"?`)) {
+            appData.playJockeyPlaylists = appData.playJockeyPlaylists.filter(p => p.id !== playlistIdToRemove);
+            delete appData.playJockeyRandomHistories[playlistIdToRemove];
+
+            if (appData.playJockeyActivePlaylistId === playlistIdToRemove) {
+                if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+                    ytPlayerInstance.stopVideo();
+                }
+                appData.playJockeyCurrentVideo = null;
+                appData.playJockeyActivePlaylistId = appData.playJockeyPlaylists[0] ? appData.playJockeyPlaylists[0].id : null;
+                 if (!appData.playJockeyActivePlaylistId) { // Should not happen if we prevent last removal
+                    addNewPlayJockeyPlaylist(); // Creates a new default if all were somehow removed
+                 }
+            }
+            renderPlayJockeyTabs();
+            renderPlayJockeyPlaylist(); // Re-render based on new active playlist
+            saveData();
+        }
+        hidePjTabContextMenu();
+    }
+
     
     function handlePjDragStart(e) {
         const target = e.target.closest('.playjockey-playlist-item');
@@ -3643,6 +3959,7 @@
                 target.classList.add('dragging');
             }, 0);
             hidePjContextMenu(); 
+            hidePjTabContextMenu();
         }
     }
 
@@ -3697,33 +4014,37 @@
         clearPjDragOverHighlights();
         if (!pjDraggedItem) return;
 
+        const activePlaylist = getActivePlayJockeyPlaylist();
+        if (!activePlaylist) return;
+
         const draggedItemId = e.dataTransfer.getData('text/plain');
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
         
-        const draggedItemIndex = appData.playJockeyPlaylist.findIndex(item => item.id === draggedItemId);
+        const draggedItemIndex = activePlaylist.videos.findIndex(item => item.id === draggedItemId);
         if (draggedItemIndex === -1) return;
 
-        const itemToMove = appData.playJockeyPlaylist[draggedItemIndex];
-        appData.playJockeyPlaylist.splice(draggedItemIndex, 1); 
+        const itemToMove = activePlaylist.videos[draggedItemIndex];
+        activePlaylist.videos.splice(draggedItemIndex, 1); 
 
         let targetIndex = -1;
 
         if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) {
             const targetItemId = targetItemElement.dataset.playlistItemId;
-            targetIndex = appData.playJockeyPlaylist.findIndex(item => item.id === targetItemId);
+            targetIndex = activePlaylist.videos.findIndex(item => item.id === targetItemId);
 
             const rect = targetItemElement.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
             if (e.clientY < midpointY) {
+                // Insert before target
             } else {
-                targetIndex++;
+                targetIndex++; // Insert after target
             }
         }
 
         if (targetIndex !== -1) {
-            appData.playJockeyPlaylist.splice(targetIndex, 0, itemToMove);
-        } else {
-            appData.playJockeyPlaylist.push(itemToMove);
+            activePlaylist.videos.splice(targetIndex, 0, itemToMove);
+        } else { // If no specific target, or dropped at the end
+            activePlaylist.videos.push(itemToMove);
         }
         
         renderPlayJockeyPlaylist();
@@ -3750,10 +4071,15 @@
 
     function togglePlayJockeyRandom() {
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        appData.playJockeyRandomHistory = []; 
-        if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && appData.playJockeyPlaylist.length > 0) {
-            if (appData.playJockeyPlaylist.length > 1 || appData.playJockeyRepeatState !== "off") {
-                appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
+        if (appData.playJockeyActivePlaylistId) {
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = []; 
+            if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo) {
+                const activePlaylist = getActivePlayJockeyPlaylist();
+                if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                    if (activePlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
+                         appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId].push(appData.playJockeyCurrentVideo.id);
+                    }
+                }
             }
         }
         updatePlayJockeyRandomButtonState();
@@ -3778,10 +4104,15 @@
         } else { 
             appData.playJockeyRepeatState = "off";
         }
-        appData.playJockeyRandomHistory = [];
-        if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && appData.playJockeyPlaylist.length > 0) {
-             if (appData.playJockeyPlaylist.length > 1 || appData.playJockeyRepeatState !== "off") {
-                 appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
+        if (appData.playJockeyActivePlaylistId) {
+            appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId] = [];
+            if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo) {
+                const activePlaylist = getActivePlayJockeyPlaylist();
+                 if (activePlaylist && activePlaylist.videos.find(v => v.id === appData.playJockeyCurrentVideo.id)) {
+                    if (activePlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
+                         appData.playJockeyRandomHistories[appData.playJockeyActivePlaylistId].push(appData.playJockeyCurrentVideo.id);
+                    }
+                }
             }
         }
         updatePlayJockeyRepeatButtonState();
