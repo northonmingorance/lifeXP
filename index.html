@@ -17,7 +17,7 @@
             padding: 0;
             min-height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; 
+            overflow: hidden;
         }
 
         .xp-window {
@@ -34,9 +34,9 @@
         .xp-window.disable-selection,
         .xp-window.disable-selection * {
             user-select: none;
-            -webkit-user-select: none; 
-            -moz-user-select: none;    
-            -ms-user-select: none;     
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .title-bar {
@@ -89,7 +89,7 @@
         }
 
         .window-body {
-            padding: 15px; 
+            padding: 15px;
             flex-grow: 1;
             overflow-y: auto;
             opacity: 1;
@@ -97,17 +97,17 @@
             display: flex;
             flex-direction: column;
             padding: 0;
-            overflow: hidden; 
+            overflow: hidden;
         }
-        
+
         #xpMainWindow .window-body {
              padding: 15px;
              overflow-y: auto;
         }
-        
+
         #playJockeyWindow .window-body {
-            padding: 0; 
-            display: flex; 
+            padding: 0;
+            display: flex;
         }
 
 
@@ -120,7 +120,7 @@
             border-top: none !important;
         }
         .xp-window.minimized {
-            min-height: 28px !important; 
+            min-height: 28px !important;
             height: 28px !important;
             overflow: hidden;
         }
@@ -179,7 +179,7 @@
         .xp-button:hover {
             border-color: #005CFE;
         }
-        .xp-button-small { 
+        .xp-button-small {
             padding: 2px 5px;
             font-size: 10px;
             min-width: auto;
@@ -292,8 +292,8 @@
             border-radius: 3px;
             word-wrap: break-word;
             box-sizing: border-box;
-            position: relative; 
-            padding-bottom: 22px; 
+            position: relative;
+            padding-bottom: 22px;
         }
         .achievement-content img {
             max-width: 100%;
@@ -309,7 +309,7 @@
             display: flex;
             gap: 3px;
         }
-        .achievement-add-btn-cell { 
+        .achievement-add-btn-cell {
             display: block;
             width: 99.5%;
             box-sizing: border-box;
@@ -320,7 +320,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000; 
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
@@ -391,7 +391,7 @@
         .modal-body label {
             display: block;
             margin-bottom: 5px;
-            margin-top: 12px; 
+            margin-top: 12px;
         }
         .modal-body input[type="text"],
         .modal-body input[type="number"],
@@ -500,7 +500,7 @@
             right: 0;
             bottom: 0;
             cursor: nwse-resize;
-            z-index: 10; 
+            z-index: 10;
             box-sizing: border-box;
             opacity: 0.6;
             background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10L10 7' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M3 10L10 3' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -529,8 +529,8 @@
 
         .desktop-icon {
             position: absolute;
-            width: 90px; 
-            height: 100px; 
+            width: 90px;
+            height: 100px;
             text-align: center;
             color: white;
             text-shadow: 1px 1px 1px black;
@@ -540,23 +540,23 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; 
-            padding-top: 10px; 
+            justify-content: flex-start;
+            padding-top: 10px;
             box-sizing: border-box;
-            z-index: 5; 
+            z-index: 5;
         }
         .desktop-icon:active {
             cursor: grabbing;
         }
         .desktop-icon .icon-image {
-            font-size: 48px; 
+            font-size: 48px;
             line-height: 1;
-            margin-bottom: 8px; 
+            margin-bottom: 8px;
         }
         .desktop-icon .icon-label {
-            font-size: 12px; 
-            font-weight: normal; 
-            word-wrap: break-word; 
+            font-size: 12px;
+            font-weight: normal;
+            word-wrap: break-word;
             max-width: 100%;
         }
 
@@ -564,9 +564,9 @@
         .playjockey-body-container {
             display: flex;
             flex-direction: column;
-            width: 100%; 
-            height: 100%; 
-            background-color: #D4D0C8; 
+            width: 100%;
+            height: 100%;
+            background-color: #D4D0C8;
             padding: 5px;
             box-sizing: border-box;
         }
@@ -575,11 +575,11 @@
             display: flex;
             margin-bottom: 5px;
             padding: 5px;
-            background-color: #C0C0C0; 
+            background-color: #C0C0C0;
             border: 1px outset #FFFFFF;
             border-right-color: #808080;
             border-bottom-color: #808080;
-            flex-shrink: 0; 
+            flex-shrink: 0;
         }
 
         #playJockeyLinkInput {
@@ -592,7 +592,7 @@
             background-color: #FFFFFF;
         }
 
-        #playJockeyAddBtn { 
+        #playJockeyAddBtn {
             min-width: 60px;
             padding: 3px 8px;
             font-size: 11px;
@@ -600,52 +600,51 @@
 
         .playjockey-player-area {
             flex-grow: 1;
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
             border: 2px inset #808080;
-            background-color: black; 
-            min-height: 150px; 
-            overflow: hidden; 
+            background-color: black;
+            min-height: 150px;
+            overflow: hidden;
         }
 
-        #playJockeyPlayer { 
+        #playJockeyPlayer {
             width: 100%;
             height: 100%;
         }
-        
+
         .playjockey-tabs-bar {
             display: flex;
-            flex-wrap: nowrap; /* Prevent tabs from wrapping to next line */
-            overflow-x: auto; /* Allow horizontal scrolling if too many tabs */
+            flex-wrap: nowrap;
+            overflow-x: auto;
             background-color: #C0C0C0;
             padding: 3px 3px 0 3px;
             border-bottom: 1px solid #808080;
             flex-shrink: 0;
-            gap: 2px; /* MODIFIED: Added gap for consistent spacing */
+            gap: 2px;
         }
         .playjockey-tab {
             padding: 6px 10px;
-            /* margin-right: 2px; REMOVED: Spacing handled by gap on parent */
             border: 1px inset #FFFFFF;
             border-bottom: none;
             background-color: #D4D0C8;
             cursor: default;
             font-size: 10px;
             white-space: nowrap;
-            border-top-left-radius: 3px; /* Ensures top corners are rounded */
-            border-top-right-radius: 3px; /* Ensures top corners are rounded */
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
         }
         .playjockey-tab:hover {
             background-color: #E0E0E0;
         }
         .playjockey-tab.active {
-            background-color: #F0F0F0; /* Lighter for active tab */
+            background-color: #F0F0F0;
             border-style: inset;
-            border-bottom: 1px solid #F0F0F0; /* Make bottom border blend with playlist area */
+            border-bottom: 1px solid #F0F0F0;
             position: relative;
-            z-index: 1; /* Bring active tab to front slightly */
+            z-index: 1;
             font-weight: bold;
         }
-        .playjockey-add-tab-btn { /* This button also has .playjockey-tab class */
+        .playjockey-add-tab-btn {
             padding: 6px 8px;
             margin-left: 0px;
             font-weight: bold;
@@ -654,67 +653,67 @@
 
         .playjockey-controls-bar {
             display: flex;
-            justify-content: center; 
-            padding: 5px 0px 5px 0px;   
+            justify-content: center;
+            padding: 5px 0px 5px 0px;
             flex-shrink: 0;
-            gap: 5px; 
+            gap: 5px;
             border-top: 1px solid #ACA899;
             background-color: #F0F0F0;
         }
         #playJockeyRandomBtn,
         #playJockeyAutoPlayBtn,
         #playJockeyRepeatBtn {
-            min-width: 90px; 
+            min-width: 90px;
             padding: 3px 8px;
             font-size: 11px;
         }
-        #playJockeyRandomBtn.random-on, 
+        #playJockeyRandomBtn.random-on,
         #playJockeyAutoPlayBtn.autoplay-on,
-        #playJockeyRepeatBtn.repeat-on { 
-            border-style: inset; 
-            font-weight: bold; 
+        #playJockeyRepeatBtn.repeat-on {
+            border-style: inset;
+            font-weight: bold;
         }
-        
+
 
         .playjockey-playlist-area {
-            height: 100px; /* Adjusted height for tabs */
+            height: 100px;
             overflow-y: auto;
             border: 1px inset #7F7F7F;
             background-color: #FFFFFF;
             padding: 3px;
-            flex-shrink: 0; 
-            border-top: none; /* Remove top border as tabs bar has bottom border */
+            flex-shrink: 0;
+            border-top: none;
             position: relative;
             z-index: 0;
         }
 
         .playjockey-playlist-item {
             padding: 4px 6px;
-            cursor: grab; 
+            cursor: grab;
             border-bottom: 1px solid #ECE9D8;
             font-size: 10px;
-            color: #000080; 
+            color: #000080;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            user-select: none; 
+            user-select: none;
         }
         .playjockey-playlist-item:hover {
-            background-color: #000080; 
+            background-color: #000080;
             color: white;
         }
         .playjockey-playlist-item.playing {
-            background-color: #005CFE; 
+            background-color: #005CFE;
             color: white;
             font-weight: bold;
         }
         .playjockey-playlist-item:last-child {
             border-bottom: none;
         }
-        
+
         .playjockey-playlist-item.dragging {
             opacity: 0.5;
-            background-color: #AED6F1; 
+            background-color: #AED6F1;
         }
         .playjockey-playlist-item.drag-over-target-before {
             border-top: 2px dashed #005CFE;
@@ -730,7 +729,7 @@
             background-color: #ECE9D8;
             border: 1px solid #000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            z-index: 2000; 
+            z-index: 2000;
             padding: 3px 0;
             min-width: 120px;
             font-family: "Tahoma", "Geneva", sans-serif;
@@ -744,6 +743,56 @@
         .context-modal-item:hover {
             background-color: #005CFE;
             color: white;
+        }
+
+        /* Youtube Modal Specific Styles */
+        #youtubeSearchResultsBody {
+            max-height: 400px; /* Limit height and make it scrollable */
+            overflow-y: auto;
+        }
+
+        .Youtube-result-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #ACA899;
+            cursor: pointer;
+            background-color: #FFFFFF;
+        }
+        .Youtube-result-item:hover {
+            background-color: #E0E0E0;
+        }
+        .Youtube-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .Youtube-result-item img {
+            width: 120px; /* Standard YouTube thumbnail width */
+            height: 90px;  /* Standard YouTube thumbnail height */
+            margin-right: 10px;
+            border: 1px solid #ACA899;
+            object-fit: cover;
+        }
+
+        .Youtube-result-item-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .Youtube-result-item-title {
+            font-weight: bold;
+            color: #0039A9;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .Youtube-result-item-channel {
+            font-size: 10px;
+            color: #555;
+        }
+        #youtubeSearchStatus {
+            padding: 15px;
+            font-size: 12px;
         }
 
     </style>
@@ -829,11 +878,11 @@
         <div class="window-body" id="playJockeyWindowBody">
             <div class="playjockey-body-container">
                 <div class="playjockey-input-bar">
-                    <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link Here">
+                    <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link or Search Query">
                     <button id="playJockeyAddBtn" class="xp-button">Add</button>
                 </div>
                 <div class="playjockey-player-area">
-                    <div id="playJockeyPlayer"></div> 
+                    <div id="playJockeyPlayer"></div>
                 </div>
                  <div class="playjockey-tabs-bar" id="playJockeyTabsBar">
                     </div>
@@ -841,7 +890,7 @@
                     </div>
                 <div class="playjockey-controls-bar">
                     <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
-                    <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button> 
+                    <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button>
                     <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
                 </div>
             </div>
@@ -1053,6 +1102,21 @@
         </div>
     </div>
 
+    <div id="youtubeSearchModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-title-bar">
+                <span>Youtube Results</span>
+                <span class="close-button" data-modal-id="youtubeSearchModal">r</span>
+            </div>
+            <div class="modal-body" id="youtubeSearchResultsBody">
+                <p id="youtubeSearchStatus" style="text-align: center; display: none;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="xp-button" data-modal-id="youtubeSearchModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -1062,16 +1126,17 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.10.0'; 
+    const STORAGE_KEY = 'lifeXpData_v1.10.0';
+    const YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"; // <-- REPLACE WITH YOUR YOUTUBE API KEY
     const MAX_WEEKLY_QUESTS = 5;
-    const ICON_GRID_SIZE = 25; 
+    const ICON_GRID_SIZE = 25;
 
-    let minTrackerAppWidth; 
+    let minTrackerAppWidth;
     const MIN_TRACKER_APP_HEIGHT = 250;
-    const MIN_TEXTEDITOR_WIDTH = 450; 
-    const MIN_TEXTEDITOR_HEIGHT = 300; 
+    const MIN_TEXTEDITOR_WIDTH = 450;
+    const MIN_TEXTEDITOR_HEIGHT = 300;
     const MIN_PLAYJOCKEY_WIDTH = 480;
-    const MIN_PLAYJOCKEY_HEIGHT = 425; // Increased slightly for tabs
+    const MIN_PLAYJOCKEY_HEIGHT = 425;
 
 
     const STANDARD_COLORS = [
@@ -1099,9 +1164,9 @@
         CREATE_QUEST: 'createQuestModal',
         CONFIRM_REFRESH_QUEST: 'confirmRefreshQuestModal',
         CHANGE_BG_IMAGE: 'changeBgImageModal',
-        // MODIFIED: Added new modal IDs for PlayJockey tab management
         RENAME_PLAYLIST: 'renamePlaylistModal',
-        CONFIRM_REMOVE_PLAYLIST: 'confirmRemovePlaylistModal'
+        CONFIRM_REMOVE_PLAYLIST: 'confirmRemovePlaylistModal',
+        Youtube: 'youtubeSearchModal'
     };
 
     const getById = (id) => document.getElementById(id);
@@ -1112,7 +1177,7 @@
         xpMainWindowResizeHandle: getById('xpMainWindowResizeHandle'),
         xpMainWindowMinimizeBtn: getById('xpMainWindowMinimizeBtn'),
         xpMainWindowMaximizeBtn: getById('xpMainWindowMaximizeBtn'),
-        xpMainWindowCloseBtn: getById('xpMainWindowCloseBtn'), 
+        xpMainWindowCloseBtn: getById('xpMainWindowCloseBtn'),
         weekdayHeaders: getById('weekdayHeaders'),
         gridBody: getById('gridBody'),
         addAreaBtn: getById('addAreaBtn'),
@@ -1143,21 +1208,21 @@
         playJockeyCloseBtn: getById('playJockeyCloseBtn'),
         playJockeyLinkInput: getById('playJockeyLinkInput'),
         playJockeyAddBtn: getById('playJockeyAddBtn'),
-        playJockeyPlayer: getById('playJockeyPlayer'), 
+        playJockeyPlayer: getById('playJockeyPlayer'),
         playJockeyTabsBar: getById('playJockeyTabsBar'),
-        playJockeyPlaylist: getById('playJockeyPlaylist'), 
+        playJockeyPlaylist: getById('playJockeyPlaylist'),
         playJockeyContextMenu: getById('playJockeyContextMenu'),
         pjContextRenameBtn: getById('pjContextRename'),
         pjContextRemoveBtn: getById('pjContextRemove'),
         playJockeyTabContextMenu: getById('playJockeyTabContextMenu'),
-        pjTabContextRenameBtn: getById('pjTabContextRename'), // This button in the context menu will now open a modal
-        pjTabContextRemoveBtn: getById('pjTabContextRemove'), // This button in the context menu will now open a modal
-        playJockeyRandomBtn: getById('playJockeyRandomBtn'), 
-        playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'), 
-        playJockeyRepeatBtn: getById('playJockeyRepeatBtn'), 
+        pjTabContextRenameBtn: getById('pjTabContextRename'),
+        pjTabContextRemoveBtn: getById('pjTabContextRemove'),
+        playJockeyRandomBtn: getById('playJockeyRandomBtn'),
+        playJockeyAutoPlayBtn: getById('playJockeyAutoPlayBtn'),
+        playJockeyRepeatBtn: getById('playJockeyRepeatBtn'),
 
 
-        textEditorIcon: getById('textEditorIcon'), 
+        textEditorIcon: getById('textEditorIcon'),
         trackerIcon: getById('trackerIcon'),
         playJockeyIcon: getById('playJockeyIcon'),
 
@@ -1195,45 +1260,48 @@
         changeBgImageModal: getById(MODAL_IDS.CHANGE_BG_IMAGE),
         newBgImageInput: getById('newBgImageInput'),
         uploadBgImageBtn: getById('uploadBgImageBtn'),
-        bgImageUrlInput: getById('bgImageUrlInput'),        
+        bgImageUrlInput: getById('bgImageUrlInput'),
         applyBgImageUrlBtn: getById('applyBgImageUrlBtn'),
         bgColorSwatchesContainer: getById('bgColorSwatchesContainer'),
 
-        // MODIFIED: Added DOM elements for new PlayJockey tab modals
         renamePlaylistModal: getById(MODAL_IDS.RENAME_PLAYLIST),
         playlistNewNameInput: getById('playlistNewNameInput'),
         saveRenamedPlaylistBtn: getById('saveRenamedPlaylistBtn'),
         confirmRemovePlaylistModal: getById(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST),
         confirmRemovePlaylistMessage: getById('confirmRemovePlaylistMessage'),
         confirmFinalPlaylistRemoveBtn: getById('confirmFinalPlaylistRemoveBtn'),
-        modalCloseButtons: null // Will be querySelected later
+
+        youtubeSearchModal: getById(MODAL_IDS.Youtube),
+        youtubeSearchResultsBody: getById('youtubeSearchResultsBody'),
+        youtubeSearchStatus: getById('youtubeSearchStatus'),
+
+        modalCloseButtons: null
     };
-    // Initialize modalCloseButtons after all modals are in DOM
     DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
 
 
     let appData = {
         areas: [],
         achievements: {},
-        quests: {},        
-        currentWeekStartDate: null, 
-        viewMode: 'week', 
-        selectedDayIndex: 0, 
-        windowStates: {}, 
-        iconPositions: {}, 
+        quests: {},
+        currentWeekStartDate: null,
+        viewMode: 'week',
+        selectedDayIndex: 0,
+        windowStates: {},
+        iconPositions: {},
         customBgImage: null,
         customBgColor: null,
-        playJockeyPlaylists: [], 
+        playJockeyPlaylists: [],
         playJockeyCurrentPlaylistId: null,
         playJockeyCurrentVideo: null,
-        playJockeyAutoPlayEnabled: true, 
-        playJockeyRandomEnabled: false,  
+        playJockeyAutoPlayEnabled: true,
+        playJockeyRandomEnabled: false,
         playJockeyRepeatState: "off",
-        playJockeyRandomHistory: [] 
+        playJockeyRandomHistory: []
     };
-    
-    let lastNormalStates = {}; 
-    let highestZIndex = 9; 
+
+    let lastNormalStates = {};
+    let highestZIndex = 9;
 
     let activeDragWindow = null;
     let activeResizeWindow = null;
@@ -1243,11 +1311,11 @@
     let activeDragIcon = null;
     let iconDragOffsetX, iconDragOffsetY;
 
-    let pjDraggedItem = null; 
+    let pjDraggedItem = null;
 
     let ytPlayerInstance = null;
     let isYouTubeApiReady = false;
-    let pendingVideoToLoad = null; 
+    let pendingVideoToLoad = null;
 
 
     function parseYYYYMMDDToLocalDate(dateString) {
@@ -1270,8 +1338,8 @@
             document.body.style.backgroundColor = '';
             document.body.style.backgroundImage = `url('${appData.customBgImage}')`;
         } else {
-            document.body.style.backgroundColor = '#3A6EA5'; 
-            document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')"; 
+            document.body.style.backgroundColor = '#3A6EA5';
+            document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')";
         }
     }
 
@@ -1279,7 +1347,7 @@
         loadData();
         applyCurrentBackgroundStyle();
         populateColorSwatches();
-        initDesktopIcons(); 
+        initDesktopIcons();
 
         if (appData.viewMode === 'week') {
             minTrackerAppWidth = 905;
@@ -1301,29 +1369,29 @@
 
         initWindowInteractions('xpMainWindow');
         restoreWindowState('xpMainWindow');
-        updateMinMaxButtonStates('xpMainWindow'); 
-        
+        updateMinMaxButtonStates('xpMainWindow');
+
         DOM.textEditorFrame.srcdoc = getTextEditorHTMLContent();
         initWindowInteractions('textEditorWindow');
         restoreWindowState('textEditorWindow');
-        updateMinMaxButtonStates('textEditorWindow'); 
-        
+        updateMinMaxButtonStates('textEditorWindow');
+
         initWindowInteractions('playJockeyWindow');
         restoreWindowState('playJockeyWindow');
         updateMinMaxButtonStates('playJockeyWindow');
-        
-        renderPlayJockeyTabs(); 
-        renderPlayJockeyPlaylist(); 
-        updatePlayJockeyAutoPlayButtonState(); 
-        updatePlayJockeyRandomButtonState(); 
-        updatePlayJockeyRepeatButtonState(); 
+
+        renderPlayJockeyTabs();
+        renderPlayJockeyPlaylist();
+        updatePlayJockeyAutoPlayButtonState();
+        updatePlayJockeyRandomButtonState();
+        updatePlayJockeyRepeatButtonState();
 
 
         if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
             const currentPlaylist = getCurrentPlayJockeyPlaylist();
             if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
-            } else { 
+                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
+            } else {
                 appData.playJockeyCurrentVideo = null;
             }
         } else if (appData.playJockeyCurrentVideo) {
@@ -1336,7 +1404,7 @@
         }
 
 
-        let maxLoadedWindowZ = highestZIndex; 
+        let maxLoadedWindowZ = highestZIndex;
         ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow'].forEach(windowId => {
             if (appData.windowStates[windowId] && appData.windowStates[windowId].zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(appData.windowStates[windowId].zIndex));
@@ -1345,8 +1413,8 @@
         highestZIndex = maxLoadedWindowZ;
 
 
-        addEventListeners(); 
-        initPlayJockeyContextMenu(); 
+        addEventListeners();
+        initPlayJockeyContextMenu();
         initPlayJockeyTabContextMenu();
 
 
@@ -1355,14 +1423,14 @@
         renderWeekdayHeaders();
         renderGrid();
         generateQuestsForCurrentWeekIfNeeded();
-        handleAppWindowResize(); 
+        handleAppWindowResize();
 
         const trackerWindowObserver = new ResizeObserver(handleAppWindowResize);
         trackerWindowObserver.observe(DOM.xpMainWindow);
     }
 
     function initDesktopIcons() {
-        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon]; 
+        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon];
         const iconData = [
             { id: 'trackerIcon', defaultX: 0, defaultY: 0, element: DOM.trackerIcon },
             { id: 'textEditorIcon', defaultX: 0, defaultY: 100, element: DOM.textEditorIcon },
@@ -1373,13 +1441,13 @@
             const iconElement = data.element;
             if (!iconElement) return;
 
-            const iconId = iconElement.id; 
+            const iconId = iconElement.id;
             if (appData.iconPositions && appData.iconPositions[iconId]) {
                 iconElement.style.left = appData.iconPositions[iconId].x + 'px';
                 iconElement.style.top = appData.iconPositions[iconId].y + 'px';
             } else {
                 const { x: finalX, y: finalY } = findNonCollidingPosition(iconElement, data.defaultX, data.defaultY);
-                
+
                 iconElement.style.left = finalX + 'px';
                 iconElement.style.top = finalY + 'px';
 
@@ -1390,7 +1458,7 @@
             iconElement.addEventListener('mousedown', handleIconMouseDown);
             iconElement.addEventListener('dblclick', handleIconDoubleClick);
         });
-        saveData(); 
+        saveData();
     }
 
 
@@ -1408,11 +1476,11 @@
         iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
 
         activeDragIcon.style.cursor = 'grabbing';
-        activeDragIcon.style.zIndex = '6'; 
+        activeDragIcon.style.zIndex = '6';
 
         document.addEventListener('mousemove', handleIconMouseMove);
         document.addEventListener('mouseup', handleIconMouseUp);
-        e.preventDefault(); 
+        e.preventDefault();
     }
 
     function handleIconMouseMove(e) {
@@ -1430,22 +1498,22 @@
         activeDragIcon.style.left = newX + 'px';
         activeDragIcon.style.top = newY + 'px';
     }
-    
+
     function findNonCollidingPosition(draggedIcon, initialX, initialY) {
         let currentX = initialX;
         let currentY = initialY;
         let attempt = 0;
-        const maxAttempts = 100; 
-        const iconWidth = draggedIcon.offsetWidth || 90; 
-        const iconHeight = draggedIcon.offsetHeight || 100; 
+        const maxAttempts = 100;
+        const iconWidth = draggedIcon.offsetWidth || 90;
+        const iconHeight = draggedIcon.offsetHeight || 100;
 
         const checkCollisionAt = (x, y, currentDraggedIcon) => {
             const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon].filter(
-                icon => icon && icon !== currentDraggedIcon 
+                icon => icon && icon !== currentDraggedIcon
             );
 
             for (const otherIcon of iconsToCompare) {
-                if (!otherIcon.style.left || !otherIcon.style.top) continue; 
+                if (!otherIcon.style.left || !otherIcon.style.top) continue;
 
                 const otherLeft = parseInt(otherIcon.style.left, 10);
                 const otherTop = parseInt(otherIcon.style.top, 10);
@@ -1456,10 +1524,10 @@
                     x + iconWidth > otherLeft &&
                     y < otherTop + otherHeight &&
                     y + iconHeight > otherTop) {
-                    return true; 
+                    return true;
                 }
             }
-            return false; 
+            return false;
         };
 
         if (!checkCollisionAt(currentX, currentY, draggedIcon)) {
@@ -1500,23 +1568,23 @@
                  console.warn("Collision search boundary too large for icon placement."); break;
             }
         }
-        
+
         console.warn("Could not find a non-colliding position for the icon after " + attempt + " attempts. Using original snapped position.");
-        return { x: initialX, y: initialY }; 
+        return { x: initialX, y: initialY };
     }
 
 
     function handleIconMouseUp() {
         if (!activeDragIcon) return;
 
-        activeDragIcon.style.zIndex = '5'; 
+        activeDragIcon.style.zIndex = '5';
 
         let finalX = activeDragIcon.offsetLeft;
         let finalY = activeDragIcon.offsetTop;
 
         let snappedX = Math.round(finalX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
         let snappedY = Math.round(finalY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
-        
+
         const iconWidth = activeDragIcon.offsetWidth || 90;
         const iconHeight = activeDragIcon.offsetHeight || 100;
         snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
@@ -1553,13 +1621,13 @@
                 appData.windowStates[windowId].hiddenByUser = false;
             }
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); 
+                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
             }
         }
 
 
         if (windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId); 
+            maximizeWindow(windowId);
         } else {
             bringToFront(windowElement);
         }
@@ -1571,7 +1639,7 @@
         return `
 <html lang="en">
 <head>
-    <title>Jotter</title> 
+    <title>Jotter</title>
     <style>
         :root { --n: rgb(20,20,20); --o: rgb(235,235,235) }
         html, body { height: 100%; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; }
@@ -1580,12 +1648,12 @@
         body.inverted { background: var(--o); color: var(--n) }
         .b { font: 18px monospace; background-color: var(--n); border: 1px solid var(--o); border-radius: 5px; padding: 5px 10px; cursor: pointer; color: var(--o); }
         .inverted.b { background-color: var(--o); color: var(--n); border: 1px solid var(--n); }
-        #d { 
-            box-sizing: border-box; 
-            width: 100%; 
+        #d {
+            box-sizing: border-box;
+            width: 100%;
             flex-grow: 1;
-            overflow-y: auto; 
-            margin-top: 10px; 
+            overflow-y: auto;
+            margin-top: 10px;
             padding: 10px;
         }
         body.inverted #d { border-color: var(--n); }
@@ -1598,14 +1666,14 @@
             right: 10px;
             display: flex;
             align-items: center;
-            gap: 8px; 
+            gap: 8px;
             z-index: 10;
         }
         .options-menu {
-            position: absolute; 
-            top: 45px; 
-            right: 10px; 
-            z-index: 10; 
+            position: absolute;
+            top: 45px;
+            right: 10px;
+            z-index: 10;
             display:none;
         }
     </style>
@@ -1630,10 +1698,10 @@
             </tbody>
         </table>
     </div>
-    <div id="d" contenteditable="true"></div> 
+    <div id="d" contenteditable="true"></div>
     <script>
         function f() {
-            let a = prompt("Filename:", "jotter_content.html"); 
+            let a = prompt("Filename:", "jotter_content.html");
             if (a) {
                 let htmlContent = \`<!DOCTYPE html>
 <html>
@@ -1665,11 +1733,11 @@
         let s_iframeBody = document.querySelector("body");
         let q_buttons = document.querySelectorAll(".b");
 
-        p_menuToggle.addEventListener("click", () => { 
+        p_menuToggle.addEventListener("click", () => {
             t_optionsMenu.style.display = (t_optionsMenu.style.display === "none" ? "block" : "none");
             p_menuToggle.innerText = (t_optionsMenu.style.display === "none" ? "+" : "-");
         });
-        
+
         document.addEventListener('click', function(event) {
             if (!t_optionsMenu.contains(event.target) && event.target !== p_menuToggle && !p_menuToggle.contains(event.target) ) {
                 if (!event.target.closest || (event.target.closest && !event.target.closest('.options-menu'))) {
@@ -1723,7 +1791,7 @@
         const windowId = windowElement.id;
         if (appData.windowStates[windowId]) {
             appData.windowStates[windowId].zIndex = highestZIndex;
-        } else { 
+        } else {
             appData.windowStates[windowId] = { zIndex: highestZIndex };
         }
     }
@@ -1736,10 +1804,10 @@
 
         if (windowId === 'xpMainWindow') {
             titleBarElement = DOM.xpMainWindowTitleBar;
-            resizeHandleElement = DOM.xpMainWindowResizeHandle; 
+            resizeHandleElement = DOM.xpMainWindowResizeHandle;
         } else if (windowId === 'textEditorWindow') {
             titleBarElement = DOM.textEditorWindowTitleBar;
-            resizeHandleElement = DOM.textEditorResizeHandle; 
+            resizeHandleElement = DOM.textEditorResizeHandle;
         } else if (windowId === 'playJockeyWindow') {
             titleBarElement = DOM.playJockeyTitleBar;
             resizeHandleElement = DOM.playJockeyResizeHandle;
@@ -1750,19 +1818,19 @@
             console.error("Window or TitleBar element not found for ID:", windowId);
             return;
         }
-        
-        windowElement.addEventListener('mousedown', (e) => {
-             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return; 
 
-            if (e.target === windowElement || 
+        windowElement.addEventListener('mousedown', (e) => {
+             if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
+
+            if (e.target === windowElement ||
                 (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab'))) { 
+                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab'))) {
                  bringToFront(windowElement);
             }
-        }, true); 
+        }, true);
 
         titleBarElement.addEventListener('mousedown', (e) => {
-            if (e.target.closest('button') || windowElement.classList.contains('true-maximized') || activeDragIcon) return; 
+            if (e.target.closest('button') || windowElement.classList.contains('true-maximized') || activeDragIcon) return;
             activeDragWindow = windowElement;
             dragOffsetX = e.clientX - activeDragWindow.offsetLeft;
             dragOffsetY = e.clientY - activeDragWindow.offsetTop;
@@ -1823,7 +1891,7 @@
         if (appData.windowStates[windowId]) {
             appData.windowStates[windowId].userManuallySet = true;
         }
-        if (windowId === 'xpMainWindow') { 
+        if (windowId === 'xpMainWindow') {
             handleAppWindowResize();
         }
     }
@@ -1848,7 +1916,7 @@
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
-        if (appWindow.classList.contains('true-maximized') && !isBrowserResize) { 
+        if (appWindow.classList.contains('true-maximized') && !isBrowserResize) {
             appWindow.style.width = '100vw';
             appWindow.style.height = '100vh';
             appWindow.style.top = '0px';
@@ -1859,44 +1927,44 @@
         const state = appData.windowStates[windowId] || {};
         const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
         const hasValidSavedPosition = state.x !== null && state.y !== null;
-        
+
         let currentMinWidth, currentMinHeight, defaultWidth, defaultHeight, defaultOffsetX, defaultOffsetY;
 
         if (windowId === 'xpMainWindow') {
-            currentMinWidth = minTrackerAppWidth; 
+            currentMinWidth = minTrackerAppWidth;
             currentMinHeight = MIN_TRACKER_APP_HEIGHT;
             defaultWidth = 905;
             defaultHeight = 645;
-            defaultOffsetX = 0; 
-            defaultOffsetY = 0; 
+            defaultOffsetX = 0;
+            defaultOffsetY = 0;
         } else if (windowId === 'textEditorWindow') {
             currentMinWidth = MIN_TEXTEDITOR_WIDTH;
             currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
             defaultWidth = 450;
             defaultHeight = 600;
-            defaultOffsetX = 50; 
-            defaultOffsetY = 50; 
+            defaultOffsetX = 50;
+            defaultOffsetY = 50;
         } else if (windowId === 'playJockeyWindow') {
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH;
             currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
-            defaultWidth = 520; 
-            defaultHeight = MIN_PLAYJOCKEY_HEIGHT; // Use min height as default
-            defaultOffsetX = 100; 
-            defaultOffsetY = 100; 
+            defaultWidth = 520;
+            defaultHeight = MIN_PLAYJOCKEY_HEIGHT;
+            defaultOffsetX = 100;
+            defaultOffsetY = 100;
         } else {
-            return; 
+            return;
         }
 
         if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize) {
             let newWidth = defaultWidth;
             let newHeight = defaultHeight;
-            
+
             newWidth = Math.max(currentMinWidth, newWidth);
             newHeight = Math.max(currentMinHeight, newHeight);
 
             let newLeft = defaultOffsetX === 0 ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
             let newTop =  defaultOffsetY === 0 ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
-            
+
             newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
             newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
 
@@ -1904,9 +1972,9 @@
             appWindow.style.height = newHeight + 'px';
             appWindow.style.left = newLeft + 'px';
             appWindow.style.top = newTop + 'px';
-            if(state) state.userManuallySet = false; 
+            if(state) state.userManuallySet = false;
         } else if (hasValidSavedSize && hasValidSavedPosition && state.userManuallySet && !isBrowserResize) {
-            appWindow.style.width = Math.max(currentMinWidth, state.width) + 'px'; 
+            appWindow.style.width = Math.max(currentMinWidth, state.width) + 'px';
             appWindow.style.height = Math.max(currentMinHeight, state.height) + 'px';
             appWindow.style.left = state.x + 'px';
             appWindow.style.top = state.y + 'px';
@@ -1916,16 +1984,16 @@
              appWindow.style.height = '100vh';
              appWindow.style.top = '0px';
              appWindow.style.left = '0px';
-             if (state) state.userManuallySet = false; 
+             if (state) state.userManuallySet = false;
         }
         saveWindowState(windowId);
     }
 
 
-    function handleAppWindowResize() { 
+    function handleAppWindowResize() {
         if (DOM.xpMainWindow.classList.contains('minimized')) return;
         checkControlsBarLayout();
-        checkToggleDayView(); 
+        checkToggleDayView();
     }
 
     function checkControlsBarLayout() {
@@ -1939,15 +2007,15 @@
         if (children.length === 0 || !controlsBar.clientWidth) return;
 
         const originalClasses = controlsBar.className;
-        controlsBar.className = 'controls-bar layout-single-row'; 
+        controlsBar.className = 'controls-bar layout-single-row';
 
         let totalChildrenWidth = 0;
         children.forEach(child => {
             const childStyle = getComputedStyle(child);
             totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
         });
-        
-        controlsBar.className = originalClasses; 
+
+        controlsBar.className = originalClasses;
 
         const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
 
@@ -1966,10 +2034,10 @@
 
     function addEventListeners() {
         document.body.addEventListener('contextmenu', function(event) {
-            if (event.target === document.body) { 
+            if (event.target === document.body) {
                 event.preventDefault();
-                DOM.newBgImageInput.value = null; 
-                DOM.bgImageUrlInput.value = '';    
+                DOM.newBgImageInput.value = null;
+                DOM.bgImageUrlInput.value = '';
                 openModal(MODAL_IDS.CHANGE_BG_IMAGE);
             }
         });
@@ -1977,15 +2045,15 @@
         DOM.uploadBgImageBtn.addEventListener('click', function() {
             const file = DOM.newBgImageInput.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) { 
+                if (file.size > 5 * 1024 * 1024) {
                     alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Consider using a smaller file or a URL.");
                 }
                 const reader = new FileReader();
                 reader.onloadend = function() {
-                    document.body.style.backgroundColor = ''; 
+                    document.body.style.backgroundColor = '';
                     document.body.style.backgroundImage = `url('${reader.result}')`;
-                    appData.customBgImage = reader.result; 
-                    appData.customBgColor = null; 
+                    appData.customBgImage = reader.result;
+                    appData.customBgColor = null;
                     saveData();
                     closeModal(MODAL_IDS.CHANGE_BG_IMAGE);
                 }
@@ -2002,11 +2070,11 @@
             const imageUrl = DOM.bgImageUrlInput.value.trim();
             if (imageUrl) {
                 try {
-                    new URL(imageUrl); 
-                    document.body.style.backgroundColor = ''; 
+                    new URL(imageUrl);
+                    document.body.style.backgroundColor = '';
                     document.body.style.backgroundImage = `url('${imageUrl}')`;
-                    appData.customBgImage = imageUrl; 
-                    appData.customBgColor = null; 
+                    appData.customBgImage = imageUrl;
+                    appData.customBgColor = null;
                     saveData();
                     closeModal(MODAL_IDS.CHANGE_BG_IMAGE);
                 } catch (e) {
@@ -2021,11 +2089,11 @@
             if (event.target.classList.contains('color-swatch-item')) {
                 const selectedColor = event.target.dataset.colorValue;
                 if (selectedColor) {
-                    document.body.style.backgroundImage = 'none'; 
+                    document.body.style.backgroundImage = 'none';
                     document.body.style.backgroundColor = selectedColor;
 
                     appData.customBgColor = selectedColor;
-                    appData.customBgImage = null; 
+                    appData.customBgImage = null;
                     saveData();
                     closeModal(MODAL_IDS.CHANGE_BG_IMAGE);
                 }
@@ -2047,7 +2115,7 @@
                 const achKey = event.target.dataset.achKey;
                 const achId = event.target.dataset.achId;
                 promptRemoveAchievement(achKey, achId);
-            } else if (event.target.classList.contains('achievement-add-btn-cell')) { 
+            } else if (event.target.classList.contains('achievement-add-btn-cell')) {
                 const areaName = event.target.dataset.areaName;
                 const dayIndex = parseInt(event.target.dataset.dayIndex);
                 openAddEditAchievementModal(areaName, dayIndex);
@@ -2090,7 +2158,7 @@
 
         DOM.xpMainWindowMinimizeBtn.addEventListener('click', () => minimizeWindow('xpMainWindow'));
         DOM.xpMainWindowMaximizeBtn.addEventListener('click', () => maximizeWindow('xpMainWindow'));
-        DOM.xpMainWindowCloseBtn.addEventListener('click', () => { 
+        DOM.xpMainWindowCloseBtn.addEventListener('click', () => {
             const trackerWindow = DOM.xpMainWindow;
             trackerWindow.style.display = 'none';
             if(appData.windowStates.xpMainWindow) {
@@ -2098,16 +2166,16 @@
             }
             saveWindowState('xpMainWindow');
         });
-        
+
         DOM.textEditorMinimizeBtn.addEventListener('click', () => minimizeWindow('textEditorWindow'));
         DOM.textEditorMaximizeBtn.addEventListener('click', () => maximizeWindow('textEditorWindow'));
         DOM.textEditorCloseBtn.addEventListener('click', () => {
             const textEditor = DOM.textEditorWindow;
             textEditor.style.display = 'none';
             if(appData.windowStates.textEditorWindow) {
-                appData.windowStates.textEditorWindow.hiddenByUser = true; 
+                appData.windowStates.textEditorWindow.hiddenByUser = true;
             }
-            saveWindowState('textEditorWindow'); 
+            saveWindowState('textEditorWindow');
         });
 
         DOM.playJockeyMinimizeBtn.addEventListener('click', () => minimizeWindow('playJockeyWindow'));
@@ -2121,29 +2189,28 @@
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo();
             }
-            appData.playJockeyCurrentVideo = null; 
+            appData.playJockeyCurrentVideo = null;
             saveWindowState('playJockeyWindow');
-            saveData(); 
+            saveData();
         });
-        
-        DOM.playJockeyAddBtn.addEventListener('click', addYouTubeLinkToPlayJockey);
+
+        DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
         DOM.playJockeyLinkInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addYouTubeLinkToPlayJockey();
+            if (e.key === 'Enter') handlePlayJockeyInput();
         });
-        
+
         DOM.playJockeyPlaylist.addEventListener('dragstart', handlePjDragStart);
         DOM.playJockeyPlaylist.addEventListener('dragend', handlePjDragEnd);
         DOM.playJockeyPlaylist.addEventListener('dragover', handlePjDragOver);
-        DOM.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave); 
+        DOM.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave);
         DOM.playJockeyPlaylist.addEventListener('drop', handlePjDrop);
         DOM.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu);
-        
-        DOM.playJockeyRandomBtn.addEventListener('click', togglePlayJockeyRandom); 
-        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay); 
-        DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat); 
+
+        DOM.playJockeyRandomBtn.addEventListener('click', togglePlayJockeyRandom);
+        DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
+        DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat);
 
 
-        // MODIFIED: Re-select modalCloseButtons after all modals are in DOM.
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
         DOM.modalCloseButtons.forEach(button => {
             button.addEventListener('click', (event) => {
@@ -2162,17 +2229,16 @@
                 delete this.dataset.areaNameToRemove;
             }
         });
-        
+
         DOM.confirmDeleteAchievementBtn.addEventListener('click', function() {
             const key = this.dataset.achievementKey;
             const id = this.dataset.achievementId;
             if (key && id) {
-                confirmRemoveAchievement(key, id); 
+                confirmRemoveAchievement(key, id);
                 closeModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT);
             }
         });
 
-        // MODIFIED: Add event listeners for new PlayJockey tab modals
         DOM.saveRenamedPlaylistBtn.addEventListener('click', saveRenamedPlaylist);
         DOM.playlistNewNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') saveRenamedPlaylist();
@@ -2188,7 +2254,7 @@
 
         document.addEventListener('click', (e) => {
             if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
-                if (!e.target.closest('.playjockey-playlist-item')) { 
+                if (!e.target.closest('.playjockey-playlist-item')) {
                      hidePjContextMenu();
                 }
             }
@@ -2199,7 +2265,7 @@
             }
         });
     }
-    
+
     function minimizeWindow(windowId) {
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
@@ -2208,7 +2274,7 @@
         state.minimized = true;
 
         if (appWindow.classList.contains('true-maximized')) {
-            state.wasMaximizedBeforeMinimize = true; 
+            state.wasMaximizedBeforeMinimize = true;
         } else {
             state.wasMaximizedBeforeMinimize = false;
             state.width = appWindow.offsetWidth;
@@ -2216,10 +2282,10 @@
             state.x = appWindow.offsetLeft;
             state.y = appWindow.offsetTop;
         }
-        appWindow.classList.remove('true-maximized'); 
+        appWindow.classList.remove('true-maximized');
         appWindow.classList.add('minimized');
-        
-        updateMinMaxButtonStates(windowId); 
+
+        updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
     }
 
@@ -2235,10 +2301,10 @@
         if (isMinimized) {
             appWindow.classList.remove('minimized');
             state.minimized = false;
-            const wasMaximized = state.wasMaximizedBeforeMinimize; 
+            const wasMaximized = state.wasMaximizedBeforeMinimize;
             delete state.wasMaximizedBeforeMinimize;
 
-            if (wasMaximized) { 
+            if (wasMaximized) {
                 if (!currentLastNormal.width || !currentLastNormal.height) {
                     let defaultNormalWidth, defaultNormalHeight, minW, minH;
                     if (windowId === 'xpMainWindow') { defaultNormalWidth = (window.innerWidth * 0.9); defaultNormalHeight = (window.innerHeight * 0.75); minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT;}
@@ -2261,14 +2327,14 @@
                 appWindow.style.left = '0px';
                 appWindow.classList.add('true-maximized');
                 state.maximized = true;
-                state.userManuallySet = false; 
-            } else { 
+                state.userManuallySet = false;
+            } else {
                 let minW, minH, defaultW, defaultH, defaultX, defaultY;
                  if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = window.innerWidth * 0.9; defaultH = window.innerHeight * 0.75; defaultX = window.innerWidth * 0.05; defaultY = 20; }
                  else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = window.innerWidth * 0.6; defaultH = window.innerHeight * 0.65; defaultX = 50; defaultY = 50; }
                  else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = window.innerWidth * 0.5; defaultH = window.innerHeight * 0.6; defaultX = 70; defaultY = 70; }
 
-                
+
                 let restoreWidth = state.width || parseFloat(currentLastNormal.width) || defaultW;
                 let restoreHeight = state.height || parseFloat(currentLastNormal.height) || defaultH;
                 let restoreX = state.x || parseFloat(currentLastNormal.left) || defaultX;
@@ -2280,20 +2346,20 @@
                 appWindow.style.top = restoreY + 'px';
                 state.maximized = false;
             }
-        } else if (appWindow.classList.contains('true-maximized')) { 
+        } else if (appWindow.classList.contains('true-maximized')) {
              if (currentLastNormal.width && currentLastNormal.height) {
                 appWindow.style.width = currentLastNormal.width;
                 appWindow.style.height = currentLastNormal.height;
                 appWindow.style.top = currentLastNormal.top;
                 appWindow.style.left = currentLastNormal.left;
             } else {
-                setWindowDefaults(windowId, false); 
+                setWindowDefaults(windowId, false);
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
-            state.userManuallySet = true; 
-        } else { 
-            lastNormalStates[windowId] = { 
+            state.userManuallySet = true;
+        } else {
+            lastNormalStates[windowId] = {
                 width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                 height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
                 top: appWindow.style.top || (appWindow.offsetTop + 'px'),
@@ -2306,12 +2372,12 @@
             appWindow.style.left = '0px';
             appWindow.classList.add('true-maximized');
             state.maximized = true;
-            state.userManuallySet = false; 
+            state.userManuallySet = false;
         }
-        
-        updateMinMaxButtonStates(windowId); 
-        saveWindowState(windowId); 
-        if (windowId === 'xpMainWindow') handleAppWindowResize(); 
+
+        updateMinMaxButtonStates(windowId);
+        saveWindowState(windowId);
+        if (windowId === 'xpMainWindow') handleAppWindowResize();
     }
 
 
@@ -2323,8 +2389,8 @@
             minimizeBtn = DOM.xpMainWindowMinimizeBtn;
             maximizeBtn = DOM.xpMainWindowMaximizeBtn;
         } else if (windowId === 'textEditorWindow') {
-            minimizeBtn = DOM.textEditorMinimizeBtn; 
-            maximizeBtn = DOM.textEditorMaximizeBtn; 
+            minimizeBtn = DOM.textEditorMinimizeBtn;
+            maximizeBtn = DOM.textEditorMaximizeBtn;
         } else if (windowId === 'playJockeyWindow') {
             minimizeBtn = DOM.playJockeyMinimizeBtn;
             maximizeBtn = DOM.playJockeyMaximizeBtn;
@@ -2338,23 +2404,23 @@
         const isMinimized = win.classList.contains('minimized');
         const isTrueMaximized = win.classList.contains('true-maximized');
 
-        minimizeBtn.disabled = isMinimized; 
-        maximizeBtn.disabled = false; 
+        minimizeBtn.disabled = isMinimized;
+        maximizeBtn.disabled = false;
 
 
         if (isMinimized) {
-            maximizeBtn.textContent = '1'; 
+            maximizeBtn.textContent = '1';
             maximizeBtn.title = "Restore";
         } else if (isTrueMaximized) {
-            maximizeBtn.textContent = '2'; 
+            maximizeBtn.textContent = '2';
             maximizeBtn.title = "Restore Down";
-        } else { 
-            maximizeBtn.textContent = '1'; 
+        } else {
+            maximizeBtn.textContent = '1';
             maximizeBtn.title = "Maximize";
         }
     }
 
-    function updateViewControls() { 
+    function updateViewControls() {
         if (appData.viewMode === 'week') {
             DOM.toggleViewBtn.textContent = 'Day View';
             DOM.prevWeekBtn.textContent = '< Prev Week';
@@ -2377,14 +2443,14 @@
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
         }
-        
+
         state.minimized = win.classList.contains('minimized');
-        state.maximized = win.classList.contains('true-maximized'); 
-        state.zIndex = parseInt(win.style.zIndex) || (highestZIndex + 1); 
-        state.hiddenByUser = win.style.display === 'none'; 
+        state.maximized = win.classList.contains('true-maximized');
+        state.zIndex = parseInt(win.style.zIndex) || (highestZIndex + 1);
+        state.hiddenByUser = win.style.display === 'none';
 
 
-        if (!state.minimized && !state.maximized && !state.hiddenByUser) { 
+        if (!state.minimized && !state.maximized && !state.hiddenByUser) {
             state.x = win.offsetLeft;
             state.y = win.offsetTop;
             state.width = win.offsetWidth;
@@ -2398,54 +2464,54 @@
         if (!win) return;
 
         let state = appData.windowStates[windowId];
-        if (!state) { 
-            appData.windowStates[windowId] = {}; 
+        if (!state) {
+            appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
             setWindowDefaults(windowId, false);
-            
-            if (!state.zIndex || state.zIndex <= 5) { 
+
+            if (!state.zIndex || state.zIndex <= 5) {
                  let newZ = highestZIndex + 1;
                  win.style.zIndex = newZ;
                  state.zIndex = newZ;
                  highestZIndex = newZ;
             }
-            
+
             if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
                 win.style.display = 'none';
             } else {
-                win.style.display = 'flex'; 
+                win.style.display = 'flex';
             }
-            updateMinMaxButtonStates(windowId); 
+            updateMinMaxButtonStates(windowId);
             return;
         }
-        
+
         let loadedZ = state.zIndex || (highestZIndex +1);
-        if (loadedZ <= 5) { 
+        if (loadedZ <= 5) {
             loadedZ = highestZIndex + 1;
         }
         win.style.zIndex = loadedZ;
-        state.zIndex = loadedZ; 
-        highestZIndex = Math.max(highestZIndex, loadedZ); 
+        state.zIndex = loadedZ;
+        highestZIndex = Math.max(highestZIndex, loadedZ);
 
 
         if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
              win.style.display = 'none';
         } else {
-             win.style.display = 'flex'; 
+             win.style.display = 'flex';
         }
 
 
         if (state.minimized) {
             win.classList.add('minimized');
-            win.classList.remove('true-maximized'); 
-        } else if (state.maximized) { 
+            win.classList.remove('true-maximized');
+        } else if (state.maximized) {
             let minW, minH, defaultW, defaultH, defaultX, defaultY;
             if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = 905; defaultH = 645; defaultX = window.innerWidth * 0.05; defaultY = 20;}
             else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = 450; defaultH = 600; defaultX = 50; defaultY = 50;}
             else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = 520; defaultH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
-            
-            lastNormalStates[windowId] = { 
-                width: (state.width ? Math.max(minW, state.width) : defaultW) + 'px', 
+
+            lastNormalStates[windowId] = {
+                width: (state.width ? Math.max(minW, state.width) : defaultW) + 'px',
                 height: (state.height ? Math.max(minH, state.height) : defaultH) + 'px',
                 top: (state.y || defaultY) + 'px',
                 left: (state.x || defaultX) + 'px'
@@ -2456,8 +2522,8 @@
             win.style.left = '0px';
             win.classList.add('true-maximized');
             win.classList.remove('minimized');
-            state.userManuallySet = false; 
-        } else if (state.userManuallySet && state.width !== null && state.width > 0 && !state.hiddenByUser) { 
+            state.userManuallySet = false;
+        } else if (state.userManuallySet && state.width !== null && state.width > 0 && !state.hiddenByUser) {
             let currentMinWidth, currentMinHeight, defaultX, defaultY;
             if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20; }
             else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50; }
@@ -2466,12 +2532,12 @@
 
             win.style.left = (state.x || defaultX) + 'px';
             win.style.top = (state.y || defaultY) + 'px';
-            win.style.width = Math.max(currentMinWidth, state.width) + 'px'; 
+            win.style.width = Math.max(currentMinWidth, state.width) + 'px';
             win.style.height = Math.max(currentMinHeight, state.height) + 'px';
             win.classList.remove('minimized');
             win.classList.remove('true-maximized');
-        } else if (!state.hiddenByUser) { 
-            setWindowDefaults(windowId, false); 
+        } else if (!state.hiddenByUser) {
+            setWindowDefaults(windowId, false);
             win.classList.remove('minimized');
             win.classList.remove('true-maximized');
         }
@@ -2494,30 +2560,30 @@
         const storedData = localStorage.getItem(STORAGE_KEY);
         const defaultPlaylistId = 'playlist_default_0';
         const defaultAppData = {
-            viewMode: 'week', 
-            selectedDayIndex: 0, 
-            windowStates: { 
-                xpMainWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false }, 
+            viewMode: 'week',
+            selectedDayIndex: 0,
+            windowStates: {
+                xpMainWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false },
                 textEditorWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
-                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true } 
+                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true }
             },
-            iconPositions: { 
-                trackerIcon: { x: 0, y: 0 }, 
+            iconPositions: {
+                trackerIcon: { x: 0, y: 0 },
                 textEditorIcon: { x: 0, y: 100 },
                 playJockeyIcon: { x: 0, y: 200 }
             },
-            areas: [], 
-            achievements: {}, 
-            quests: {}, 
+            areas: [],
+            achievements: {},
+            quests: {},
             customBgImage: null,
             customBgColor: null,
             playJockeyPlaylists: [{id: defaultPlaylistId, name: "Playlist", videos: []}],
             playJockeyCurrentPlaylistId: defaultPlaylistId,
             playJockeyCurrentVideo: null,
-            playJockeyAutoPlayEnabled: true, 
+            playJockeyAutoPlayEnabled: true,
             playJockeyRandomEnabled: false,
             playJockeyRepeatState: "off",
-            playJockeyRandomHistory: [] 
+            playJockeyRandomHistory: []
         };
         if (storedData) {
             try {
@@ -2525,13 +2591,13 @@
                 appData = {
                     ...defaultAppData,
                     ...loadedData,
-                    windowStates: { 
+                    windowStates: {
                         xpMainWindow: { ...defaultAppData.windowStates.xpMainWindow, ...(loadedData.windowStates ? loadedData.windowStates.xpMainWindow : {}) },
                         textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(loadedData.windowStates ? loadedData.windowStates.textEditorWindow : {}) },
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) }
                     },
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
-                    playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0) 
+                    playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
                             ...pl,
                             videos: (pl.videos || []).map(video => ({
@@ -2548,12 +2614,12 @@
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
-                    playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [] 
+                    playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : []
                 };
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
-                     if (appData.playJockeyPlaylists.length === 0) { 
+                     if (appData.playJockeyPlaylists.length === 0) {
                         appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
                         appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
                     }
@@ -2580,8 +2646,8 @@
     }
 
     function getMonday(d) {
-        d = new Date(d); 
-        const currentDay = d.getDay(); 
+        d = new Date(d);
+        const currentDay = d.getDay();
         const diffToMondayVal = d.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
         const mondayDate = new Date(d.getFullYear(), d.getMonth(), diffToMondayVal);
         return mondayDate;
@@ -2594,7 +2660,7 @@
         return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     }
 
-    function getCurrentWeekId() { 
+    function getCurrentWeekId() {
         if (!appData.currentWeekStartDate) {
             appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
         }
@@ -2602,10 +2668,10 @@
         return `${startDate.getFullYear()}-W${String(getWeekNumber(startDate)).padStart(2, '0')}`;
     }
 
-    function navigateWeek(offsetInDays) { 
+    function navigateWeek(offsetInDays) {
         const currentMon = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
         currentMon.setDate(currentMon.getDate() + offsetInDays);
-        appData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; 
+        appData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0];
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
@@ -2613,20 +2679,20 @@
         saveData();
     }
 
-    function navigateDay(offset) { 
+    function navigateDay(offset) {
         appData.selectedDayIndex += offset;
         let weekChanged = false;
         let currentMonDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
 
         if (appData.selectedDayIndex < 0) {
-            currentMonDate.setDate(currentMonDate.getDate() - 7); 
+            currentMonDate.setDate(currentMonDate.getDate() - 7);
             appData.currentWeekStartDate = getMonday(currentMonDate).toISOString().split('T')[0];
-            appData.selectedDayIndex = 6; 
+            appData.selectedDayIndex = 6;
             weekChanged = true;
         } else if (appData.selectedDayIndex > 6) {
-            currentMonDate.setDate(currentMonDate.getDate() + 7); 
+            currentMonDate.setDate(currentMonDate.getDate() + 7);
             appData.currentWeekStartDate = getMonday(currentMonDate).toISOString().split('T')[0];
-            appData.selectedDayIndex = 0; 
+            appData.selectedDayIndex = 0;
             weekChanged = true;
         }
 
@@ -2639,11 +2705,11 @@
         saveData();
     }
 
-    function goToThisWeek() { 
+    function goToThisWeek() {
         appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
         if(appData.viewMode === 'day') {
             const today = new Date();
-            let currentDayOfWeek = today.getDay(); 
+            let currentDayOfWeek = today.getDay();
             appData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1;
         }
         updateViewControls();
@@ -2654,14 +2720,14 @@
         saveData();
     }
 
-    function toggleViewMode() { 
+    function toggleViewMode() {
         const appWindow = DOM.xpMainWindow;
         const wasMaximized = appWindow.classList.contains('true-maximized');
         const wasMinimized = appWindow.classList.contains('minimized');
 
         if (appData.viewMode === 'week') {
             appData.viewMode = 'day';
-            minTrackerAppWidth = 375; 
+            minTrackerAppWidth = 375;
             const today = new Date();
             const currentWeekMondayObj = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
             const checkDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -2679,7 +2745,7 @@
             }
         } else {
             appData.viewMode = 'week';
-            minTrackerAppWidth = 905; 
+            minTrackerAppWidth = 905;
         }
 
         if (!wasMaximized && !wasMinimized) {
@@ -2687,8 +2753,8 @@
             if (currentWidth < minTrackerAppWidth) {
                 appWindow.style.width = minTrackerAppWidth + 'px';
                 if(appData.windowStates.xpMainWindow) {
-                    appData.windowStates.xpMainWindow.userManuallySet = false; 
-                    setWindowDefaults('xpMainWindow', false); 
+                    appData.windowStates.xpMainWindow.userManuallySet = false;
+                    setWindowDefaults('xpMainWindow', false);
                 }
             } else if (appData.windowStates.xpMainWindow && !appData.windowStates.xpMainWindow.userManuallySet) {
                  setWindowDefaults('xpMainWindow', false);
@@ -2700,10 +2766,10 @@
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
-        saveData(); 
+        saveData();
     }
 
-    function updateDateDisplay() { 
+    function updateDateDisplay() {
         const currentMonday = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
         if (appData.viewMode === 'week') {
             const weekEndDate = new Date(currentMonday);
@@ -2716,7 +2782,7 @@
              if (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6){
                  selectedDate.setDate(currentMonday.getDate() + appData.selectedDayIndex);
             } else {
-                 appData.selectedDayIndex = 0; 
+                 appData.selectedDayIndex = 0;
                  selectedDate.setDate(currentMonday.getDate() + appData.selectedDayIndex);
             }
             const dayDisplayOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -2725,7 +2791,7 @@
         }
     }
 
-    function renderWeekdayHeaders() { 
+    function renderWeekdayHeaders() {
         DOM.weekdayHeaders.innerHTML = '<th>Area</th>';
         if (appData.viewMode === 'week') {
             WEEKDAYS.forEach(day => {
@@ -2743,7 +2809,7 @@
         }
     }
 
-    function renderGrid() { 
+    function renderGrid() {
         DOM.gridBody.innerHTML = '';
         appData.areas.forEach(area => {
             const tr = document.createElement('tr');
@@ -2757,10 +2823,10 @@
                     <button class="xp-button delete-area-btn" data-area-name="${area.name}" title="Delete ${area.name}">X</button>
                 </div>
                 <div class="area-stats">
-                    <span>Level: <span class="area-level">${area.level}</span></span>
+                    <span>Level: <span class="area-level">${area.level}</span></span>
                     <div class="xp-bar-container">
                         <div class="xp-bar" style="width: ${getXpPercentage(area)}%;"></div>
-                        <div class="xp-bar-text"><span class="area-xp">${area.xp}</span> / ${xpForNextLevel(area.level)} XP</div>
+                        <div class="xp-bar-text"><span class="area-xp">${area.xp}</span> / ${xpForNextLevel(area.level)} XP</div>
                     </div>
                 </div>`;
             tr.appendChild(nameTd);
@@ -2799,7 +2865,7 @@
                 });
 
                 const addAchBtn = document.createElement('button');
-                addAchBtn.className = 'xp-button achievement-add-btn-cell'; 
+                addAchBtn.className = 'xp-button achievement-add-btn-cell';
                 addAchBtn.textContent = '+';
                 addAchBtn.dataset.areaName = areaName;
                 addAchBtn.dataset.dayIndex = dayIdx;
@@ -2807,7 +2873,7 @@
                 const dayDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
                 dayDate.setDate(dayDate.getDate() + dayIdx);
                 addAchBtn.title = `Add achievement to ${areaName} on ${WEEKDAYS[dayIdx]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
-                
+
                 td.appendChild(addAchBtn);
             };
 
@@ -2832,12 +2898,12 @@
     }
 
 
-    function getXpPercentage(area) { 
+    function getXpPercentage(area) {
         const required = xpForNextLevel(area.level);
         return required > 0 ? Math.min((area.xp / required) * 100, 100) : 0;
     }
 
-    function saveNewArea() { 
+    function saveNewArea() {
         const name = DOM.newAreaNameInput.value.trim();
         if (!name) {
             alert("Area name cannot be empty.");
@@ -2852,17 +2918,17 @@
         DOM.newAreaNameInput.value = '';
         closeModal(MODAL_IDS.NEW_AREA);
         renderGrid();
-        generateQuestsForCurrentWeekIfNeeded(true); 
+        generateQuestsForCurrentWeekIfNeeded(true);
         saveData();
     }
 
-    function promptRemoveArea(areaName) { 
+    function promptRemoveArea(areaName) {
         DOM.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${areaName}"? This action cannot be undone and will delete all associated achievements and quests.`;
         DOM.confirmRemoveBtn.dataset.areaNameToRemove = areaName;
         openModal(MODAL_IDS.CONFIRM_REMOVE_AREA);
     }
 
-    function removeArea(areaName) { 
+    function removeArea(areaName) {
         appData.areas = appData.areas.filter(area => area.name !== areaName);
 
         const achievementKeysToDelete = [];
@@ -2884,21 +2950,21 @@
                 appData.quests[weekId] = appData.quests[weekId].filter(quest => quest.areaName !== areaName);
             }
         }
-        
-        generateQuestsForCurrentWeekIfNeeded(true); 
-        updateDateDisplay(); 
+
+        generateQuestsForCurrentWeekIfNeeded(true);
+        updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
         saveData();
     }
-    
-    function openAddEditAchievementModal(areaName, dayIndex, achievementKeyToEdit = null, achievementIdToEdit = null) { 
-        DOM.achievementImageInput.value = null; 
+
+    function openAddEditAchievementModal(areaName, dayIndex, achievementKeyToEdit = null, achievementIdToEdit = null) {
+        DOM.achievementImageInput.value = null;
         DOM.achievementTextInput.value = '';
         DOM.editingAchievementKeyInput.value = '';
         DOM.editingAchievementIdInput.value = '';
 
-        if (achievementKeyToEdit && achievementIdToEdit) { 
+        if (achievementKeyToEdit && achievementIdToEdit) {
             const achievementsInCell = appData.achievements[achievementKeyToEdit];
             const achievementToEdit = achievementsInCell ? achievementsInCell.find(ach => ach.id === achievementIdToEdit) : null;
 
@@ -2906,7 +2972,7 @@
                 alert("Error: Could not find achievement to edit.");
                 return;
             }
-            
+
             const keyParts = achievementKeyToEdit.split('_');
             const currentAreaName = keyParts.slice(1, keyParts.length -1).join('_');
             const currentDayIndex = parseInt(keyParts[keyParts.length -1]);
@@ -2925,12 +2991,12 @@
             } else if (achievementToEdit.type === 'image') {
                 DOM.achievementTypeRadios[1].checked = true;
             }
-        } else { 
+        } else {
             DOM.achievementAreaNameInput.value = areaName;
             DOM.achievementDayIndexInput.value = dayIndex;
             DOM.addEditAchievementModalTitle.textContent = "Add Achievement";
             DOM.saveAchievementBtn.textContent = "Save Achievement";
-            DOM.achievementTypeRadios[0].checked = true; 
+            DOM.achievementTypeRadios[0].checked = true;
         }
         toggleAchievementInputType();
         openModal(MODAL_IDS.ADD_EDIT_ACHIEVEMENT);
@@ -2938,17 +3004,17 @@
     }
 
 
-    function toggleAchievementInputType() { 
-        if (DOM.achievementTypeRadios[0].checked) { 
+    function toggleAchievementInputType() {
+        if (DOM.achievementTypeRadios[0].checked) {
             DOM.textInputDiv.style.display = 'block';
             DOM.imageInputDiv.style.display = 'none';
-        } else { 
+        } else {
             DOM.textInputDiv.style.display = 'none';
             DOM.imageInputDiv.style.display = 'block';
         }
     }
 
-    function saveOrUpdateAchievement() { 
+    function saveOrUpdateAchievement() {
         const areaName = DOM.achievementAreaNameInput.value;
         const dayIndex = parseInt(DOM.achievementDayIndexInput.value);
         const type = document.querySelector('input[name="achievementType"]:checked').value;
@@ -2957,12 +3023,12 @@
 
         const isEditing = editingKey && editingId;
         let achievement;
-        
+
         const achievementsKey = isEditing ? editingKey : `${appData.currentWeekStartDate}_${areaName}_${dayIndex}`;
         if (!appData.achievements[achievementsKey] && !isEditing) {
             appData.achievements[achievementsKey] = [];
         }
-        
+
         let achievementList = appData.achievements[achievementsKey] || [];
 
         if (isEditing) {
@@ -2975,21 +3041,21 @@
             achievement = {
                 id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
                 timestamp: new Date().toISOString(),
-                xp: XP_PER_REGULAR_ACHIEVEMENT 
+                xp: XP_PER_REGULAR_ACHIEVEMENT
             };
         }
-        
+
         achievement.type = type;
 
         const processSave = (content) => {
             achievement.content = content;
             if (isEditing) {
-            } else { 
+            } else {
                 achievementList.push(achievement);
                 addXpToArea(areaName, achievement.xp);
                 updateQuestProgress(areaName, achievement.xp);
             }
-            
+
             closeModal(MODAL_IDS.ADD_EDIT_ACHIEVEMENT);
             renderGrid();
             saveData();
@@ -3005,8 +3071,8 @@
             processSave(textContent);
         } else if (type === 'image') {
             const file = DOM.achievementImageInput.files[0];
-            if (file) { 
-                if (file.size > 2 * 1024 * 1024) { 
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
                     alert("Image file is too large. Please choose an image under 2MB.");
                     return;
                 }
@@ -3020,24 +3086,24 @@
                 reader.readAsDataURL(file);
             } else if (isEditing && achievement.type === 'image' && achievement.content) {
                 processSave(achievement.content);
-            } else if (isEditing && achievement.type !== 'image'){ 
+            } else if (isEditing && achievement.type !== 'image'){
                  alert("Please select an image file for an image type achievement.");
                  return;
             }
-             else if (!isEditing) { 
+             else if (!isEditing) {
                 alert("Please select an image file.");
                 return;
             }
         }
     }
 
-    function promptRemoveAchievement(achievementKey, achievementId) { 
+    function promptRemoveAchievement(achievementKey, achievementId) {
         DOM.confirmDeleteAchievementBtn.dataset.achievementKey = achievementKey;
         DOM.confirmDeleteAchievementBtn.dataset.achievementId = achievementId;
         openModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT);
     }
 
-    function confirmRemoveAchievement(achievementKey, achievementId) { 
+    function confirmRemoveAchievement(achievementKey, achievementId) {
         if (!appData.achievements[achievementKey]) return;
 
         const achIndex = appData.achievements[achievementKey].findIndex(ach => ach.id === achievementId);
@@ -3045,7 +3111,7 @@
 
         const achievementToRemove = appData.achievements[achievementKey][achIndex];
         const xpToRemove = achievementToRemove.xp;
-        
+
         const keyParts = achievementKey.split('_');
         const areaName = keyParts.slice(1, keyParts.length -1).join('_');
 
@@ -3056,26 +3122,26 @@
         }
 
         subtractXpFromArea(areaName, xpToRemove);
-        updateQuestProgress(areaName, -xpToRemove); 
+        updateQuestProgress(areaName, -xpToRemove);
 
         renderGrid();
         saveData();
     }
 
 
-    function xpForNextLevel(currentLevel) { 
-        if (currentLevel === 0) return 50; 
+    function xpForNextLevel(currentLevel) {
+        if (currentLevel === 0) return 50;
         return Math.floor(50 * Math.pow(currentLevel, 1.5));
     }
 
-    function addXpToArea(areaName, xpAmount) { 
+    function addXpToArea(areaName, xpAmount) {
         const area = appData.areas.find(a => a.name === areaName);
         if (area) {
             area.xp += xpAmount;
             let leveledUp = false;
             let requiredForNext = xpForNextLevel(area.level);
 
-            while (area.xp >= requiredForNext && requiredForNext > 0) { 
+            while (area.xp >= requiredForNext && requiredForNext > 0) {
                 area.xp -= requiredForNext;
                 area.level++;
                 leveledUp = true;
@@ -3084,12 +3150,12 @@
 
             if (leveledUp) {
                 alert(`${area.name} leveled up to Level ${area.level}!`);
-                generateQuestsForCurrentWeekIfNeeded(true); 
+                generateQuestsForCurrentWeekIfNeeded(true);
             }
         }
     }
-    
-    function subtractXpFromArea(areaName, xpAmount) { 
+
+    function subtractXpFromArea(areaName, xpAmount) {
         const area = appData.areas.find(a => a.name === areaName);
         if (area) {
             area.xp -= xpAmount;
@@ -3098,50 +3164,50 @@
                 if (area.level > 1) {
                     area.level--;
                     deLeveled = true;
-                    area.xp += xpForNextLevel(area.level); 
+                    area.xp += xpForNextLevel(area.level);
                 } else {
-                    area.xp = 0; 
+                    area.xp = 0;
                     break;
                 }
             }
             if (deLeveled) {
-                generateQuestsForCurrentWeekIfNeeded(true); 
+                generateQuestsForCurrentWeekIfNeeded(true);
             }
         }
     }
 
 
-    function generateQuestsForCurrentWeekIfNeeded(forceRegenerate = false) { 
+    function generateQuestsForCurrentWeekIfNeeded(forceRegenerate = false) {
         const weekId = getCurrentWeekId();
 
-        if (!appData.quests) appData.quests = {}; 
+        if (!appData.quests) appData.quests = {};
 
         if (!appData.quests[weekId]) {
             appData.quests[weekId] = [];
         }
 
         if (appData.quests[weekId].length > 0 && !forceRegenerate) {
-            return; 
+            return;
         }
 
         if (appData.areas.length < 1 && !forceRegenerate) {
-            appData.quests[weekId] = []; 
+            appData.quests[weekId] = [];
             saveData();
             return;
         }
 
         if (forceRegenerate || appData.quests[weekId].length === 0) {
-            if (forceRegenerate) appData.quests[weekId] = []; 
+            if (forceRegenerate) appData.quests[weekId] = [];
 
             const existingQuestCount = appData.quests[weekId].length;
-            const questsToPotentiallyGenerate = Math.min(3, appData.areas.length); 
+            const questsToPotentiallyGenerate = Math.min(3, appData.areas.length);
             let generatedCount = 0;
-            
-            const availableAreasForNewQuests = [...appData.areas].filter(area => 
-                !appData.quests[weekId].some(q => q.areaName === area.name) 
+
+            const availableAreasForNewQuests = [...appData.areas].filter(area =>
+                !appData.quests[weekId].some(q => q.areaName === area.name)
             );
-            if (availableAreasForNewQuests.length === 0 && appData.areas.length > 0) { 
-                 availableAreasForNewQuests.push(...appData.areas); 
+            if (availableAreasForNewQuests.length === 0 && appData.areas.length > 0) {
+                 availableAreasForNewQuests.push(...appData.areas);
             }
 
 
@@ -3149,7 +3215,7 @@
                 if (availableAreasForNewQuests.length === 0) break;
 
                 const randomAreaIndex = Math.floor(Math.random() * availableAreasForNewQuests.length);
-                const selectedArea = availableAreasForNewQuests.splice(randomAreaIndex, 1)[0]; 
+                const selectedArea = availableAreasForNewQuests.splice(randomAreaIndex, 1)[0];
                 if (!selectedArea) continue;
 
                 const targetXPEarned = 20 + (selectedArea.level * 10);
@@ -3170,7 +3236,7 @@
         saveData();
     }
 
-    function updateQuestProgress(areaName, xpGained) { 
+    function updateQuestProgress(areaName, xpGained) {
         const weekId = getCurrentWeekId();
         if (!appData.quests || !appData.quests[weekId]) return;
 
@@ -3178,12 +3244,12 @@
         appData.quests[weekId].forEach(quest => {
             if (quest.areaName === areaName && !quest.completed) {
                 quest.currentXPEarned += xpGained;
-                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0; 
+                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0;
 
                 if (quest.currentXPEarned >= quest.targetXPEarned) {
                     quest.completed = true;
-                    quest.currentXPEarned = quest.targetXPEarned; 
-                    addXpToArea(quest.areaName, quest.rewardXP); 
+                    quest.currentXPEarned = quest.targetXPEarned;
+                    addXpToArea(quest.areaName, quest.rewardXP);
                     alert(`Quest Completed: ${quest.description}\n+${quest.rewardXP} XP to ${quest.areaName}!`);
                     questCompletedThisUpdate = true;
                 }
@@ -3191,16 +3257,16 @@
         });
 
         if (questCompletedThisUpdate) {
-            renderGrid(); 
+            renderGrid();
             saveData();
         }
     }
 
-    function showQuests() { 
+    function showQuests() {
         const weekId = getCurrentWeekId();
         DOM.questsList.innerHTML = '';
 
-        generateQuestsForCurrentWeekIfNeeded(); 
+        generateQuestsForCurrentWeekIfNeeded();
 
         const currentQuests = appData.quests[weekId] || [];
 
@@ -3225,7 +3291,7 @@
                 const progress = document.createElement('div');
                 progress.className = 'quest-progress';
                 progress.textContent = `Progress: ${Math.min(quest.currentXPEarned, quest.targetXPEarned)} / ${quest.targetXPEarned} XP. Reward: ${quest.rewardXP} XP.`;
-                
+
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'quest-actions';
                 if (!quest.completed) {
@@ -3247,8 +3313,8 @@
         DOM.addQuestBtn.disabled = currentQuests.length >= MAX_WEEKLY_QUESTS;
         openModal(MODAL_IDS.QUESTS);
     }
-    
-    function openCreateQuestModal() { 
+
+    function openCreateQuestModal() {
         const weekId = getCurrentWeekId();
         if (appData.quests[weekId] && appData.quests[weekId].length >= MAX_WEEKLY_QUESTS) {
             alert(`Maximum of ${MAX_WEEKLY_QUESTS} quests per week reached.`);
@@ -3267,12 +3333,12 @@
             DOM.newQuestAreaNameSelect.appendChild(option);
         });
         DOM.newQuestDescriptionInput.value = '';
-        DOM.newQuestTargetXPInput.value = 30; 
-        DOM.newQuestRewardXPInput.value = 50; 
+        DOM.newQuestTargetXPInput.value = 30;
+        DOM.newQuestRewardXPInput.value = 50;
         openModal(MODAL_IDS.CREATE_QUEST);
     }
 
-    function saveNewQuest() { 
+    function saveNewQuest() {
         const weekId = getCurrentWeekId();
         if (appData.quests[weekId] && appData.quests[weekId].length >= MAX_WEEKLY_QUESTS) {
             alert(`Cannot add new quest: Maximum of ${MAX_WEEKLY_QUESTS} quests reached.`);
@@ -3301,20 +3367,20 @@
 
         if (!appData.quests[weekId]) appData.quests[weekId] = [];
         appData.quests[weekId].push(newQuest);
-        
+
         closeModal(MODAL_IDS.CREATE_QUEST);
-        showQuests(); 
+        showQuests();
         saveData();
     }
 
-    function promptRefreshQuest(questId) { 
+    function promptRefreshQuest(questId) {
         DOM.confirmRefreshQuestBtn.dataset.questIdToRefresh = questId;
         openModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
     }
 
-    function generateSingleRandomQuest(weekId, questToReplace = null) { 
+    function generateSingleRandomQuest(weekId, questToReplace = null) {
         if (appData.areas.length === 0) return null;
-        
+
         let potentialAreas = [...appData.areas];
         if (questToReplace && potentialAreas.length > 1) {
             const filteredAreas = potentialAreas.filter(a => a.name !== questToReplace.areaName);
@@ -3323,14 +3389,14 @@
             }
         } else if (potentialAreas.length === 1 && questToReplace && potentialAreas[0].name === questToReplace.areaName) {
         }
-        
+
         const randomAreaIndex = Math.floor(Math.random() * potentialAreas.length);
         const selectedArea = potentialAreas[randomAreaIndex];
 
         const baseTarget = 20 + (selectedArea.level * 10);
-        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) ); 
+        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) );
         const baseReward = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5);
-        const rewardXP = Math.max(10, Math.round(baseReward + (Math.random() * baseReward * 0.2) - (baseReward * 0.1))); 
+        const rewardXP = Math.max(10, Math.round(baseReward + (Math.random() * baseReward * 0.2) - (baseReward * 0.1)));
 
         return {
             id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}`,
@@ -3343,7 +3409,7 @@
         };
     }
 
-    function confirmAndRefreshQuest() { 
+    function confirmAndRefreshQuest() {
         const questIdToRefresh = DOM.confirmRefreshQuestBtn.dataset.questIdToRefresh;
         const weekId = getCurrentWeekId();
 
@@ -3357,19 +3423,19 @@
             closeModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
             return;
         }
-        
-        const oldQuest = appData.quests[weekId][questIndex];
-        appData.quests[weekId].splice(questIndex, 1); 
 
-        const newQuest = generateSingleRandomQuest(weekId, oldQuest); 
+        const oldQuest = appData.quests[weekId][questIndex];
+        appData.quests[weekId].splice(questIndex, 1);
+
+        const newQuest = generateSingleRandomQuest(weekId, oldQuest);
         if (newQuest) {
             appData.quests[weekId].push(newQuest);
         } else if (appData.areas.length > 0) {
             alert("Could not generate a new quest. Try again or create one manually.");
         }
         closeModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
-        showQuests(); 
-        saveData(); 
+        showQuests();
+        saveData();
     }
 
     // --- PlayJockey Functions ---
@@ -3391,11 +3457,11 @@
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.playJockeyCurrentVideo?.id);
 
-        if (pendingVideoToLoad && currentVideoInPlaylist) { 
+        if (pendingVideoToLoad && currentVideoInPlaylist) {
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (appData.playJockeyCurrentVideo && currentVideoInPlaylist && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
-            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled); 
+            playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
         }
     }
 
@@ -3406,8 +3472,174 @@
         return match ? match[1] : null;
     }
 
-    function addYouTubeLinkToPlayJockey() {
-        const link = DOM.playJockeyLinkInput.value.trim();
+    function isValidYouTubeUrl(url) {
+        if (!url) return false;
+        // Regex to match standard YouTube video URLs (watch, embed, short)
+        const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})([&?].*)?$/;
+        return regex.test(url);
+    }
+
+    async function handlePlayJockeyInput() {
+        const input = DOM.playJockeyLinkInput.value.trim();
+        if (!input) {
+            alert("Please enter a YouTube link or search query.");
+            return;
+        }
+
+        if (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY) {
+            // Alert only if it's not a URL, because URLs should still work
+            if (!isValidYouTubeUrl(input)) {
+                alert("YouTube API Key is not configured. Video search is disabled. You can still add direct YouTube links.");
+            }
+        }
+
+        if (isValidYouTubeUrl(input)) {
+            addYouTubeLinkToPlayJockey(input);
+        } else {
+            if (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY) {
+                alert("Cannot search: YouTube API Key is missing or invalid. Please paste a full YouTube video URL instead.");
+                return;
+            }
+            searchYouTubeVideos(input);
+        }
+    }
+
+    async function searchYouTubeVideos(query) {
+        if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY") {
+            console.error("YouTube API Key is not set.");
+            alert("YouTube API Key is not configured. Cannot perform search.");
+            return;
+        }
+
+        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear previous results
+        DOM.youtubeSearchStatus.textContent = 'Searching...';
+        DOM.youtubeSearchStatus.style.display = 'block';
+        openModal(MODAL_IDS.Youtube);
+
+        const maxResults = 10;
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}&maxResults=${maxResults}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('YouTube API Error:', errorData);
+                let errorMessage = `Error searching videos: ${response.statusText}`;
+                if (errorData.error && errorData.error.message) {
+                    errorMessage += ` - ${errorData.error.message}`;
+                }
+                DOM.youtubeSearchStatus.textContent = errorMessage;
+                return;
+            }
+            const data = await response.json();
+            if (data.items && data.items.length > 0) {
+                DOM.youtubeSearchStatus.style.display = 'none';
+                renderYouTubeSearchResults(data.items);
+            } else {
+                DOM.youtubeSearchStatus.textContent = 'No videos found for your search query.';
+            }
+        } catch (error) {
+            console.error('Error fetching Youtube results:', error);
+            DOM.youtubeSearchStatus.textContent = 'Failed to search videos. Check console for details.';
+        }
+    }
+
+    function renderYouTubeSearchResults(items) {
+        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear status or previous results
+
+        items.forEach(item => {
+            const videoId = item.id.videoId;
+            const title = item.snippet.title;
+            const channelTitle = item.snippet.channelTitle;
+            const thumbnailUrl = item.snippet.thumbnails.default.url;
+
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'Youtube-result-item';
+            resultDiv.dataset.videoId = videoId;
+            resultDiv.dataset.title = title;
+            resultDiv.dataset.artist = channelTitle;
+
+            const img = document.createElement('img');
+            img.src = thumbnailUrl;
+            img.alt = title;
+
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'Youtube-result-item-details';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'Youtube-result-item-title';
+            titleDiv.textContent = title;
+            titleDiv.title = title;
+
+
+            const channelDiv = document.createElement('div');
+            channelDiv.className = 'Youtube-result-item-channel';
+            channelDiv.textContent = channelTitle;
+            channelDiv.title = channelTitle;
+
+
+            detailsDiv.appendChild(titleDiv);
+            detailsDiv.appendChild(channelDiv);
+            resultDiv.appendChild(img);
+            resultDiv.appendChild(detailsDiv);
+
+            resultDiv.addEventListener('click', () => {
+                addVideoFromSearchResult(videoId, title, channelTitle);
+                closeModal(MODAL_IDS.Youtube);
+            });
+            DOM.youtubeSearchResultsBody.appendChild(resultDiv);
+        });
+    }
+
+    function addVideoFromSearchResult(videoId, title, artist) {
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!currentPlaylist) {
+            alert("Error: No active playlist found.");
+            if (appData.playJockeyPlaylists.length === 0) {
+                addNewPlayJockeyPlaylist(); // This will also switch to it
+                const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
+                 if (!newCurrentPlaylist) return;
+                 const videoEntryFirst = { id: 'pjv_' + Date.now(), videoId: videoId, title: title, artist: artist.replace(/\s-\sTopic$/, '').trim(), originalUrl: `https://www.youtube.com/watch?v=${videoId}` };
+                 newCurrentPlaylist.videos.push(videoEntryFirst);
+                 if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
+                    playYouTubeVideoById(videoId, true, true);
+                 }
+                 renderPlayJockeyPlaylist();
+                 DOM.playJockeyLinkInput.value = '';
+                 saveData();
+                 return;
+            } else {
+                 alert("Error: No active playlist selected.");
+                 return;
+            }
+        }
+
+        if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
+            alert("This video is already in the current playlist.");
+            DOM.playJockeyLinkInput.value = '';
+            return;
+        }
+
+        const videoEntry = {
+            id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
+            originalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+            videoId: videoId,
+            title: title,
+            artist: artist.replace(/\s-\sTopic$/, '').trim()
+        };
+
+        currentPlaylist.videos.push(videoEntry);
+        renderPlayJockeyPlaylist();
+        DOM.playJockeyLinkInput.value = '';
+
+        if (!ytPlayerInstance || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true);
+        }
+        saveData();
+    }
+
+
+    function addYouTubeLinkToPlayJockey(link) {
         if (!link) {
             alert("Please enter a YouTube link.");
             return;
@@ -3421,16 +3653,13 @@
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!currentPlaylist) {
             alert("Error: No active playlist found. Please create one first.");
-            // Optionally, create a default playlist here if none exist
             if (appData.playJockeyPlaylists.length === 0) {
-                addNewPlayJockeyPlaylist(); // This will also switch to it
-                // Re-get currentPlaylist as addNewPlayJockeyPlaylist would have created it
+                addNewPlayJockeyPlaylist();
                 const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
-                if (!newCurrentPlaylist) { // Should not happen
+                if (!newCurrentPlaylist) {
                     console.error("Failed to create/get playlist after attempting to add a link to an empty set.");
                     return;
                 }
-                 // Now try to add the video to this newly created playlist
                 const videoEntryFirst = { id: 'pjv_' + Date.now(), originalUrl: link, videoId: videoId, title: "Loading title...", artist: "" };
                 newCurrentPlaylist.videos.push(videoEntryFirst);
                 fetchYouTubeTitle(videoEntryFirst, newCurrentPlaylist.id);
@@ -3440,8 +3669,8 @@
                 renderPlayJockeyPlaylist();
                 DOM.playJockeyLinkInput.value = '';
                 saveData();
-                return; // Exit after handling this special case
-            } else { // A playlist exists but somehow currentPlaylistId is null
+                return;
+            } else {
                  alert("Error: No active playlist selected.");
                  return;
             }
@@ -3450,60 +3679,62 @@
 
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
             alert("This video is already in the current playlist.");
+            DOM.playJockeyLinkInput.value = '';
             return;
         }
 
-        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7); 
+        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
         const videoEntry = {
             id: tempId,
             originalUrl: link,
             videoId: videoId,
             title: "Loading title...",
-            artist: "" 
+            artist: ""
         };
 
         currentPlaylist.videos.push(videoEntry);
-        renderPlayJockeyPlaylist(); 
+        renderPlayJockeyPlaylist();
         DOM.playJockeyLinkInput.value = '';
-        
-        fetchYouTubeTitle(videoEntry, currentPlaylist.id); 
+
+        fetchYouTubeTitle(videoEntry, currentPlaylist.id);
 
         if (!ytPlayerInstance || currentPlaylist.videos.length === 1) {
-            playYouTubeVideoById(videoId, true, true); 
+            playYouTubeVideoById(videoId, true, true);
         }
         saveData();
     }
 
+
     async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
         try {
+            // Using Noembed as a fallback for title fetching if needed, primary info comes from search for searched videos.
+            // This function is more relevant for direct link additions.
             const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
-            let newTitle = videoEntryToUpdate.originalUrl; 
+            let newTitle = videoEntryToUpdate.originalUrl;
             let newArtist = "";
 
             if (response.ok) {
                 const data = await response.json();
                 if (data.title) newTitle = data.title;
                 if (data.author_name) newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
-                if (data.error) {
+                if (data.error) { // noembed specific error
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
-                    newTitle = videoEntryToUpdate.originalUrl; newArtist = "";
                 }
             } else {
                 console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
-                newTitle = videoEntryToUpdate.originalUrl; newArtist = "";
             }
-            
+
             const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
                     itemInPlaylist.title = newTitle;
                     itemInPlaylist.artist = newArtist;
-                    if (appData.playJockeyCurrentPlaylistId === playlistId) { 
-                        renderPlayJockeyPlaylist(); 
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) {
+                        renderPlayJockeyPlaylist();
                     }
-                    saveData(); 
+                    saveData();
                 }
             }
         } catch (error) {
@@ -3513,7 +3744,7 @@
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
                     if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                    itemInPlaylist.artist = "";
+                    itemInPlaylist.artist = ""; // Clear artist if fetch failed
                     if (appData.playJockeyCurrentPlaylistId === playlistId) {
                          renderPlayJockeyPlaylist();
                     }
@@ -3522,6 +3753,7 @@
             }
         }
     }
+
 
     function renderPlayJockeyTabs() {
         DOM.playJockeyTabsBar.innerHTML = '';
@@ -3540,17 +3772,16 @@
         });
 
         const addTabBtn = document.createElement('button');
-        // MODIFIED: Ensure add button also has playjockey-tab for consistent styling by gap
         addTabBtn.className = 'playjockey-tab playjockey-add-tab-btn xp-button xp-button-small';
         addTabBtn.textContent = '+';
         addTabBtn.title = "New Playlist";
         addTabBtn.addEventListener('click', addNewPlayJockeyPlaylist);
         DOM.playJockeyTabsBar.appendChild(addTabBtn);
     }
-    
+
     function addNewPlayJockeyPlaylist() {
         let newPlaylistName = "Playlist";
-        let counter = appData.playJockeyPlaylists.length; 
+        let counter = appData.playJockeyPlaylists.length;
         const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase());
 
         if (existingNames.includes(newPlaylistName.toLowerCase())) {
@@ -3560,27 +3791,27 @@
             }
             newPlaylistName = `${newPlaylistName} ${counter}`;
         }
-        
+
         const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
         appData.playJockeyPlaylists.push({
             id: newPlaylistId,
             name: newPlaylistName,
             videos: []
         });
-        switchPlayJockeyPlaylist(newPlaylistId); 
+        switchPlayJockeyPlaylist(newPlaylistId);
     }
 
     function switchPlayJockeyPlaylist(playlistId) {
         if (appData.playJockeyCurrentPlaylistId === playlistId) return;
 
         appData.playJockeyCurrentPlaylistId = playlistId;
-        appData.playJockeyCurrentVideo = null; 
-        appData.playJockeyRandomHistory = []; 
+        appData.playJockeyCurrentVideo = null;
+        appData.playJockeyRandomHistory = [];
 
         if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
             ytPlayerInstance.stopVideo();
         }
-        
+
         renderPlayJockeyTabs();
         renderPlayJockeyPlaylist();
         saveData();
@@ -3588,12 +3819,12 @@
 
 
     function renderPlayJockeyPlaylist() {
-        DOM.playJockeyPlaylist.innerHTML = ''; 
+        DOM.playJockeyPlaylist.innerHTML = '';
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!currentPlaylist || currentPlaylist.videos.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.textContent = "Playlist is empty. Add some YouTube links!";
+            emptyMsg.textContent = "Playlist is empty. Add some YouTube links or search!";
             emptyMsg.style.padding = "10px";
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
@@ -3604,7 +3835,7 @@
         currentPlaylist.videos.forEach(video => {
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
-            
+
             let displayTitle = video.title;
             if (video.title === "Loading title..." || video.title === video.originalUrl) {
                 displayTitle = video.originalUrl.length > 40 ? video.originalUrl.substring(0, 37) + '...' : video.originalUrl;
@@ -3620,82 +3851,90 @@
                 itemText = `${displayTitle} - ${artistShort}`;
                 itemTooltip = `${itemTooltip} by ${video.artist}`;
             }
-            
+
             item.textContent = itemText;
             item.title = itemTooltip;
-            
-            item.dataset.videoId = video.videoId;
-            item.dataset.playlistItemId = video.id; 
-            item.draggable = true; 
 
-            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) { 
+            item.dataset.videoId = video.videoId;
+            item.dataset.playlistItemId = video.id;
+            item.draggable = true;
+
+            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) {
                 item.classList.add('playing');
             }
             item.addEventListener('click', (event) => {
                 if (event.target.closest('.context-modal')) return;
-                if (item.classList.contains('dragging')) return; 
+                if (item.classList.contains('dragging')) return;
 
-                const clickedItem = event.currentTarget; 
+                const clickedItem = event.currentTarget;
                 if (clickedItem && clickedItem.dataset.videoId) {
-                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true); 
+                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true);
                 }
             });
             DOM.playJockeyPlaylist.appendChild(item);
         });
     }
 
-    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { 
+    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) {
         if (!videoId) return;
 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!currentPlaylist) return;
-        
+
         const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
-        if (!videoToPlay) { 
+        if (!videoToPlay) {
             appData.playJockeyCurrentVideo = null;
             updatePlayingClassInPlaylist(null);
             if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
             return;
         }
-        
+
         if (
-            isManualPlay && 
-            videoToPlay &&    
+            isManualPlay &&
+            videoToPlay &&
             appData.playJockeyRandomEnabled &&
-            appData.playJockeyAutoPlayEnabled && 
+            appData.playJockeyAutoPlayEnabled &&
             appData.playJockeyRepeatState === "off" &&
             currentPlaylist.videos.length > 0 &&
             new Set(appData.playJockeyRandomHistory).size >= new Set(currentPlaylist.videos.map(v => v.id)).size
         ) {
-            appData.playJockeyRandomHistory = [videoToPlay.id]; 
+            appData.playJockeyRandomHistory = [videoToPlay.id];
         }
-        
+
 
         appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
-        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null); 
-        saveData(); 
+        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null);
+        saveData();
 
-        if (!appData.playJockeyCurrentVideo && videoId) { 
+        if (!appData.playJockeyCurrentVideo && videoId) {
              if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo();
              }
-             return; 
+             return;
         }
 
 
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
             console.log("YouTube API not ready, video load queued:", videoId);
+            // Attempt to initialize player if YT object is available (API script might have loaded but onYouTubeIframeAPIReady hasn't fired)
+            if (typeof YT !== 'undefined' && YT.Player) {
+                onYouTubeIframeAPIReady(); // Try to manually trigger if API is loaded
+            }
             return;
         }
 
+
         if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
             ytPlayerInstance.loadVideoById({ 'videoId': videoId });
+            if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') { // Ensure play if autoplay is intended
+                 ytPlayerInstance.playVideo();
+            }
         } else {
-            if (DOM.playJockeyPlayer.firstChild && DOM.playJockeyPlayer.firstChild.tagName === 'IFRAME') { 
+            if (DOM.playJockeyPlayer.firstChild && DOM.playJockeyPlayer.firstChild.tagName === 'IFRAME') {
                  DOM.playJockeyPlayer.innerHTML = '';
             }
-            ytPlayerInstance = new YT.Player('playJockeyPlayer', { 
+            ytPlayerInstance = new YT.Player('playJockeyPlayer', {
                 height: '100%',
                 width: '100%',
                 videoId: videoId,
@@ -3704,10 +3943,15 @@
                     'controls': 1,
                     'enablejsapi': 1,
                     'origin': window.location.origin,
-                    'modestbranding': 1, 
-                    'rel': 0 
+                    'modestbranding': 1,
+                    'rel': 0
                 },
                 events: {
+                    'onReady': (event) => { // Ensure video plays onReady if autoplay intended
+                        if (autoplayIntent) {
+                            event.target.playVideo();
+                        }
+                    },
                     'onStateChange': onPlayerStateChange
                 }
             });
@@ -3723,7 +3967,7 @@
     function playNextPjVideo() {
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) {
-            return; 
+            return;
         }
 
         let nextVideoItem = null;
@@ -3734,40 +3978,40 @@
         if (appData.playJockeyRepeatState === "song") {
             nextVideoItem = activePlaylistVideos.find(item => item.id === currentVideoUniqueId);
         } else if (appData.playJockeyRandomEnabled) {
-            if (activePlaylistVideos.length === 0) return; 
-            
+            if (activePlaylistVideos.length === 0) return;
+
             if (activePlaylistVideos.length === 1) {
                 if (appData.playJockeyRepeatState === "off") {
-                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; 
+                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return;
                     nextVideoItem = activePlaylistVideos[0];
-                } else { 
+                } else {
                     nextVideoItem = activePlaylistVideos[0];
                 }
-            } else { 
+            } else {
                 let eligibleVideos = activePlaylistVideos.filter(
                     video => !appData.playJockeyRandomHistory.includes(video.id)
                 );
 
-                if (eligibleVideos.length === 0) { 
+                if (eligibleVideos.length === 0) {
                     if (appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
+                        appData.playJockeyRandomHistory = [currentVideoUniqueId];
                         eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
-                        if (eligibleVideos.length === 0 ) { 
-                             eligibleVideos = [...activePlaylistVideos.filter(v => v.id !== currentVideoUniqueId)]; 
-                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylistVideos[0]]; 
+                        if (eligibleVideos.length === 0 ) {
+                             eligibleVideos = [...activePlaylistVideos.filter(v => v.id !== currentVideoUniqueId)];
+                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylistVideos[0]];
                         }
-                    } else { 
-                        appData.playJockeyRandomHistory = []; 
-                        return; 
+                    } else {
+                        appData.playJockeyRandomHistory = [];
+                        return;
                     }
                 }
-                
+
                 if (eligibleVideos.length > 0) {
                     const randomIndex = Math.floor(Math.random() * eligibleVideos.length);
                     nextVideoItem = eligibleVideos[randomIndex];
-                } 
+                }
             }
-            
+
             if (nextVideoItem) {
                 if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) {
                      appData.playJockeyRandomHistory.push(nextVideoItem.id);
@@ -3775,21 +4019,21 @@
                 if (appData.playJockeyRepeatState === "playlist") {
                     const maxHistorySize = Math.max(0, activePlaylistVideos.length - 1);
                     while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) {
-                        appData.playJockeyRandomHistory.shift(); 
+                        appData.playJockeyRandomHistory.shift();
                     }
                 }
             }
 
-        } else { 
+        } else {
             const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId);
             if (currentIndex === -1) return;
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= activePlaylistVideos.length) { 
+            if (nextIndex >= activePlaylistVideos.length) {
                 if (appData.playJockeyRepeatState === "playlist") {
-                    nextIndex = 0; 
-                } else { 
-                    return; 
+                    nextIndex = 0;
+                } else {
+                    return;
                 }
             }
             if (activePlaylistVideos[nextIndex]) {
@@ -3798,10 +4042,10 @@
         }
 
         if (nextVideoItem && nextVideoItem.videoId) {
-            playYouTubeVideoById(nextVideoItem.videoId, true, false); 
+            playYouTubeVideoById(nextVideoItem.videoId, true, false);
         }
     }
-    
+
     function updatePlayingClassInPlaylist(playingItemId) {
         const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
@@ -3814,20 +4058,19 @@
     }
 
 
-    function initPlayJockeyContextMenu() { 
+    function initPlayJockeyContextMenu() {
         DOM.pjContextRenameBtn.addEventListener('click', handlePjContextRename);
         DOM.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove);
     }
-    function initPlayJockeyTabContextMenu() { 
-        // MODIFIED: Context menu items now open modals instead of direct action
+    function initPlayJockeyTabContextMenu() {
         DOM.pjTabContextRenameBtn.addEventListener('click', openRenamePlaylistModalFromContextMenu);
         DOM.pjTabContextRemoveBtn.addEventListener('click', openConfirmRemovePlaylistModalFromContextMenu);
     }
 
 
-    function showPjContextMenu(e) { 
+    function showPjContextMenu(e) {
         e.preventDefault();
-        hidePjContextMenu(); 
+        hidePjContextMenu();
         hidePjTabContextMenu();
 
         const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item');
@@ -3840,9 +4083,9 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
-            if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; 
-            if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; 
-            
+            if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5;
+            if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5;
+
             DOM.playJockeyContextMenu.style.left = `${x}px`;
             DOM.playJockeyContextMenu.style.top = `${y}px`;
             DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId;
@@ -3853,8 +4096,8 @@
         DOM.playJockeyContextMenu.style.display = 'none';
         delete DOM.playJockeyContextMenu.dataset.currentItemId;
     }
-    
-    function showPjTabContextMenu(e, playlistId) { 
+
+    function showPjTabContextMenu(e, playlistId) {
         e.preventDefault();
         hidePjContextMenu();
         hidePjTabContextMenu();
@@ -3881,7 +4124,7 @@
     }
 
 
-    function handlePjContextRename() { 
+    function handlePjContextRename() {
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) return;
@@ -3892,7 +4135,7 @@
             const newName = prompt("Enter new name for the track:", currentDisplayTitle);
             if (newName !== null && newName.trim() !== "") {
                 itemToRename.title = newName.trim();
-                 if (itemToRename.artist === "" && newName.includes(" - ")) { 
+                 if (itemToRename.artist === "" && newName.includes(" - ")) {
                     const parts = newName.split(" - ");
                     if (parts.length > 1) {
                         itemToRename.title = parts.slice(0, -1).join(" - ").trim();
@@ -3906,7 +4149,7 @@
         hidePjContextMenu();
     }
 
-    function handlePjContextRemove() { 
+    function handlePjContextRemove() {
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) return;
@@ -3914,7 +4157,7 @@
         const itemIndex = currentPlaylist.videos.findIndex(video => video.id === itemId);
         if (itemIndex > -1) {
             const removedItem = currentPlaylist.videos.splice(itemIndex, 1)[0];
-            
+
             const historyIndex = appData.playJockeyRandomHistory.indexOf(removedItem.id);
             if (historyIndex > -1) {
                 appData.playJockeyRandomHistory.splice(historyIndex, 1);
@@ -3926,7 +4169,7 @@
                 }
                 appData.playJockeyCurrentVideo = null;
                 if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) {
-                    playNextPjVideo(); 
+                    playNextPjVideo();
                 }
             }
             renderPlayJockeyPlaylist();
@@ -3935,14 +4178,13 @@
         hidePjContextMenu();
     }
 
-    // MODIFIED: Functions to open modals for renaming/removing playlist tabs
     function openRenamePlaylistModalFromContextMenu() {
         const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
         if (!playlistId) return;
         const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
             DOM.playlistNewNameInput.value = playlistToRename.name;
-            DOM.saveRenamedPlaylistBtn.dataset.playlistId = playlistId; // Store ID for save function
+            DOM.saveRenamedPlaylistBtn.dataset.playlistId = playlistId;
             openModal(MODAL_IDS.RENAME_PLAYLIST);
             DOM.playlistNewNameInput.focus();
         }
@@ -3964,7 +4206,7 @@
             saveData();
         }
         closeModal(MODAL_IDS.RENAME_PLAYLIST);
-        delete DOM.saveRenamedPlaylistBtn.dataset.playlistId; // Clean up
+        delete DOM.saveRenamedPlaylistBtn.dataset.playlistId;
     }
 
 
@@ -3974,7 +4216,7 @@
         const playlistToRemove = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRemove) {
             DOM.confirmRemovePlaylistMessage.textContent = `Are you sure you want to remove the playlist "${playlistToRemove.name}"? This action cannot be undone.`;
-            DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId; // Store ID for confirm function
+            DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId;
             openModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
         }
         hidePjTabContextMenu();
@@ -3998,37 +4240,36 @@
                 if (appData.playJockeyPlaylists.length > 0) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
                 } else {
-                    // If all playlists are removed, create a new default one
                     const defaultPlaylistId = 'playlist_default_' + Date.now();
                     appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
                     appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
                 }
             }
         }
-         if (appData.playJockeyPlaylists.length === 0) { 
+         if (appData.playJockeyPlaylists.length === 0) {
             const defaultPlaylistId = 'playlist_default_' + Date.now();
             appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
             appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
         }
 
         renderPlayJockeyTabs();
-        renderPlayJockeyPlaylist(); // Update the playlist view as well
+        renderPlayJockeyPlaylist();
         saveData();
         closeModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
-        delete DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId; // Clean up
+        delete DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId;
     }
 
-    
+
     function handlePjDragStart(e) {
         const target = e.target.closest('.playjockey-playlist-item');
         if (target) {
             pjDraggedItem = target;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
-            setTimeout(() => { 
+            setTimeout(() => {
                 target.classList.add('dragging');
             }, 0);
-            hidePjContextMenu(); 
+            hidePjContextMenu();
         }
     }
 
@@ -4041,7 +4282,7 @@
         });
         pjDraggedItem = null;
     }
-    
+
     function clearPjDragOverHighlights() {
         DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => {
             item.classList.remove('drag-over-target-before', 'drag-over-target-after');
@@ -4049,9 +4290,9 @@
     }
 
     function handlePjDragOver(e) {
-        e.preventDefault(); 
+        e.preventDefault();
         const targetItem = e.target.closest('.playjockey-playlist-item');
-        
+
         clearPjDragOverHighlights();
 
         if (targetItem && pjDraggedItem && targetItem !== pjDraggedItem) {
@@ -4064,12 +4305,12 @@
             }
         }
     }
-    
+
     function handlePjDragLeave(e) {
         const relatedTargetIsChild = DOM.playJockeyPlaylist.contains(e.relatedTarget);
-        if (!relatedTargetIsChild) { 
+        if (!relatedTargetIsChild) {
              clearPjDragOverHighlights();
-        } else { 
+        } else {
             const targetItem = e.target.closest('.playjockey-playlist-item');
             if (targetItem) {
                  targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after');
@@ -4086,12 +4327,12 @@
 
         const draggedItemId = e.dataTransfer.getData('text/plain');
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
-        
+
         const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId);
         if (draggedItemIndex === -1) return;
 
         const itemToMove = currentPlaylist.videos[draggedItemIndex];
-        currentPlaylist.videos.splice(draggedItemIndex, 1); 
+        currentPlaylist.videos.splice(draggedItemIndex, 1);
 
         let targetIndex = -1;
 
@@ -4101,7 +4342,7 @@
 
             const rect = targetItemElement.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
-            if (e.clientY >= midpointY) { 
+            if (e.clientY >= midpointY) {
                 targetIndex++;
             }
         }
@@ -4109,13 +4350,13 @@
 
         if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) {
             currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
-        } else { 
+        } else {
             currentPlaylist.videos.push(itemToMove);
         }
-        
+
         renderPlayJockeyPlaylist();
         saveData();
-        pjDraggedItem = null; 
+        pjDraggedItem = null;
     }
 
 
@@ -4137,7 +4378,7 @@
 
     function togglePlayJockeyRandom() {
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        appData.playJockeyRandomHistory = []; 
+        appData.playJockeyRandomHistory = [];
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
              if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
@@ -4151,7 +4392,7 @@
     function updatePlayJockeyRandomButtonState() {
         if (appData.playJockeyRandomEnabled) {
             DOM.playJockeyRandomBtn.textContent = 'Random: On';
-            DOM.playJockeyRandomBtn.classList.add('random-on'); 
+            DOM.playJockeyRandomBtn.classList.add('random-on');
         } else {
             DOM.playJockeyRandomBtn.textContent = 'Random: Off';
             DOM.playJockeyRandomBtn.classList.remove('random-on');
@@ -4163,13 +4404,13 @@
             appData.playJockeyRepeatState = "playlist";
         } else if (appData.playJockeyRepeatState === "playlist") {
             appData.playJockeyRepeatState = "song";
-        } else { 
+        } else {
             appData.playJockeyRepeatState = "off";
         }
-        appData.playJockeyRandomHistory = []; 
+        appData.playJockeyRandomHistory = [];
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
-             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") { 
+             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
                  appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
         }
@@ -4178,7 +4419,7 @@
     }
 
     function updatePlayJockeyRepeatButtonState() {
-        DOM.playJockeyRepeatBtn.classList.remove('repeat-on'); 
+        DOM.playJockeyRepeatBtn.classList.remove('repeat-on');
         switch (appData.playJockeyRepeatState) {
             case "off":
                 DOM.playJockeyRepeatBtn.textContent = 'Repeat: Off';
