@@ -1694,17 +1694,19 @@
 <head>
     <title>Jotter</title>
     <style>
+        html, body { /* Tweak: Ensure html and body take full height for calculations */
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Body should not scroll */
+        }
         body {
             font-family: "Tahoma", "Geneva", sans-serif;
             font-size: 11px;
             background-color: #ECE9D8;
             color: #000000;
-            margin: 0;
-            padding: 0;
-            height: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
         [contenteditable]:focus { outline: none; }
 
@@ -1713,7 +1715,7 @@
             padding: 2px 3px;
             border-bottom: 1px solid #ACA899;
             display: flex;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Menu bar should not shrink */
             user-select: none;
             color: #000000;
         }
@@ -1736,7 +1738,7 @@
             border: 1px solid #000;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
             z-index: 100;
-            min-width: 150px; /* Adjusted min-width for font control */
+            min-width: 150px; 
             padding: 2px 0;
             color: #000000;
         }
@@ -1746,10 +1748,10 @@
             white-space: nowrap;
             position: relative;
             color: inherit;
-            display: flex; /* For aligning items in font size control */
-            align-items: center; /* For aligning items in font size control */
+            display: flex; 
+            align-items: center; 
         }
-        .jotter-dropdown-item:hover:not(.disabled) { /* Don't highlight disabled items on hover */
+        .jotter-dropdown-item:hover:not(.disabled) {
             background-color: #005CFE;
             color: white;
         }
@@ -1767,31 +1769,25 @@
         }
 
         #editorArea {
-            flex-grow: 1;
+            /* Tweak: Removed flex-grow: 1; height will be set by JS */
             border: 1px solid #7F7F7F;
             padding: 5px;
             background-color: white;
             overflow-y: auto;
             font-family: 'Lucida Console', Monaco, monospace;
-            font-size: 14px; /* Initial font size */
+            font-size: 14px; 
             line-height: 1.4;
             color: #000000;
             white-space: pre-wrap; 
             word-wrap: break-word;
             box-sizing: border-box;
-            /* Tweak: Removed all margins to make it fill height perfectly */
-            margin: 0;
-            border-top: none; /* Remove top border as it's adjacent to menu bar's bottom border */
-            border-left: none; /* Optional: remove side borders if you want it flush */
-            border-right: none;
-            border-bottom: none;
+            margin: 2px; /* Tweak: Restored margin */
         }
 
-        /* Styles for the new font size control */
         .font-size-control-container {
             display: flex;
             align-items: center;
-            padding: 0px 5px 0px 15px !important; /* Override default padding for this specific item */
+            padding: 0px 5px 0px 15px !important;
         }
         .font-size-control-container span {
             margin-right: 8px;
@@ -1803,7 +1799,7 @@
             background-color: #ECE9D8;
             width: 20px;
             height: 20px;
-            line-height: 18px; /* Adjust for vertical centering */
+            line-height: 18px; 
             text-align: center;
             padding: 0;
             cursor: default;
@@ -1850,22 +1846,34 @@
 
     <script>
         const editorArea = document.getElementById('editorArea');
-        const menuBar = document.getElementById('jotterMenuBar');
+        const jotterMenuBar = document.getElementById('jotterMenuBar'); // Renamed for clarity
+        const bodyElement = document.body; // Get the body element of the iframe
         let activeMenu = null;
 
-        // --- Font Size Control Elements ---
         const fontDecrementBtn = document.getElementById('fontDecrementBtn');
         const fontIncrementBtn = document.getElementById('fontIncrementBtn');
         const fontSizeInput = document.getElementById('fontSizeInput');
 
+        // --- Tweak: Function to adjust editor height ---
+        function adjustEditorHeight() {
+            const menuBarHeight = jotterMenuBar.offsetHeight;
+            const bodyHeight = bodyElement.offsetHeight;
+            const editorMarginTop = parseInt(window.getComputedStyle(editorArea).marginTop) || 0;
+            const editorMarginBottom = parseInt(window.getComputedStyle(editorArea).marginBottom) || 0;
+            
+            let newEditorHeight = bodyHeight - menuBarHeight - editorMarginTop - editorMarginBottom;
+            
+            // Ensure height is not negative if calculations are off or window is too small
+            newEditorHeight = Math.max(0, newEditorHeight); 
+            editorArea.style.height = newEditorHeight + 'px';
+        }
 
         // --- Menu Logic ---
-        menuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
+        jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
             menuItem.addEventListener('click', (event) => {
                 event.stopPropagation();
-                // Don't close if clicking on the font size controls themselves
                 if (event.target.closest('.font-size-control-container')) {
-                    if(!menuItem.classList.contains('open')) { // Open parent if not already
+                    if(!menuItem.classList.contains('open')) {
                          if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
                          menuItem.classList.add('open');
                          activeMenu = menuItem;
@@ -1905,11 +1913,9 @@
             }
         });
 
-
-        // --- File Save ---
         const fileSaveButton = document.getElementById('fileSave');
         fileSaveButton.addEventListener('click', (event) => {
-             event.stopPropagation(); // Prevent menu from closing before prompt
+             event.stopPropagation();
             performSave();
         });
 
@@ -1956,10 +1962,8 @@
             }
         });
 
-
-        // --- Font Size Change Logic ---
         function applyFontSize(size) {
-            const newSize = Math.max(8, Math.min(72, parseInt(size))); // Clamp between 8px and 72px
+            const newSize = Math.max(8, Math.min(72, parseInt(size))); 
             if (!isNaN(newSize)) {
                 editorArea.style.fontSize = newSize + 'px';
                 fontSizeInput.value = newSize;
@@ -1967,13 +1971,13 @@
         }
 
         fontDecrementBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Keep menu open
+            event.stopPropagation(); 
             let currentSize = parseInt(fontSizeInput.value) || 14;
             applyFontSize(currentSize - 1);
         });
 
         fontIncrementBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Keep menu open
+            event.stopPropagation(); 
             let currentSize = parseInt(fontSizeInput.value) || 14;
             applyFontSize(currentSize + 1);
         });
@@ -1982,19 +1986,32 @@
             applyFontSize(fontSizeInput.value);
         });
         fontSizeInput.addEventListener('click', (event) => {
-            event.stopPropagation(); // Keep menu open
+            event.stopPropagation(); 
         });
-         fontSizeInput.addEventListener('input', () => { // Optional: Apply as user types
+         fontSizeInput.addEventListener('input', () => { 
             let val = parseInt(fontSizeInput.value);
             if(!isNaN(val) && val >=8 && val <=72){
                  editorArea.style.fontSize = val + 'px';
             }
         });
 
-
-        // Set initial font size for the editor area from the input
         applyFontSize(fontSizeInput.value);
         editorArea.focus();
+
+        // --- Tweak: Initial and on resize height adjustment ---
+        adjustEditorHeight(); // Call once on load
+        // Use ResizeObserver to adjust height when iframe body resizes
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(entries => {
+                // We are only observing one element, so we can just call adjustEditorHeight
+                adjustEditorHeight();
+            });
+            resizeObserver.observe(bodyElement);
+        } else {
+            // Fallback for older browsers (less reliable for iframe content changes)
+            window.addEventListener('resize', adjustEditorHeight);
+        }
+
     <\/script>
 </body>
 </html>`;
