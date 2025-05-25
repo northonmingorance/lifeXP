@@ -747,7 +747,7 @@
 
         /* Youtube Modal Specific Styles */
         #youtubeSearchResultsBody {
-            max-height: 400px; /* Limit height and make it scrollable */
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -767,8 +767,8 @@
         }
 
         .Youtube-result-item img {
-            width: 120px; /* Standard YouTube thumbnail width */
-            height: 90px;  /* Standard YouTube thumbnail height */
+            width: 120px;
+            height: 90px;
             margin-right: 10px;
             border: 1px solid #ACA899;
             object-fit: cover;
@@ -1207,6 +1207,15 @@
 
     const getById = (id) => document.getElementById(id);
 
+    function decodeHtmlEntities(text) {
+        if (typeof text !== 'string') {
+            return text;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        return textarea.value;
+    }
+
     const DOM = {
         xpMainWindow: getById('xpMainWindow'),
         xpMainWindowTitleBar: getById('xpMainWindowTitleBar'),
@@ -1457,7 +1466,7 @@
         highestZIndex = maxLoadedWindowZ;
 
 
-        addEventListeners(); // This will also re-select modalCloseButtons
+        addEventListeners();
         initPlayJockeyContextMenu();
         initPlayJockeyTabContextMenu();
 
@@ -2254,7 +2263,6 @@
         DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
         DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat);
 
-
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
         DOM.modalCloseButtons.forEach(button => {
             button.addEventListener('click', (event) => {
@@ -2659,14 +2667,16 @@
                             ...pl,
                             videos: (pl.videos || []).map(video => ({
                                 ...video,
-                                artist: video.artist || ""
+                                title: video.title ? decodeHtmlEntities(video.title) : (video.originalUrl ? decodeHtmlEntities(video.originalUrl) : "Unknown Title"), // Decode on load
+                                artist: video.artist ? decodeHtmlEntities(video.artist) : "" // Decode on load
                             }))
                           }))
                         : [{id: defaultPlaylistId, name: "Playlist", videos: []}],
                     playJockeyCurrentPlaylistId: loadedData.playJockeyCurrentPlaylistId || defaultPlaylistId,
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo ? {
                         ...(loadedData.playJockeyCurrentVideo),
-                        artist: loadedData.playJockeyCurrentVideo.artist || ""
+                        title: loadedData.playJockeyCurrentVideo.title ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.title) : "Unknown Title", // Decode on load
+                        artist: loadedData.playJockeyCurrentVideo.artist ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.artist) : "" // Decode on load
                     } : null,
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
@@ -2901,10 +2911,10 @@
                     const contentDiv = document.createElement('div');
                     contentDiv.className = 'achievement-content';
                     if (ach.type === 'text') {
-                        contentDiv.textContent = ach.content;
+                        contentDiv.textContent = decodeHtmlEntities(ach.content); // Decode for display
                     } else if (ach.type === 'image') {
                         const img = document.createElement('img');
-                        img.src = ach.content;
+                        img.src = ach.content; // Image URLs are not typically HTML encoded
                         img.alt = "Achievement Image";
                         contentDiv.appendChild(img);
                     }
@@ -3044,9 +3054,10 @@
 
             if (achievementToEdit.type === 'text') {
                 DOM.achievementTypeRadios[0].checked = true;
-                DOM.achievementTextInput.value = achievementToEdit.content;
+                DOM.achievementTextInput.value = decodeHtmlEntities(achievementToEdit.content); // Decode for editing
             } else if (achievementToEdit.type === 'image') {
                 DOM.achievementTypeRadios[1].checked = true;
+                // Image content (URL/base64) usually isn't HTML encoded
             }
         } else {
             DOM.achievementAreaNameInput.value = areaName;
@@ -3105,8 +3116,11 @@
         achievement.type = type;
 
         const processSave = (content) => {
-            achievement.content = content;
+            // Store text content decoded. Image content (URL/base64) is not typically encoded.
+            achievement.content = type === 'text' ? decodeHtmlEntities(content) : content;
             if (isEditing) {
+                // If it was a text achievement being edited, XP is not re-added unless content significantly changed
+                // (complex logic, for now, editing doesn't change XP unless we implement more specific rules)
             } else {
                 achievementList.push(achievement);
                 addXpToArea(areaName, achievement.xp);
@@ -3120,7 +3134,7 @@
 
 
         if (type === 'text') {
-            const textContent = DOM.achievementTextInput.value.trim();
+            const textContent = DOM.achievementTextInput.value.trim(); // Input value is already plain text
             if (!textContent) {
                 alert("Achievement description cannot be empty.");
                 return;
@@ -3135,13 +3149,14 @@
                 }
                 const reader = new FileReader();
                 reader.onloadend = function() {
-                    processSave(reader.result);
+                    processSave(reader.result); // Base64 string
                 }
                 reader.onerror = function() {
                     alert("Error reading image file.");
                 }
                 reader.readAsDataURL(file);
             } else if (isEditing && achievement.type === 'image' && achievement.content) {
+                // Keep existing image if no new one is selected during edit
                 processSave(achievement.content);
             } else if (isEditing && achievement.type !== 'image'){
                  alert("Please select an image file for an image type achievement.");
@@ -3604,15 +3619,16 @@
 
         items.forEach(item => {
             const videoId = item.id.videoId;
-            const title = item.snippet.title;
-            const channelTitle = item.snippet.channelTitle;
+            const title = decodeHtmlEntities(item.snippet.title);
+            const channelTitle = decodeHtmlEntities(item.snippet.channelTitle);
             const thumbnailUrl = item.snippet.thumbnails.default.url;
 
             const resultDiv = document.createElement('div');
             resultDiv.className = 'Youtube-result-item';
             resultDiv.dataset.videoId = videoId;
-            resultDiv.dataset.title = title;
-            resultDiv.dataset.artist = channelTitle;
+            // Store raw versions in dataset if needed, but pass decoded to add function
+            // resultDiv.dataset.rawTitle = item.snippet.title;
+            // resultDiv.dataset.rawArtist = item.snippet.channelTitle;
 
             const img = document.createElement('img');
             img.src = thumbnailUrl;
@@ -3646,7 +3662,7 @@
         });
     }
 
-    function addVideoFromSearchResult(videoId, title, artist) {
+    function addVideoFromSearchResult(videoId, title, artist) { // title and artist are already decoded
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!currentPlaylist) {
             alert("Error: No active playlist found.");
@@ -3654,7 +3670,13 @@
                 addNewPlayJockeyPlaylist();
                 const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
                  if (!newCurrentPlaylist) return;
-                 const videoEntryFirst = { id: 'pjv_' + Date.now(), videoId: videoId, title: title, artist: artist.replace(/\s-\sTopic$/, '').trim(), originalUrl: `https://www.youtube.com/watch?v=${videoId}` };
+                 const videoEntryFirst = {
+                    id: 'pjv_' + Date.now(),
+                    videoId: videoId,
+                    title: title,
+                    artist: artist.replace(/\s-\sTopic$/, '').trim(),
+                    originalUrl: `https://www.youtube.com/watch?v=${videoId}`
+                 };
                  newCurrentPlaylist.videos.push(videoEntryFirst);
                  if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
                     playYouTubeVideoById(videoId, true, true);
@@ -3717,7 +3739,7 @@
                 }
                 const videoEntryFirst = { id: 'pjv_' + Date.now(), originalUrl: link, videoId: videoId, title: "Loading title...", artist: "" };
                 newCurrentPlaylist.videos.push(videoEntryFirst);
-                fetchYouTubeTitle(videoEntryFirst, newCurrentPlaylist.id);
+                fetchYouTubeTitle(videoEntryFirst, newCurrentPlaylist.id); // fetchYouTubeTitle will decode
                 if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
                    playYouTubeVideoById(videoId, true, true);
                 }
@@ -3743,8 +3765,8 @@
             id: tempId,
             originalUrl: link,
             videoId: videoId,
-            title: "Loading title...",
-            artist: ""
+            title: "Loading title...", // Will be replaced by fetchYouTubeTitle (decoded)
+            artist: "" // Will be replaced by fetchYouTubeTitle (decoded)
         };
 
         currentPlaylist.videos.push(videoEntry);
@@ -3764,19 +3786,23 @@
         try {
             const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
-            let newTitle = videoEntryToUpdate.originalUrl;
-            let newArtist = "";
+            let newTitle = videoEntryToUpdate.title === "Loading title..." ? videoEntryToUpdate.originalUrl : videoEntryToUpdate.title;
+            let newArtist = videoEntryToUpdate.artist || "";
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.title) newTitle = data.title;
-                if (data.author_name) newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
+                if (data.title) newTitle = decodeHtmlEntities(data.title);
+                if (data.author_name) newArtist = decodeHtmlEntities(data.author_name).replace(/\s-\sTopic$/, '').trim();
                 if (data.error) {
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
                 }
             } else {
                 console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
             }
+            if (!newTitle || newTitle.trim() === "" || newTitle === "Loading title...") {
+                newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Fallback to decoded original URL
+            }
+
 
             const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
@@ -3796,8 +3822,9 @@
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
-                    if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                    itemInPlaylist.artist = "";
+                    if (itemInPlaylist.title === "Loading title..." || !itemInPlaylist.title.trim()) {
+                         itemInPlaylist.title = decodeHtmlEntities(itemInPlaylist.originalUrl);
+                    }
                     if (appData.playJockeyCurrentPlaylistId === playlistId) {
                          renderPlayJockeyPlaylist();
                     }
@@ -3813,8 +3840,8 @@
         appData.playJockeyPlaylists.forEach(playlist => {
             const tab = document.createElement('div');
             tab.className = 'playjockey-tab';
-            tab.textContent = playlist.name;
-            tab.title = playlist.name;
+            tab.textContent = decodeHtmlEntities(playlist.name); // Decode for display
+            tab.title = decodeHtmlEntities(playlist.name); // Decode for display
             tab.dataset.playlistId = playlist.id;
             if (playlist.id === appData.playJockeyCurrentPlaylistId) {
                 tab.classList.add('active');
@@ -3848,7 +3875,7 @@
         const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
         appData.playJockeyPlaylists.push({
             id: newPlaylistId,
-            name: newPlaylistName,
+            name: newPlaylistName, // Stored as plain text
             videos: []
         });
         switchPlayJockeyPlaylist(newPlaylistId);
@@ -3889,20 +3916,24 @@
             const item = document.createElement('div');
             item.className = 'playjockey-playlist-item';
 
-            let displayTitle = video.title;
-            if (video.title === "Loading title..." || video.title === video.originalUrl) {
-                displayTitle = video.originalUrl.length > 40 ? video.originalUrl.substring(0, 37) + '...' : video.originalUrl;
+            let cleanTitle = decodeHtmlEntities(video.title);
+            let cleanArtist = decodeHtmlEntities(video.artist);
+
+            let displayTitle = cleanTitle;
+            if (cleanTitle === "Loading title..." || cleanTitle === video.originalUrl || !cleanTitle.trim()) {
+                const decodedOriginalUrl = decodeHtmlEntities(video.originalUrl);
+                displayTitle = decodedOriginalUrl.length > 40 ? decodedOriginalUrl.substring(0, 37) + '...' : decodedOriginalUrl;
             } else {
-                 displayTitle = video.title.length > 40 ? video.title.substring(0, 37) + '...' : video.title;
+                 displayTitle = cleanTitle.length > 40 ? cleanTitle.substring(0, 37) + '...' : cleanTitle;
             }
 
             let itemText = displayTitle;
-            let itemTooltip = video.title !== "Loading title..." ? video.title : video.originalUrl;
+            let itemTooltip = (cleanTitle !== "Loading title..." && cleanTitle.trim()) ? cleanTitle : decodeHtmlEntities(video.originalUrl);
 
-            if (video.artist && video.artist.trim() !== "") {
-                const artistShort = video.artist.length > 20 ? video.artist.substring(0, 17) + '...' : video.artist;
+            if (cleanArtist && cleanArtist.trim() !== "") {
+                const artistShort = cleanArtist.length > 20 ? cleanArtist.substring(0, 17) + '...' : cleanArtist;
                 itemText = `${displayTitle} - ${artistShort}`;
-                itemTooltip = `${itemTooltip} by ${video.artist}`;
+                itemTooltip = `${itemTooltip} by ${cleanArtist}`;
             }
 
             item.textContent = itemText;
@@ -3970,7 +4001,7 @@
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
             console.log("YouTube API not ready, video load queued:", videoId);
-            if (typeof YT !== 'undefined' && YT.Player) {
+            if (typeof YT !== 'undefined' && YT.Player) { // Attempt to init if API is loaded but flag not set
                 onYouTubeIframeAPIReady();
             }
             return;
@@ -4186,8 +4217,8 @@
 
         const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
-            DOM.trackNewNameInput.value = itemToRename.title || '';
-            DOM.trackNewArtistInput.value = itemToRename.artist || '';
+            DOM.trackNewNameInput.value = decodeHtmlEntities(itemToRename.title) || '';
+            DOM.trackNewArtistInput.value = decodeHtmlEntities(itemToRename.artist) || '';
             DOM.saveRenamedTrackBtn.dataset.itemId = itemId;
             openModal(MODAL_IDS.RENAME_TRACK);
             DOM.trackNewNameInput.focus();
@@ -4204,7 +4235,7 @@
         }
         const itemToRemove = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRemove) {
-            DOM.confirmRemoveTrackMessage.textContent = `Are you sure you want to remove the track "${itemToRemove.title}"?`;
+            DOM.confirmRemoveTrackMessage.textContent = `Are you sure you want to remove the track "${decodeHtmlEntities(itemToRemove.title)}"?`;
             DOM.confirmFinalTrackRemoveBtn.dataset.itemId = itemId;
             openModal(MODAL_IDS.CONFIRM_REMOVE_TRACK);
         }
@@ -4213,8 +4244,8 @@
 
     function saveRenamedTrack() {
         const itemId = DOM.saveRenamedTrackBtn.dataset.itemId;
-        const newName = DOM.trackNewNameInput.value.trim();
-        const newArtist = DOM.trackNewArtistInput.value.trim();
+        const newName = DOM.trackNewNameInput.value.trim(); // Already plain text from input
+        const newArtist = DOM.trackNewArtistInput.value.trim(); // Already plain text
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!itemId || !currentPlaylist) {
@@ -4229,8 +4260,8 @@
 
         const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
-            itemToRename.title = newName;
-            itemToRename.artist = newArtist;
+            itemToRename.title = newName; // Store plain text
+            itemToRename.artist = newArtist; // Store plain text
             renderPlayJockeyPlaylist();
             saveData();
         }
@@ -4266,6 +4297,7 @@
                     playNextPjVideo();
                 } else if (currentPlaylist.videos.length === 0) {
                      if (ytPlayerInstance && typeof ytPlayerInstance.destroy === 'function') {
+                        // ytPlayerInstance.destroy(); ytPlayerInstance = null; // Can be too aggressive
                         DOM.playJockeyPlayer.innerHTML = '';
                     }
                 }
@@ -4283,7 +4315,7 @@
         if (!playlistId) return;
         const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
-            DOM.playlistNewNameInput.value = playlistToRename.name;
+            DOM.playlistNewNameInput.value = decodeHtmlEntities(playlistToRename.name); // Decode for editing
             DOM.saveRenamedPlaylistBtn.dataset.playlistId = playlistId;
             openModal(MODAL_IDS.RENAME_PLAYLIST);
             DOM.playlistNewNameInput.focus();
@@ -4293,7 +4325,7 @@
 
     function saveRenamedPlaylist() {
         const playlistId = DOM.saveRenamedPlaylistBtn.dataset.playlistId;
-        const newName = DOM.playlistNewNameInput.value.trim();
+        const newName = DOM.playlistNewNameInput.value.trim(); // Plain text from input
 
         if (!playlistId || !newName) {
             alert("Playlist name cannot be empty.");
@@ -4301,7 +4333,7 @@
         }
         const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
-            playlistToRename.name = newName;
+            playlistToRename.name = newName; // Store plain text
             renderPlayJockeyTabs();
             saveData();
         }
@@ -4315,7 +4347,7 @@
         if (!playlistId) return;
         const playlistToRemove = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRemove) {
-            DOM.confirmRemovePlaylistMessage.textContent = `Are you sure you want to remove the playlist "${playlistToRemove.name}"? This action cannot be undone.`;
+            DOM.confirmRemovePlaylistMessage.textContent = `Are you sure you want to remove the playlist "${decodeHtmlEntities(playlistToRemove.name)}"? This action cannot be undone.`;
             DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId;
             openModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
         }
@@ -4346,7 +4378,7 @@
                 }
             }
         }
-         if (appData.playJockeyPlaylists.length === 0) {
+         if (appData.playJockeyPlaylists.length === 0) { // Should be caught by above, but good fallback
             const defaultPlaylistId = 'playlist_default_' + Date.now();
             appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
             appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
