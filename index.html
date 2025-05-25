@@ -1117,6 +1117,40 @@
         </div>
     </div>
 
+    <div id="renameTrackModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Rename Track</span>
+                <span class="close-button" data-modal-id="renameTrackModal">r</span>
+            </div>
+            <div class="modal-body">
+                <label for="trackNewNameInput">New track name:</label>
+                <input type="text" id="trackNewNameInput" placeholder="Enter track name">
+                <label for="trackNewArtistInput" style="margin-top:10px;">New artist name (optional):</label>
+                <input type="text" id="trackNewArtistInput" placeholder="Enter artist name">
+            </div>
+            <div class="modal-footer">
+                <button id="saveRenamedTrackBtn" class="xp-button">Save</button>
+                <button class="xp-button" data-modal-id="renameTrackModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmRemoveTrackModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Confirm Track Deletion</span>
+                <span class="close-button" data-modal-id="confirmRemoveTrackModal">r</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmRemoveTrackMessage">Are you sure you want to remove this track from the playlist?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmFinalTrackRemoveBtn" class="xp-button">Delete</button>
+                <button class="xp-button" data-modal-id="confirmRemoveTrackModal">Cancel</button>
+            </div>
+        </div>
+    </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -1166,7 +1200,9 @@
         CHANGE_BG_IMAGE: 'changeBgImageModal',
         RENAME_PLAYLIST: 'renamePlaylistModal',
         CONFIRM_REMOVE_PLAYLIST: 'confirmRemovePlaylistModal',
-        Youtube: 'youtubeSearchModal'
+        Youtube: 'youtubeSearchModal',
+        RENAME_TRACK: 'renameTrackModal',
+        CONFIRM_REMOVE_TRACK: 'confirmRemoveTrackModal'
     };
 
     const getById = (id) => document.getElementById(id);
@@ -1274,6 +1310,14 @@
         youtubeSearchModal: getById(MODAL_IDS.Youtube),
         youtubeSearchResultsBody: getById('youtubeSearchResultsBody'),
         youtubeSearchStatus: getById('youtubeSearchStatus'),
+
+        renameTrackModal: getById(MODAL_IDS.RENAME_TRACK),
+        trackNewNameInput: getById('trackNewNameInput'),
+        trackNewArtistInput: getById('trackNewArtistInput'),
+        saveRenamedTrackBtn: getById('saveRenamedTrackBtn'),
+        confirmRemoveTrackModal: getById(MODAL_IDS.CONFIRM_REMOVE_TRACK),
+        confirmRemoveTrackMessage: getById('confirmRemoveTrackMessage'),
+        confirmFinalTrackRemoveBtn: getById('confirmFinalTrackRemoveBtn'),
 
         modalCloseButtons: null
     };
@@ -1413,7 +1457,7 @@
         highestZIndex = maxLoadedWindowZ;
 
 
-        addEventListeners();
+        addEventListeners(); // This will also re-select modalCloseButtons
         initPlayJockeyContextMenu();
         initPlayJockeyTabContextMenu();
 
@@ -2244,6 +2288,19 @@
             if (e.key === 'Enter') saveRenamedPlaylist();
         });
         DOM.confirmFinalPlaylistRemoveBtn.addEventListener('click', executePlaylistDeletion);
+
+        DOM.saveRenamedTrackBtn.addEventListener('click', saveRenamedTrack);
+        DOM.trackNewNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                 DOM.saveRenamedTrackBtn.click();
+            }
+        });
+         DOM.trackNewArtistInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                DOM.saveRenamedTrackBtn.click();
+            }
+        });
+        DOM.confirmFinalTrackRemoveBtn.addEventListener('click', executeTrackDeletion);
 
 
         window.addEventListener('resize', () => {
@@ -3474,7 +3531,6 @@
 
     function isValidYouTubeUrl(url) {
         if (!url) return false;
-        // Regex to match standard YouTube video URLs (watch, embed, short)
         const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})([&?].*)?$/;
         return regex.test(url);
     }
@@ -3487,7 +3543,6 @@
         }
 
         if (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY) {
-            // Alert only if it's not a URL, because URLs should still work
             if (!isValidYouTubeUrl(input)) {
                 alert("YouTube API Key is not configured. Video search is disabled. You can still add direct YouTube links.");
             }
@@ -3511,7 +3566,7 @@
             return;
         }
 
-        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear previous results
+        DOM.youtubeSearchResultsBody.innerHTML = '';
         DOM.youtubeSearchStatus.textContent = 'Searching...';
         DOM.youtubeSearchStatus.style.display = 'block';
         openModal(MODAL_IDS.Youtube);
@@ -3545,7 +3600,7 @@
     }
 
     function renderYouTubeSearchResults(items) {
-        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear status or previous results
+        DOM.youtubeSearchResultsBody.innerHTML = '';
 
         items.forEach(item => {
             const videoId = item.id.videoId;
@@ -3596,7 +3651,7 @@
         if (!currentPlaylist) {
             alert("Error: No active playlist found.");
             if (appData.playJockeyPlaylists.length === 0) {
-                addNewPlayJockeyPlaylist(); // This will also switch to it
+                addNewPlayJockeyPlaylist();
                 const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
                  if (!newCurrentPlaylist) return;
                  const videoEntryFirst = { id: 'pjv_' + Date.now(), videoId: videoId, title: title, artist: artist.replace(/\s-\sTopic$/, '').trim(), originalUrl: `https://www.youtube.com/watch?v=${videoId}` };
@@ -3707,8 +3762,6 @@
 
     async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
         try {
-            // Using Noembed as a fallback for title fetching if needed, primary info comes from search for searched videos.
-            // This function is more relevant for direct link additions.
             const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
             const response = await fetch(oEmbedUrl);
             let newTitle = videoEntryToUpdate.originalUrl;
@@ -3718,7 +3771,7 @@
                 const data = await response.json();
                 if (data.title) newTitle = data.title;
                 if (data.author_name) newArtist = data.author_name.replace(/\s-\sTopic$/, '').trim();
-                if (data.error) { // noembed specific error
+                if (data.error) {
                     console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
                 }
             } else {
@@ -3744,7 +3797,7 @@
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
                     if (itemInPlaylist.title === "Loading title...") itemInPlaylist.title = videoEntryToUpdate.originalUrl;
-                    itemInPlaylist.artist = ""; // Clear artist if fetch failed
+                    itemInPlaylist.artist = "";
                     if (appData.playJockeyCurrentPlaylistId === playlistId) {
                          renderPlayJockeyPlaylist();
                     }
@@ -3917,9 +3970,8 @@
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
             console.log("YouTube API not ready, video load queued:", videoId);
-            // Attempt to initialize player if YT object is available (API script might have loaded but onYouTubeIframeAPIReady hasn't fired)
             if (typeof YT !== 'undefined' && YT.Player) {
-                onYouTubeIframeAPIReady(); // Try to manually trigger if API is loaded
+                onYouTubeIframeAPIReady();
             }
             return;
         }
@@ -3927,7 +3979,7 @@
 
         if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
             ytPlayerInstance.loadVideoById({ 'videoId': videoId });
-            if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') { // Ensure play if autoplay is intended
+            if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') {
                  ytPlayerInstance.playVideo();
             }
         } else {
@@ -3947,7 +3999,7 @@
                     'rel': 0
                 },
                 events: {
-                    'onReady': (event) => { // Ensure video plays onReady if autoplay intended
+                    'onReady': (event) => {
                         if (autoplayIntent) {
                             event.target.playVideo();
                         }
@@ -4127,24 +4179,18 @@
     function handlePjContextRename() {
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!itemId || !currentPlaylist) return;
+        if (!itemId || !currentPlaylist) {
+            hidePjContextMenu();
+            return;
+        }
 
         const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
-            const currentDisplayTitle = itemToRename.title === itemToRename.originalUrl || itemToRename.title === "Loading title..." ? "" : itemToRename.title;
-            const newName = prompt("Enter new name for the track:", currentDisplayTitle);
-            if (newName !== null && newName.trim() !== "") {
-                itemToRename.title = newName.trim();
-                 if (itemToRename.artist === "" && newName.includes(" - ")) {
-                    const parts = newName.split(" - ");
-                    if (parts.length > 1) {
-                        itemToRename.title = parts.slice(0, -1).join(" - ").trim();
-                        itemToRename.artist = parts[parts.length - 1].trim().replace(/\s-\sTopic$/, '').trim();
-                    }
-                }
-                renderPlayJockeyPlaylist();
-                saveData();
-            }
+            DOM.trackNewNameInput.value = itemToRename.title || '';
+            DOM.trackNewArtistInput.value = itemToRename.artist || '';
+            DOM.saveRenamedTrackBtn.dataset.itemId = itemId;
+            openModal(MODAL_IDS.RENAME_TRACK);
+            DOM.trackNewNameInput.focus();
         }
         hidePjContextMenu();
     }
@@ -4152,7 +4198,55 @@
     function handlePjContextRemove() {
         const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!itemId || !currentPlaylist) return;
+        if (!itemId || !currentPlaylist) {
+            hidePjContextMenu();
+            return;
+        }
+        const itemToRemove = currentPlaylist.videos.find(video => video.id === itemId);
+        if (itemToRemove) {
+            DOM.confirmRemoveTrackMessage.textContent = `Are you sure you want to remove the track "${itemToRemove.title}"?`;
+            DOM.confirmFinalTrackRemoveBtn.dataset.itemId = itemId;
+            openModal(MODAL_IDS.CONFIRM_REMOVE_TRACK);
+        }
+        hidePjContextMenu();
+    }
+
+    function saveRenamedTrack() {
+        const itemId = DOM.saveRenamedTrackBtn.dataset.itemId;
+        const newName = DOM.trackNewNameInput.value.trim();
+        const newArtist = DOM.trackNewArtistInput.value.trim();
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+
+        if (!itemId || !currentPlaylist) {
+            alert("Error: Could not find track or playlist.");
+            closeModal(MODAL_IDS.RENAME_TRACK);
+            return;
+        }
+        if (!newName) {
+            alert("Track name cannot be empty.");
+            return;
+        }
+
+        const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
+        if (itemToRename) {
+            itemToRename.title = newName;
+            itemToRename.artist = newArtist;
+            renderPlayJockeyPlaylist();
+            saveData();
+        }
+        closeModal(MODAL_IDS.RENAME_TRACK);
+        delete DOM.saveRenamedTrackBtn.dataset.itemId;
+    }
+
+    function executeTrackDeletion() {
+        const itemId = DOM.confirmFinalTrackRemoveBtn.dataset.itemId;
+        const currentPlaylist = getCurrentPlayJockeyPlaylist();
+
+        if (!itemId || !currentPlaylist) {
+            alert("Error: Could not find track or playlist for deletion.");
+            closeModal(MODAL_IDS.CONFIRM_REMOVE_TRACK);
+            return;
+        }
 
         const itemIndex = currentPlaylist.videos.findIndex(video => video.id === itemId);
         if (itemIndex > -1) {
@@ -4170,13 +4264,19 @@
                 appData.playJockeyCurrentVideo = null;
                 if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) {
                     playNextPjVideo();
+                } else if (currentPlaylist.videos.length === 0) {
+                     if (ytPlayerInstance && typeof ytPlayerInstance.destroy === 'function') {
+                        DOM.playJockeyPlayer.innerHTML = '';
+                    }
                 }
             }
             renderPlayJockeyPlaylist();
             saveData();
         }
-        hidePjContextMenu();
+        closeModal(MODAL_IDS.CONFIRM_REMOVE_TRACK);
+        delete DOM.confirmFinalTrackRemoveBtn.dataset.itemId;
     }
+
 
     function openRenamePlaylistModalFromContextMenu() {
         const playlistId = DOM.playJockeyTabContextMenu.dataset.playlistId;
