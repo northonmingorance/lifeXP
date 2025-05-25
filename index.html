@@ -1161,7 +1161,7 @@
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
     const STORAGE_KEY = 'lifeXpData_v1.10.0';
-    const YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"; // <-- REPLACE WITH YOUR YOUTUBE API KEY
+    const YOUTUBE_API_KEY = "AIzaSyCmfQymtVEL3b_YEi7FlhpdNX5MkGsrNDM"; // <-- REPLACE WITH YOUR YOUTUBE API KEY
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25;
 
@@ -1694,128 +1694,243 @@
 <head>
     <title>Jotter</title>
     <style>
-        :root { --n: rgb(20,20,20); --o: rgb(235,235,235) }
-        html, body { height: 100%; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; }
-        [contenteditable]:focus { outline: 0 }
-        body, body.inverted { font: 24px/1.5 monospace; color: var(--o); background: var(--n); padding: 20px; box-sizing: border-box; height: 100%; display: flex; flex-direction: column;}
-        body.inverted { background: var(--o); color: var(--n) }
-        .b { font: 18px monospace; background-color: var(--n); border: 1px solid var(--o); border-radius: 5px; padding: 5px 10px; cursor: pointer; color: var(--o); }
-        .inverted.b { background-color: var(--o); color: var(--n); border: 1px solid var(--n); }
-        #d {
-            box-sizing: border-box;
-            width: 100%;
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-top: 10px;
-            padding: 10px;
-        }
-        body.inverted #d { border-color: var(--n); }
-        #t table { width: auto; margin-top: 5px; }
-        #t table td { padding: 2px 5px; }
-
-        .editor-top-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        body {
+            font-family: "Tahoma", "Geneva", sans-serif;
+            font-size: 11px; /* Default small font size for XP */
+            background-color: #ECE9D8; /* XP window background */
+            color: #000000; /* Standard black text */
+            margin: 0;
+            padding: 0;
+            height: 100%;
             display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 10;
+            flex-direction: column;
+            overflow: hidden; /* Prevent body scroll, editor will scroll */
         }
-        .options-menu {
+        [contenteditable]:focus { outline: none; }
+
+        .jotter-menu-bar {
+            background-color: #ECE9D8;
+            padding: 2px 3px;
+            border-bottom: 1px solid #ACA899; /* XP-like separator */
+            display: flex;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .jotter-menu-item {
+            padding: 3px 8px;
+            cursor: default;
+            position: relative;
+        }
+        .jotter-menu-item:hover {
+            background-color: #005CFE; /* XP selection blue */
+            color: white;
+        }
+        .jotter-dropdown-content {
+            display: none;
             position: absolute;
-            top: 45px;
-            right: 10px;
-            z-index: 10;
-            display:none;
+            top: 100%;
+            left: 0;
+            background-color: #ECE9D8;
+            border: 1px solid #000;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            z-index: 100;
+            min-width: 150px;
+            padding: 2px 0;
+        }
+        .jotter-dropdown-item {
+            padding: 4px 12px 4px 25px; /* Space for potential checkmark/icon */
+            cursor: default;
+            white-space: nowrap;
+            position: relative;
+        }
+        .jotter-dropdown-item:hover {
+            background-color: #005CFE;
+            color: white;
+        }
+        .jotter-dropdown-item.disabled {
+            color: #7F7F7F;
+            background-color: #ECE9D8 !important;
+            cursor: default;
+        }
+        .jotter-dropdown-separator {
+            height: 1px;
+            background-color: #ACA899;
+            margin: 3px 0;
+        }
+        .jotter-menu-item:focus-within .jotter-dropdown-content, /* Show on focus/tab navigation */
+        .jotter-menu-item.open .jotter-dropdown-content { /* Show on click (JS controlled) */
+            display: block;
+        }
+        .jotter-menu-item .underline {
+            text-decoration: underline;
+        }
+
+        #editorArea {
+            flex-grow: 1;
+            border: 1px solid #7F7F7F; /* XP input field border */
+            padding: 5px;
+            margin: 5px;
+            background-color: white; /* Text area background */
+            overflow-y: auto;
+            font-family: 'Lucida Console', Monaco, monospace; /* Monospace font for editor */
+            font-size: 14px; /* Initial font size */
+            line-height: 1.4;
+            color: #000000;
+            white-space: pre-wrap; /* Preserve whitespace and wrap */
+            word-wrap: break-word;
         }
     </style>
 </head>
 <body>
-    <div class="editor-top-actions">
-        <button class="b menu-toggle" id="m">+</button>
-        <button class="b" onclick="f()">Save</button>
+    <div class="jotter-menu-bar" id="jotterMenuBar">
+        <div class="jotter-menu-item" tabindex="0">
+            <span class="underline">F</span>ile
+            <div class="jotter-dropdown-content">
+                <div class="jotter-dropdown-item" id="fileSave">Save <span style="float:right; color: #777; margin-left:10px;">Ctrl+S</span></div>
+            </div>
+        </div>
+        <div class="jotter-menu-item" tabindex="0">
+            <span class="underline">E</span>dit
+            <div class="jotter-dropdown-content">
+                <div class="jotter-dropdown-item disabled" id="editUndo">Undo</div>
+                <div class="jotter-dropdown-separator"></div>
+                <div class="jotter-dropdown-item disabled" id="editCut">Cut</div>
+                <div class="jotter-dropdown-item disabled" id="editCopy">Copy</div>
+                <div class="jotter-dropdown-item disabled" id="editPaste">Paste</div>
+                <div class="jotter-dropdown-item disabled" id="editDelete">Delete</div>
+                <div class="jotter-dropdown-separator"></div>
+                <div class="jotter-dropdown-item disabled" id="editSelectAll">Select All</div>
+            </div>
+        </div>
+        <div class="jotter-menu-item" tabindex="0">
+            <span class="underline">V</span>iew
+            <div class="jotter-dropdown-content">
+                <div class="jotter-menu-item" tabindex="0">
+                    Font Size
+                    <div class="jotter-dropdown-content" style="left:100%; top:0; min-width: 80px;">
+                        <div class="jotter-dropdown-item font-size-option" data-size="12px">12px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="14px">14px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="16px">16px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="18px">18px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="22px">22px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="26px">26px</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="options-menu" id="t">
-        <table class="b">
-            <tbody>
-                <tr>
-                    <td style="text-align:left"><button class="b" id="-">-</button></td>
-                    <td style="text-align:center">zoom</td>
-                    <td style="text-align:right"><button class="b" id="+">+</button></td>
-                </tr>
-                <tr>
-                    <td colspan="3" style="text-align:center;"><button class="b" id="l">light mode</button></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div id="d" contenteditable="true"></div>
+    <div id="editorArea" contenteditable="true"></div>
+
     <script>
-        function f() {
-            let a = prompt("Filename:", "jotter_content.html");
-            if (a) {
+        const editorArea = document.getElementById('editorArea');
+        const menuBar = document.getElementById('jotterMenuBar');
+        let activeMenu = null;
+
+        // --- Menu Logic ---
+        menuBar.querySelectorAll('.jotter-menu-item').forEach(menuItem => {
+            const mainButton = menuItem.childNodes[0].parentElement; // The main menu item text container
+            mainButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent window click from closing it immediately
+                if (activeMenu && activeMenu !== menuItem) {
+                    activeMenu.classList.remove('open');
+                }
+                menuItem.classList.toggle('open');
+                activeMenu = menuItem.classList.contains('open') ? menuItem : null;
+            });
+
+            // Allow keyboard navigation to open dropdowns
+            menuItem.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    menuItem.click(); // Simulate click to toggle
+                }
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        window.addEventListener('click', () => {
+            if (activeMenu) {
+                activeMenu.classList.remove('open');
+                activeMenu = null;
+            }
+        });
+
+        // Close dropdowns with Escape key
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && activeMenu) {
+                activeMenu.classList.remove('open');
+                activeMenu.focus(); // Return focus to the main menu item
+                activeMenu = null;
+            }
+        });
+
+
+        // --- File Save ---
+        const fileSaveButton = document.getElementById('fileSave');
+        fileSaveButton.addEventListener('click', performSave);
+
+        function performSave() {
+            let filename = prompt("Filename:", "jotter_content.html");
+            if (filename) {
                 let htmlContent = \`<!DOCTYPE html>
 <html>
 <head>
     <title>Saved Content</title>
     <meta charset="UTF-8">
     <style>
-        body { font: 24px/1.5 monospace; margin: 50px; }
+        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
-    \${document.getElementById("d").innerHTML}
+    \${editorArea.innerHTML}
 </body>
 </html>\`;
-                let b = new Blob([htmlContent], { type: "text/html" });
-                let c = URL.createObjectURL(b);
+                let blob = new Blob([htmlContent], { type: "text/html" });
+                let url = URL.createObjectURL(blob);
                 let downloadLink = document.createElement("a");
-                downloadLink.setAttribute("href", c);
-                downloadLink.setAttribute("download", a);
+                downloadLink.setAttribute("href", url);
+                downloadLink.setAttribute("download", filename);
                 downloadLink.click();
-                URL.revokeObjectURL(c);
+                URL.revokeObjectURL(url);
             }
+            if (activeMenu) activeMenu.classList.remove('open'); activeMenu = null;
         }
-        let d_editor = document.getElementById("d");
-        d_editor.focus();
 
-        let p_menuToggle = document.getElementById("m");
-        let t_optionsMenu = document.getElementById("t");
-        let s_iframeBody = document.querySelector("body");
-        let q_buttons = document.querySelectorAll(".b");
-
-        p_menuToggle.addEventListener("click", () => {
-            t_optionsMenu.style.display = (t_optionsMenu.style.display === "none" ? "block" : "none");
-            p_menuToggle.innerText = (t_optionsMenu.style.display === "none" ? "+" : "-");
+        // Ctrl+S for save
+        editorArea.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                performSave();
+            }
         });
-
-        document.addEventListener('click', function(event) {
-            if (!t_optionsMenu.contains(event.target) && event.target !== p_menuToggle && !p_menuToggle.contains(event.target) ) {
-                if (!event.target.closest || (event.target.closest && !event.target.closest('.options-menu'))) {
-                     t_optionsMenu.style.display = 'none';
-                     p_menuToggle.innerText = "+";
-                }
+        window.addEventListener('keydown', function(e) { // Also listen on window for when editor isn't focused
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                performSave();
             }
         });
 
-        t_optionsMenu.addEventListener("click", e => {
-            if (e.target.id === "+") {
-                let currentFontSize = parseInt(window.getComputedStyle(s_iframeBody).fontSize);
-                s_iframeBody.style.fontSize = (currentFontSize + 2) + "px";
-            } else if (e.target.id === "-") {
-                let currentFontSize = parseInt(window.getComputedStyle(s_iframeBody).fontSize);
-                s_iframeBody.style.fontSize = Math.max(8, currentFontSize - 2) + "px";
-            } else if (e.target.id === "l") {
-                s_iframeBody.classList.toggle("inverted");
-                q_buttons.forEach(btn => btn.classList.toggle("inverted"));
-                let lightModeButton = document.getElementById("l");
-                if (lightModeButton) {
-                    lightModeButton.innerText = s_iframeBody.classList.contains("inverted") ? "dark mode" : "light mode";
+
+        // --- Font Size Change ---
+        document.querySelectorAll('.font-size-option').forEach(button => {
+            button.addEventListener('click', function(event) {
+                const newSize = this.dataset.size;
+                if (newSize) {
+                    editorArea.style.fontSize = newSize;
                 }
-            }
+                if (activeMenu) activeMenu.classList.remove('open'); activeMenu = null;
+                // Close parent menus if necessary
+                let parentMenu = event.target.closest('.jotter-menu-item.open');
+                while(parentMenu) {
+                    parentMenu.classList.remove('open');
+                    parentMenu = parentMenu.parentElement.closest('.jotter-menu-item.open');
+                }
+            });
         });
+
+        // Initial focus
+        editorArea.focus();
     <\/script>
 </body>
 </html>`;
