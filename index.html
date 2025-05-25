@@ -1696,35 +1696,35 @@
     <style>
         body {
             font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 11px;
-            background-color: #ECE9D8;
-            color: #000000;
+            font-size: 11px; /* Default small font size for XP */
+            background-color: #ECE9D8; /* XP window background */
+            color: #000000; /* Standard black text */
             margin: 0;
             padding: 0;
             height: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Prevent body scroll, editor will scroll */
         }
         [contenteditable]:focus { outline: none; }
 
         .jotter-menu-bar {
             background-color: #ECE9D8;
             padding: 2px 3px;
-            border-bottom: 1px solid #ACA899;
+            border-bottom: 1px solid #ACA899; /* XP-like separator */
             display: flex;
             flex-shrink: 0;
             user-select: none;
-            color: #000000;
+            color: #000000; /* Tweak: Ensure base menu text is black */
         }
         .jotter-menu-item {
             padding: 3px 8px;
             cursor: default;
             position: relative;
-            color: inherit;
+            color: inherit; /* Inherit black from parent */
         }
         .jotter-menu-item:hover {
-            background-color: #005CFE;
+            background-color: #005CFE; /* XP selection blue */
             color: white;
         }
         .jotter-dropdown-content {
@@ -1738,21 +1738,21 @@
             z-index: 100;
             min-width: 150px;
             padding: 2px 0;
-            color: #000000;
+            color: #000000; /* Tweak: Ensure dropdown base text is black */
         }
         .jotter-dropdown-item {
-            padding: 4px 12px 4px 25px;
+            padding: 4px 12px 4px 25px; /* Space for potential checkmark/icon */
             cursor: default;
             white-space: nowrap;
             position: relative;
-            color: inherit;
+            color: inherit; /* Inherit black from parent dropdown */
         }
-        .jotter-dropdown-item:hover:not(.disabled) {
+        .jotter-dropdown-item:hover {
             background-color: #005CFE;
             color: white;
         }
         .jotter-dropdown-item.disabled {
-            color: #7F7F7F !important;
+            color: #7F7F7F !important; /* Ensure disabled text is gray */
             background-color: #ECE9D8 !important;
             cursor: default;
         }
@@ -1770,63 +1770,22 @@
         }
 
         #editorArea {
-            flex-grow: 1; /* Crucial for filling height */
-            border: 1px solid #7F7F7F;
+            flex-grow: 1;
+            border: 1px solid #7F7F7F; /* XP input field border */
             padding: 5px;
-            background-color: white;
+            /* Tweak: Removed margin: 5px; to make it fill more space */
+            background-color: white; /* Text area background */
             overflow-y: auto;
-            font-family: 'Lucida Console', Monaco, monospace;
+            font-family: 'Lucida Console', Monaco, monospace; /* Monospace font for editor */
             font-size: 14px; /* Initial font size */
             line-height: 1.4;
             color: #000000;
-            white-space: pre-wrap;
+            white-space: pre-wrap; 
             word-wrap: break-word;
+            /* Tweak: Added box-sizing for better padding behavior with border */
             box-sizing: border-box;
-            /* Tweak: Removed all margins to make it truly fill */
-            margin: 0;
-            /* Tweak: Added a very subtle inner border to delineate from scrollbar if needed */
-            border-top: none; 
-        }
-        /* Tweak: Font size controls container */
-        .font-size-controls {
-            display: flex;
-            align-items: center;
-            padding: 2px 5px 2px 12px; /* Adjusted padding */
-        }
-        .font-size-controls label {
-            margin-right: 5px;
-            white-space: nowrap;
-        }
-        .font-size-input {
-            width: 40px;
-            text-align: right;
-            padding: 2px 4px;
-            border: 1px solid #7F7F7F;
-            font-family: "Tahoma", Geneva, sans-serif;
-            font-size: 11px;
-            margin-right: 3px;
-            -moz-appearance: textfield; /* Firefox */
-        }
-        .font-size-input::-webkit-outer-spin-button,
-        .font-size-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .font-size-btn {
-            width: 20px;
-            height: 20px;
-            padding: 0;
-            margin: 0 2px;
-            border: 1px outset #7F7F7F;
-            background-color: #ECE9D8;
-            font-family: "Tahoma", Geneva, sans-serif;
-            font-size: 10px;
-            line-height: 18px;
-            text-align: center;
-            cursor: default;
-        }
-        .font-size-btn:active {
-            border-style: inset;
+            margin: 2px 2px 2px 2px; /* Minimal margin for a slight inset look */
+
         }
     </style>
 </head>
@@ -1841,11 +1800,16 @@
         <div class="jotter-menu-item" tabindex="0">
             <span class="underline">V</span>iew
             <div class="jotter-dropdown-content">
-                <div class="font-size-controls">
-                    <label for="fontSizeInput" style="padding-left:13px;">Font Size:</label>
-                    <input type="number" id="fontSizeInput" class="font-size-input" value="14" min="8" max="72">
-                    <button class="font-size-btn" id="fontDecreaseBtn">-</button>
-                    <button class="font-size-btn" id="fontIncreaseBtn">+</button>
+                <div class="jotter-menu-item" tabindex="0">
+                    Font Size
+                    <div class="jotter-dropdown-content" style="left:100%; top:0; min-width: 80px;">
+                        <div class="jotter-dropdown-item font-size-option" data-size="12px">12px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="14px">14px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="16px">16px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="18px">18px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="22px">22px</div>
+                        <div class="jotter-dropdown-item font-size-option" data-size="26px">26px</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1859,32 +1823,39 @@
         let activeMenu = null;
 
         // --- Menu Logic ---
-        menuBar.querySelectorAll(':scope > .jotter-menu-item').forEach(menuItem => {
-            menuItem.addEventListener('click', (event) => {
-                event.stopPropagation();
-                if (menuItem.querySelector('.jotter-dropdown-content')) {
-                    if (activeMenu && activeMenu !== menuItem) {
-                        activeMenu.classList.remove('open');
-                        const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
-                        openSubmenus.forEach(sub => sub.classList.remove('open'));
-                    }
-                    menuItem.classList.toggle('open');
-                    activeMenu = menuItem.classList.contains('open') ? menuItem : null;
+        menuBar.querySelectorAll('.jotter-menu-item').forEach(menuItem => {
+            const mainButton = menuItem.childNodes[0].parentElement; 
+            mainButton.addEventListener('click', (event) => {
+                event.stopPropagation(); 
+                if (activeMenu && activeMenu !== menuItem) {
+                    activeMenu.classList.remove('open');
                 }
+                menuItem.classList.toggle('open');
+                activeMenu = menuItem.classList.contains('open') ? menuItem : null;
             });
+
             menuItem.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
-                    if (menuItem.querySelector('.jotter-dropdown-content')) {
-                        event.preventDefault();
+                    event.preventDefault();
+                    // Check if the target is a main menu item before simulating click
+                    if (event.target === menuItem || menuItem.contains(event.target) && !event.target.closest('.jotter-dropdown-content .jotter-menu-item')) {
                         menuItem.click();
                     }
                 }
             });
         });
         
-        window.addEventListener('click', (event) => {
-            if (activeMenu && !menuBar.contains(event.target)) {
+        window.addEventListener('click', () => {
+            if (activeMenu) {
+                // Check if the click was outside any open menu structure
+                let current = activeMenu;
+                let close = true;
+                // This logic needs to be careful not to close submenus when their parent is clicked
+                // For simplicity now, any click outside currently focused menu hierarchy closes it.
+                // A more robust solution would trace up the DOM from event.target.
+
                 activeMenu.classList.remove('open');
+                // Also close any nested submenus if the main menu is closed
                 const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
                 openSubmenus.forEach(sub => sub.classList.remove('open'));
                 activeMenu = null;
@@ -1893,16 +1864,19 @@
 
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && activeMenu) {
+                // If a submenu is open, close it first
                 const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
                 if (openSubmenus.length > 0) {
                     openSubmenus[openSubmenus.length -1].classList.remove('open');
-                } else {
+                    openSubmenus[openSubmenus.length -1].focus();
+                } else { // Otherwise, close the main active menu
                     activeMenu.classList.remove('open');
-                    activeMenu.focus();
+                    activeMenu.focus(); 
                     activeMenu = null;
                 }
             }
         });
+
 
         // --- File Save ---
         const fileSaveButton = document.getElementById('fileSave');
@@ -1911,14 +1885,13 @@
         function performSave() {
             let filename = prompt("Filename:", "jotter_content.html");
             if (filename) {
-                let currentFontSize = editorArea.style.fontSize || '14px';
                 let htmlContent = \`<!DOCTYPE html>
 <html>
 <head>
     <title>Saved Content</title>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${currentFontSize}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
+        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -1933,7 +1906,12 @@
                 downloadLink.click();
                 URL.revokeObjectURL(url);
             }
-            closeAllMenus();
+            if (activeMenu) {
+                 activeMenu.classList.remove('open');
+                 const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
+                 openSubmenus.forEach(sub => sub.classList.remove('open'));
+                 activeMenu = null;
+            }
         }
 
         editorArea.addEventListener('keydown', function(e) {
@@ -1943,64 +1921,37 @@
             }
         });
         window.addEventListener('keydown', function(e) { 
-            if (e.ctrlKey && e.key === 's' && document.activeElement !== editorArea) {
+            if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
                 performSave();
             }
         });
 
+
         // --- Font Size Change ---
-        const fontSizeInput = document.getElementById('fontSizeInput');
-        const fontDecreaseBtn = document.getElementById('fontDecreaseBtn');
-        const fontIncreaseBtn = document.getElementById('fontIncreaseBtn');
-        const MIN_FONT_SIZE = 8;
-        const MAX_FONT_SIZE = 72;
+        document.querySelectorAll('.font-size-option').forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent closing all menus
+                const newSize = this.dataset.size;
+                if (newSize) {
+                    editorArea.style.fontSize = newSize;
+                }
+                
+                // Close all menus after selection
+                if (activeMenu) {
+                    activeMenu.classList.remove('open');
+                    const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
+                    openSubmenus.forEach(sub => sub.classList.remove('open'));
+                    activeMenu = null;
+                }
+                // Also close the top-level menu if the activeMenu was a submenu item
+                let topLevelMenu = event.target.closest('.jotter-menu-bar > .jotter-menu-item');
+                if(topLevelMenu && topLevelMenu.classList.contains('open')){
+                    topLevelMenu.classList.remove('open');
+                }
 
-        function updateFontSize(newSize) {
-            newSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, parseInt(newSize, 10)));
-            if (isNaN(newSize)) newSize = 14; // Default if input is bad
-            editorArea.style.fontSize = newSize + 'px';
-            fontSizeInput.value = newSize;
-        }
-
-        fontSizeInput.addEventListener('change', () => {
-            updateFontSize(fontSizeInput.value);
+            });
         });
-        fontSizeInput.addEventListener('input', () => { // Optional: immediate feedback as user types
-             const currentVal = parseInt(fontSizeInput.value, 10);
-             if (!isNaN(currentVal) && currentVal >= MIN_FONT_SIZE && currentVal <= MAX_FONT_SIZE) {
-                 editorArea.style.fontSize = currentVal + 'px';
-             }
-        });
-
-
-        fontDecreaseBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent menu from closing
-            let currentSize = parseInt(fontSizeInput.value, 10);
-            updateFontSize(currentSize - 1);
-        });
-
-        fontIncreaseBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent menu from closing
-            let currentSize = parseInt(fontSizeInput.value, 10);
-            updateFontSize(currentSize + 1);
-        });
-        
-        // Initialize font size input
-        fontSizeInput.value = parseInt(editorArea.style.fontSize, 10) || 14;
-
-        function closeAllMenus() {
-             if (activeMenu) {
-                activeMenu.classList.remove('open');
-                const openSubmenus = activeMenu.querySelectorAll('.jotter-menu-item.open');
-                openSubmenus.forEach(sub => sub.classList.remove('open'));
-                activeMenu = null;
-            }
-        }
-
-        // Stop propagation for font controls to keep menu open
-        document.querySelector('.font-size-controls').addEventListener('click', (e) => e.stopPropagation());
-
 
         editorArea.focus();
     <\/script>
