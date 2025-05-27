@@ -1668,22 +1668,39 @@
 
         if (!windowElement) return;
 
-        if (windowElement.style.display === 'none') {
-            windowElement.style.display = 'flex';
-            if (appData.windowStates[windowId]) {
-                appData.windowStates[windowId].hiddenByUser = false;
+        let state = appData.windowStates[windowId];
+        if (!state) { // Ensure state object exists
+            appData.windowStates[windowId] = {};
+            state = appData.windowStates[windowId];
+        }
+
+        // Determine the action based on current state
+        if (state.hiddenByUser || windowElement.style.display === 'none') {
+            // Window was hidden, so unhide it and restore its state
+            state.hiddenByUser = false;
+            // If a window is opened from a "closed" state, it should generally not be minimized.
+            // If it was minimized THEN closed, opening it should restore it to normal, not keep it minimized.
+            if (state.minimized) {
+                state.minimized = false;
+                // Note: wasMaximizedBeforeMinimize logic is handled by maximizeWindow,
+                // but for a simple open-from-closed, we assume "normal" state.
             }
+            
+            // Restore all visual aspects now that hiddenByUser (and potentially minimized) is false
+            restoreWindowState(windowId); // This will apply dimensions, positions, and ensure visibility
+
+            // Specific logic for PlayJockey
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
             }
+        } else if (state.minimized || windowElement.classList.contains('minimized')) {
+            // Window is visible but minimized, so "maximize" it (which could mean restore to normal or full screen)
+            maximizeWindow(windowId); // This function handles un-minimizing and restoring dimensions/state
         }
-
-
-        if (windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId);
-        } else {
-            bringToFront(windowElement);
-        }
+        
+        // Always bring to front after any operation that makes it active
+        bringToFront(windowElement);
+        // Save the state, which now reflects it being open and correctly sized/positioned
         saveWindowState(windowId);
     }
 
@@ -2749,52 +2766,32 @@
         if (!state) {
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
-            setWindowDefaults(windowId, false);
-
-            if (!state.zIndex || state.zIndex <= 5) {
-                 let newZ = highestZIndex + 1;
-                 win.style.zIndex = newZ;
-                 state.zIndex = newZ;
-                 highestZIndex = newZ;
-            }
-
-            if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
-                win.style.display = 'none';
-            } else {
-                win.style.display = 'flex';
-            }
-            updateMinMaxButtonStates(windowId);
-            return;
+            // Dimensions will be set by setWindowDefaults if this new state falls through
         }
 
-        let loadedZ = state.zIndex || (highestZIndex +1);
-        if (loadedZ <= 5) {
-            loadedZ = highestZIndex + 1;
-        }
+        // Apply Z-Index
+        let loadedZ = state.zIndex || (highestZIndex + 1);
+        if (loadedZ <= 5) loadedZ = highestZIndex + 1;
         win.style.zIndex = loadedZ;
         state.zIndex = loadedZ;
         highestZIndex = Math.max(highestZIndex, loadedZ);
 
-
-        if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
-             win.style.display = 'none';
-        } else {
-             win.style.display = 'flex';
-        }
-
-
-        if (state.minimized) {
+        // Apply Dimensions, Position, and Minimized/Maximized Classes
+        // This logic runs regardless of the current hiddenByUser, as it defines the window's properties for when it *is* visible.
+        if (state.minimized) { // Check minimized state first
             win.classList.add('minimized');
             win.classList.remove('true-maximized');
-        } else if (state.maximized) {
-            let minW, minH, defaultW, defaultH, defaultX, defaultY;
-            if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = 905; defaultH = 645; defaultX = window.innerWidth * 0.05; defaultY = 20;}
-            else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = 450; defaultH = 600; defaultX = 50; defaultY = 50;}
-            else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = 520; defaultH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
+            // Minimized styling is primarily CSS; width/height/x/y in state are for normal view
+        } else if (state.maximized) { // Then check maximized state
+            let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
+            // (Your existing logic for default sizes for lastNormalStates)
+            if (windowId === 'xpMainWindow') { defaultNormalWidth = (window.innerWidth * 0.9); defaultNormalHeight = (window.innerHeight * 0.75); minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20;}
+            else if (windowId === 'textEditorWindow') { defaultNormalWidth = (window.innerWidth * 0.6); defaultNormalHeight = (window.innerHeight * 0.65); minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
+            else if (windowId === 'playJockeyWindow') { defaultNormalWidth = (window.innerWidth * 0.5); defaultNormalHeight = (window.innerHeight * 0.6); minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 70; defaultY = 70;}
 
-            lastNormalStates[windowId] = {
-                width: (state.width ? Math.max(minW, state.width) : defaultW) + 'px',
-                height: (state.height ? Math.max(minH, state.height) : defaultH) + 'px',
+            lastNormalStates[windowId] = { // Store the "normal" dimensions it would revert to
+                width: (state.width ? Math.max(minW, state.width) : defaultNormalWidth) + 'px',
+                height: (state.height ? Math.max(minH, state.height) : defaultNormalHeight) + 'px',
                 top: (state.y || defaultY) + 'px',
                 left: (state.x || defaultX) + 'px'
             };
@@ -2803,27 +2800,37 @@
             win.style.top = '0px';
             win.style.left = '0px';
             win.classList.add('true-maximized');
-            win.classList.remove('minimized');
-            state.userManuallySet = false;
-        } else if (state.userManuallySet && state.width !== null && state.width > 0 && !state.hiddenByUser) {
+            win.classList.remove('minimized'); // Ensure not minimized
+            state.userManuallySet = false; // Maximized is a special state, not a user-dragged size
+        } else if (state.userManuallySet && state.width && state.height) {
+            // Apply user's specific dimensions for a normal window
             let currentMinWidth, currentMinHeight, defaultX, defaultY;
+             // (Your existing logic for min widths/heights and default positions)
             if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20; }
             else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50; }
             else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100; }
-
 
             win.style.left = (state.x || defaultX) + 'px';
             win.style.top = (state.y || defaultY) + 'px';
             win.style.width = Math.max(currentMinWidth, state.width) + 'px';
             win.style.height = Math.max(currentMinHeight, state.height) + 'px';
-            win.classList.remove('minimized');
-            win.classList.remove('true-maximized');
-        } else if (!state.hiddenByUser) {
-            setWindowDefaults(windowId, false);
-            win.classList.remove('minimized');
-            win.classList.remove('true-maximized');
+            win.classList.remove('minimized'); // Ensure not minimized
+            win.classList.remove('true-maximized'); // Ensure not maximized
+        } else {
+            // Not minimized, not maximized, and not user-manually-set (or state dimensions are invalid)
+            // This is where defaults should apply.
+            setWindowDefaults(windowId, false); // This function sets styles and calls saveWindowState
+                                                // It also removes minimized/true-maximized classes.
         }
-        updateMinMaxButtonStates(windowId);
+
+        // Set Visibility based on the state AFTER dimensions and classes are set
+        if (state.hiddenByUser) {
+            win.style.display = 'none';
+        } else {
+            win.style.display = 'flex';
+        }
+
+        updateMinMaxButtonStates(windowId); // Update buttons based on final state
     }
 
 
