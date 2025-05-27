@@ -1666,43 +1666,24 @@
         const windowId = iconElement.dataset.windowId;
         const windowElement = getById(windowId);
 
-        if (!windowElement) {
-            console.error("Window element not found for ID:", windowId);
-            return;
-        }
+        if (!windowElement) return;
 
-        let state = appData.windowStates[windowId];
-        if (!state) {
-            console.warn("State not found for window ID:", windowId, ". Initializing.");
-            appData.windowStates[windowId] = {};
-            state = appData.windowStates[windowId];
-            // It will get defaults via restoreWindowState if other flags aren't set
-        }
-
-        // Logic: If the window is considered "not normally open and active", then open it.
-        // "Not normally open" means it's hidden by user, or minimized.
-        // The windowElement.style.display check is a DOM fallback.
-        const isCurrentlyHiddenByState = state.hiddenByUser;
-        const isCurrentlyMinimizedByState = state.minimized;
-        const isDomHidden = windowElement.style.display === 'none';
-        const isDomMinimized = windowElement.classList.contains('minimized');
-
-        if (isCurrentlyHiddenByState || isCurrentlyMinimizedByState || isDomHidden || isDomMinimized) {
-            // Intention is to open/restore the window to a normal, visible state
-            state.hiddenByUser = false;
-            state.minimized = false; 
-
-            // Let restoreWindowState handle applying dimensions, classes, and visibility
-            restoreWindowState(windowId);
-
-            // Specific logic for PlayJockey on open
+        if (windowElement.style.display === 'none') {
+            windowElement.style.display = 'flex';
+            if (appData.windowStates[windowId]) {
+                appData.windowStates[windowId].hiddenByUser = false;
+            }
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
             }
         }
-        
-        // Always bring to front and save the potentially modified state
-        bringToFront(windowElement);
+
+
+        if (windowElement.classList.contains('minimized')) {
+            maximizeWindow(windowId);
+        } else {
+            bringToFront(windowElement);
+        }
         saveWindowState(windowId);
     }
 
@@ -2456,32 +2437,31 @@
             saveWindowState('xpMainWindow');
         });
 
-        // For textEditorWindow (Jotter)
+        DOM.textEditorMinimizeBtn.addEventListener('click', () => minimizeWindow('textEditorWindow'));
+        DOM.textEditorMaximizeBtn.addEventListener('click', () => maximizeWindow('textEditorWindow'));
         DOM.textEditorCloseBtn.addEventListener('click', () => {
-            const windowId = 'textEditorWindow';
-            getById(windowId).style.display = 'none';
-            if (!appData.windowStates[windowId]) appData.windowStates[windowId] = {};
-            appData.windowStates[windowId].hiddenByUser = true;
-            saveWindowState(windowId);
+            const textEditor = DOM.textEditorWindow;
+            textEditor.style.display = 'none';
+            if(appData.windowStates.textEditorWindow) {
+                appData.windowStates.textEditorWindow.hiddenByUser = true;
+            }
+            saveWindowState('textEditorWindow');
         });
 
-        // For playJockeyWindow
+        DOM.playJockeyMinimizeBtn.addEventListener('click', () => minimizeWindow('playJockeyWindow'));
+        DOM.playJockeyMaximizeBtn.addEventListener('click', () => maximizeWindow('playJockeyWindow'));
         DOM.playJockeyCloseBtn.addEventListener('click', () => {
-            const windowId = 'playJockeyWindow';
-            getById(windowId).style.display = 'none';
-            
-            if (!appData.windowStates[windowId]) appData.windowStates[windowId] = {};
-            appData.windowStates[windowId].hiddenByUser = true;
-
+            const playJockey = DOM.playJockeyWindow;
+            playJockey.style.display = 'none';
+            if (appData.windowStates.playJockeyWindow) {
+                appData.windowStates.playJockeyWindow.hiddenByUser = true;
+            }
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo();
             }
-            appData.playJockeyCurrentVideo = null; // This requires a saveData call if not covered by saveWindowState
-            saveWindowState(windowId); 
-            // If appData.playJockeyCurrentVideo is the only change outside of windowStates[windowId], 
-            // and saveWindowState only saves windowStates[windowId] effectively, then:
-            // saveData(); // Might be needed if saveWindowState doesn't save the whole appData.
-            // However, your saveWindowState calls saveData() which stringifies the whole appData. So it's fine.
+            appData.playJockeyCurrentVideo = null;
+            saveWindowState('playJockeyWindow');
+            saveData();
         });
 
         DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
@@ -2769,32 +2749,52 @@
         if (!state) {
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
-            // Dimensions will be set by setWindowDefaults if this new state falls through
+            setWindowDefaults(windowId, false);
+
+            if (!state.zIndex || state.zIndex <= 5) {
+                 let newZ = highestZIndex + 1;
+                 win.style.zIndex = newZ;
+                 state.zIndex = newZ;
+                 highestZIndex = newZ;
+            }
+
+            if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
+                win.style.display = 'none';
+            } else {
+                win.style.display = 'flex';
+            }
+            updateMinMaxButtonStates(windowId);
+            return;
         }
 
-        // Apply Z-Index
-        let loadedZ = state.zIndex || (highestZIndex + 1);
-        if (loadedZ <= 5) loadedZ = highestZIndex + 1;
+        let loadedZ = state.zIndex || (highestZIndex +1);
+        if (loadedZ <= 5) {
+            loadedZ = highestZIndex + 1;
+        }
         win.style.zIndex = loadedZ;
         state.zIndex = loadedZ;
         highestZIndex = Math.max(highestZIndex, loadedZ);
 
-        // Apply Dimensions, Position, and Minimized/Maximized Classes
-        // This logic runs regardless of the current hiddenByUser, as it defines the window's properties for when it *is* visible.
-        if (state.minimized) { // Check minimized state first
+
+        if ( (windowId === 'textEditorWindow' || windowId === 'xpMainWindow' || windowId === 'playJockeyWindow') && state.hiddenByUser) {
+             win.style.display = 'none';
+        } else {
+             win.style.display = 'flex';
+        }
+
+
+        if (state.minimized) {
             win.classList.add('minimized');
             win.classList.remove('true-maximized');
-            // Minimized styling is primarily CSS; width/height/x/y in state are for normal view
-        } else if (state.maximized) { // Then check maximized state
-            let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
-            // (Your existing logic for default sizes for lastNormalStates)
-            if (windowId === 'xpMainWindow') { defaultNormalWidth = (window.innerWidth * 0.9); defaultNormalHeight = (window.innerHeight * 0.75); minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20;}
-            else if (windowId === 'textEditorWindow') { defaultNormalWidth = (window.innerWidth * 0.6); defaultNormalHeight = (window.innerHeight * 0.65); minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
-            else if (windowId === 'playJockeyWindow') { defaultNormalWidth = (window.innerWidth * 0.5); defaultNormalHeight = (window.innerHeight * 0.6); minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 70; defaultY = 70;}
+        } else if (state.maximized) {
+            let minW, minH, defaultW, defaultH, defaultX, defaultY;
+            if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = 905; defaultH = 645; defaultX = window.innerWidth * 0.05; defaultY = 20;}
+            else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = 450; defaultH = 600; defaultX = 50; defaultY = 50;}
+            else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = 520; defaultH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
 
-            lastNormalStates[windowId] = { // Store the "normal" dimensions it would revert to
-                width: (state.width ? Math.max(minW, state.width) : defaultNormalWidth) + 'px',
-                height: (state.height ? Math.max(minH, state.height) : defaultNormalHeight) + 'px',
+            lastNormalStates[windowId] = {
+                width: (state.width ? Math.max(minW, state.width) : defaultW) + 'px',
+                height: (state.height ? Math.max(minH, state.height) : defaultH) + 'px',
                 top: (state.y || defaultY) + 'px',
                 left: (state.x || defaultX) + 'px'
             };
@@ -2803,37 +2803,27 @@
             win.style.top = '0px';
             win.style.left = '0px';
             win.classList.add('true-maximized');
-            win.classList.remove('minimized'); // Ensure not minimized
-            state.userManuallySet = false; // Maximized is a special state, not a user-dragged size
-        } else if (state.userManuallySet && state.width && state.height) {
-            // Apply user's specific dimensions for a normal window
+            win.classList.remove('minimized');
+            state.userManuallySet = false;
+        } else if (state.userManuallySet && state.width !== null && state.width > 0 && !state.hiddenByUser) {
             let currentMinWidth, currentMinHeight, defaultX, defaultY;
-             // (Your existing logic for min widths/heights and default positions)
             if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20; }
             else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50; }
             else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100; }
+
 
             win.style.left = (state.x || defaultX) + 'px';
             win.style.top = (state.y || defaultY) + 'px';
             win.style.width = Math.max(currentMinWidth, state.width) + 'px';
             win.style.height = Math.max(currentMinHeight, state.height) + 'px';
-            win.classList.remove('minimized'); // Ensure not minimized
-            win.classList.remove('true-maximized'); // Ensure not maximized
-        } else {
-            // Not minimized, not maximized, and not user-manually-set (or state dimensions are invalid)
-            // This is where defaults should apply.
-            setWindowDefaults(windowId, false); // This function sets styles and calls saveWindowState
-                                                // It also removes minimized/true-maximized classes.
+            win.classList.remove('minimized');
+            win.classList.remove('true-maximized');
+        } else if (!state.hiddenByUser) {
+            setWindowDefaults(windowId, false);
+            win.classList.remove('minimized');
+            win.classList.remove('true-maximized');
         }
-
-        // Set Visibility based on the state AFTER dimensions and classes are set
-        if (state.hiddenByUser) {
-            win.style.display = 'none';
-        } else {
-            win.style.display = 'flex';
-        }
-
-        updateMinMaxButtonStates(windowId); // Update buttons based on final state
+        updateMinMaxButtonStates(windowId);
     }
 
 
