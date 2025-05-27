@@ -1160,7 +1160,7 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.10.0';
+    const STORAGE_KEY = 'lifeXpData_v1.10.0'; // Consider versioning if schema changes significantly
     const YOUTUBE_API_KEY = "AIzaSyCmfQymtVEL3b_YEi7FlhpdNX5MkGsrNDM"; // <-- REPLACE WITH YOUR YOUTUBE API KEY
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25;
@@ -1332,8 +1332,9 @@
     };
     DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
 
+    let defaultAppData; // Defined in loadData/init context
 
-    let appData = {
+    let appData = { // This will be properly initialized by loadData
         areas: [],
         achievements: {},
         quests: {},
@@ -1388,16 +1389,17 @@
             document.body.style.backgroundImage = 'none';
             document.body.style.backgroundColor = appData.customBgColor;
         } else if (appData.customBgImage) {
-            document.body.style.backgroundColor = '';
+            document.body.style.backgroundColor = ''; // Clear solid color
             document.body.style.backgroundImage = `url('${appData.customBgImage}')`;
         } else {
+            // Default background
             document.body.style.backgroundColor = '#3A6EA5';
             document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')";
         }
     }
 
     function init() {
-        loadData();
+        loadData(); // Initializes appData and defaultAppData
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons();
@@ -1421,17 +1423,20 @@
         }
 
         initWindowInteractions('xpMainWindow');
-        restoreWindowState('xpMainWindow');
-        updateMinMaxButtonStates('xpMainWindow');
+        restoreWindowState('xpMainWindow'); // This will now correctly handle hiddenByUser
 
         DOM.textEditorFrame.srcdoc = getTextEditorHTMLContent();
         initWindowInteractions('textEditorWindow');
-        restoreWindowState('textEditorWindow');
-        updateMinMaxButtonStates('textEditorWindow');
+        restoreWindowState('textEditorWindow'); // This will now correctly handle hiddenByUser
 
         initWindowInteractions('playJockeyWindow');
-        restoreWindowState('playJockeyWindow');
+        restoreWindowState('playJockeyWindow'); // This will now correctly handle hiddenByUser
+
+        // Update button states after restoring, as restoreWindowState calls updateMinMaxButtonStates
+        updateMinMaxButtonStates('xpMainWindow');
+        updateMinMaxButtonStates('textEditorWindow');
         updateMinMaxButtonStates('playJockeyWindow');
+
 
         renderPlayJockeyTabs();
         renderPlayJockeyPlaylist();
@@ -1445,9 +1450,9 @@
             if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
                  playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
             } else {
-                appData.playJockeyCurrentVideo = null;
+                appData.playJockeyCurrentVideo = null; // Video no longer in playlist
             }
-        } else if (appData.playJockeyCurrentVideo) {
+        } else if (appData.playJockeyCurrentVideo) { // API not ready, video queued
             const currentPlaylist = getCurrentPlayJockeyPlaylist();
              if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
                 pendingVideoToLoad = { videoId: appData.playJockeyCurrentVideo.videoId, autoplayIntent: appData.playJockeyAutoPlayEnabled };
@@ -1456,8 +1461,7 @@
             }
         }
 
-
-        let maxLoadedWindowZ = highestZIndex;
+        let maxLoadedWindowZ = highestZIndex; // highestZIndex starts at 9
         ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow'].forEach(windowId => {
             if (appData.windowStates[windowId] && appData.windowStates[windowId].zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(appData.windowStates[windowId].zIndex));
@@ -1476,10 +1480,12 @@
         renderWeekdayHeaders();
         renderGrid();
         generateQuestsForCurrentWeekIfNeeded();
-        handleAppWindowResize();
+        handleAppWindowResize(); // Initial check
 
         const trackerWindowObserver = new ResizeObserver(handleAppWindowResize);
         trackerWindowObserver.observe(DOM.xpMainWindow);
+
+        saveData(); // Save potentially normalized states from restoreWindowState
     }
 
     function initDesktopIcons() {
@@ -1511,7 +1517,7 @@
             iconElement.addEventListener('mousedown', handleIconMouseDown);
             iconElement.addEventListener('dblclick', handleIconDoubleClick);
         });
-        saveData();
+        // saveData(); // Called at the end of init
     }
 
 
@@ -1529,7 +1535,7 @@
         iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
 
         activeDragIcon.style.cursor = 'grabbing';
-        activeDragIcon.style.zIndex = '6';
+        activeDragIcon.style.zIndex = '6'; // Higher than other icons, lower than windows
 
         document.addEventListener('mousemove', handleIconMouseMove);
         document.addEventListener('mouseup', handleIconMouseUp);
@@ -1556,60 +1562,71 @@
         let currentX = initialX;
         let currentY = initialY;
         let attempt = 0;
-        const maxAttempts = 100;
+        const maxAttempts = 100; // Increased attempts
         const iconWidth = draggedIcon.offsetWidth || 90;
         const iconHeight = draggedIcon.offsetHeight || 100;
 
         const checkCollisionAt = (x, y, currentDraggedIcon) => {
             const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon].filter(
-                icon => icon && icon !== currentDraggedIcon
+                icon => icon && icon !== currentDraggedIcon && icon.style.left && icon.style.top // Ensure other icons are placed
             );
 
             for (const otherIcon of iconsToCompare) {
-                if (!otherIcon.style.left || !otherIcon.style.top) continue;
-
                 const otherLeft = parseInt(otherIcon.style.left, 10);
                 const otherTop = parseInt(otherIcon.style.top, 10);
                 const otherWidth = otherIcon.offsetWidth || 90;
                 const otherHeight = otherIcon.offsetHeight || 100;
 
+                // Standard collision detection
                 if (x < otherLeft + otherWidth &&
                     x + iconWidth > otherLeft &&
                     y < otherTop + otherHeight &&
                     y + iconHeight > otherTop) {
-                    return true;
+                    return true; // Collision detected
                 }
             }
-            return false;
+            return false; // No collision
         };
+        
+        // Initial snapped position check
+        let snappedX = Math.round(initialX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+        let snappedY = Math.round(initialY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+        snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
+        snappedY = Math.max(0, Math.min(snappedY, document.body.clientHeight - iconHeight));
 
-        if (!checkCollisionAt(currentX, currentY, draggedIcon)) {
-            return { x: currentX, y: currentY };
+
+        if (!checkCollisionAt(snappedX, snappedY, draggedIcon)) {
+            return { x: snappedX, y: snappedY };
         }
 
+        // Spiral search if initial position collides
         let layer = 1;
         while (attempt < maxAttempts) {
             const positionsToTry = [];
+            // Top and bottom rows of the current layer
             for (let i = -layer; i <= layer; i++) {
-                positionsToTry.push({ x: initialX + i * ICON_GRID_SIZE, y: initialY - layer * ICON_GRID_SIZE });
-                if (layer !==0 ) positionsToTry.push({ x: initialX + i * ICON_GRID_SIZE, y: initialY + layer * ICON_GRID_SIZE });
+                positionsToTry.push({ x: snappedX + i * ICON_GRID_SIZE, y: snappedY - layer * ICON_GRID_SIZE }); // Top
+                if (layer !== 0) positionsToTry.push({ x: snappedX + i * ICON_GRID_SIZE, y: snappedY + layer * ICON_GRID_SIZE }); // Bottom
             }
+            // Left and right columns of the current layer (excluding corners already covered)
             for (let i = -layer + 1; i < layer; i++) {
-                positionsToTry.push({ x: initialX - layer * ICON_GRID_SIZE, y: initialY + i * ICON_GRID_SIZE });
-                if (layer !== 0) positionsToTry.push({ x: initialX + layer * ICON_GRID_SIZE, y: initialY + i * ICON_GRID_SIZE });
+                positionsToTry.push({ x: snappedX - layer * ICON_GRID_SIZE, y: snappedY + i * ICON_GRID_SIZE }); // Left
+                if (layer !== 0) positionsToTry.push({ x: snappedX + layer * ICON_GRID_SIZE, y: snappedY + i * ICON_GRID_SIZE }); // Right
             }
 
             for (const pos of positionsToTry) {
                 attempt++;
                 if (attempt >= maxAttempts) break;
 
-                let testX = Math.round(pos.x / ICON_GRID_SIZE) * ICON_GRID_SIZE;
-                let testY = Math.round(pos.y / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+                let testX = pos.x;
+                let testY = pos.y;
 
+                // Ensure within bounds and snap
                 testX = Math.max(0, Math.min(testX, document.body.clientWidth - iconWidth));
                 testY = Math.max(0, Math.min(testY, document.body.clientHeight - iconHeight));
                 testX = Math.round(testX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
                 testY = Math.round(testY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+
 
                 if (!checkCollisionAt(testX, testY, draggedIcon)) {
                     return { x: testX, y: testY };
@@ -1617,33 +1634,38 @@
             }
             if (attempt >= maxAttempts) break;
             layer++;
+            // Safety break if layer becomes excessively large
             if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
-                 console.warn("Collision search boundary too large for icon placement."); break;
+                 console.warn("Collision search boundary too large for icon placement. Layer:", layer); break;
             }
         }
 
-        console.warn("Could not find a non-colliding position for the icon after " + attempt + " attempts. Using original snapped position.");
-        return { x: initialX, y: initialY };
+        console.warn("Could not find a non-colliding position for icon " + draggedIcon.id + " after " + attempt + " attempts. Using original snapped position which might collide.");
+        return { x: snappedX, y: snappedY }; // Fallback to original snapped position
     }
 
 
     function handleIconMouseUp() {
         if (!activeDragIcon) return;
 
-        activeDragIcon.style.zIndex = '5';
+        activeDragIcon.style.zIndex = '5'; // Reset z-index
 
         let finalX = activeDragIcon.offsetLeft;
         let finalY = activeDragIcon.offsetTop;
 
+        // Snap to grid
         let snappedX = Math.round(finalX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
         let snappedY = Math.round(finalY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
 
         const iconWidth = activeDragIcon.offsetWidth || 90;
         const iconHeight = activeDragIcon.offsetHeight || 100;
+        // Ensure snapped position is within viewport bounds
         snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
         snappedY = Math.max(0, Math.min(snappedY, document.body.clientHeight - iconHeight));
+        // Re-snap after clamping to ensure it's on the grid
         snappedX = Math.round(snappedX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
         snappedY = Math.round(snappedY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+
 
         const { x: finalSnappedX, y: finalSnappedY } = findNonCollidingPosition(activeDragIcon, snappedX, snappedY);
 
@@ -1669,53 +1691,45 @@
         if (!windowElement) return;
 
         let state = appData.windowStates[windowId];
+        // Ensure state exists and is fully initialized (restoreWindowState should handle this on load)
         if (!state) {
-            // This case should ideally not be hit if windows are initialized with default states.
-            // However, for robustness, if a state is missing, initialize it.
-            appData.windowStates[windowId] = {};
-            state = appData.windowStates[windowId];
-            // Assume it was hidden and needs to be opened.
-            state.hiddenByUser = true; // This will trigger the 'unhiding' logic below.
-            state.minimized = false;
-            state.maximized = false; // Or load default dimensions if necessary
-            // console.warn(`State for window ${windowId} was missing, initialized.`);
+            console.warn(`State for window ${windowId} was missing on double click. Attempting to restore/initialize.`);
+            restoreWindowState(windowId); // Try to initialize it fully
+            state = appData.windowStates[windowId]; // Re-fetch
+            if(!state) {
+                console.error(`Failed to initialize state for ${windowId} on double click.`);
+                return;
+            }
         }
 
-        // Determine the action based on current state
+
         if (state.hiddenByUser || windowElement.style.display === 'none') {
-            // Window was hidden (closed), so unhide it and restore its state.
             state.hiddenByUser = false;
-            // When reopening a closed window, it should not be minimized,
-            // even if it was minimized before being closed.
-            state.minimized = false;
+            state.minimized = false; // When reopening a closed window, it should not be minimized
             
-            // Explicitly set display to flex and remove minimized class before restoreWindowState.
-            // This ensures the window is immediately prepared to be visible.
-            windowElement.style.display = 'flex';
+            windowElement.style.display = 'flex'; // Make visible before restore if it was truly 'none'
             windowElement.classList.remove('minimized');
 
             // Restore all visual aspects (dimensions, position) based on the now updated state.
+            // restoreWindowState will use state.hiddenByUser = false.
+            // If dimensions were null, it will call setWindowDefaults.
             restoreWindowState(windowId); 
 
-            // Specific logic for PlayJockey
             if (windowId === 'playJockeyWindow') {
                 if (appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                    playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay on manual reopen
-                } else if (pendingVideoToLoad && isYouTubeApiReady) { // If there was a pending video load attempt
+                    playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
+                } else if (pendingVideoToLoad && isYouTubeApiReady) {
                     playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
                     pendingVideoToLoad = null;
                 }
             }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            // Window is visible but minimized, so "maximize" it 
-            // (maximizeWindow handles restoring to normal or full screen).
+            // Window is visible but minimized, so "maximize" it (handles restore to normal or full screen).
             maximizeWindow(windowId); 
         }
         
-        // Always bring the interacted window to the front.
         bringToFront(windowElement);
-        // Save the updated state (e.g., hiddenByUser: false, minimized: false).
-        saveWindowState(windowId);
+        saveWindowState(windowId); // Save new state (e.g., hiddenByUser: false)
     }
 
 
@@ -1725,11 +1739,11 @@
 <head>
     <title>Jotter</title>
     <style>
-        html, body { /* Tweak: Ensure html and body take full height for calculations */
+        html, body { 
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Body should not scroll */
+            overflow: hidden; 
         }
         body {
             font-family: "Tahoma", "Geneva", sans-serif;
@@ -1746,7 +1760,7 @@
             padding: 2px 3px;
             border-bottom: 1px solid #ACA899;
             display: flex;
-            flex-shrink: 0; /* Menu bar should not shrink */
+            flex-shrink: 0; 
             user-select: none;
             color: #000000;
         }
@@ -1800,7 +1814,6 @@
         }
 
         #editorArea {
-            /* Tweak: Removed flex-grow: 1; height will be set by JS */
             border: 1px solid #7F7F7F;
             padding: 5px;
             background-color: white;
@@ -1812,7 +1825,8 @@
             white-space: pre-wrap; 
             word-wrap: break-word;
             box-sizing: border-box;
-            margin: 5px; /* Tweak: Restored margin */
+            margin: 5px; 
+            flex-grow: 1; /* Let editor area take remaining space */
         }
 
         .font-size-control-container {
@@ -1853,21 +1867,21 @@
     </style>
 </head>
 <body>
-    <div class="jotter-menu-bar" id="jotterMenuBar">
+    <div class="jotter-menu-bar" id="jotterMenuBarInFrame">
         <div class="jotter-menu-item" tabindex="0">
             <span class="underline">F</span>ile
             <div class="jotter-dropdown-content">
-                <div class="jotter-dropdown-item" id="fileSave">Save</div>
+                <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div>
             </div>
         </div>
         <div class="jotter-menu-item" tabindex="0">
             <span class="underline">V</span>iew
             <div class="jotter-dropdown-content">
-                <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItem">
+                <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame">
                     <span>Font Size:</span>
-                    <button class="font-size-btn" id="fontDecrementBtn">-</button>
-                    <input type="number" class="font-size-input" id="fontSizeInput" value="14" min="8" max="72">
-                    <button class="font-size-btn" id="fontIncrementBtn">+</button>
+                    <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button>
+                    <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72">
+                    <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button>
                 </div>
             </div>
         </div>
@@ -1877,29 +1891,28 @@
 
     <script>
         const editorArea = document.getElementById('editorArea');
-        const jotterMenuBar = document.getElementById('jotterMenuBar'); // Renamed for clarity
-        const bodyElement = document.body; // Get the body element of the iframe
+        const jotterMenuBar = document.getElementById('jotterMenuBarInFrame'); 
+        const bodyElement = document.body; 
         let activeMenu = null;
 
-        const fontDecrementBtn = document.getElementById('fontDecrementBtn');
-        const fontIncrementBtn = document.getElementById('fontIncrementBtn');
-        const fontSizeInput = document.getElementById('fontSizeInput');
-
-        // --- Tweak: Function to adjust editor height ---
+        const fontDecrementBtn = document.getElementById('fontDecrementBtnInFrame');
+        const fontIncrementBtn = document.getElementById('fontIncrementBtnInFrame');
+        const fontSizeInput = document.getElementById('fontSizeInputInFrame');
+        
         function adjustEditorHeight() {
+            // Now that editorArea has flex-grow: 1, this might not be strictly necessary
+            // if the parent (.window-body of the main page) correctly sizes the iframe.
+            // However, keeping it for internal consistency within the iframe or if direct iframe resizing happens.
             const menuBarHeight = jotterMenuBar.offsetHeight;
-            const bodyHeight = bodyElement.offsetHeight;
+            const bodyHeight = bodyElement.clientHeight; // Use clientHeight for available space
             const editorMarginTop = parseInt(window.getComputedStyle(editorArea).marginTop) || 0;
             const editorMarginBottom = parseInt(window.getComputedStyle(editorArea).marginBottom) || 0;
             
             let newEditorHeight = bodyHeight - menuBarHeight - editorMarginTop - editorMarginBottom;
-            
-            // Ensure height is not negative if calculations are off or window is too small
             newEditorHeight = Math.max(0, newEditorHeight); 
-            editorArea.style.height = newEditorHeight + 'px';
+            // editorArea.style.height = newEditorHeight + 'px'; // Only set if not using flex-grow
         }
 
-        // --- Menu Logic ---
         jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
             menuItem.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -1944,7 +1957,7 @@
             }
         });
 
-        const fileSaveButton = document.getElementById('fileSave');
+        const fileSaveButton = document.getElementById('fileSaveInFrame');
         fileSaveButton.addEventListener('click', (event) => {
              event.stopPropagation();
             performSave();
@@ -1981,13 +1994,15 @@
         }
 
         editorArea.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 's') {
+            if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
                 e.preventDefault();
                 performSave();
             }
         });
+        // Also listen on window for Ctrl+S in case editor doesn't have focus but menu was interacted with
         window.addEventListener('keydown', function(e) { 
-            if (e.ctrlKey && e.key === 's') {
+            if (e.ctrlKey && (e.key === 's' || e.key === 'S') && !e.target.closest('#editorArea')) {
+                 // Only trigger if focus is not in editor, to avoid double-trigger
                 e.preventDefault();
                 performSave();
             }
@@ -2029,20 +2044,10 @@
         applyFontSize(fontSizeInput.value);
         editorArea.focus();
 
-        // --- Tweak: Initial and on resize height adjustment ---
-        adjustEditorHeight(); // Call once on load
-        // Use ResizeObserver to adjust height when iframe body resizes
-        if (typeof ResizeObserver !== 'undefined') {
-            const resizeObserver = new ResizeObserver(entries => {
-                // We are only observing one element, so we can just call adjustEditorHeight
-                adjustEditorHeight();
-            });
-            resizeObserver.observe(bodyElement);
-        } else {
-            // Fallback for older browsers (less reliable for iframe content changes)
-            window.addEventListener('resize', adjustEditorHeight);
-        }
-
+        // adjustEditorHeight(); // Initial call
+        // Using ResizeObserver on the iframe's body can be problematic for cross-origin or if the iframe itself is resized.
+        // The parent page's ResizeObserver on the #textEditorWindow element is more reliable for overall window size changes.
+        // window.addEventListener('resize', adjustEditorHeight); // Fallback if needed
     <\/script>
 </body>
 </html>`;
@@ -2069,11 +2074,10 @@
         highestZIndex++;
         windowElement.style.zIndex = highestZIndex;
         const windowId = windowElement.id;
-        if (appData.windowStates[windowId]) {
-            appData.windowStates[windowId].zIndex = highestZIndex;
-        } else {
-            appData.windowStates[windowId] = { zIndex: highestZIndex };
-        }
+        // Ensure state object exists
+        if (!appData.windowStates[windowId]) appData.windowStates[windowId] = {};
+        appData.windowStates[windowId].zIndex = highestZIndex;
+        // No need to call saveData() here, will be called by the action triggering bringToFront
     }
 
 
@@ -2087,7 +2091,7 @@
             resizeHandleElement = DOM.xpMainWindowResizeHandle;
         } else if (windowId === 'textEditorWindow') {
             titleBarElement = DOM.textEditorWindowTitleBar;
-            resizeHandleElement = DOM.textEditorResizeHandle; // <<< Relevant for Jotter
+            resizeHandleElement = DOM.textEditorResizeHandle;
         } else if (windowId === 'playJockeyWindow') {
             titleBarElement = DOM.playJockeyTitleBar;
             resizeHandleElement = DOM.playJockeyResizeHandle;
@@ -2102,21 +2106,23 @@
         windowElement.addEventListener('mousedown', (e) => {
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
 
+            // Check if the click is on the window itself, title bar (not buttons), or window body (not interactive elements)
             if (e.target === windowElement ||
-                (e.target === titleBarElement && !e.target.closest('button')) ||
-                (windowElement.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab'))) {
+                (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab'))) {
                  bringToFront(windowElement);
             }
-        }, true);
+        }, true); // Use capture phase to bring to front before other actions
 
         titleBarElement.addEventListener('mousedown', (e) => {
             if (e.target.closest('button') || windowElement.classList.contains('true-maximized') || activeDragIcon) return;
             activeDragWindow = windowElement;
             dragOffsetX = e.clientX - activeDragWindow.offsetLeft;
             dragOffsetY = e.clientY - activeDragWindow.offsetTop;
+            activeDragWindow.classList.add('disable-selection'); // Prevent text selection during drag
             document.addEventListener('mousemove', doDrag);
             document.addEventListener('mouseup', stopDragOrResize);
-            bringToFront(windowElement);
+            bringToFront(windowElement); // Bring to front on title bar mousedown as well
         });
 
         if (resizeHandleElement) {
@@ -2129,13 +2135,9 @@
                 resizeInitialWidth = activeResizeWindow.offsetWidth;
                 resizeInitialHeight = activeResizeWindow.offsetHeight;
 
-                // --- MODIFICATION START ---
-                // Disable pointer events on the iframe if it's the text editor being resized
-                if (windowId === 'textEditorWindow') {
+                if (windowId === 'textEditorWindow' && DOM.textEditorFrame) {
                     DOM.textEditorFrame.style.pointerEvents = 'none';
                 }
-                // --- MODIFICATION END ---
-
                 document.addEventListener('mousemove', doResize);
                 document.addEventListener('mouseup', stopDragOrResize);
                 bringToFront(windowElement);
@@ -2167,7 +2169,7 @@
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH;
             currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
         } else {
-            return;
+            return; // Should not happen
         }
 
 
@@ -2180,25 +2182,28 @@
             appData.windowStates[windowId].userManuallySet = true;
         }
         if (windowId === 'xpMainWindow') {
-            handleAppWindowResize();
+            handleAppWindowResize(); // For specific layout changes in tracker
         }
     }
 
     function stopDragOrResize() {
-        if (activeDragWindow || activeResizeWindow) {
-            const windowId = activeDragWindow ? activeDragWindow.id : activeResizeWindow.id;
-            saveWindowState(windowId);
-
-            // --- MODIFICATION START ---
-            // Re-enable pointer events on the iframe if it was the text editor being resized
-            if (activeResizeWindow && activeResizeWindow.id === 'textEditorWindow') {
-                DOM.textEditorFrame.style.pointerEvents = 'auto';
-            }
-            // --- MODIFICATION END ---
+        let windowToSaveState = null;
+        if (activeDragWindow) {
+            activeDragWindow.classList.remove('disable-selection');
+            windowToSaveState = activeDragWindow.id;
         }
         if (activeResizeWindow) {
             activeResizeWindow.classList.remove('disable-selection');
+            if (activeResizeWindow.id === 'textEditorWindow' && DOM.textEditorFrame) {
+                DOM.textEditorFrame.style.pointerEvents = 'auto';
+            }
+            windowToSaveState = activeResizeWindow.id;
         }
+
+        if (windowToSaveState) {
+            saveWindowState(windowToSaveState);
+        }
+
         activeDragWindow = null;
         activeResizeWindow = null;
         document.removeEventListener('mousemove', doDrag);
@@ -2209,8 +2214,10 @@
 
     function setWindowDefaults(windowId, isBrowserResize = false) {
         const appWindow = getById(windowId);
+        // Guard: if window doesn't exist, or is minimized (defaults shouldn't apply to minimized state visually)
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
+        // If window is maximized and this isn't a browser resize, it should stay maximized.
         if (appWindow.classList.contains('true-maximized') && !isBrowserResize) {
             appWindow.style.width = '100vw';
             appWindow.style.height = '100vh';
@@ -2219,96 +2226,86 @@
             return;
         }
 
-        const state = appData.windowStates[windowId] || {};
+        const state = appData.windowStates[windowId]; // Assumed to exist due to restoreWindowState logic
+        if (!state) {
+            console.error(`State missing for ${windowId} in setWindowDefaults`);
+            return;
+        }
+
         const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
-        const hasValidSavedPosition = state.x !== null && state.y !== null;
+        const hasValidSavedPosition = state.x != null && state.y != null;
 
         let currentMinWidth, currentMinHeight, defaultWidth, defaultHeight, defaultOffsetX, defaultOffsetY;
 
         if (windowId === 'xpMainWindow') {
-            currentMinWidth = minTrackerAppWidth;
-            currentMinHeight = MIN_TRACKER_APP_HEIGHT;
-            // --- MODIFICATION START for xpMainWindow ---
-            defaultWidth = 905; // Remains 905px
-            defaultHeight = 705; // Changed from 645px
-            // --- MODIFICATION END for xpMainWindow ---
-            defaultOffsetX = 0;
-            defaultOffsetY = 0;
+            currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT;
+            defaultWidth = 905; defaultHeight = 705;
+            defaultOffsetX = 0; defaultOffsetY = 0; // Centered
         } else if (windowId === 'textEditorWindow') {
-            currentMinWidth = MIN_TEXTEDITOR_WIDTH;
-            currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
-            // --- MODIFICATION START for textEditorWindow ---
-            defaultWidth = 450; // Remains 450px
-            defaultHeight = 705; // Changed from 600px
-            // --- MODIFICATION END for textEditorWindow ---
-            defaultOffsetX = 50;
-            defaultOffsetY = 50;
+            currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
+            defaultWidth = 450; defaultHeight = 705;
+            defaultOffsetX = 50; defaultOffsetY = 50;
         } else if (windowId === 'playJockeyWindow') {
-            currentMinWidth = MIN_PLAYJOCKEY_WIDTH;
-            currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
-            // --- MODIFICATION START for playJockeyWindow ---
-            defaultWidth = 480;    // Changed from 520px
-            defaultHeight = 705;   // Changed from MIN_PLAYJOCKEY_HEIGHT (425px)
-            // --- MODIFICATION END for playJockeyWindow ---
-            defaultOffsetX = 100;
-            defaultOffsetY = 100;
+            currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
+            defaultWidth = 480; defaultHeight = 705;
+            defaultOffsetX = 100; defaultOffsetY = 100;
         } else {
-            return;
+            return; // Unknown window ID
         }
 
-        if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize) {
+        // Apply default dimensions and position ONLY if not user-set or if it's a browser resize forcing re-evaluation
+        if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize || !hasValidSavedPosition) {
             let newWidth = defaultWidth;
             let newHeight = defaultHeight;
 
             newWidth = Math.max(currentMinWidth, newWidth);
             newHeight = Math.max(currentMinHeight, newHeight);
 
-            let newLeft = defaultOffsetX === 0 ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
-            let newTop =  defaultOffsetY === 0 ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
-
+            let newLeft = (defaultOffsetX === 0 && window.innerWidth > newWidth) ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
+            let newTop = (defaultOffsetY === 0 && window.innerHeight > newHeight) ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
+            
             newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
             newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
+            if (window.innerHeight <= newHeight + 20) newTop = 10;
+            if (window.innerWidth <= newWidth + 20) newLeft = 10;
 
             appWindow.style.width = newWidth + 'px';
             appWindow.style.height = newHeight + 'px';
             appWindow.style.left = newLeft + 'px';
             appWindow.style.top = newTop + 'px';
-            if(state) state.userManuallySet = false;
-        } else if (hasValidSavedSize && hasValidSavedPosition && state.userManuallySet && !isBrowserResize) {
-            appWindow.style.width = Math.max(currentMinWidth, state.width) + 'px';
-            appWindow.style.height = Math.max(currentMinHeight, state.height) + 'px';
-            appWindow.style.left = state.x + 'px';
-            appWindow.style.top = state.y + 'px';
+
+            // Update the state object directly as these are now the applied "default" values
+            state.width = newWidth;
+            state.height = newHeight;
+            state.x = newLeft;
+            state.y = newTop;
+            state.userManuallySet = false; // These are defaults, not user-dragged/resized
         }
-        if (appWindow.classList.contains('true-maximized')) {
-             appWindow.style.width = '100vw';
-             appWindow.style.height = '100vh';
-             appWindow.style.top = '0px';
-             appWindow.style.left = '0px';
-             if (state) state.userManuallySet = false;
-        }
-        saveWindowState(windowId);
+        // If userManuallySet and valid dimensions/position exist, restoreWindowState already applied them.
+        // No saveWindowState(windowId) here; this function just applies styles.
     }
 
 
     function handleAppWindowResize() {
-        if (DOM.xpMainWindow.classList.contains('minimized')) return;
+        if (DOM.xpMainWindow.classList.contains('minimized') || DOM.xpMainWindow.style.display === 'none') return;
         checkControlsBarLayout();
-        checkToggleDayView();
+        checkToggleDayView(); // If this function has complex logic, ensure it's needed
     }
 
     function checkControlsBarLayout() {
         const controlsBar = DOM.controlsBar;
+        if (!controlsBar || !controlsBar.clientWidth) return; // Ensure controlsBar is visible and has width
+
         const children = [
             controlsBar.querySelector('.week-navigation'),
             controlsBar.querySelector('.controls-group'),
             controlsBar.querySelector('.global-actions')
         ].filter(el => el);
 
-        if (children.length === 0 || !controlsBar.clientWidth) return;
+        if (children.length === 0) return;
 
-        const originalClasses = controlsBar.className;
-        controlsBar.className = 'controls-bar layout-single-row';
+        const originalClasses = controlsBar.className; // Preserve original classes
+        controlsBar.className = 'controls-bar layout-single-row'; // Temporarily apply for measurement
 
         let totalChildrenWidth = 0;
         children.forEach(child => {
@@ -2316,7 +2313,7 @@
             totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
         });
 
-        controlsBar.className = originalClasses;
+        controlsBar.className = originalClasses; // Restore original classes
 
         const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
 
@@ -2330,14 +2327,14 @@
     }
 
 
-    function checkToggleDayView() { }
+    function checkToggleDayView() { /* Placeholder if specific logic is needed */ }
 
 
     function addEventListeners() {
         document.body.addEventListener('contextmenu', function(event) {
-            if (event.target === document.body) {
+            if (event.target === document.body) { // Only if clicking directly on the body/desktop
                 event.preventDefault();
-                DOM.newBgImageInput.value = null;
+                DOM.newBgImageInput.value = null; // Clear previous file selection
                 DOM.bgImageUrlInput.value = '';
                 openModal(MODAL_IDS.CHANGE_BG_IMAGE);
             }
@@ -2346,12 +2343,12 @@
         DOM.uploadBgImageBtn.addEventListener('click', function() {
             const file = DOM.newBgImageInput.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB warning
                     alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Consider using a smaller file or a URL.");
                 }
                 const reader = new FileReader();
                 reader.onloadend = function() {
-                    document.body.style.backgroundColor = '';
+                    document.body.style.backgroundColor = ''; // Clear solid color
                     document.body.style.backgroundImage = `url('${reader.result}')`;
                     appData.customBgImage = reader.result;
                     appData.customBgColor = null;
@@ -2371,8 +2368,8 @@
             const imageUrl = DOM.bgImageUrlInput.value.trim();
             if (imageUrl) {
                 try {
-                    new URL(imageUrl);
-                    document.body.style.backgroundColor = '';
+                    new URL(imageUrl); // Basic URL validation
+                    document.body.style.backgroundColor = ''; // Clear solid color
                     document.body.style.backgroundImage = `url('${imageUrl}')`;
                     appData.customBgImage = imageUrl;
                     appData.customBgColor = null;
@@ -2390,7 +2387,7 @@
             if (event.target.classList.contains('color-swatch-item')) {
                 const selectedColor = event.target.dataset.colorValue;
                 if (selectedColor) {
-                    document.body.style.backgroundImage = 'none';
+                    document.body.style.backgroundImage = 'none'; // Clear image
                     document.body.style.backgroundColor = selectedColor;
 
                     appData.customBgColor = selectedColor;
@@ -2403,22 +2400,21 @@
 
 
         DOM.gridBody.addEventListener('click', function(event) {
-            if (event.target.classList.contains('delete-area-btn')) {
-                const areaName = event.target.dataset.areaName;
-                if (areaName) {
-                    promptRemoveArea(areaName);
-                }
-            } else if (event.target.classList.contains('edit-ach-btn')) {
-                const achKey = event.target.dataset.achKey;
-                const achId = event.target.dataset.achId;
+            const target = event.target;
+            if (target.classList.contains('delete-area-btn')) {
+                const areaName = target.dataset.areaName;
+                if (areaName) promptRemoveArea(areaName);
+            } else if (target.classList.contains('edit-ach-btn')) {
+                const achKey = target.dataset.achKey;
+                const achId = target.dataset.achId;
                 openAddEditAchievementModal(null, null, achKey, achId);
-            } else if (event.target.classList.contains('remove-ach-btn')) {
-                const achKey = event.target.dataset.achKey;
-                const achId = event.target.dataset.achId;
+            } else if (target.classList.contains('remove-ach-btn')) {
+                const achKey = target.dataset.achKey;
+                const achId = target.dataset.achId;
                 promptRemoveAchievement(achKey, achId);
-            } else if (event.target.classList.contains('achievement-add-btn-cell')) {
-                const areaName = event.target.dataset.areaName;
-                const dayIndex = parseInt(event.target.dataset.dayIndex);
+            } else if (target.classList.contains('achievement-add-btn-cell')) {
+                const areaName = target.dataset.areaName;
+                const dayIndex = parseInt(target.dataset.dayIndex);
                 openAddEditAchievementModal(areaName, dayIndex);
             }
         });
@@ -2457,42 +2453,38 @@
         });
         DOM.confirmRefreshQuestBtn.addEventListener('click', confirmAndRefreshQuest);
 
+        // Window Controls
         DOM.xpMainWindowMinimizeBtn.addEventListener('click', () => minimizeWindow('xpMainWindow'));
         DOM.xpMainWindowMaximizeBtn.addEventListener('click', () => maximizeWindow('xpMainWindow'));
         DOM.xpMainWindowCloseBtn.addEventListener('click', () => {
-            const trackerWindow = DOM.xpMainWindow;
-            trackerWindow.style.display = 'none';
-            if(appData.windowStates.xpMainWindow) {
-                appData.windowStates.xpMainWindow.hiddenByUser = true;
-            }
+            const win = DOM.xpMainWindow;
+            win.style.display = 'none';
+            if(appData.windowStates.xpMainWindow) appData.windowStates.xpMainWindow.hiddenByUser = true;
             saveWindowState('xpMainWindow');
         });
 
         DOM.textEditorMinimizeBtn.addEventListener('click', () => minimizeWindow('textEditorWindow'));
         DOM.textEditorMaximizeBtn.addEventListener('click', () => maximizeWindow('textEditorWindow'));
         DOM.textEditorCloseBtn.addEventListener('click', () => {
-            const textEditor = DOM.textEditorWindow;
-            textEditor.style.display = 'none';
-            if(appData.windowStates.textEditorWindow) {
-                appData.windowStates.textEditorWindow.hiddenByUser = true;
-            }
+            const win = DOM.textEditorWindow;
+            win.style.display = 'none';
+            if(appData.windowStates.textEditorWindow) appData.windowStates.textEditorWindow.hiddenByUser = true;
             saveWindowState('textEditorWindow');
         });
 
         DOM.playJockeyMinimizeBtn.addEventListener('click', () => minimizeWindow('playJockeyWindow'));
         DOM.playJockeyMaximizeBtn.addEventListener('click', () => maximizeWindow('playJockeyWindow'));
         DOM.playJockeyCloseBtn.addEventListener('click', () => {
-            const playJockey = DOM.playJockeyWindow;
-            playJockey.style.display = 'none';
-            if (appData.windowStates.playJockeyWindow) {
-                appData.windowStates.playJockeyWindow.hiddenByUser = true;
-            }
+            const win = DOM.playJockeyWindow;
+            win.style.display = 'none';
+            if(appData.windowStates.playJockeyWindow) appData.windowStates.playJockeyWindow.hiddenByUser = true;
+            
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
-                ytPlayerInstance.stopVideo();
+                ytPlayerInstance.stopVideo(); // Stop video when closing
             }
-            appData.playJockeyCurrentVideo = null;
+            // appData.playJockeyCurrentVideo = null; // Optionally clear current video
             saveWindowState('playJockeyWindow');
-            saveData();
+            // saveData(); // saveWindowState calls saveData
         });
 
         DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
@@ -2511,13 +2503,10 @@
         DOM.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay);
         DOM.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat);
 
-        DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
         DOM.modalCloseButtons.forEach(button => {
             button.addEventListener('click', (event) => {
                 const modalId = event.target.dataset.modalId || event.target.closest('.modal').id;
-                if (modalId) {
-                     closeModal(modalId);
-                }
+                if (modalId) closeModal(modalId);
             });
         });
 
@@ -2526,7 +2515,7 @@
             if (areaNameToRemove) {
                 removeArea(areaNameToRemove);
                 closeModal(MODAL_IDS.CONFIRM_REMOVE_AREA);
-                delete this.dataset.areaNameToRemove;
+                delete this.dataset.areaNameToRemove; // Clean up
             }
         });
 
@@ -2546,35 +2535,27 @@
         DOM.confirmFinalPlaylistRemoveBtn.addEventListener('click', executePlaylistDeletion);
 
         DOM.saveRenamedTrackBtn.addEventListener('click', saveRenamedTrack);
-        DOM.trackNewNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                 DOM.saveRenamedTrackBtn.click();
-            }
-        });
-         DOM.trackNewArtistInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                DOM.saveRenamedTrackBtn.click();
-            }
-        });
+        DOM.trackNewNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM.saveRenamedTrackBtn.click();});
+        DOM.trackNewArtistInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM.saveRenamedTrackBtn.click();});
         DOM.confirmFinalTrackRemoveBtn.addEventListener('click', executeTrackDeletion);
 
-
         window.addEventListener('resize', () => {
+            // Call setWindowDefaults for each window that might need to adjust
+            // It will only adjust if not user-set, or if isBrowserResize is true (which it is here implicitly)
             setWindowDefaults('xpMainWindow', true);
             setWindowDefaults('textEditorWindow', true);
             setWindowDefaults('playJockeyWindow', true);
+            // After defaults are applied, the state object's dimensions are updated by setWindowDefaults.
+            // We should then save this potentially new default state.
+            saveData();
         });
 
-        document.addEventListener('click', (e) => {
-            if (!DOM.playJockeyContextMenu.contains(e.target) && DOM.playJockeyContextMenu.style.display === 'block') {
-                if (!e.target.closest('.playjockey-playlist-item')) {
-                     hidePjContextMenu();
-                }
+        document.addEventListener('click', (e) => { // Hide context menus on outside click
+            if (DOM.playJockeyContextMenu.style.display === 'block' && !DOM.playJockeyContextMenu.contains(e.target) && !e.target.closest('.playjockey-playlist-item')) {
+                hidePjContextMenu();
             }
-            if (!DOM.playJockeyTabContextMenu.contains(e.target) && DOM.playJockeyTabContextMenu.style.display === 'block') {
-                 if (!e.target.closest('.playjockey-tab')) {
-                    hidePjTabContextMenu();
-                 }
+            if (DOM.playJockeyTabContextMenu.style.display === 'block' && !DOM.playJockeyTabContextMenu.contains(e.target) && !e.target.closest('.playjockey-tab')) {
+                hidePjTabContextMenu();
             }
         });
     }
@@ -2583,13 +2564,28 @@
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
-        const state = appData.windowStates[windowId] || {};
+        const state = appData.windowStates[windowId]; // Assumed to exist
+        if (!state) { console.error(`State missing for ${windowId} in minimizeWindow`); return; }
+
         state.minimized = true;
 
         if (appWindow.classList.contains('true-maximized')) {
             state.wasMaximizedBeforeMinimize = true;
+            // Restore pre-maximized dimensions into state from lastNormalStates
+            if (lastNormalStates[windowId]) {
+                state.width = parseInt(lastNormalStates[windowId].width);
+                state.height = parseInt(lastNormalStates[windowId].height);
+                state.x = parseInt(lastNormalStates[windowId].left);
+                state.y = parseInt(lastNormalStates[windowId].top);
+            } else {
+                // Fallback if lastNormalState is somehow missing, use app defaults
+                // This requires knowing the default normal sizes.
+                // For simplicity, this case should ideally not be hit if lastNormalStates is managed well.
+                console.warn(`lastNormalStates missing for ${windowId} during minimize from maximized.`);
+            }
         } else {
             state.wasMaximizedBeforeMinimize = false;
+            // Save current normal dimensions into state
             state.width = appWindow.offsetWidth;
             state.height = appWindow.offsetHeight;
             state.x = appWindow.offsetLeft;
@@ -2606,78 +2602,64 @@
         const appWindow = getById(windowId);
         if (!appWindow) return;
 
-        const state = appData.windowStates[windowId] || {};
+        const state = appData.windowStates[windowId];
+        if (!state) { console.error(`State missing for ${windowId} in maximizeWindow`); return; }
+
         const isMinimized = appWindow.classList.contains('minimized');
         let currentLastNormal = lastNormalStates[windowId] || {};
 
-
-        if (isMinimized) {
+        if (isMinimized) { // Restore from minimized
             appWindow.classList.remove('minimized');
             state.minimized = false;
             const wasMaximized = state.wasMaximizedBeforeMinimize;
-            delete state.wasMaximizedBeforeMinimize;
+            delete state.wasMaximizedBeforeMinimize; // Clear flag
 
-            if (wasMaximized) {
-                if (!currentLastNormal.width || !currentLastNormal.height) {
-                    let defaultNormalWidth, defaultNormalHeight, minW, minH;
-                    if (windowId === 'xpMainWindow') { defaultNormalWidth = (window.innerWidth * 0.9); defaultNormalHeight = (window.innerHeight * 0.75); minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT;}
-                    else if (windowId === 'textEditorWindow') { defaultNormalWidth = (window.innerWidth * 0.6); defaultNormalHeight = (window.innerHeight * 0.65); minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT;}
-                    else if (windowId === 'playJockeyWindow') { defaultNormalWidth = (window.innerWidth * 0.5); defaultNormalHeight = (window.innerHeight * 0.6); minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
-
-
-                    currentLastNormal = {
-                        width: Math.max(minW, state.width || defaultNormalWidth) + 'px',
-                        height: Math.max(minH, state.height || defaultNormalHeight) + 'px',
-                        top: (state.y || (windowId === 'xpMainWindow' ? 20 : (windowId === 'textEditorWindow' ? 50 : 70))) + 'px',
-                        left: (state.x || (windowId === 'xpMainWindow' ? (window.innerWidth * 0.05) : (windowId === 'textEditorWindow' ? 50 : 70))) + 'px'
-                    };
-                    lastNormalStates[windowId] = currentLastNormal;
-                }
-
+            if (wasMaximized) { // Restore to maximized state
                 appWindow.style.width = '100vw';
                 appWindow.style.height = '100vh';
                 appWindow.style.top = '0px';
                 appWindow.style.left = '0px';
                 appWindow.classList.add('true-maximized');
                 state.maximized = true;
-                state.userManuallySet = false;
-            } else {
-                let minW, minH, defaultW, defaultH, defaultX, defaultY;
-                 if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultW = window.innerWidth * 0.9; defaultH = window.innerHeight * 0.75; defaultX = window.innerWidth * 0.05; defaultY = 20; }
-                 else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultW = window.innerWidth * 0.6; defaultH = window.innerHeight * 0.65; defaultX = 50; defaultY = 50; }
-                 else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultW = window.innerWidth * 0.5; defaultH = window.innerHeight * 0.6; defaultX = 70; defaultY = 70; }
+                // state.width/height/x/y should already hold the pre-maximized (normal) dimensions from when it was minimized
+            } else { // Restore to normal state (dimensions are in state.width/height/x/y)
+                let minW, minH;
+                if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT;}
+                else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT;}
+                else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
 
-
-                let restoreWidth = state.width || parseFloat(currentLastNormal.width) || defaultW;
-                let restoreHeight = state.height || parseFloat(currentLastNormal.height) || defaultH;
-                let restoreX = state.x || parseFloat(currentLastNormal.left) || defaultX;
-                let restoreY = state.y || parseFloat(currentLastNormal.top) || defaultY;
-
-                appWindow.style.width = Math.max(minW, restoreWidth) + 'px';
-                appWindow.style.height = Math.max(minH, restoreHeight) + 'px';
-                appWindow.style.left = restoreX + 'px';
-                appWindow.style.top = restoreY + 'px';
+                appWindow.style.width = Math.max(minW, state.width || parseInt(currentLastNormal.width) || 0) + 'px';
+                appWindow.style.height = Math.max(minH, state.height || parseInt(currentLastNormal.height) || 0) + 'px';
+                appWindow.style.left = (state.x || parseInt(currentLastNormal.left) || 0) + 'px';
+                appWindow.style.top = (state.y || parseInt(currentLastNormal.top) || 0) + 'px';
                 state.maximized = false;
             }
-        } else if (appWindow.classList.contains('true-maximized')) {
-             if (currentLastNormal.width && currentLastNormal.height) {
+        } else if (appWindow.classList.contains('true-maximized')) { // Restore down from maximized
+            if (currentLastNormal.width && currentLastNormal.height) {
                 appWindow.style.width = currentLastNormal.width;
                 appWindow.style.height = currentLastNormal.height;
                 appWindow.style.top = currentLastNormal.top;
                 appWindow.style.left = currentLastNormal.left;
+                // Update state with these normal dimensions
+                state.width = parseInt(currentLastNormal.width);
+                state.height = parseInt(currentLastNormal.height);
+                state.x = parseInt(currentLastNormal.left);
+                state.y = parseInt(currentLastNormal.top);
             } else {
-                setWindowDefaults(windowId, false);
+                // Fallback if lastNormalState is missing, apply app defaults for normal state
+                setWindowDefaults(windowId, false); // This will set state.width/height/x/y
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
-            state.userManuallySet = true;
-        } else {
-            lastNormalStates[windowId] = {
+            state.userManuallySet = true; // Restoring to a specific size implies manual control over that size
+        } else { // Maximize from normal
+            lastNormalStates[windowId] = { // Save current normal state
                 width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                 height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
                 top: appWindow.style.top || (appWindow.offsetTop + 'px'),
                 left: appWindow.style.left || (appWindow.offsetLeft + 'px')
             };
+            // state.width/height/x/y already hold these normal dimensions, no change needed to them here.
 
             appWindow.style.width = '100vw';
             appWindow.style.height = '100vh';
@@ -2685,12 +2667,12 @@
             appWindow.style.left = '0px';
             appWindow.classList.add('true-maximized');
             state.maximized = true;
-            state.userManuallySet = false;
+            state.userManuallySet = false; // Maximized is not a user-dragged size
         }
 
         updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
-        if (windowId === 'xpMainWindow') handleAppWindowResize();
+        if (windowId === 'xpMainWindow' && !isMinimized) handleAppWindowResize(); // if unminimized or toggled max state
     }
 
 
@@ -2709,26 +2691,22 @@
             maximizeBtn = DOM.playJockeyMaximizeBtn;
         }
 
-
-        if (!win || !minimizeBtn || !maximizeBtn) {
-            return;
-        }
+        if (!win || !minimizeBtn || !maximizeBtn) return;
 
         const isMinimized = win.classList.contains('minimized');
         const isTrueMaximized = win.classList.contains('true-maximized');
 
-        minimizeBtn.disabled = isMinimized;
-        maximizeBtn.disabled = false;
-
+        minimizeBtn.disabled = isMinimized; // Cannot minimize if already minimized
+        maximizeBtn.disabled = false; // Maximize/Restore button is always enabled unless window is hidden
 
         if (isMinimized) {
-            maximizeBtn.textContent = '1';
+            maximizeBtn.textContent = '1'; // Symbol for Restore
             maximizeBtn.title = "Restore";
         } else if (isTrueMaximized) {
-            maximizeBtn.textContent = '2';
+            maximizeBtn.textContent = '2'; // Symbol for Restore Down
             maximizeBtn.title = "Restore Down";
         } else {
-            maximizeBtn.textContent = '1';
+            maximizeBtn.textContent = '1'; // Symbol for Maximize
             maximizeBtn.title = "Maximize";
         }
     }
@@ -2739,7 +2717,7 @@
             DOM.prevWeekBtn.textContent = '< Prev Week';
             DOM.nextWeekBtn.textContent = 'Next Week >';
             DOM.thisWeekBtn.textContent = 'This Week';
-        } else {
+        } else { // Day view
             DOM.toggleViewBtn.textContent = 'Week View';
             DOM.prevWeekBtn.textContent = '< Prev Day';
             DOM.nextWeekBtn.textContent = 'Next Day >';
@@ -2753,98 +2731,144 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
+            console.warn(`Window state for ${windowId} was missing during saveWindowState. Re-initializing.`);
+            // This path should ideally not be hit if restoreWindowState initializes correctly.
+            // For safety, attempt to create a basic state.
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
+            // Populate with current DOM state as best guess, though hiddenByUser might be wrong if called unexpectedly
+            state.hiddenByUser = (win.style.display === 'none');
+            state.minimized = win.classList.contains('minimized');
+            state.maximized = win.classList.contains('true-maximized');
+            state.userManuallySet = false; // Default if creating new
+             // state.x,y,w,h will be captured below if applicable
         }
 
+        // These flags are updated based on the window's current classes
         state.minimized = win.classList.contains('minimized');
         state.maximized = win.classList.contains('true-maximized');
-        state.zIndex = parseInt(win.style.zIndex) || (highestZIndex + 1);
-        state.hiddenByUser = win.style.display === 'none';
+        state.zIndex = parseInt(win.style.zIndex) || highestZIndex; // Use current highestZ if parsing fails or zIndex is 0
 
+        // state.hiddenByUser is managed by open/close actions directly modifying appData.windowStates[windowId].hiddenByUser.
+        // This function saves whatever value is ALREADY in state.hiddenByUser. It does NOT re-derive it from win.style.display.
 
-        if (!state.minimized && !state.maximized && !state.hiddenByUser) {
+        // Save dimensions:
+        // If the window is in a "normal" state (neither minimized nor maximized),
+        // its current offsetLeft/Top/Width/Height are the ones to save.
+        if (!state.minimized && !state.maximized) {
             state.x = win.offsetLeft;
             state.y = win.offsetTop;
             state.width = win.offsetWidth;
             state.height = win.offsetHeight;
+            // state.userManuallySet is true if user dragged/resized, false if set by defaults.
+            // Drag/Resize handlers set userManuallySet = true.
+            // setWindowDefaults sets userManuallySet = false.
         }
+        // If state.minimized is true, state.x/y/width/height should already hold the pre-minimized values.
+        // These are set by the minimizeWindow function before it calls saveWindowState.
+        // If state.maximized is true, state.x/y/width/height should already hold the pre-maximized (normal) values.
+        // These are set by the maximizeWindow function (when restoring down or from lastNormalState)
+        // or preserved (if maximizing from normal) before it calls saveWindowState.
+
         saveData();
     }
 
+
     function restoreWindowState(windowId) {
         const win = getById(windowId);
-        if (!win) return;
+        if (!win) {
+            console.error(`Window element ${windowId} not found for restore.`);
+            return;
+        }
 
         let state = appData.windowStates[windowId];
+        const defaultStateTemplate = (defaultAppData.windowStates && defaultAppData.windowStates[windowId]) || {
+            x: null, y: null, width: null, height: null,
+            maximized: false, minimized: false, zIndex: highestZIndex + 1, userManuallySet: false,
+            hiddenByUser: (windowId === 'playJockeyWindow') // Default fallback
+        };
+
         if (!state) {
-            appData.windowStates[windowId] = {};
+            appData.windowStates[windowId] = { ...defaultStateTemplate };
             state = appData.windowStates[windowId];
-            // Dimensions will be set by setWindowDefaults if this new state falls through
-        }
-
-        // Apply Z-Index
-        let loadedZ = state.zIndex || (highestZIndex + 1);
-        if (loadedZ <= 5) loadedZ = highestZIndex + 1;
-        win.style.zIndex = loadedZ;
-        state.zIndex = loadedZ;
-        highestZIndex = Math.max(highestZIndex, loadedZ);
-
-        // Apply Dimensions, Position, and Minimized/Maximized Classes
-        // This logic runs regardless of the current hiddenByUser, as it defines the window's properties for when it *is* visible.
-        if (state.minimized) { // Check minimized state first
-            win.classList.add('minimized');
-            win.classList.remove('true-maximized');
-            // Minimized styling is primarily CSS; width/height/x/y in state are for normal view
-        } else if (state.maximized) { // Then check maximized state
-            let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
-            // (Your existing logic for default sizes for lastNormalStates)
-            if (windowId === 'xpMainWindow') { defaultNormalWidth = (window.innerWidth * 0.9); defaultNormalHeight = (window.innerHeight * 0.75); minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20;}
-            else if (windowId === 'textEditorWindow') { defaultNormalWidth = (window.innerWidth * 0.6); defaultNormalHeight = (window.innerHeight * 0.65); minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
-            else if (windowId === 'playJockeyWindow') { defaultNormalWidth = (window.innerWidth * 0.5); defaultNormalHeight = (window.innerHeight * 0.6); minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 70; defaultY = 70;}
-
-            lastNormalStates[windowId] = { // Store the "normal" dimensions it would revert to
-                width: (state.width ? Math.max(minW, state.width) : defaultNormalWidth) + 'px',
-                height: (state.height ? Math.max(minH, state.height) : defaultNormalHeight) + 'px',
-                top: (state.y || defaultY) + 'px',
-                left: (state.x || defaultX) + 'px'
-            };
-            win.style.width = '100vw';
-            win.style.height = '100vh';
-            win.style.top = '0px';
-            win.style.left = '0px';
-            win.classList.add('true-maximized');
-            win.classList.remove('minimized'); // Ensure not minimized
-            state.userManuallySet = false; // Maximized is a special state, not a user-dragged size
-        } else if (state.userManuallySet && state.width && state.height) {
-            // Apply user's specific dimensions for a normal window
-            let currentMinWidth, currentMinHeight, defaultX, defaultY;
-             // (Your existing logic for min widths/heights and default positions)
-            if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; defaultX = window.innerWidth * 0.05; defaultY = 20; }
-            else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50; }
-            else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100; }
-
-            win.style.left = (state.x || defaultX) + 'px';
-            win.style.top = (state.y || defaultY) + 'px';
-            win.style.width = Math.max(currentMinWidth, state.width) + 'px';
-            win.style.height = Math.max(currentMinHeight, state.height) + 'px';
-            win.classList.remove('minimized'); // Ensure not minimized
-            win.classList.remove('true-maximized'); // Ensure not maximized
         } else {
-            // Not minimized, not maximized, and not user-manually-set (or state dimensions are invalid)
-            // This is where defaults should apply.
-            setWindowDefaults(windowId, false); // This function sets styles and calls saveWindowState
-                                                // It also removes minimized/true-maximized classes.
+            state = {
+                ...defaultStateTemplate, // Apply defaults first for any missing properties
+                ...state,                 // Loaded state overrides defaults
+                // Ensure boolean flags and zIndex are valid after merge
+                minimized: state.minimized === undefined ? defaultStateTemplate.minimized : state.minimized,
+                maximized: state.maximized === undefined ? defaultStateTemplate.maximized : state.maximized,
+                hiddenByUser: state.hiddenByUser === undefined ? defaultStateTemplate.hiddenByUser : state.hiddenByUser,
+                userManuallySet: state.userManuallySet === undefined ? defaultStateTemplate.userManuallySet : state.userManuallySet,
+                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex
+            };
+            appData.windowStates[windowId] = state; // Assign back the merged state
         }
 
-        // Set Visibility based on the state AFTER dimensions and classes are set
+
+        // 1. Set visibility FIRST, based on the loaded or initialized state.hiddenByUser.
         if (state.hiddenByUser) {
             win.style.display = 'none';
         } else {
             win.style.display = 'flex';
         }
 
-        updateMinMaxButtonStates(windowId); // Update buttons based on final state
+        // 2. Apply Z-Index from state or assign a new one.
+        let loadedZ = state.zIndex; // Already parsed or defaulted
+        if (loadedZ <= 5 && windowId !== 'desktop-icon') loadedZ = highestZIndex + 1;
+        win.style.zIndex = loadedZ;
+        state.zIndex = loadedZ;
+        highestZIndex = Math.max(highestZIndex, loadedZ);
+
+
+        // 3. Apply minimized/maximized state or normal dimensions.
+        if (state.minimized) {
+            win.classList.add('minimized');
+            win.classList.remove('true-maximized');
+            // Normal dimensions are already in state.x/y/width/height from when it was minimized.
+        } else if (state.maximized) {
+            win.classList.add('true-maximized');
+            win.classList.remove('minimized');
+            win.style.width = '100vw';
+            win.style.height = '100vh';
+            win.style.top = '0px';
+            win.style.left = '0px';
+
+            let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
+            if (windowId === 'xpMainWindow') { defaultNormalWidth = 905; defaultNormalHeight = 705; minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = (window.innerWidth - defaultNormalWidth)/2; defaultY = 20;}
+            else if (windowId === 'textEditorWindow') { defaultNormalWidth = 450; defaultNormalHeight = 705; minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
+            else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
+
+            lastNormalStates[windowId] = { // Populate lastNormalStates using normal dims from state or defaults
+                width: (state.width ? Math.max(minW, state.width) : defaultNormalWidth) + 'px',
+                height: (state.height ? Math.max(minH, state.height) : defaultNormalHeight) + 'px',
+                top: (state.y != null ? state.y : defaultY) + 'px',
+                left: (state.x != null ? state.x : defaultX) + 'px'
+            };
+        } else { // Normal window state (not minimized, not maximized)
+            win.classList.remove('minimized');
+            win.classList.remove('true-maximized');
+
+            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
+                let currentMinWidth, currentMinHeight;
+                if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; }
+                else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; }
+                else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; }
+                else { currentMinWidth = 100; currentMinHeight = 100; }
+
+                win.style.left = state.x + 'px';
+                win.style.top = state.y + 'px';
+                win.style.width = Math.max(currentMinWidth, state.width) + 'px';
+                win.style.height = Math.max(currentMinHeight, state.height) + 'px';
+            } else {
+                // Needs defaults. Only apply if currently visible (not hiddenByUser).
+                if (!state.hiddenByUser) {
+                    setWindowDefaults(windowId, false); // This updates state.width/height/x/y & userManuallySet
+                }
+                // If hidden and needs defaults, dimensions will be set when first unhidden if still null.
+            }
+        }
+        updateMinMaxButtonStates(windowId);
     }
 
 
@@ -2853,7 +2877,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (error) {
             console.error("Error saving data to localStorage:", error);
-            if (error.name === 'QuotaExceededError') {
+            if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
             }
         }
@@ -2862,7 +2886,9 @@
     function loadData() {
         const storedData = localStorage.getItem(STORAGE_KEY);
         const defaultPlaylistId = 'playlist_default_0';
-        const defaultAppData = {
+
+        // Define defaultAppData here so it's in scope for init and restoreWindowState
+        defaultAppData = {
             viewMode: 'week',
             selectedDayIndex: 0,
             windowStates: {
@@ -2878,6 +2904,7 @@
             areas: [],
             achievements: {},
             quests: {},
+            currentWeekStartDate: null, // Will be set in init if null
             customBgImage: null,
             customBgColor: null,
             playJockeyPlaylists: [{id: defaultPlaylistId, name: "Playlist", videos: []}],
@@ -2888,13 +2915,15 @@
             playJockeyRepeatState: "off",
             playJockeyRandomHistory: []
         };
+
         if (storedData) {
             try {
                 const loadedData = JSON.parse(storedData);
+                // Merge loadedData with defaultAppData to ensure all keys exist
                 appData = {
-                    ...defaultAppData,
-                    ...loadedData,
-                    windowStates: {
+                    ...defaultAppData, // Start with defaults
+                    ...loadedData,     // Override with loaded data
+                    windowStates: { // Deep merge for windowStates
                         xpMainWindow: { ...defaultAppData.windowStates.xpMainWindow, ...(loadedData.windowStates ? loadedData.windowStates.xpMainWindow : {}) },
                         textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(loadedData.windowStates ? loadedData.windowStates.textEditorWindow : {}) },
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) }
@@ -2902,71 +2931,74 @@
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
                     playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
-                            ...pl,
-                            videos: (pl.videos || []).map(video => ({
-                                ...video,
-                                title: video.title ? decodeHtmlEntities(video.title) : (video.originalUrl ? decodeHtmlEntities(video.originalUrl) : "Unknown Title"), // Decode on load
-                                artist: video.artist ? decodeHtmlEntities(video.artist) : "" // Decode on load
+                            ...pl, // Spread playlist properties
+                            videos: (pl.videos || []).map(video => ({ // Ensure videos array exists
+                                ...video, // Spread video properties
+                                title: video.title ? decodeHtmlEntities(video.title) : (video.originalUrl ? decodeHtmlEntities(video.originalUrl) : "Unknown Title"),
+                                artist: video.artist ? decodeHtmlEntities(video.artist) : ""
                             }))
                           }))
-                        : [{id: defaultPlaylistId, name: "Playlist", videos: []}],
+                        : [{id: defaultPlaylistId, name: "Playlist", videos: []}], // Default if playlists are missing/empty
                     playJockeyCurrentPlaylistId: loadedData.playJockeyCurrentPlaylistId || defaultPlaylistId,
                     playJockeyCurrentVideo: loadedData.playJockeyCurrentVideo ? {
                         ...(loadedData.playJockeyCurrentVideo),
-                        title: loadedData.playJockeyCurrentVideo.title ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.title) : "Unknown Title", // Decode on load
-                        artist: loadedData.playJockeyCurrentVideo.artist ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.artist) : "" // Decode on load
+                        title: loadedData.playJockeyCurrentVideo.title ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.title) : "Unknown Title",
+                        artist: loadedData.playJockeyCurrentVideo.artist ? decodeHtmlEntities(loadedData.playJockeyCurrentVideo.artist) : ""
                     } : null,
+                    // Ensure boolean/specific values have fallbacks if malformed in storage
                     playJockeyAutoPlayEnabled: typeof loadedData.playJockeyAutoPlayEnabled === 'boolean' ? loadedData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
                     playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : []
                 };
-
+                
+                // Ensure current playlist ID is valid
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
-                     if (appData.playJockeyPlaylists.length === 0) {
+                     if (appData.playJockeyPlaylists.length === 0) { // Should be caught by ternary above, but extra safety
                         appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
                         appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
                     }
                 }
-
-
+                // Ensure core arrays/objects exist
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
                 appData.quests = appData.quests || {};
-
+                // Validate selectedDayIndex and viewMode
                 if (typeof appData.selectedDayIndex !== 'number' || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
-                    appData.selectedDayIndex = 0;
+                    appData.selectedDayIndex = defaultAppData.selectedDayIndex;
                 }
                  if (appData.viewMode !== 'week' && appData.viewMode !== 'day') {
-                    appData.viewMode = 'week';
+                    appData.viewMode = defaultAppData.viewMode;
                 }
+
             } catch (error) {
-                console.error("Error parsing stored data:", error);
-                appData = {...defaultAppData};
+                console.error("Error parsing stored data, reverting to defaults:", error);
+                appData = JSON.parse(JSON.stringify(defaultAppData)); // Deep copy defaults
             }
         } else {
-             appData = { ...defaultAppData};
+             appData = JSON.parse(JSON.stringify(defaultAppData)); // Deep copy defaults if no stored data
         }
     }
 
     function getMonday(d) {
         d = new Date(d);
-        const currentDay = d.getDay();
-        const diffToMondayVal = d.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+        const currentDay = d.getDay(); // Sunday = 0, Monday = 1, ...
+        const diffToMondayVal = d.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Adjust for Sunday
         const mondayDate = new Date(d.getFullYear(), d.getMonth(), diffToMondayVal);
         return mondayDate;
     }
 
-    function getWeekNumber(d) {
+    function getWeekNumber(d) { // d is a Date object
         d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); // Thursday of that week
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); // Calculate week number
     }
 
     function getCurrentWeekId() {
         if (!appData.currentWeekStartDate) {
+            // This should ideally be set by init() if null after loadData()
             appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
         }
         const startDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
@@ -2989,15 +3021,15 @@
         let weekChanged = false;
         let currentMonDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
 
-        if (appData.selectedDayIndex < 0) {
+        if (appData.selectedDayIndex < 0) { // Moved to previous week
             currentMonDate.setDate(currentMonDate.getDate() - 7);
             appData.currentWeekStartDate = getMonday(currentMonDate).toISOString().split('T')[0];
-            appData.selectedDayIndex = 6;
+            appData.selectedDayIndex = 6; // Last day of the new current week
             weekChanged = true;
-        } else if (appData.selectedDayIndex > 6) {
+        } else if (appData.selectedDayIndex > 6) { // Moved to next week
             currentMonDate.setDate(currentMonDate.getDate() + 7);
             appData.currentWeekStartDate = getMonday(currentMonDate).toISOString().split('T')[0];
-            appData.selectedDayIndex = 0;
+            appData.selectedDayIndex = 0; // First day of the new current week
             weekChanged = true;
         }
 
@@ -3014,19 +3046,21 @@
         appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
         if(appData.viewMode === 'day') {
             const today = new Date();
-            let currentDayOfWeek = today.getDay();
-            appData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1;
+            let currentDayOfWeek = today.getDay(); // Sunday = 0
+            appData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1; // Mon = 0 .. Sun = 6
         }
-        updateViewControls();
+        updateViewControls(); // Reflect potential mode change if "Today" also means "This Week" context
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
-        generateQuestsForCurrentWeekIfNeeded();
+        generateQuestsForCurrentWeekIfNeeded(); // Quests are weekly
         saveData();
     }
 
     function toggleViewMode() {
         const appWindow = DOM.xpMainWindow;
+        const state = appData.windowStates.xpMainWindow; // Assumed to exist
+
         const wasMaximized = appWindow.classList.contains('true-maximized');
         const wasMinimized = appWindow.classList.contains('minimized');
 
@@ -3035,34 +3069,37 @@
             minTrackerAppWidth = 375;
             const today = new Date();
             const currentWeekMondayObj = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
+            // Check if "today" is within the currently displayed week
             const checkDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const weekStartCheck = new Date(currentWeekMondayObj.getFullYear(), currentWeekMondayObj.getMonth(), currentWeekMondayObj.getDate());
             const weekEndCheck = new Date(weekStartCheck);
             weekEndCheck.setDate(weekStartCheck.getDate() + 6);
 
-            if (checkDate >= weekStartCheck && checkDate <= weekEndCheck) {
-                let currentDayOfWeek = today.getDay();
-                appData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1;
-            } else {
-                if (appData.selectedDayIndex === undefined || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
+            if (checkDate >= weekStartCheck && checkDate <= weekEndCheck) { // If today is in current week
+                let currentDayOfWeek = today.getDay(); // Sunday = 0
+                appData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1; // Mon=0..Sun=6
+            } else { // If not, default to the first day of the current week
+                 if (appData.selectedDayIndex === undefined || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
                     appData.selectedDayIndex = 0;
                 }
             }
-        } else {
+        } else { // Switching from day to week
             appData.viewMode = 'week';
             minTrackerAppWidth = 905;
+            // selectedDayIndex is not directly used in week view display but kept in appData
         }
 
+        // Adjust window width if it's now smaller than the new min width, and not maximized/minimized
         if (!wasMaximized && !wasMinimized) {
             let currentWidth = appWindow.offsetWidth;
             if (currentWidth < minTrackerAppWidth) {
                 appWindow.style.width = minTrackerAppWidth + 'px';
-                if(appData.windowStates.xpMainWindow) {
-                    appData.windowStates.xpMainWindow.userManuallySet = false;
-                    setWindowDefaults('xpMainWindow', false);
+                if(state) {
+                    state.width = minTrackerAppWidth; // Update state
+                    state.userManuallySet = false; // No longer user-set if forced to minWidth
                 }
-            } else if (appData.windowStates.xpMainWindow && !appData.windowStates.xpMainWindow.userManuallySet) {
-                 setWindowDefaults('xpMainWindow', false);
+            } else if (state && !state.userManuallySet) { // If it was default sized, re-evaluate
+                 setWindowDefaults('xpMainWindow', false); // Let defaults re-evaluate size potentially
             }
         }
 
@@ -3071,7 +3108,7 @@
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
-        saveData();
+        saveData(); // Save new viewMode and potentially selectedDayIndex
     }
 
     function updateDateDisplay() {
@@ -3082,14 +3119,11 @@
             const options = { month: 'short', day: 'numeric' };
             DOM.currentWeekDisplay.textContent = `${currentMonday.toLocaleDateString(undefined, options)} - ${weekEndDate.toLocaleDateString(undefined, options)}`;
             DOM.weekCountDisplay.textContent = `Year Week: ${getWeekNumber(currentMonday)}`;
-        } else {
+        } else { // Day view
             const selectedDate = new Date(currentMonday);
-             if (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6){
-                 selectedDate.setDate(currentMonday.getDate() + appData.selectedDayIndex);
-            } else {
-                 appData.selectedDayIndex = 0;
-                 selectedDate.setDate(currentMonday.getDate() + appData.selectedDayIndex);
-            }
+             const currentDayIndex = (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6) ? appData.selectedDayIndex : 0;
+             selectedDate.setDate(currentMonday.getDate() + currentDayIndex);
+            
             const dayDisplayOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             DOM.currentWeekDisplay.textContent = selectedDate.toLocaleDateString(undefined, dayDisplayOptions);
             DOM.weekCountDisplay.textContent = `Year Day: ${getDayOfYear(selectedDate)}`;
@@ -3097,41 +3131,46 @@
     }
 
     function renderWeekdayHeaders() {
-        DOM.weekdayHeaders.innerHTML = '<th>Area</th>';
+        DOM.weekdayHeaders.innerHTML = '<th>Area</th>'; // Reset headers
         if (appData.viewMode === 'week') {
             WEEKDAYS.forEach(day => {
                 const th = document.createElement('th');
                 th.textContent = day;
                 DOM.weekdayHeaders.appendChild(th);
             });
-        } else {
+        } else { // Day view
             const th = document.createElement('th');
             const dayDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
             const currentDayIndex = (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6) ? appData.selectedDayIndex : 0;
-            dayDate.setDate(dayDate.getDate() + currentDayIndex);
+            dayDate.setDate(dayDate.getDate() + currentDayIndex); // Get the specific day
             th.textContent = `${WEEKDAYS[currentDayIndex]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
             DOM.weekdayHeaders.appendChild(th);
         }
     }
 
     function renderGrid() {
-        DOM.gridBody.innerHTML = '';
+        DOM.gridBody.innerHTML = ''; // Clear existing grid
         appData.areas.forEach(area => {
             const tr = document.createElement('tr');
             tr.dataset.areaName = area.name;
 
             const nameTd = document.createElement('td');
             nameTd.className = 'area-name-cell';
+            // XP Bar details
+            const currentXP = area.xp;
+            const xpToNext = xpForNextLevel(area.level);
+            const percentage = xpToNext > 0 ? Math.min((currentXP / xpToNext) * 100, 100) : (currentXP > 0 ? 100 : 0);
+
             nameTd.innerHTML = `
                 <div class="area-name-wrapper">
-                    <span>${area.name}</span>
+                    <span>${decodeHtmlEntities(area.name)}</span>
                     <button class="xp-button delete-area-btn" data-area-name="${area.name}" title="Delete ${area.name}">X</button>
                 </div>
                 <div class="area-stats">
                     <span>Level: <span class="area-level">${area.level}</span></span>
                     <div class="xp-bar-container">
-                        <div class="xp-bar" style="width: ${getXpPercentage(area)}%;"></div>
-                        <div class="xp-bar-text"><span class="area-xp">${area.xp}</span> / ${xpForNextLevel(area.level)} XP</div>
+                        <div class="xp-bar" style="width: ${percentage}%;"></div>
+                        <div class="xp-bar-text"><span class="area-xp">${currentXP}</span> / ${xpToNext} XP</div>
                     </div>
                 </div>`;
             tr.appendChild(nameTd);
@@ -3149,10 +3188,10 @@
                     const contentDiv = document.createElement('div');
                     contentDiv.className = 'achievement-content';
                     if (ach.type === 'text') {
-                        contentDiv.textContent = decodeHtmlEntities(ach.content); // Decode for display
+                        contentDiv.textContent = decodeHtmlEntities(ach.content);
                     } else if (ach.type === 'image') {
                         const img = document.createElement('img');
-                        img.src = ach.content; // Image URLs are not typically HTML encoded
+                        img.src = ach.content; // Assuming content is a valid image URL or data URL
                         img.alt = "Achievement Image";
                         contentDiv.appendChild(img);
                     }
@@ -3177,7 +3216,7 @@
 
                 const dayDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
                 dayDate.setDate(dayDate.getDate() + dayIdx);
-                addAchBtn.title = `Add achievement to ${areaName} on ${WEEKDAYS[dayIdx]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
+                addAchBtn.title = `Add achievement to ${decodeHtmlEntities(areaName)} on ${WEEKDAYS[dayIdx]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
 
                 td.appendChild(addAchBtn);
             };
@@ -3190,11 +3229,11 @@
                     renderCellContent(td, area.name, dayIndex);
                     tr.appendChild(td);
                 });
-            } else {
+            } else { // Day view
                 const dayIndex = (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6) ? appData.selectedDayIndex : 0;
                 const td = document.createElement('td');
                 td.dataset.areaName = area.name;
-                td.dataset.dayIndex = dayIndex;
+                td.dataset.dayIndex = dayIndex; // Store the actual day index
                 renderCellContent(td, area.name, dayIndex);
                 tr.appendChild(td);
             }
@@ -3205,7 +3244,7 @@
 
     function getXpPercentage(area) {
         const required = xpForNextLevel(area.level);
-        return required > 0 ? Math.min((area.xp / required) * 100, 100) : 0;
+        return required > 0 ? Math.min((area.xp / required) * 100, 100) : (area.xp > 0 ? 100 : 0);
     }
 
     function saveNewArea() {
@@ -3219,57 +3258,58 @@
             return;
         }
 
-        appData.areas.push({ name: name, level: 1, xp: 0 });
+        appData.areas.push({ name: name, level: 1, xp: 0 }); // Store name as entered (plain text)
         DOM.newAreaNameInput.value = '';
         closeModal(MODAL_IDS.NEW_AREA);
         renderGrid();
-        generateQuestsForCurrentWeekIfNeeded(true);
+        generateQuestsForCurrentWeekIfNeeded(true); // Force regeneration if new area might affect quest pool
         saveData();
     }
 
     function promptRemoveArea(areaName) {
-        DOM.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${areaName}"? This action cannot be undone and will delete all associated achievements and quests.`;
-        DOM.confirmRemoveBtn.dataset.areaNameToRemove = areaName;
+        DOM.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${decodeHtmlEntities(areaName)}"? This action cannot be undone and will delete all associated achievements and quests.`;
+        DOM.confirmRemoveBtn.dataset.areaNameToRemove = areaName; // Store plain name
         openModal(MODAL_IDS.CONFIRM_REMOVE_AREA);
     }
 
-    function removeArea(areaName) {
+    function removeArea(areaName) { // areaName is plain text
         appData.areas = appData.areas.filter(area => area.name !== areaName);
 
+        // Remove achievements associated with this area
         const achievementKeysToDelete = [];
         for (const key in appData.achievements) {
             if (appData.achievements.hasOwnProperty(key)) {
-                const parts = key.split('_');
-                if (parts.length >= 3) {
-                    const keyAreaName = parts.slice(1, parts.length -1).join('_');
-                    if (keyAreaName === areaName) {
-                        achievementKeysToDelete.push(key);
-                    }
+                const parts = key.split('_'); // Format: YYYY-MM-DD_AreaName_DayIndex
+                // Reconstruct area name from key parts (can contain underscores)
+                const keyAreaName = parts.slice(1, parts.length -1).join('_');
+                if (keyAreaName === areaName) {
+                    achievementKeysToDelete.push(key);
                 }
             }
         }
         achievementKeysToDelete.forEach(key => delete appData.achievements[key]);
 
+        // Remove quests associated with this area
         for (const weekId in appData.quests) {
             if (appData.quests.hasOwnProperty(weekId)) {
                 appData.quests[weekId] = appData.quests[weekId].filter(quest => quest.areaName !== areaName);
             }
         }
 
-        generateQuestsForCurrentWeekIfNeeded(true);
-        updateDateDisplay();
+        generateQuestsForCurrentWeekIfNeeded(true); // Regenerate if pool changed
+        updateDateDisplay(); // In case view depends on area data (not directly, but good practice)
         renderWeekdayHeaders();
         renderGrid();
         saveData();
     }
 
     function openAddEditAchievementModal(areaName, dayIndex, achievementKeyToEdit = null, achievementIdToEdit = null) {
-        DOM.achievementImageInput.value = null;
+        DOM.achievementImageInput.value = null; // Clear file input
         DOM.achievementTextInput.value = '';
         DOM.editingAchievementKeyInput.value = '';
         DOM.editingAchievementIdInput.value = '';
 
-        if (achievementKeyToEdit && achievementIdToEdit) {
+        if (achievementKeyToEdit && achievementIdToEdit) { // Editing existing achievement
             const achievementsInCell = appData.achievements[achievementKeyToEdit];
             const achievementToEdit = achievementsInCell ? achievementsInCell.find(ach => ach.id === achievementIdToEdit) : null;
 
@@ -3279,10 +3319,10 @@
             }
 
             const keyParts = achievementKeyToEdit.split('_');
-            const currentAreaName = keyParts.slice(1, keyParts.length -1).join('_');
+            const currentAreaName = keyParts.slice(1, keyParts.length -1).join('_'); // Reconstruct area name
             const currentDayIndex = parseInt(keyParts[keyParts.length -1]);
 
-            DOM.achievementAreaNameInput.value = currentAreaName;
+            DOM.achievementAreaNameInput.value = currentAreaName; // Plain text area name
             DOM.achievementDayIndexInput.value = currentDayIndex;
             DOM.editingAchievementKeyInput.value = achievementKeyToEdit;
             DOM.editingAchievementIdInput.value = achievementIdToEdit;
@@ -3295,33 +3335,33 @@
                 DOM.achievementTextInput.value = decodeHtmlEntities(achievementToEdit.content); // Decode for editing
             } else if (achievementToEdit.type === 'image') {
                 DOM.achievementTypeRadios[1].checked = true;
-                // Image content (URL/base64) usually isn't HTML encoded
+                // Image content (URL/base64) is not HTML encoded
             }
-        } else {
-            DOM.achievementAreaNameInput.value = areaName;
+        } else { // Adding new achievement
+            DOM.achievementAreaNameInput.value = areaName; // Plain text area name
             DOM.achievementDayIndexInput.value = dayIndex;
             DOM.addEditAchievementModalTitle.textContent = "Add Achievement";
             DOM.saveAchievementBtn.textContent = "Save Achievement";
-            DOM.achievementTypeRadios[0].checked = true;
+            DOM.achievementTypeRadios[0].checked = true; // Default to text
         }
-        toggleAchievementInputType();
+        toggleAchievementInputType(); // Show/hide text/image input fields
         openModal(MODAL_IDS.ADD_EDIT_ACHIEVEMENT);
         if(DOM.achievementTypeRadios[0].checked) DOM.achievementTextInput.focus();
     }
 
 
     function toggleAchievementInputType() {
-        if (DOM.achievementTypeRadios[0].checked) {
+        if (DOM.achievementTypeRadios[0].checked) { // Text type
             DOM.textInputDiv.style.display = 'block';
             DOM.imageInputDiv.style.display = 'none';
-        } else {
+        } else { // Image type
             DOM.textInputDiv.style.display = 'none';
             DOM.imageInputDiv.style.display = 'block';
         }
     }
 
     function saveOrUpdateAchievement() {
-        const areaName = DOM.achievementAreaNameInput.value;
+        const areaName = DOM.achievementAreaNameInput.value; // Plain text
         const dayIndex = parseInt(DOM.achievementDayIndexInput.value);
         const type = document.querySelector('input[name="achievementType"]:checked').value;
         const editingKey = DOM.editingAchievementKeyInput.value;
@@ -3331,11 +3371,11 @@
         let achievement;
 
         const achievementsKey = isEditing ? editingKey : `${appData.currentWeekStartDate}_${areaName}_${dayIndex}`;
-        if (!appData.achievements[achievementsKey] && !isEditing) {
+        if (!appData.achievements[achievementsKey] && !isEditing) { // Ensure array exists for new achievements
             appData.achievements[achievementsKey] = [];
         }
 
-        let achievementList = appData.achievements[achievementsKey] || [];
+        let achievementList = appData.achievements[achievementsKey] || []; // Get the list (or empty if somehow still null)
 
         if (isEditing) {
             achievement = achievementList.find(ach => ach.id === editingId);
@@ -3343,26 +3383,25 @@
                 alert("Error: Could not find achievement to update.");
                 return;
             }
-        } else {
+        } else { // New achievement
             achievement = {
-                id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
+                id: Date.now() + '-' + Math.random().toString(36).substring(2, 9), // Unique ID
                 timestamp: new Date().toISOString(),
-                xp: XP_PER_REGULAR_ACHIEVEMENT
+                xp: XP_PER_REGULAR_ACHIEVEMENT // Standard XP for new achievement
             };
         }
 
         achievement.type = type;
 
-        const processSave = (content) => {
-            // Store text content decoded. Image content (URL/base64) is not typically encoded.
-            achievement.content = type === 'text' ? decodeHtmlEntities(content) : content;
+        const processSave = (contentToSave) => {
+            // Content for text is stored as plain text. For images, it's URL/base64.
+            achievement.content = contentToSave; 
             if (isEditing) {
-                // If it was a text achievement being edited, XP is not re-added unless content significantly changed
-                // (complex logic, for now, editing doesn't change XP unless we implement more specific rules)
-            } else {
+                // XP is generally not re-added on edit unless content/type changes significantly (not implemented here)
+            } else { // New achievement
                 achievementList.push(achievement);
                 addXpToArea(areaName, achievement.xp);
-                updateQuestProgress(areaName, achievement.xp);
+                updateQuestProgress(areaName, achievement.xp); // Update quests with XP gained
             }
 
             closeModal(MODAL_IDS.ADD_EDIT_ACHIEVEMENT);
@@ -3370,38 +3409,32 @@
             saveData();
         };
 
-
         if (type === 'text') {
-            const textContent = DOM.achievementTextInput.value.trim(); // Input value is already plain text
+            const textContent = DOM.achievementTextInput.value.trim(); // Input value is plain text
             if (!textContent) {
                 alert("Achievement description cannot be empty.");
                 return;
             }
-            processSave(textContent);
+            processSave(textContent); // Save plain text
         } else if (type === 'image') {
             const file = DOM.achievementImageInput.files[0];
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) {
+            if (file) { // New image uploaded
+                if (file.size > 2 * 1024 * 1024) { // 2MB limit
                     alert("Image file is too large. Please choose an image under 2MB.");
                     return;
                 }
                 const reader = new FileReader();
                 reader.onloadend = function() {
-                    processSave(reader.result); // Base64 string
+                    processSave(reader.result); // Save base64 string
                 }
-                reader.onerror = function() {
-                    alert("Error reading image file.");
-                }
+                reader.onerror = function() { alert("Error reading image file."); }
                 reader.readAsDataURL(file);
             } else if (isEditing && achievement.type === 'image' && achievement.content) {
-                // Keep existing image if no new one is selected during edit
+                // Editing, but no new image selected, keep existing image
                 processSave(achievement.content);
-            } else if (isEditing && achievement.type !== 'image'){
-                 alert("Please select an image file for an image type achievement.");
-                 return;
-            }
-             else if (!isEditing) {
-                alert("Please select an image file.");
+            } else if (!isEditing || (isEditing && achievement.type !== 'image')) {
+                // New image achievement or type changed to image, but no file selected
+                alert("Please select an image file for an image type achievement.");
                 return;
             }
         }
@@ -3417,22 +3450,21 @@
         if (!appData.achievements[achievementKey]) return;
 
         const achIndex = appData.achievements[achievementKey].findIndex(ach => ach.id === achievementId);
-        if (achIndex === -1) return;
+        if (achIndex === -1) return; // Achievement not found
 
         const achievementToRemove = appData.achievements[achievementKey][achIndex];
         const xpToRemove = achievementToRemove.xp;
 
         const keyParts = achievementKey.split('_');
-        const areaName = keyParts.slice(1, keyParts.length -1).join('_');
+        const areaName = keyParts.slice(1, keyParts.length -1).join('_'); // Reconstruct area name
 
-
-        appData.achievements[achievementKey].splice(achIndex, 1);
-        if (appData.achievements[achievementKey].length === 0) {
+        appData.achievements[achievementKey].splice(achIndex, 1); // Remove from list
+        if (appData.achievements[achievementKey].length === 0) { // Clean up empty list
             delete appData.achievements[achievementKey];
         }
 
-        subtractXpFromArea(areaName, xpToRemove);
-        updateQuestProgress(areaName, -xpToRemove);
+        subtractXpFromArea(areaName, xpToRemove); // Deduct XP
+        updateQuestProgress(areaName, -xpToRemove); // Update quest progress (negative gain)
 
         renderGrid();
         saveData();
@@ -3440,48 +3472,50 @@
 
 
     function xpForNextLevel(currentLevel) {
-        if (currentLevel === 0) return 50;
+        if (currentLevel <= 0) return 50; // Level 0 or less, first level up is 50 XP
         return Math.floor(50 * Math.pow(currentLevel, 1.5));
     }
 
-    function addXpToArea(areaName, xpAmount) {
+    function addXpToArea(areaName, xpAmount) { // areaName is plain text
         const area = appData.areas.find(a => a.name === areaName);
         if (area) {
             area.xp += xpAmount;
             let leveledUp = false;
             let requiredForNext = xpForNextLevel(area.level);
 
-            while (area.xp >= requiredForNext && requiredForNext > 0) {
+            while (area.xp >= requiredForNext && requiredForNext > 0) { // Loop for multiple level-ups
                 area.xp -= requiredForNext;
                 area.level++;
                 leveledUp = true;
-                requiredForNext = xpForNextLevel(area.level);
+                requiredForNext = xpForNextLevel(area.level); // Get XP for the new current level
             }
 
             if (leveledUp) {
-                alert(`${area.name} leveled up to Level ${area.level}!`);
-                generateQuestsForCurrentWeekIfNeeded(true);
+                alert(`${decodeHtmlEntities(area.name)} leveled up to Level ${area.level}!`);
+                generateQuestsForCurrentWeekIfNeeded(true); // Potentially refresh quests if level changes
             }
         }
     }
 
-    function subtractXpFromArea(areaName, xpAmount) {
+    function subtractXpFromArea(areaName, xpAmount) { // areaName is plain text
         const area = appData.areas.find(a => a.name === areaName);
         if (area) {
             area.xp -= xpAmount;
             let deLeveled = false;
+            // Handle de-leveling if XP drops below zero for the current level
             while (area.xp < 0) {
-                if (area.level > 1) {
+                if (area.level > 1) { // Cannot de-level below 1
                     area.level--;
                     deLeveled = true;
-                    area.xp += xpForNextLevel(area.level);
+                    // Add the XP requirement of the *new lower* level to the negative XP
+                    area.xp += xpForNextLevel(area.level); 
                 } else {
-                    area.xp = 0;
+                    area.xp = 0; // Cannot go below 0 XP at level 1
                     break;
                 }
             }
             if (deLeveled) {
-                generateQuestsForCurrentWeekIfNeeded(true);
+                generateQuestsForCurrentWeekIfNeeded(true); // Potentially refresh quests
             }
         }
     }
@@ -3491,50 +3525,52 @@
         const weekId = getCurrentWeekId();
 
         if (!appData.quests) appData.quests = {};
-
-        if (!appData.quests[weekId]) {
-            appData.quests[weekId] = [];
+        if (!appData.quests[weekId] || forceRegenerate) { // If no quests for week or forcing
+            appData.quests[weekId] = []; // Initialize/clear quests for the week
         }
 
-        if (appData.quests[weekId].length > 0 && !forceRegenerate) {
-            return;
+        if (appData.areas.length < 1 && !forceRegenerate) { // No areas, no auto-generated quests
+            if(appData.quests[weekId].length === 0) return; // No existing manual quests either
         }
-
-        if (appData.areas.length < 1 && !forceRegenerate) {
-            appData.quests[weekId] = [];
-            saveData();
-            return;
-        }
-
+        
+        // Only generate if list is empty and not forced (initial generation) or if forced.
         if (forceRegenerate || appData.quests[weekId].length === 0) {
-            if (forceRegenerate) appData.quests[weekId] = [];
+            if (forceRegenerate) appData.quests[weekId] = []; // Ensure empty if forcing
 
-            const existingQuestCount = appData.quests[weekId].length;
-            const questsToPotentiallyGenerate = Math.min(3, appData.areas.length);
+            const questsToPotentiallyGenerate = Math.min(MAX_WEEKLY_QUESTS, appData.areas.length, 3); // Max 3 auto-generated
             let generatedCount = 0;
 
+            // Filter out areas that already have a quest this week to avoid duplicates if not forceRegenerating all
             const availableAreasForNewQuests = [...appData.areas].filter(area =>
                 !appData.quests[weekId].some(q => q.areaName === area.name)
             );
-            if (availableAreasForNewQuests.length === 0 && appData.areas.length > 0) {
-                 availableAreasForNewQuests.push(...appData.areas);
+             // If all areas have quests but we are short of MAX and forceRegenerate is false, don't add more of same.
+            // If forceRegenerate is true, this filter is less important as list is cleared.
+
+            // Shuffle available areas to pick from
+            let shuffledAreas = [...(availableAreasForNewQuests.length > 0 ? availableAreasForNewQuests : appData.areas)];
+            for (let i = shuffledAreas.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledAreas[i], shuffledAreas[j]] = [shuffledAreas[j], shuffledAreas[i]];
             }
 
 
-            for (let i = 0; i < questsToPotentiallyGenerate && (existingQuestCount + generatedCount) < MAX_WEEKLY_QUESTS; i++) {
-                if (availableAreasForNewQuests.length === 0) break;
+            for (let i = 0; i < questsToPotentiallyGenerate && appData.quests[weekId].length < MAX_WEEKLY_QUESTS; i++) {
+                if (shuffledAreas.length === 0) break; // No more areas to pick from
 
-                const randomAreaIndex = Math.floor(Math.random() * availableAreasForNewQuests.length);
-                const selectedArea = availableAreasForNewQuests.splice(randomAreaIndex, 1)[0];
+                const selectedArea = shuffledAreas.pop(); // Pick one from shuffled list
                 if (!selectedArea) continue;
+                // Skip if this area already got a quest in this generation pass (relevant if shuffledAreas can have duplicates somehow or logic changes)
+                if(appData.quests[weekId].some(q => q.areaName === selectedArea.name)) continue;
 
-                const targetXPEarned = 20 + (selectedArea.level * 10);
-                const rewardXP = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5);
+
+                const targetXPEarned = 20 + (selectedArea.level * 10); // Scale with area level
+                const rewardXP = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5); // Scale reward
 
                 appData.quests[weekId].push({
                     id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}_${i}`,
-                    areaName: selectedArea.name,
-                    description: `Earn ${targetXPEarned} XP in "${selectedArea.name}" this week.`,
+                    areaName: selectedArea.name, // Plain name
+                    description: `Earn ${targetXPEarned} XP in "${decodeHtmlEntities(selectedArea.name)}" this week.`,
                     targetXPEarned: targetXPEarned,
                     currentXPEarned: 0,
                     rewardXP: rewardXP,
@@ -3543,10 +3579,10 @@
                 generatedCount++;
             }
         }
-        saveData();
+        // saveData(); // Called by functions that trigger this (e.g., init, navigateWeek)
     }
 
-    function updateQuestProgress(areaName, xpGained) {
+    function updateQuestProgress(areaName, xpGained) { // areaName is plain
         const weekId = getCurrentWeekId();
         if (!appData.quests || !appData.quests[weekId]) return;
 
@@ -3554,29 +3590,30 @@
         appData.quests[weekId].forEach(quest => {
             if (quest.areaName === areaName && !quest.completed) {
                 quest.currentXPEarned += xpGained;
-                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0;
+                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0; // XP shouldn't go negative
 
                 if (quest.currentXPEarned >= quest.targetXPEarned) {
                     quest.completed = true;
-                    quest.currentXPEarned = quest.targetXPEarned;
-                    addXpToArea(quest.areaName, quest.rewardXP);
-                    alert(`Quest Completed: ${quest.description}\n+${quest.rewardXP} XP to ${quest.areaName}!`);
+                    quest.currentXPEarned = quest.targetXPEarned; // Cap at target
+                    addXpToArea(quest.areaName, quest.rewardXP); // Grant reward XP
+                    alert(`Quest Completed: ${decodeHtmlEntities(quest.description)}\n+${quest.rewardXP} XP to ${decodeHtmlEntities(quest.areaName)}!`);
                     questCompletedThisUpdate = true;
                 }
             }
         });
 
         if (questCompletedThisUpdate) {
-            renderGrid();
+            renderGrid(); // Re-render grid to show XP/level changes from quest reward
+            // showQuests(); // If quest modal is open, refresh it (optional, or handle on modal open)
             saveData();
         }
     }
 
     function showQuests() {
         const weekId = getCurrentWeekId();
-        DOM.questsList.innerHTML = '';
+        DOM.questsList.innerHTML = ''; // Clear previous list
 
-        generateQuestsForCurrentWeekIfNeeded();
+        generateQuestsForCurrentWeekIfNeeded(); // Ensure quests are generated/loaded for the current week
 
         const currentQuests = appData.quests[weekId] || [];
 
@@ -3592,11 +3629,11 @@
 
                 const title = document.createElement('div');
                 title.className = 'quest-title';
-                title.textContent = `Quest for: ${quest.areaName}`;
+                title.textContent = `Quest for: ${decodeHtmlEntities(quest.areaName)}`;
 
                 const details = document.createElement('div');
                 details.className = 'quest-details';
-                details.textContent = quest.description;
+                details.textContent = decodeHtmlEntities(quest.description);
 
                 const progress = document.createElement('div');
                 progress.className = 'quest-progress';
@@ -3611,7 +3648,6 @@
                     refreshBtn.textContent = 'Refresh';
                     actionsDiv.appendChild(refreshBtn);
                 }
-
 
                 questDiv.appendChild(title);
                 questDiv.appendChild(details);
@@ -3635,11 +3671,11 @@
             return;
         }
 
-        DOM.newQuestAreaNameSelect.innerHTML = '';
+        DOM.newQuestAreaNameSelect.innerHTML = ''; // Clear previous options
         appData.areas.forEach(area => {
             const option = document.createElement('option');
-            option.value = area.name;
-            option.textContent = area.name;
+            option.value = area.name; // Store plain name
+            option.textContent = decodeHtmlEntities(area.name); // Display decoded
             DOM.newQuestAreaNameSelect.appendChild(option);
         });
         DOM.newQuestDescriptionInput.value = '';
@@ -3650,13 +3686,16 @@
 
     function saveNewQuest() {
         const weekId = getCurrentWeekId();
-        if (appData.quests[weekId] && appData.quests[weekId].length >= MAX_WEEKLY_QUESTS) {
-            alert(`Cannot add new quest: Maximum of ${MAX_WEEKLY_QUESTS} quests reached.`);
+        // Ensure quests for the week are initialized
+        if (!appData.quests[weekId]) appData.quests[weekId] = [];
+
+        if (appData.quests[weekId].length >= MAX_WEEKLY_QUESTS) {
+            alert(`Cannot add new quest: Maximum of ${MAX_WEEKLY_QUESTS} quests reached for this week.`);
             return;
         }
 
-        const areaName = DOM.newQuestAreaNameSelect.value;
-        const description = DOM.newQuestDescriptionInput.value.trim();
+        const areaName = DOM.newQuestAreaNameSelect.value; // Plain name
+        const description = DOM.newQuestDescriptionInput.value.trim(); // Plain text
         const targetXP = parseInt(DOM.newQuestTargetXPInput.value);
         const rewardXP = parseInt(DOM.newQuestRewardXPInput.value);
 
@@ -3667,19 +3706,18 @@
 
         const newQuest = {
             id: `quest_${weekId}_${areaName.replace(/\s+/g, '-')}_${Date.now()}`,
-            areaName: areaName,
-            description: description,
+            areaName: areaName, // Store plain name
+            description: description, // Store plain description
             targetXPEarned: targetXP,
             currentXPEarned: 0,
             rewardXP: rewardXP,
             completed: false
         };
 
-        if (!appData.quests[weekId]) appData.quests[weekId] = [];
         appData.quests[weekId].push(newQuest);
 
         closeModal(MODAL_IDS.CREATE_QUEST);
-        showQuests();
+        showQuests(); // Refresh quest list in modal
         saveData();
     }
 
@@ -3692,26 +3730,30 @@
         if (appData.areas.length === 0) return null;
 
         let potentialAreas = [...appData.areas];
+        // Try to pick a different area than the one being replaced, if possible
         if (questToReplace && potentialAreas.length > 1) {
             const filteredAreas = potentialAreas.filter(a => a.name !== questToReplace.areaName);
             if (filteredAreas.length > 0) {
                 potentialAreas = filteredAreas;
             }
-        } else if (potentialAreas.length === 1 && questToReplace && potentialAreas[0].name === questToReplace.areaName) {
+            // If only one area exists, or filtering results in no areas, it will pick from all original areas.
         }
+        
+        if(potentialAreas.length === 0) potentialAreas = [...appData.areas]; // Fallback if filtering left no options
 
         const randomAreaIndex = Math.floor(Math.random() * potentialAreas.length);
         const selectedArea = potentialAreas[randomAreaIndex];
 
-        const baseTarget = 20 + (selectedArea.level * 10);
-        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) );
+        const baseTarget = 20 + (selectedArea.level * 10); // Base on level
+        // Add some randomness to target XP
+        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) ); 
         const baseReward = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5);
         const rewardXP = Math.max(10, Math.round(baseReward + (Math.random() * baseReward * 0.2) - (baseReward * 0.1)));
 
         return {
             id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}`,
-            areaName: selectedArea.name,
-            description: `Earn ${targetXPEarned} XP in "${selectedArea.name}" this week. (Refreshed)`,
+            areaName: selectedArea.name, // Plain name
+            description: `Earn ${targetXPEarned} XP in "${decodeHtmlEntities(selectedArea.name)}" this week. (Refreshed)`,
             targetXPEarned: targetXPEarned,
             currentXPEarned: 0,
             rewardXP: rewardXP,
@@ -3731,20 +3773,23 @@
         const questIndex = appData.quests[weekId].findIndex(q => q.id === questIdToRefresh);
         if (questIndex === -1) {
             closeModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
-            return;
+            return; // Quest not found
         }
 
         const oldQuest = appData.quests[weekId][questIndex];
+        // Remove the old quest
         appData.quests[weekId].splice(questIndex, 1);
 
-        const newQuest = generateSingleRandomQuest(weekId, oldQuest);
+        // Generate a new random quest
+        const newQuest = generateSingleRandomQuest(weekId, oldQuest); 
         if (newQuest) {
             appData.quests[weekId].push(newQuest);
-        } else if (appData.areas.length > 0) {
+        } else if (appData.areas.length > 0) { // Only alert if areas exist but quest gen failed
             alert("Could not generate a new quest. Try again or create one manually.");
         }
+        
         closeModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
-        showQuests();
+        showQuests(); // Refresh quest list
         saveData();
     }
 
@@ -3753,8 +3798,8 @@
     function getCurrentPlayJockeyPlaylist() {
         if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
             if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
-                appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
-            } else {
+                appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id; // Default to first if current is invalid
+            } else { // No playlists exist at all
                 return null;
             }
         }
@@ -3767,16 +3812,18 @@
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.playJockeyCurrentVideo?.id);
 
-        if (pendingVideoToLoad && currentVideoInPlaylist) {
+        if (pendingVideoToLoad && currentVideoInPlaylist) { // If a video was queued
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (appData.playJockeyCurrentVideo && currentVideoInPlaylist && !ytPlayerInstance && DOM.playJockeyWindow.style.display !== 'none' && !DOM.playJockeyWindow.classList.contains('minimized')) {
+            // If window is open, API ready, and a video should be playing
             playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
         }
     }
 
     function extractYouTubeVideoId(url) {
         if (!url) return null;
+        // Regex to capture video ID from various YouTube URL formats
         const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = url.match(regex);
         return match ? match[1] : null;
@@ -3795,17 +3842,13 @@
             return;
         }
 
-        if (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY) {
-            if (!isValidYouTubeUrl(input)) {
-                alert("YouTube API Key is not configured. Video search is disabled. You can still add direct YouTube links.");
-            }
-        }
+        const apiKeyMissing = (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY);
 
         if (isValidYouTubeUrl(input)) {
             addYouTubeLinkToPlayJockey(input);
-        } else {
-            if (YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY" || !YOUTUBE_API_KEY) {
-                alert("Cannot search: YouTube API Key is missing or invalid. Please paste a full YouTube video URL instead.");
+        } else { // Treat as search query
+            if (apiKeyMissing) {
+                alert("YouTube API Key is not configured. Video search is disabled. You can only add direct YouTube video links.");
                 return;
             }
             searchYouTubeVideos(input);
@@ -3813,13 +3856,9 @@
     }
 
     async function searchYouTubeVideos(query) {
-        if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY") {
-            console.error("YouTube API Key is not set.");
-            alert("YouTube API Key is not configured. Cannot perform search.");
-            return;
-        }
+        // API Key check done in handlePlayJockeyInput
 
-        DOM.youtubeSearchResultsBody.innerHTML = '';
+        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear previous results
         DOM.youtubeSearchStatus.textContent = 'Searching...';
         DOM.youtubeSearchStatus.style.display = 'block';
         openModal(MODAL_IDS.Youtube);
@@ -3841,7 +3880,7 @@
             }
             const data = await response.json();
             if (data.items && data.items.length > 0) {
-                DOM.youtubeSearchStatus.style.display = 'none';
+                DOM.youtubeSearchStatus.style.display = 'none'; // Hide status on success
                 renderYouTubeSearchResults(data.items);
             } else {
                 DOM.youtubeSearchStatus.textContent = 'No videos found for your search query.';
@@ -3853,24 +3892,22 @@
     }
 
     function renderYouTubeSearchResults(items) {
-        DOM.youtubeSearchResultsBody.innerHTML = '';
+        DOM.youtubeSearchResultsBody.innerHTML = ''; // Clear again just in case
 
         items.forEach(item => {
             const videoId = item.id.videoId;
-            const title = decodeHtmlEntities(item.snippet.title);
-            const channelTitle = decodeHtmlEntities(item.snippet.channelTitle);
+            const title = decodeHtmlEntities(item.snippet.title); // Already decoded
+            const channelTitle = decodeHtmlEntities(item.snippet.channelTitle); // Already decoded
             const thumbnailUrl = item.snippet.thumbnails.default.url;
 
             const resultDiv = document.createElement('div');
             resultDiv.className = 'Youtube-result-item';
             resultDiv.dataset.videoId = videoId;
-            // Store raw versions in dataset if needed, but pass decoded to add function
-            // resultDiv.dataset.rawTitle = item.snippet.title;
-            // resultDiv.dataset.rawArtist = item.snippet.channelTitle;
+            // No need for rawTitle/Artist if passing decoded versions directly
 
             const img = document.createElement('img');
             img.src = thumbnailUrl;
-            img.alt = title;
+            img.alt = title; // Use decoded title for alt text
 
             const detailsDiv = document.createElement('div');
             detailsDiv.className = 'Youtube-result-item-details';
@@ -3878,7 +3915,7 @@
             const titleDiv = document.createElement('div');
             titleDiv.className = 'Youtube-result-item-title';
             titleDiv.textContent = title;
-            titleDiv.title = title;
+            titleDiv.title = title; // Tooltip with full title
 
 
             const channelDiv = document.createElement('div');
@@ -3893,62 +3930,45 @@
             resultDiv.appendChild(detailsDiv);
 
             resultDiv.addEventListener('click', () => {
-                addVideoFromSearchResult(videoId, title, channelTitle);
+                addVideoFromSearchResult(videoId, title, channelTitle); // Pass decoded title/artist
                 closeModal(MODAL_IDS.Youtube);
             });
             DOM.youtubeSearchResultsBody.appendChild(resultDiv);
         });
     }
 
-    function addVideoFromSearchResult(videoId, title, artist) { // title and artist are already decoded
-        const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!currentPlaylist) {
-            alert("Error: No active playlist found.");
-            if (appData.playJockeyPlaylists.length === 0) {
-                addNewPlayJockeyPlaylist();
-                const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
-                 if (!newCurrentPlaylist) return;
-                 const videoEntryFirst = {
-                    id: 'pjv_' + Date.now(),
-                    videoId: videoId,
-                    title: title,
-                    artist: artist.replace(/\s-\sTopic$/, '').trim(),
-                    originalUrl: `https://www.youtube.com/watch?v=${videoId}`
-                 };
-                 newCurrentPlaylist.videos.push(videoEntryFirst);
-                 if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
-                    playYouTubeVideoById(videoId, true, true);
-                 }
-                 renderPlayJockeyPlaylist();
-                 DOM.playJockeyLinkInput.value = '';
-                 saveData();
-                 return;
-            } else {
-                 alert("Error: No active playlist selected.");
-                 return;
+    function addVideoFromSearchResult(videoId, title, artist) { // title and artist are pre-decoded
+        let currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!currentPlaylist) { // No playlist exists, create one
+            addNewPlayJockeyPlaylist(); // This sets the new playlist as current
+            currentPlaylist = getCurrentPlayJockeyPlaylist();
+            if (!currentPlaylist) { // Should not happen if addNewPlayJockeyPlaylist works
+                alert("Error: Could not create or find a playlist.");
+                return;
             }
         }
 
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
             alert("This video is already in the current playlist.");
-            DOM.playJockeyLinkInput.value = '';
+            DOM.playJockeyLinkInput.value = ''; // Clear input
             return;
         }
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=${videoId}`, // Generic URL
             videoId: videoId,
-            title: title,
-            artist: artist.replace(/\s-\sTopic$/, '').trim()
+            title: title, // Store decoded
+            artist: artist.replace(/\s-\sTopic$/, '').trim() // Store decoded & cleaned artist
         };
 
         currentPlaylist.videos.push(videoEntry);
         renderPlayJockeyPlaylist();
-        DOM.playJockeyLinkInput.value = '';
+        DOM.playJockeyLinkInput.value = ''; // Clear input
 
-        if (!ytPlayerInstance || currentPlaylist.videos.length === 1) {
-            playYouTubeVideoById(videoId, true, true);
+        // If no video is playing or it's the first video, start playing it
+        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true); // Autoplay, manual add
         }
         saveData();
     }
@@ -3965,32 +3985,15 @@
             return;
         }
 
-        const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!currentPlaylist) {
-            alert("Error: No active playlist found. Please create one first.");
-            if (appData.playJockeyPlaylists.length === 0) {
-                addNewPlayJockeyPlaylist();
-                const newCurrentPlaylist = getCurrentPlayJockeyPlaylist();
-                if (!newCurrentPlaylist) {
-                    console.error("Failed to create/get playlist after attempting to add a link to an empty set.");
-                    return;
-                }
-                const videoEntryFirst = { id: 'pjv_' + Date.now(), originalUrl: link, videoId: videoId, title: "Loading title...", artist: "" };
-                newCurrentPlaylist.videos.push(videoEntryFirst);
-                fetchYouTubeTitle(videoEntryFirst, newCurrentPlaylist.id); // fetchYouTubeTitle will decode
-                if (!ytPlayerInstance || newCurrentPlaylist.videos.length === 1) {
-                   playYouTubeVideoById(videoId, true, true);
-                }
-                renderPlayJockeyPlaylist();
-                DOM.playJockeyLinkInput.value = '';
-                saveData();
+        let currentPlaylist = getCurrentPlayJockeyPlaylist();
+        if (!currentPlaylist) { // No playlist, create one
+            addNewPlayJockeyPlaylist();
+            currentPlaylist = getCurrentPlayJockeyPlaylist();
+             if (!currentPlaylist) {
+                console.error("Failed to create/get playlist after attempting to add a link.");
                 return;
-            } else {
-                 alert("Error: No active playlist selected.");
-                 return;
             }
         }
-
 
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
             alert("This video is already in the current playlist.");
@@ -4001,44 +4004,71 @@
         const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
         const videoEntry = {
             id: tempId,
-            originalUrl: link,
+            originalUrl: link, // Store original link
             videoId: videoId,
-            title: "Loading title...", // Will be replaced by fetchYouTubeTitle (decoded)
-            artist: "" // Will be replaced by fetchYouTubeTitle (decoded)
+            title: "Loading title...", // Placeholder, will be updated
+            artist: "" // Placeholder
         };
 
         currentPlaylist.videos.push(videoEntry);
-        renderPlayJockeyPlaylist();
+        renderPlayJockeyPlaylist(); // Show with "Loading title..." initially
         DOM.playJockeyLinkInput.value = '';
 
-        fetchYouTubeTitle(videoEntry, currentPlaylist.id);
+        fetchYouTubeTitle(videoEntry, currentPlaylist.id); // Fetch actual title/artist
 
-        if (!ytPlayerInstance || currentPlaylist.videos.length === 1) {
-            playYouTubeVideoById(videoId, true, true);
+        if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true); // Autoplay, manual add
         }
         saveData();
     }
 
 
     async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
+        // videoEntryToUpdate contains placeholders for title/artist
         try {
-            const oEmbedUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}`;
-            const response = await fetch(oEmbedUrl);
-            let newTitle = videoEntryToUpdate.title === "Loading title..." ? videoEntryToUpdate.originalUrl : videoEntryToUpdate.title;
-            let newArtist = videoEntryToUpdate.artist || "";
+            // Using a more direct approach if oEmbed is problematic or for simplicity
+            // Note: This requires the YouTube Data API v3 if you need more details than oEmbed provides.
+            // For just title/author, oEmbed *should* work if endpoint is correct.
+            // The provided URL "https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}" needs to be a valid oEmbed endpoint.
+            // A common public one is like: `https://www.youtube.com/oembed?url=http%3A//youtube.com/watch%3Fv%3D${videoEntryToUpdate.videoId}&format=json`
+            // Or use the Google API Client Library if available and API key is set up for Data API.
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.title) newTitle = decodeHtmlEntities(data.title);
-                if (data.author_name) newArtist = decodeHtmlEntities(data.author_name).replace(/\s-\sTopic$/, '').trim();
-                if (data.error) {
-                    console.warn(`Error fetching title/author via noembed for ${videoEntryToUpdate.videoId}: ${data.error}`);
-                }
+            // Simplified: If API Key is available, use it for a quick fetch (less ideal than proper oEmbed or client lib)
+            let newTitle = "Unknown Title"; // Default
+            let newArtist = "";
+            
+            if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== "YOUR_YOUTUBE_API_KEY") {
+                 const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoEntryToUpdate.videoId}&key=${YOUTUBE_API_KEY}`;
+                 const response = await fetch(apiUrl);
+                 if (response.ok) {
+                     const data = await response.json();
+                     if (data.items && data.items.length > 0) {
+                         newTitle = decodeHtmlEntities(data.items[0].snippet.title);
+                         newArtist = decodeHtmlEntities(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim();
+                     } else {
+                         console.warn(`No video data found via API for ${videoEntryToUpdate.videoId}`);
+                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Fallback to URL
+                     }
+                 } else {
+                     console.warn(`Failed to fetch title/author via API for ${videoEntryToUpdate.videoId}. Status: ${response.status}`);
+                     newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Fallback to URL
+                 }
             } else {
-                console.warn(`Failed to fetch title/author for ${videoEntryToUpdate.videoId} from noembed. Status: ${response.status}`);
-            }
-            if (!newTitle || newTitle.trim() === "" || newTitle === "Loading title...") {
-                newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Fallback to decoded original URL
+                // Fallback if no API key or if above fetch fails - try to use a generic oEmbed (might be CORS restricted)
+                try {
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http%3A//youtube.com/watch%3Fv%3D${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedResponse = await fetch(oEmbedUrl, { mode: 'cors' }); // CORS might block this in browser
+                    if (oEmbedResponse.ok) {
+                        const oEmbedData = await oEmbedResponse.json();
+                        newTitle = decodeHtmlEntities(oEmbedData.title);
+                        newArtist = decodeHtmlEntities(oEmbedData.author_name).replace(/\s-\sTopic$/, '').trim();
+                    } else {
+                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Fallback
+                    }
+                } catch (oEmbedError) {
+                    console.warn(`oEmbed fetch failed for ${videoEntryToUpdate.videoId}:`, oEmbedError);
+                    newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); // Final fallback
+                }
             }
 
 
@@ -4046,26 +4076,28 @@
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist) {
-                    itemInPlaylist.title = newTitle;
-                    itemInPlaylist.artist = newArtist;
-                    if (appData.playJockeyCurrentPlaylistId === playlistId) {
-                        renderPlayJockeyPlaylist();
+                    itemInPlaylist.title = newTitle; // Store decoded
+                    itemInPlaylist.artist = newArtist; // Store decoded
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) { // If it's the active playlist
+                        renderPlayJockeyPlaylist(); // Re-render to show updated title/artist
+                    }
+                    // Update current video details if this is the one playing
+                    if(appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === itemInPlaylist.id) {
+                        appData.playJockeyCurrentVideo.title = newTitle;
+                        appData.playJockeyCurrentVideo.artist = newArtist;
                     }
                     saveData();
                 }
             }
         } catch (error) {
             console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
+             // Fallback: ensure title isn't "Loading title..."
              const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
-                if (itemInPlaylist) {
-                    if (itemInPlaylist.title === "Loading title..." || !itemInPlaylist.title.trim()) {
-                         itemInPlaylist.title = decodeHtmlEntities(itemInPlaylist.originalUrl);
-                    }
-                    if (appData.playJockeyCurrentPlaylistId === playlistId) {
-                         renderPlayJockeyPlaylist();
-                    }
+                if (itemInPlaylist && (itemInPlaylist.title === "Loading title..." || !itemInPlaylist.title.trim())) {
+                    itemInPlaylist.title = decodeHtmlEntities(itemInPlaylist.originalUrl); // Use decoded URL as fallback
+                    if (appData.playJockeyCurrentPlaylistId === playlistId) renderPlayJockeyPlaylist();
                     saveData();
                 }
             }
@@ -4074,12 +4106,13 @@
 
 
     function renderPlayJockeyTabs() {
-        DOM.playJockeyTabsBar.innerHTML = '';
+        DOM.playJockeyTabsBar.innerHTML = ''; // Clear existing tabs
         appData.playJockeyPlaylists.forEach(playlist => {
             const tab = document.createElement('div');
             tab.className = 'playjockey-tab';
-            tab.textContent = decodeHtmlEntities(playlist.name); // Decode for display
-            tab.title = decodeHtmlEntities(playlist.name); // Decode for display
+            const displayName = decodeHtmlEntities(playlist.name); // Decode for display
+            tab.textContent = displayName;
+            tab.title = displayName;
             tab.dataset.playlistId = playlist.id;
             if (playlist.id === appData.playJockeyCurrentPlaylistId) {
                 tab.classList.add('active');
@@ -4099,45 +4132,49 @@
 
     function addNewPlayJockeyPlaylist() {
         let newPlaylistName = "Playlist";
-        let counter = appData.playJockeyPlaylists.length;
+        let counter = 1; // Start counter for unique name
         const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase());
 
-        if (existingNames.includes(newPlaylistName.toLowerCase())) {
-            counter = 1;
-            while (existingNames.includes(`${newPlaylistName} ${counter}`.toLowerCase())) {
-                counter++;
-            }
-            newPlaylistName = `${newPlaylistName} ${counter}`;
+        // Ensure unique name
+        let potentialName = newPlaylistName.toLowerCase();
+        while (existingNames.includes(potentialName)) {
+            potentialName = `${newPlaylistName} ${counter}`.toLowerCase();
+            counter++;
         }
+        if (counter > 1) newPlaylistName = `${newPlaylistName} ${counter-1}`;
+
 
         const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
         appData.playJockeyPlaylists.push({
             id: newPlaylistId,
-            name: newPlaylistName, // Stored as plain text
+            name: newPlaylistName, // Store plain text name
             videos: []
         });
-        switchPlayJockeyPlaylist(newPlaylistId);
+        switchPlayJockeyPlaylist(newPlaylistId); // Switch to the new playlist
+        // saveData() is called by switchPlayJockeyPlaylist if ID changes
     }
 
     function switchPlayJockeyPlaylist(playlistId) {
-        if (appData.playJockeyCurrentPlaylistId === playlistId) return;
+        if (appData.playJockeyCurrentPlaylistId === playlistId) return; // No change
 
         appData.playJockeyCurrentPlaylistId = playlistId;
-        appData.playJockeyCurrentVideo = null;
-        appData.playJockeyRandomHistory = [];
+        appData.playJockeyCurrentVideo = null; // Reset current video when switching playlists
+        appData.playJockeyRandomHistory = []; // Reset random history for the new playlist
 
         if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
-            ytPlayerInstance.stopVideo();
+            ytPlayerInstance.stopVideo(); // Stop any video playing from old playlist
         }
+        // Optionally destroy and recreate player if issues occur, or just clear its content
+        // DOM.playJockeyPlayer.innerHTML = ''; // Clears the player display area
 
-        renderPlayJockeyTabs();
-        renderPlayJockeyPlaylist();
+        renderPlayJockeyTabs(); // Highlight the new active tab
+        renderPlayJockeyPlaylist(); // Display videos of the new playlist
         saveData();
     }
 
 
     function renderPlayJockeyPlaylist() {
-        DOM.playJockeyPlaylist.innerHTML = '';
+        DOM.playJockeyPlaylist.innerHTML = ''; // Clear existing items
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!currentPlaylist || currentPlaylist.videos.length === 0) {
@@ -4147,6 +4184,7 @@
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
             DOM.playJockeyPlaylist.appendChild(emptyMsg);
+            updatePlayingClassInPlaylist(null); // Ensure no "playing" class if empty
             return;
         }
 
@@ -4157,6 +4195,7 @@
             let cleanTitle = decodeHtmlEntities(video.title);
             let cleanArtist = decodeHtmlEntities(video.artist);
 
+            // Truncate for display if too long
             let displayTitle = cleanTitle;
             if (cleanTitle === "Loading title..." || cleanTitle === video.originalUrl || !cleanTitle.trim()) {
                 const decodedOriginalUrl = decodeHtmlEntities(video.originalUrl);
@@ -4178,19 +4217,19 @@
             item.title = itemTooltip;
 
             item.dataset.videoId = video.videoId;
-            item.dataset.playlistItemId = video.id;
+            item.dataset.playlistItemId = video.id; // Use internal unique ID
             item.draggable = true;
 
             if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) {
                 item.classList.add('playing');
             }
             item.addEventListener('click', (event) => {
-                if (event.target.closest('.context-modal')) return;
-                if (item.classList.contains('dragging')) return;
+                if (event.target.closest('.context-modal')) return; // Ignore if click is on context menu
+                if (item.classList.contains('dragging')) return; // Ignore clicks while dragging
 
                 const clickedItem = event.currentTarget;
                 if (clickedItem && clickedItem.dataset.videoId) {
-                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true);
+                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true); // Autoplay, manual click
                 }
             });
             DOM.playJockeyPlaylist.appendChild(item);
@@ -4198,62 +4237,53 @@
     }
 
     function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) {
-        if (!videoId) return;
+        if (!videoId) { console.warn("playYouTubeVideoById called with no videoId"); return; }
 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!currentPlaylist) return;
+        if (!currentPlaylist) { console.warn("No current playlist to play from"); return; }
 
         const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
         if (!videoToPlay) {
+            console.warn(`Video with ID ${videoId} not found in current playlist.`);
             appData.playJockeyCurrentVideo = null;
             updatePlayingClassInPlaylist(null);
             if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
             return;
         }
 
-        if (
-            isManualPlay &&
-            videoToPlay &&
-            appData.playJockeyRandomEnabled &&
-            appData.playJockeyAutoPlayEnabled &&
-            appData.playJockeyRepeatState === "off" &&
-            currentPlaylist.videos.length > 0 &&
-            new Set(appData.playJockeyRandomHistory).size >= new Set(currentPlaylist.videos.map(v => v.id)).size
-        ) {
-            appData.playJockeyRandomHistory = [videoToPlay.id];
+        // Random history management for manual plays
+        if ( isManualPlay && videoToPlay && appData.playJockeyRandomEnabled &&
+             appData.playJockeyAutoPlayEnabled && appData.playJockeyRepeatState === "off" &&
+             currentPlaylist.videos.length > 0 ) {
+            // If all unique videos played, clear history except current, or just add current
+            const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id));
+            if (new Set(appData.playJockeyRandomHistory).size >= uniqueVideoIdsInPlaylist.size) {
+                 appData.playJockeyRandomHistory = [videoToPlay.id];
+            } else if (!appData.playJockeyRandomHistory.includes(videoToPlay.id)) {
+                 appData.playJockeyRandomHistory.push(videoToPlay.id);
+            }
         }
 
 
-        appData.playJockeyCurrentVideo = videoToPlay ? { ...videoToPlay } : null;
-        updatePlayingClassInPlaylist(videoToPlay ? videoToPlay.id : null);
-        saveData();
-
-        if (!appData.playJockeyCurrentVideo && videoId) {
-             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
-                ytPlayerInstance.stopVideo();
-             }
-             return;
-        }
-
+        appData.playJockeyCurrentVideo = { ...videoToPlay }; // Store a copy
+        updatePlayingClassInPlaylist(videoToPlay.id);
+        saveData(); // Save current video state
 
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
             console.log("YouTube API not ready, video load queued:", videoId);
-            if (typeof YT !== 'undefined' && YT.Player) { // Attempt to init if API is loaded but flag not set
-                onYouTubeIframeAPIReady();
-            }
+            if (typeof YT !== 'undefined' && YT.Player) { onYouTubeIframeAPIReady(); } // Try to init if API seems loaded
             return;
         }
-
 
         if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
             ytPlayerInstance.loadVideoById({ 'videoId': videoId });
             if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') {
                  ytPlayerInstance.playVideo();
             }
-        } else {
+        } else { // Create new player instance
             if (DOM.playJockeyPlayer.firstChild && DOM.playJockeyPlayer.firstChild.tagName === 'IFRAME') {
-                 DOM.playJockeyPlayer.innerHTML = '';
+                 DOM.playJockeyPlayer.innerHTML = ''; // Clear old iframe if any
             }
             ytPlayerInstance = new YT.Player('playJockeyPlayer', {
                 height: '100%',
@@ -4261,18 +4291,11 @@
                 videoId: videoId,
                 playerVars: {
                     'autoplay': autoplayIntent ? 1 : 0,
-                    'controls': 1,
-                    'enablejsapi': 1,
-                    'origin': window.location.origin,
-                    'modestbranding': 1,
-                    'rel': 0
+                    'controls': 1, 'enablejsapi': 1, 'origin': window.location.origin,
+                    'modestbranding': 1, 'rel': 0
                 },
                 events: {
-                    'onReady': (event) => {
-                        if (autoplayIntent) {
-                            event.target.playVideo();
-                        }
-                    },
+                    'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); },
                     'onStateChange': onPlayerStateChange
                 }
             });
@@ -4288,11 +4311,11 @@
     function playNextPjVideo() {
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) {
-            return;
+            return; // Conditions not met to play next
         }
 
         let nextVideoItem = null;
-        const currentVideoUniqueId = appData.playJockeyCurrentVideo.id;
+        const currentVideoUniqueId = appData.playJockeyCurrentVideo.id; // Use internal unique ID
         const activePlaylistVideos = currentPlaylist.videos;
 
 
@@ -4301,59 +4324,69 @@
         } else if (appData.playJockeyRandomEnabled) {
             if (activePlaylistVideos.length === 0) return;
 
-            if (activePlaylistVideos.length === 1) {
-                if (appData.playJockeyRepeatState === "off") {
-                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return;
+            if (activePlaylistVideos.length === 1) { // Only one song
+                if (appData.playJockeyRepeatState === "off") { // If repeat off and only one song
+                    // If already played (in history) and not repeating, don't play again
+                    if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; 
                     nextVideoItem = activePlaylistVideos[0];
-                } else {
+                } else { // Repeat playlist or song (effectively same for one song)
                     nextVideoItem = activePlaylistVideos[0];
                 }
-            } else {
+            } else { // Multiple songs, random enabled
                 let eligibleVideos = activePlaylistVideos.filter(
-                    video => !appData.playJockeyRandomHistory.includes(video.id)
+                    video => !appData.playJockeyRandomHistory.includes(video.id) || video.id === currentVideoUniqueId // Allow current to be re-picked if only one eligible and repeat song
                 );
+                
+                // If current video is the only one in eligible and repeat song is on, it's fine
+                if (eligibleVideos.length === 1 && eligibleVideos[0].id === currentVideoUniqueId && appData.playJockeyRepeatState === "song") {
+                    // Will be picked below
+                } else { // filter out current video unless it's the only one left and repeat is not off
+                     eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId || appData.playJockeyRepeatState !== "off");
+                     eligibleVideos = eligibleVideos.filter(video => !appData.playJockeyRandomHistory.includes(video.id));
+                }
 
-                if (eligibleVideos.length === 0) {
+
+                if (eligibleVideos.length === 0) { // All unique videos played
                     if (appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistory = [currentVideoUniqueId];
+                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; // Start new cycle, current is "played"
                         eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
-                        if (eligibleVideos.length === 0 ) {
-                             eligibleVideos = [...activePlaylistVideos.filter(v => v.id !== currentVideoUniqueId)];
-                             if (eligibleVideos.length === 0) eligibleVideos = [activePlaylistVideos[0]];
+                        if (eligibleVideos.length === 0 ) { // If current was the only one, pick any other (or itself if only 1 video total)
+                             eligibleVideos = [...activePlaylistVideos]; // Full list again
+                             if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0];
                         }
-                    } else {
-                        appData.playJockeyRandomHistory = [];
+                    } else { // Repeat is off, all played, so stop
+                        appData.playJockeyRandomHistory = []; // Clear for next manual play
                         return;
                     }
                 }
-
-                if (eligibleVideos.length > 0) {
+                if (eligibleVideos.length > 0 && !nextVideoItem) { // If nextVideoItem not set by single video logic
                     const randomIndex = Math.floor(Math.random() * eligibleVideos.length);
                     nextVideoItem = eligibleVideos[randomIndex];
                 }
             }
 
-            if (nextVideoItem) {
+            if (nextVideoItem) { // Add to history if not already there
                 if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) {
                      appData.playJockeyRandomHistory.push(nextVideoItem.id);
                 }
+                 // Prune history if repeating playlist and history gets too long (e.g., longer than playlist size - 1)
                 if (appData.playJockeyRepeatState === "playlist") {
-                    const maxHistorySize = Math.max(0, activePlaylistVideos.length - 1);
-                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) {
-                        appData.playJockeyRandomHistory.shift();
+                    const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); // Keep history for non-repeating elements
+                    while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) { // Safety for >=
+                        appData.playJockeyRandomHistory.shift(); // Remove oldest
                     }
                 }
             }
 
-        } else {
+        } else { // Sequential play
             const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId);
-            if (currentIndex === -1) return;
+            if (currentIndex === -1) return; // Current video not found (should not happen)
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= activePlaylistVideos.length) {
+            if (nextIndex >= activePlaylistVideos.length) { // Reached end of playlist
                 if (appData.playJockeyRepeatState === "playlist") {
-                    nextIndex = 0;
-                } else {
+                    nextIndex = 0; // Loop back to start
+                } else { // Repeat off, end of playlist
                     return;
                 }
             }
@@ -4363,11 +4396,11 @@
         }
 
         if (nextVideoItem && nextVideoItem.videoId) {
-            playYouTubeVideoById(nextVideoItem.videoId, true, false);
+            playYouTubeVideoById(nextVideoItem.videoId, true, false); // Autoplay, not a direct manual click
         }
     }
 
-    function updatePlayingClassInPlaylist(playingItemId) {
+    function updatePlayingClassInPlaylist(playingItemId) { // playingItemId is internal unique ID
         const items = DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
             if (item.dataset.playlistItemId === playingItemId) {
@@ -4391,7 +4424,7 @@
 
     function showPjContextMenu(e) {
         e.preventDefault();
-        hidePjContextMenu();
+        hidePjContextMenu(); // Hide any existing menus
         hidePjTabContextMenu();
 
         const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item');
@@ -4404,12 +4437,15 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
+            // Adjust position to keep menu within viewport
             if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5;
             if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5;
+            x = Math.max(0, x); y = Math.max(0, y);
+
 
             DOM.playJockeyContextMenu.style.left = `${x}px`;
             DOM.playJockeyContextMenu.style.top = `${y}px`;
-            DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId;
+            DOM.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId; // Use internal ID
         }
     }
 
@@ -4420,7 +4456,7 @@
 
     function showPjTabContextMenu(e, playlistId) {
         e.preventDefault();
-        hidePjContextMenu();
+        hidePjContextMenu(); // Hide other context menu
         hidePjTabContextMenu();
 
         DOM.playJockeyTabContextMenu.style.display = 'block';
@@ -4433,6 +4469,7 @@
 
         if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5;
         if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5;
+        x = Math.max(0, x); y = Math.max(0, y);
 
         DOM.playJockeyTabContextMenu.style.left = `${x}px`;
         DOM.playJockeyTabContextMenu.style.top = `${y}px`;
@@ -4446,7 +4483,7 @@
 
 
     function handlePjContextRename() {
-        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
+        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId; // Internal ID
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) {
             hidePjContextMenu();
@@ -4455,9 +4492,9 @@
 
         const itemToRename = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRename) {
-            DOM.trackNewNameInput.value = decodeHtmlEntities(itemToRename.title) || '';
-            DOM.trackNewArtistInput.value = decodeHtmlEntities(itemToRename.artist) || '';
-            DOM.saveRenamedTrackBtn.dataset.itemId = itemId;
+            DOM.trackNewNameInput.value = decodeHtmlEntities(itemToRename.title) || ''; // Populate with decoded
+            DOM.trackNewArtistInput.value = decodeHtmlEntities(itemToRename.artist) || ''; // Populate with decoded
+            DOM.saveRenamedTrackBtn.dataset.itemId = itemId; // Store internal ID
             openModal(MODAL_IDS.RENAME_TRACK);
             DOM.trackNewNameInput.focus();
         }
@@ -4465,7 +4502,7 @@
     }
 
     function handlePjContextRemove() {
-        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId;
+        const itemId = DOM.playJockeyContextMenu.dataset.currentItemId; // Internal ID
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!itemId || !currentPlaylist) {
             hidePjContextMenu();
@@ -4474,16 +4511,16 @@
         const itemToRemove = currentPlaylist.videos.find(video => video.id === itemId);
         if (itemToRemove) {
             DOM.confirmRemoveTrackMessage.textContent = `Are you sure you want to remove the track "${decodeHtmlEntities(itemToRemove.title)}"?`;
-            DOM.confirmFinalTrackRemoveBtn.dataset.itemId = itemId;
+            DOM.confirmFinalTrackRemoveBtn.dataset.itemId = itemId; // Store internal ID
             openModal(MODAL_IDS.CONFIRM_REMOVE_TRACK);
         }
         hidePjContextMenu();
     }
 
     function saveRenamedTrack() {
-        const itemId = DOM.saveRenamedTrackBtn.dataset.itemId;
-        const newName = DOM.trackNewNameInput.value.trim(); // Already plain text from input
-        const newArtist = DOM.trackNewArtistInput.value.trim(); // Already plain text
+        const itemId = DOM.saveRenamedTrackBtn.dataset.itemId; // Internal ID
+        const newName = DOM.trackNewNameInput.value.trim(); // Plain text from input
+        const newArtist = DOM.trackNewArtistInput.value.trim(); // Plain text
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!itemId || !currentPlaylist) {
@@ -4500,6 +4537,11 @@
         if (itemToRename) {
             itemToRename.title = newName; // Store plain text
             itemToRename.artist = newArtist; // Store plain text
+            // Update current video if it's the one being renamed
+            if(appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === itemId) {
+                appData.playJockeyCurrentVideo.title = newName;
+                appData.playJockeyCurrentVideo.artist = newArtist;
+            }
             renderPlayJockeyPlaylist();
             saveData();
         }
@@ -4508,7 +4550,7 @@
     }
 
     function executeTrackDeletion() {
-        const itemId = DOM.confirmFinalTrackRemoveBtn.dataset.itemId;
+        const itemId = DOM.confirmFinalTrackRemoveBtn.dataset.itemId; // Internal ID
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
 
         if (!itemId || !currentPlaylist) {
@@ -4519,24 +4561,25 @@
 
         const itemIndex = currentPlaylist.videos.findIndex(video => video.id === itemId);
         if (itemIndex > -1) {
-            const removedItem = currentPlaylist.videos.splice(itemIndex, 1)[0];
+            const removedItem = currentPlaylist.videos.splice(itemIndex, 1)[0]; // Remove and get item
 
+            // Remove from random history if present
             const historyIndex = appData.playJockeyRandomHistory.indexOf(removedItem.id);
             if (historyIndex > -1) {
                 appData.playJockeyRandomHistory.splice(historyIndex, 1);
             }
 
-            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) {
+            if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) { // If deleted video was playing
                 if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                     ytPlayerInstance.stopVideo();
                 }
-                appData.playJockeyCurrentVideo = null;
+                appData.playJockeyCurrentVideo = null; // Clear current video
                 if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) {
-                    playNextPjVideo();
-                } else if (currentPlaylist.videos.length === 0) {
+                    playNextPjVideo(); // Try to play next if autoplay is on
+                } else if (currentPlaylist.videos.length === 0) { // Playlist became empty
                      if (ytPlayerInstance && typeof ytPlayerInstance.destroy === 'function') {
-                        // ytPlayerInstance.destroy(); ytPlayerInstance = null; // Can be too aggressive
-                        DOM.playJockeyPlayer.innerHTML = '';
+                        // ytPlayerInstance.destroy(); ytPlayerInstance = null; // Optional: fully destroy
+                        DOM.playJockeyPlayer.innerHTML = ''; // Clear player display
                     }
                 }
             }
@@ -4565,10 +4608,9 @@
         const playlistId = DOM.saveRenamedPlaylistBtn.dataset.playlistId;
         const newName = DOM.playlistNewNameInput.value.trim(); // Plain text from input
 
-        if (!playlistId || !newName) {
-            alert("Playlist name cannot be empty.");
-            return;
-        }
+        if (!playlistId) { alert("Error: Playlist ID missing."); return;}
+        if (!newName) { alert("Playlist name cannot be empty."); return; }
+
         const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
         if (playlistToRename) {
             playlistToRename.name = newName; // Store plain text
@@ -4598,32 +4640,33 @@
 
         const playlistIndex = appData.playJockeyPlaylists.findIndex(pl => pl.id === playlistIdToRemove);
         if (playlistIndex > -1) {
-            appData.playJockeyPlaylists.splice(playlistIndex, 1);
+            appData.playJockeyPlaylists.splice(playlistIndex, 1); // Remove playlist
 
-            if (appData.playJockeyCurrentPlaylistId === playlistIdToRemove) {
+            if (appData.playJockeyCurrentPlaylistId === playlistIdToRemove) { // If deleted playlist was active
                 if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                     ytPlayerInstance.stopVideo();
                 }
                 appData.playJockeyCurrentVideo = null;
                 appData.playJockeyRandomHistory = [];
 
-                if (appData.playJockeyPlaylists.length > 0) {
+                if (appData.playJockeyPlaylists.length > 0) { // Switch to first available
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
-                } else {
+                } else { // No playlists left, create a new default one
                     const defaultPlaylistId = 'playlist_default_' + Date.now();
                     appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
                     appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
                 }
             }
         }
-         if (appData.playJockeyPlaylists.length === 0) { // Should be caught by above, but good fallback
+         // Ensure there's always at least one playlist (even if it was just created above)
+        if (appData.playJockeyPlaylists.length === 0) { 
             const defaultPlaylistId = 'playlist_default_' + Date.now();
             appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
             appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
         }
 
         renderPlayJockeyTabs();
-        renderPlayJockeyPlaylist();
+        renderPlayJockeyPlaylist(); // Render the (new) current playlist
         saveData();
         closeModal(MODAL_IDS.CONFIRM_REMOVE_PLAYLIST);
         delete DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId;
@@ -4635,11 +4678,11 @@
         if (target) {
             pjDraggedItem = target;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
-            setTimeout(() => {
+            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId); // Use internal ID
+            setTimeout(() => { // Apply dragging class slightly after to ensure it's picked up
                 target.classList.add('dragging');
             }, 0);
-            hidePjContextMenu();
+            hidePjContextMenu(); // Hide menu if open
         }
     }
 
@@ -4647,6 +4690,7 @@
         if (pjDraggedItem) {
             pjDraggedItem.classList.remove('dragging');
         }
+        // Clear all drag-over highlights from playlist items
         DOM.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => {
             item.classList.remove('drag-over-target-before', 'drag-over-target-after');
         });
@@ -4660,29 +4704,30 @@
     }
 
     function handlePjDragOver(e) {
-        e.preventDefault();
+        e.preventDefault(); // Necessary to allow drop
         const targetItem = e.target.closest('.playjockey-playlist-item');
 
-        clearPjDragOverHighlights();
+        clearPjDragOverHighlights(); // Clear previous highlights
 
         if (targetItem && pjDraggedItem && targetItem !== pjDraggedItem) {
             const rect = targetItem.getBoundingClientRect();
             const midpointY = rect.top + rect.height / 2;
-            if (e.clientY < midpointY) {
+            if (e.clientY < midpointY) { // Dragging over top half
                 targetItem.classList.add('drag-over-target-before');
-            } else {
+            } else { // Dragging over bottom half
                 targetItem.classList.add('drag-over-target-after');
             }
         }
     }
 
     function handlePjDragLeave(e) {
-        const relatedTargetIsChild = DOM.playJockeyPlaylist.contains(e.relatedTarget);
-        if (!relatedTargetIsChild) {
+        // Only clear if leaving the playlist area or moving to a non-item child
+        const relatedTargetIsChildOrSelf = DOM.playJockeyPlaylist.contains(e.relatedTarget);
+        if (!relatedTargetIsChildOrSelf) {
              clearPjDragOverHighlights();
-        } else {
+        } else { // If moving between items, dragOver on the new item will handle highlights
             const targetItem = e.target.closest('.playjockey-playlist-item');
-            if (targetItem) {
+            if (targetItem) { // Clear from the item being left
                  targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after');
             }
         }
@@ -4695,38 +4740,42 @@
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (!pjDraggedItem || !currentPlaylist) return;
 
-        const draggedItemId = e.dataTransfer.getData('text/plain');
+        const draggedItemId = e.dataTransfer.getData('text/plain'); // Internal ID
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
 
         const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId);
-        if (draggedItemIndex === -1) return;
+        if (draggedItemIndex === -1) return; // Dragged item not found in current playlist data
 
         const itemToMove = currentPlaylist.videos[draggedItemIndex];
-        currentPlaylist.videos.splice(draggedItemIndex, 1);
+        currentPlaylist.videos.splice(draggedItemIndex, 1); // Remove from old position
 
-        let targetIndex = -1;
+        let targetIndex = -1; // Default to end of list if no specific target
 
         if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) {
-            const targetItemId = targetItemElement.dataset.playlistItemId;
+            const targetItemId = targetItemElement.dataset.playlistItemId; // Internal ID
+            // Find index in the *current state* of the playlist (after itemToMove was removed)
             targetIndex = currentPlaylist.videos.findIndex(item => item.id === targetItemId);
 
-            const rect = targetItemElement.getBoundingClientRect();
-            const midpointY = rect.top + rect.height / 2;
-            if (e.clientY >= midpointY) {
-                targetIndex++;
+            if (targetIndex !== -1) { // If target found
+                const rect = targetItemElement.getBoundingClientRect();
+                const midpointY = rect.top + rect.height / 2;
+                if (e.clientY >= midpointY) { // Dropped on bottom half, insert after
+                    targetIndex++;
+                }
+                // If dropped on top half, targetIndex is correct (insert before)
             }
         }
 
 
         if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) {
             currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
-        } else {
+        } else { // No valid target, or dropped at the end
             currentPlaylist.videos.push(itemToMove);
         }
 
         renderPlayJockeyPlaylist();
         saveData();
-        pjDraggedItem = null;
+        pjDraggedItem = null; // Reset dragged item
     }
 
 
@@ -4737,20 +4786,16 @@
     }
 
     function updatePlayJockeyAutoPlayButtonState() {
-        if (appData.playJockeyAutoPlayEnabled) {
-            DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: On';
-            DOM.playJockeyAutoPlayBtn.classList.add('autoplay-on');
-        } else {
-            DOM.playJockeyAutoPlayBtn.textContent = 'Auto Play: Off';
-            DOM.playJockeyAutoPlayBtn.classList.remove('autoplay-on');
-        }
+        DOM.playJockeyAutoPlayBtn.classList.toggle('autoplay-on', appData.playJockeyAutoPlayEnabled);
+        DOM.playJockeyAutoPlayBtn.textContent = `Auto Play: ${appData.playJockeyAutoPlayEnabled ? 'On' : 'Off'}`;
     }
 
     function togglePlayJockeyRandom() {
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        appData.playJockeyRandomHistory = [];
+        appData.playJockeyRandomHistory = []; // Reset history when toggling random
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
+            // Add current video to history if random is turned on and a video is playing
              if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
                  appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
@@ -4760,24 +4805,17 @@
     }
 
     function updatePlayJockeyRandomButtonState() {
-        if (appData.playJockeyRandomEnabled) {
-            DOM.playJockeyRandomBtn.textContent = 'Random: On';
-            DOM.playJockeyRandomBtn.classList.add('random-on');
-        } else {
-            DOM.playJockeyRandomBtn.textContent = 'Random: Off';
-            DOM.playJockeyRandomBtn.classList.remove('random-on');
-        }
+        DOM.playJockeyRandomBtn.classList.toggle('random-on', appData.playJockeyRandomEnabled);
+        DOM.playJockeyRandomBtn.textContent = `Random: ${appData.playJockeyRandomEnabled ? 'On' : 'Off'}`;
     }
 
     function cyclePlayJockeyRepeat() {
-        if (appData.playJockeyRepeatState === "off") {
-            appData.playJockeyRepeatState = "playlist";
-        } else if (appData.playJockeyRepeatState === "playlist") {
-            appData.playJockeyRepeatState = "song";
-        } else {
-            appData.playJockeyRepeatState = "off";
-        }
-        appData.playJockeyRandomHistory = [];
+        const states = ["off", "playlist", "song"];
+        let currentIndex = states.indexOf(appData.playJockeyRepeatState);
+        currentIndex = (currentIndex + 1) % states.length;
+        appData.playJockeyRepeatState = states[currentIndex];
+        
+        appData.playJockeyRandomHistory = []; // Reset history on repeat change
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
              if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
@@ -4789,7 +4827,7 @@
     }
 
     function updatePlayJockeyRepeatButtonState() {
-        DOM.playJockeyRepeatBtn.classList.remove('repeat-on');
+        DOM.playJockeyRepeatBtn.classList.remove('repeat-on'); // Remove class first
         switch (appData.playJockeyRepeatState) {
             case "off":
                 DOM.playJockeyRepeatBtn.textContent = 'Repeat: Off';
@@ -4809,7 +4847,7 @@
     function openModal(modalId) {
         const modal = getById(modalId);
         if (modal) {
-            modal.style.display = 'flex';
+            modal.style.display = 'flex'; // Use flex for centering defined in CSS
         } else {
             console.error(`Modal with ID "${modalId}" not found.`);
         }
