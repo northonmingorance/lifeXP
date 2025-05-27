@@ -1669,38 +1669,52 @@
         if (!windowElement) return;
 
         let state = appData.windowStates[windowId];
-        if (!state) { // Ensure state object exists
+        if (!state) {
+            // This case should ideally not be hit if windows are initialized with default states.
+            // However, for robustness, if a state is missing, initialize it.
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
+            // Assume it was hidden and needs to be opened.
+            state.hiddenByUser = true; // This will trigger the 'unhiding' logic below.
+            state.minimized = false;
+            state.maximized = false; // Or load default dimensions if necessary
+            // console.warn(`State for window ${windowId} was missing, initialized.`);
         }
 
         // Determine the action based on current state
         if (state.hiddenByUser || windowElement.style.display === 'none') {
-            // Window was hidden, so unhide it and restore its state
+            // Window was hidden (closed), so unhide it and restore its state.
             state.hiddenByUser = false;
-            // If a window is opened from a "closed" state, it should generally not be minimized.
-            // If it was minimized THEN closed, opening it should restore it to normal, not keep it minimized.
-            if (state.minimized) {
-                state.minimized = false;
-                // Note: wasMaximizedBeforeMinimize logic is handled by maximizeWindow,
-                // but for a simple open-from-closed, we assume "normal" state.
-            }
+            // When reopening a closed window, it should not be minimized,
+            // even if it was minimized before being closed.
+            state.minimized = false;
             
-            // Restore all visual aspects now that hiddenByUser (and potentially minimized) is false
-            restoreWindowState(windowId); // This will apply dimensions, positions, and ensure visibility
+            // Explicitly set display to flex and remove minimized class before restoreWindowState.
+            // This ensures the window is immediately prepared to be visible.
+            windowElement.style.display = 'flex';
+            windowElement.classList.remove('minimized');
+
+            // Restore all visual aspects (dimensions, position) based on the now updated state.
+            restoreWindowState(windowId); 
 
             // Specific logic for PlayJockey
-            if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
-                playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
+            if (windowId === 'playJockeyWindow') {
+                if (appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
+                    playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false); // Don't autoplay on manual reopen
+                } else if (pendingVideoToLoad && isYouTubeApiReady) { // If there was a pending video load attempt
+                    playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
+                    pendingVideoToLoad = null;
+                }
             }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            // Window is visible but minimized, so "maximize" it (which could mean restore to normal or full screen)
-            maximizeWindow(windowId); // This function handles un-minimizing and restoring dimensions/state
+            // Window is visible but minimized, so "maximize" it 
+            // (maximizeWindow handles restoring to normal or full screen).
+            maximizeWindow(windowId); 
         }
         
-        // Always bring to front after any operation that makes it active
+        // Always bring the interacted window to the front.
         bringToFront(windowElement);
-        // Save the state, which now reflects it being open and correctly sized/positioned
+        // Save the updated state (e.g., hiddenByUser: false, minimized: false).
         saveWindowState(windowId);
     }
 
@@ -2824,12 +2838,13 @@
         }
 
         // Set Visibility based on the state AFTER dimensions and classes are set
-        if (state.hiddenByUser) { // If the flag from localStorage is true
-            win.style.display = 'none'; // Keep the window hidden
+        if (state.hiddenByUser) {
+            win.style.display = 'none';
         } else {
-            win.style.display = 'flex'; // Otherwise, show the window
+            win.style.display = 'flex';
         }
-        updateMinMaxButtonStates(windowId);
+
+        updateMinMaxButtonStates(windowId); // Update buttons based on final state
     }
 
 
