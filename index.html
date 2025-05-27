@@ -1666,41 +1666,43 @@
         const windowId = iconElement.dataset.windowId;
         const windowElement = getById(windowId);
 
-        if (!windowElement) return;
-
-        let state = appData.windowStates[windowId];
-        if (!state) { // Ensure state object exists
-            appData.windowStates[windowId] = {};
-            state = appData.windowStates[windowId];
+        if (!windowElement) {
+            console.error("Window element not found for ID:", windowId);
+            return;
         }
 
-        // Determine the action based on current state
-        if (state.hiddenByUser || windowElement.style.display === 'none') {
-            // Window was hidden, so unhide it and restore its state
-            state.hiddenByUser = false;
-            // If a window is opened from a "closed" state, it should generally not be minimized.
-            // If it was minimized THEN closed, opening it should restore it to normal, not keep it minimized.
-            if (state.minimized) {
-                state.minimized = false;
-                // Note: wasMaximizedBeforeMinimize logic is handled by maximizeWindow,
-                // but for a simple open-from-closed, we assume "normal" state.
-            }
-            
-            // Restore all visual aspects now that hiddenByUser (and potentially minimized) is false
-            restoreWindowState(windowId); // This will apply dimensions, positions, and ensure visibility
+        let state = appData.windowStates[windowId];
+        if (!state) {
+            console.warn("State not found for window ID:", windowId, ". Initializing.");
+            appData.windowStates[windowId] = {};
+            state = appData.windowStates[windowId];
+            // It will get defaults via restoreWindowState if other flags aren't set
+        }
 
-            // Specific logic for PlayJockey
+        // Logic: If the window is considered "not normally open and active", then open it.
+        // "Not normally open" means it's hidden by user, or minimized.
+        // The windowElement.style.display check is a DOM fallback.
+        const isCurrentlyHiddenByState = state.hiddenByUser;
+        const isCurrentlyMinimizedByState = state.minimized;
+        const isDomHidden = windowElement.style.display === 'none';
+        const isDomMinimized = windowElement.classList.contains('minimized');
+
+        if (isCurrentlyHiddenByState || isCurrentlyMinimizedByState || isDomHidden || isDomMinimized) {
+            // Intention is to open/restore the window to a normal, visible state
+            state.hiddenByUser = false;
+            state.minimized = false; 
+
+            // Let restoreWindowState handle applying dimensions, classes, and visibility
+            restoreWindowState(windowId);
+
+            // Specific logic for PlayJockey on open
             if (windowId === 'playJockeyWindow' && appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
                 playYouTubeVideoById(appData.playJockeyCurrentVideo.videoId, false);
             }
-        } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            // Window is visible but minimized, so "maximize" it (which could mean restore to normal or full screen)
-            maximizeWindow(windowId); // This function handles un-minimizing and restoring dimensions/state
         }
         
-        // Always bring to front after any operation that makes it active
+        // Always bring to front and save the potentially modified state
         bringToFront(windowElement);
-        // Save the state, which now reflects it being open and correctly sized/positioned
         saveWindowState(windowId);
     }
 
@@ -2454,31 +2456,32 @@
             saveWindowState('xpMainWindow');
         });
 
-        DOM.textEditorMinimizeBtn.addEventListener('click', () => minimizeWindow('textEditorWindow'));
-        DOM.textEditorMaximizeBtn.addEventListener('click', () => maximizeWindow('textEditorWindow'));
+        // For textEditorWindow (Jotter)
         DOM.textEditorCloseBtn.addEventListener('click', () => {
-            const textEditor = DOM.textEditorWindow;
-            textEditor.style.display = 'none';
-            if(appData.windowStates.textEditorWindow) {
-                appData.windowStates.textEditorWindow.hiddenByUser = true;
-            }
-            saveWindowState('textEditorWindow');
+            const windowId = 'textEditorWindow';
+            getById(windowId).style.display = 'none';
+            if (!appData.windowStates[windowId]) appData.windowStates[windowId] = {};
+            appData.windowStates[windowId].hiddenByUser = true;
+            saveWindowState(windowId);
         });
 
-        DOM.playJockeyMinimizeBtn.addEventListener('click', () => minimizeWindow('playJockeyWindow'));
-        DOM.playJockeyMaximizeBtn.addEventListener('click', () => maximizeWindow('playJockeyWindow'));
+        // For playJockeyWindow
         DOM.playJockeyCloseBtn.addEventListener('click', () => {
-            const playJockey = DOM.playJockeyWindow;
-            playJockey.style.display = 'none';
-            if (appData.windowStates.playJockeyWindow) {
-                appData.windowStates.playJockeyWindow.hiddenByUser = true;
-            }
+            const windowId = 'playJockeyWindow';
+            getById(windowId).style.display = 'none';
+            
+            if (!appData.windowStates[windowId]) appData.windowStates[windowId] = {};
+            appData.windowStates[windowId].hiddenByUser = true;
+
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo();
             }
-            appData.playJockeyCurrentVideo = null;
-            saveWindowState('playJockeyWindow');
-            saveData();
+            appData.playJockeyCurrentVideo = null; // This requires a saveData call if not covered by saveWindowState
+            saveWindowState(windowId); 
+            // If appData.playJockeyCurrentVideo is the only change outside of windowStates[windowId], 
+            // and saveWindowState only saves windowStates[windowId] effectively, then:
+            // saveData(); // Might be needed if saveWindowState doesn't save the whole appData.
+            // However, your saveWindowState calls saveData() which stringifies the whole appData. So it's fine.
         });
 
         DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
