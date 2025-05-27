@@ -2197,22 +2197,28 @@
         if (windowId === 'xpMainWindow') {
             currentMinWidth = minTrackerAppWidth;
             currentMinHeight = MIN_TRACKER_APP_HEIGHT;
-            defaultWidth = 905;
-            defaultHeight = 645;
+            // --- MODIFICATION START for xpMainWindow ---
+            defaultWidth = 905; // Remains 905px
+            defaultHeight = 705; // Changed from 645px
+            // --- MODIFICATION END for xpMainWindow ---
             defaultOffsetX = 0;
             defaultOffsetY = 0;
         } else if (windowId === 'textEditorWindow') {
             currentMinWidth = MIN_TEXTEDITOR_WIDTH;
             currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
-            defaultWidth = 450;
-            defaultHeight = 600;
+            // --- MODIFICATION START for textEditorWindow ---
+            defaultWidth = 450; // Remains 450px
+            defaultHeight = 705; // Changed from 600px
+            // --- MODIFICATION END for textEditorWindow ---
             defaultOffsetX = 50;
             defaultOffsetY = 50;
         } else if (windowId === 'playJockeyWindow') {
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH;
             currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
-            defaultWidth = 520;
-            defaultHeight = MIN_PLAYJOCKEY_HEIGHT;
+            // --- MODIFICATION START for playJockeyWindow ---
+            defaultWidth = 480;    // Changed from 520px
+            defaultHeight = 705;   // Changed from MIN_PLAYJOCKEY_HEIGHT (425px)
+            // --- MODIFICATION END for playJockeyWindow ---
             defaultOffsetX = 100;
             defaultOffsetY = 100;
         } else {
