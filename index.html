@@ -2824,13 +2824,12 @@
         }
 
         // Set Visibility based on the state AFTER dimensions and classes are set
-        if (state.hiddenByUser) {
-            win.style.display = 'none';
+        if (state.hiddenByUser) { // If the flag from localStorage is true
+            win.style.display = 'none'; // Keep the window hidden
         } else {
-            win.style.display = 'flex';
+            win.style.display = 'flex'; // Otherwise, show the window
         }
-
-        updateMinMaxButtonStates(windowId); // Update buttons based on final state
+        updateMinMaxButtonStates(windowId);
     }
 
 
