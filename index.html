@@ -2056,7 +2056,7 @@
             resizeHandleElement = DOM.xpMainWindowResizeHandle;
         } else if (windowId === 'textEditorWindow') {
             titleBarElement = DOM.textEditorWindowTitleBar;
-            resizeHandleElement = DOM.textEditorResizeHandle;
+            resizeHandleElement = DOM.textEditorResizeHandle; // <<< Relevant for Jotter
         } else if (windowId === 'playJockeyWindow') {
             titleBarElement = DOM.playJockeyTitleBar;
             resizeHandleElement = DOM.playJockeyResizeHandle;
@@ -2097,6 +2097,14 @@
                 resizeInitialY = e.clientY;
                 resizeInitialWidth = activeResizeWindow.offsetWidth;
                 resizeInitialHeight = activeResizeWindow.offsetHeight;
+
+                // --- MODIFICATION START ---
+                // Disable pointer events on the iframe if it's the text editor being resized
+                if (windowId === 'textEditorWindow') {
+                    DOM.textEditorFrame.style.pointerEvents = 'none';
+                }
+                // --- MODIFICATION END ---
+
                 document.addEventListener('mousemove', doResize);
                 document.addEventListener('mouseup', stopDragOrResize);
                 bringToFront(windowElement);
@@ -2149,6 +2157,13 @@
         if (activeDragWindow || activeResizeWindow) {
             const windowId = activeDragWindow ? activeDragWindow.id : activeResizeWindow.id;
             saveWindowState(windowId);
+
+            // --- MODIFICATION START ---
+            // Re-enable pointer events on the iframe if it was the text editor being resized
+            if (activeResizeWindow && activeResizeWindow.id === 'textEditorWindow') {
+                DOM.textEditorFrame.style.pointerEvents = 'auto';
+            }
+            // --- MODIFICATION END ---
         }
         if (activeResizeWindow) {
             activeResizeWindow.classList.remove('disable-selection');
