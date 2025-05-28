@@ -12,7 +12,7 @@ const cors = require("cors")({ origin: true }); // Allows all origins for simpli
 exports.youtubeSearch = functions.https.onRequest((request, response) => {
     cors(request, response, async () => {
         const query = request.query.q;
-        const YOUTUBE_API_KEY = functions.config().youtube?.key;
+        const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
         if (!YOUTUBE_API_KEY) {
             console.error("YouTube API Key not configured in Firebase Functions environment.");
@@ -56,7 +56,7 @@ exports.youtubeSearch = functions.https.onRequest((request, response) => {
 exports.youtubeVideoDetails = functions.https.onRequest((request, response) => {
     cors(request, response, async () => {
         const videoId = request.query.videoId;
-        const YOUTUBE_API_KEY = functions.config().youtube?.key;
+        const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
         if (!YOUTUBE_API_KEY) {
             console.error("YouTube API Key not configured in Firebase Functions environment.");
@@ -107,7 +107,7 @@ exports.geminiChat = functions.https.onRequest((request, response) => {
         }
 
         const userPrompt = request.body.prompt;
-        const GEMINI_API_KEY = functions.config().gemini?.key;
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
         // Use a stable or your preferred Gemini model
         const GEMINI_MODEL = "gemini-2.5-flash-preview-05-20"; 
 
