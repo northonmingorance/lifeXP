@@ -3989,7 +3989,7 @@
         }
     }
 
-    const Youtube_FUNCTION_URL = 'https://us-central1-lifexpapp-f5578.cloudfunctions.net/youtubeSearch'; 
+    const Youtube_FUNCTION_URL = 'https://youtubesearch-jhm5jbbzla-uc.a.run.app'; 
 
     async function searchYouTubeVideos(query) {
         DOM.youtubeSearchResultsBody.innerHTML = '';
@@ -4158,7 +4158,7 @@
     }
 
 
-    const YOUTUBE_VIDEO_DETAILS_FUNCTION_URL = 'https://us-central1-lifexpapp-f5578.cloudfunctions.net/youtubeVideoDetails';
+    const YOUTUBE_VIDEO_DETAILS_FUNCTION_URL = 'https://youtubevideodetails-jhm5jbbzla-uc.a.run.app';
 
     async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) {
         try {
@@ -5019,7 +5019,7 @@
         closeModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); //
     } //
     
-    const GEMINI_CHAT_FUNCTION_URL = 'https://us-central1-lifexpapp-f5578.cloudfunctions.net/geminiChat';
+    const GEMINI_CHAT_FUNCTION_URL = 'https://geminichat-jhm5jbbzla-uc.a.run.app';
 
     async function handleSendGeminiPrompt() {
         const promptText = DOM.geminiChatPromptInput.value.trim();
