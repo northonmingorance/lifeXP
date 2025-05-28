@@ -2395,19 +2395,19 @@
 
         if (windowId === 'xpMainWindow') {
             currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT;
-            defaultWidth = 905; defaultHeight = 705;
+            defaultWidth = 905; defaultHeight = 705; // UPDATED
             defaultOffsetX = 0; defaultOffsetY = 0; 
         } else if (windowId === 'textEditorWindow') {
             currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
-            defaultWidth = 450; defaultHeight = 705;
+            defaultWidth = 450; defaultHeight = 705; // UPDATED
             defaultOffsetX = 50; defaultOffsetY = 50;
         } else if (windowId === 'playJockeyWindow') {
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
-            defaultWidth = 480; defaultHeight = 705;
+            defaultWidth = 480; defaultHeight = 705; // UPDATED
             defaultOffsetX = 100; defaultOffsetY = 100;
         } else if (windowId === 'geminiChatWindow') { 
             currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT;
-            defaultWidth = 500; defaultHeight = 400; 
+            defaultWidth = 450; defaultHeight = 705; // UPDATED (width 450px, height 705px)
             defaultOffsetX = 150; defaultOffsetY = 150; 
         } else {
             return; 
@@ -2613,40 +2613,56 @@
         DOM.xpMainWindowMaximizeBtn.addEventListener('click', () => maximizeWindow('xpMainWindow'));
         DOM.xpMainWindowCloseBtn.addEventListener('click', () => {
             const win = DOM.xpMainWindow;
-            win.style.display = 'none';
-            if(appData.windowStates.xpMainWindow) appData.windowStates.xpMainWindow.hiddenByUser = true;
-            saveWindowState('xpMainWindow');
+            const windowId = 'xpMainWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
+            saveWindowState(windowId); // Save state BEFORE hiding
+            win.style.display = 'none';   // Hide AFTER saving state
         });
 
         DOM.textEditorMinimizeBtn.addEventListener('click', () => minimizeWindow('textEditorWindow'));
         DOM.textEditorMaximizeBtn.addEventListener('click', () => maximizeWindow('textEditorWindow'));
         DOM.textEditorCloseBtn.addEventListener('click', () => {
             const win = DOM.textEditorWindow;
-            win.style.display = 'none';
-            if(appData.windowStates.textEditorWindow) appData.windowStates.textEditorWindow.hiddenByUser = true;
-            saveWindowState('textEditorWindow');
+            const windowId = 'textEditorWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
+            saveWindowState(windowId); // Save state BEFORE hiding
+            win.style.display = 'none';   // Hide AFTER saving state
         });
 
         DOM.playJockeyMinimizeBtn.addEventListener('click', () => minimizeWindow('playJockeyWindow'));
         DOM.playJockeyMaximizeBtn.addEventListener('click', () => maximizeWindow('playJockeyWindow'));
         DOM.playJockeyCloseBtn.addEventListener('click', () => {
             const win = DOM.playJockeyWindow;
-            win.style.display = 'none';
-            if(appData.windowStates.playJockeyWindow) appData.windowStates.playJockeyWindow.hiddenByUser = true;
+            const windowId = 'playJockeyWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
             
             if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
                 ytPlayerInstance.stopVideo(); 
             }
-            saveWindowState('playJockeyWindow');
+            saveWindowState(windowId); // Save state BEFORE hiding
+            win.style.display = 'none';   // Hide AFTER saving state
         });
 
         DOM.geminiChatMinimizeBtn.addEventListener('click', () => minimizeWindow('geminiChatWindow'));
         DOM.geminiChatMaximizeBtn.addEventListener('click', () => maximizeWindow('geminiChatWindow'));
         DOM.geminiChatCloseBtn.addEventListener('click', () => {
             const win = DOM.geminiChatWindow;
-            win.style.display = 'none';
-            if(appData.windowStates.geminiChatWindow) appData.windowStates.geminiChatWindow.hiddenByUser = true;
-            saveWindowState('geminiChatWindow');
+            const windowId = 'geminiChatWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
+            saveWindowState(windowId); // Save state BEFORE hiding
+            win.style.display = 'none';   // Hide AFTER saving state
         });
 
         DOM.geminiChatSendBtn.addEventListener('click', handleSendGeminiPrompt);
@@ -3041,10 +3057,10 @@
             viewMode: 'week',
             selectedDayIndex: 0,
             windowStates: {
-                xpMainWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false },
-                textEditorWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
-                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
-                geminiChatWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true }
+                xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false }, // UPDATED W/H
+                textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false }, // UPDATED W/H
+                playJockeyWindow: { x: null, y: null, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true }, // UPDATED W/H
+                geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true } // UPDATED W/H
             },
             iconPositions: {
                 trackerIcon: { x: 0, y: 0 },
@@ -3080,6 +3096,7 @@
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) },
                         geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(loadedData.windowStates ? loadedData.windowStates.geminiChatWindow : {}) }
                     },
+                    
                     iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}), geminiChatIcon: (loadedData.iconPositions && loadedData.iconPositions.geminiChatIcon) ? loadedData.iconPositions.geminiChatIcon : defaultAppData.iconPositions.geminiChatIcon },
                     playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
