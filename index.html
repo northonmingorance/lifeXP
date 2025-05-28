@@ -560,6 +560,7 @@
             max-width: 100%;
         }
 
+        /* PlayJockey Specific Styles */
         .playjockey-body-container {
             display: flex;
             flex-direction: column;
@@ -744,6 +745,12 @@
             color: white;
         }
 
+        /* Youtube Modal Specific Styles */
+        #youtubeSearchResultsBody {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
         .Youtube-result-item {
             display: flex;
             align-items: center;
@@ -788,6 +795,7 @@
             font-size: 12px;
         }
 
+        /* Gemini Chat Specific Styles */
         .gemini-chat-body-container {
             display: flex;
             flex-direction: column;
@@ -819,7 +827,7 @@
             background-color: #FFFFFF; 
             padding: 8px;
             margin: 5px; 
-            margin-top: 0; 
+            margin-top: 0; /* Adjusted */
             overflow-y: auto; 
             font-family: "Tahoma", "Geneva", sans-serif;
             font-size: 11px;
@@ -843,7 +851,7 @@
             font-size: 10px;
         }
         .gemini-chat-message .message-content {
-           
+           /* Individual content styling if needed */
         }
          .gemini-chat-message .message-timestamp {
             font-size: 9px;
@@ -1298,23 +1306,22 @@
         </div>
     </div>
 
-    <div id="confirmClearChatHistoryModal" class="modal">
+    <div id="confirmClearChatModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-title-bar">
                 <span>Confirm Clear History</span>
-                <span class="close-button" data-modal-id="confirmClearChatHistoryModal">r</span>
+                <span class="close-button" data-modal-id="confirmClearChatModal">r</span>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to clear the entire chat history? This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <button id="confirmClearChatHistoryBtn" class="xp-button">Clear History</button>
-                <button class="xp-button" data-modal-id="confirmClearChatHistoryModal">Cancel</button>
+                <button id="confirmClearChatBtn" class="xp-button">Clear History</button>
+                <button class="xp-button" data-modal-id="confirmClearChatModal">Cancel</button>
             </div>
         </div>
     </div>
-
-<script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
     "use strict";
@@ -1324,7 +1331,7 @@
     const XP_PER_QUEST_COMPLETED_BASE = 50;
     const STORAGE_KEY = 'lifeXpData_v1.10.0'; 
     const YOUTUBE_API_KEY = "AIzaSyCmfQymtVEL3b_YEi7FlhpdNX5MkGsrNDM"; 
-    const GEMINI_API_KEY = "AIzaSyDsrkiasqd692YW4Hyza8v9_1aksbjKVwM"; 
+    const GEMINI_API_KEY = "AIzaSyDsrkiasqd692YW4Hyza8v9_1aksbjKVwM"; // <<< IMPORTANT: REPLACE WITH YOUR ACTUAL GEMINI API KEY
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25;
 
@@ -1368,7 +1375,7 @@
         Youtube: 'youtubeSearchModal',
         RENAME_TRACK: 'renameTrackModal',
         CONFIRM_REMOVE_TRACK: 'confirmRemoveTrackModal',
-        CONFIRM_CLEAR_CHAT_HISTORY: 'confirmClearChatHistoryModal'
+        CONFIRM_CLEAR_CHAT: 'confirmClearChatModal' //
     };
 
     const getById = (id) => document.getElementById(id);
@@ -1505,9 +1512,10 @@
         confirmRemoveTrackModal: getById(MODAL_IDS.CONFIRM_REMOVE_TRACK),
         confirmRemoveTrackMessage: getById('confirmRemoveTrackMessage'),
         confirmFinalTrackRemoveBtn: getById('confirmFinalTrackRemoveBtn'),
-
-        confirmClearChatHistoryModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT_HISTORY),
-        confirmClearChatHistoryBtn: getById('confirmClearChatHistoryBtn'),
+        
+        // NEW DOM ELEMENTS FOR GEMINI CHAT CLEAR HISTORY MODAL
+        confirmClearChatModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT), //
+        confirmClearChatBtn: getById('confirmClearChatBtn'), //
 
         modalCloseButtons: null
     };
@@ -1591,7 +1599,7 @@
             minTrackerAppWidth = 375;
         }
         if (appData.viewMode !== 'week' && appData.viewMode !== 'day') {
-             
+             console.warn("Invalid viewMode loaded, defaulting to week.");
              appData.viewMode = 'week';
              minTrackerAppWidth = 905;
         }
@@ -1814,11 +1822,11 @@
             if (attempt >= maxAttempts) break;
             layer++;
             if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
-                 break;
+                 console.warn("Collision search boundary too large for icon placement. Layer:", layer); break;
             }
         }
 
-        
+        console.warn("Could not find a non-colliding position for icon " + draggedIcon.id + " after " + attempt + " attempts. Using original snapped position which might collide.");
         return { x: snappedX, y: snappedY }; 
     }
 
@@ -1867,11 +1875,11 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            
+            console.warn(`State for window ${windowId} was missing on double click. Attempting to restore/initialize.`);
             restoreWindowState(windowId); 
             state = appData.windowStates[windowId]; 
             if(!state) {
-                
+                console.error(`Failed to initialize state for ${windowId} on double click.`);
                 return;
             }
         }
@@ -1907,7 +1915,6 @@
 <html lang="en">
 <head>
     <title>Jotter</title>
-    <meta charset="UTF-8">
     <style>
         html, body { 
             height: 100%;
@@ -2249,7 +2256,7 @@
 
 
         if (!windowElement || !titleBarElement) {
-            
+            console.error("Window or TitleBar element not found for ID:", windowId);
             return;
         }
 
@@ -2257,7 +2264,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar'))) { 
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar'))) { // Added .gemini-chat-controls-bar
                  bringToFront(windowElement);
             }
         }, true); 
@@ -2377,7 +2384,7 @@
 
         const state = appData.windowStates[windowId]; 
         if (!state) {
-            
+            console.error(`State missing for ${windowId} in setWindowDefaults`);
             return;
         }
 
@@ -2476,7 +2483,7 @@
     }
 
 
-    function checkToggleDayView() { }
+    function checkToggleDayView() { /* Placeholder if specific logic is needed */ }
 
 
     function addEventListeners() {
@@ -2649,8 +2656,8 @@
                 handleSendGeminiPrompt();
             }
         });
-        DOM.geminiChatClearHistoryBtn.addEventListener('click', () => openModal(MODAL_IDS.CONFIRM_CLEAR_CHAT_HISTORY));
-        DOM.confirmClearChatHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
+        DOM.geminiChatClearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
+        DOM.confirmClearChatBtn.addEventListener('click', confirmClearChat); //
 
         DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
         DOM.playJockeyLinkInput.addEventListener('keypress', (e) => {
@@ -2727,7 +2734,7 @@
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
         const state = appData.windowStates[windowId]; 
-        if (!state) { return; }
+        if (!state) { console.error(`State missing for ${windowId} in minimizeWindow`); return; }
 
         state.minimized = true;
 
@@ -2739,7 +2746,7 @@
                 state.x = parseInt(lastNormalStates[windowId].left);
                 state.y = parseInt(lastNormalStates[windowId].top);
             } else {
-                
+                console.warn(`lastNormalStates missing for ${windowId} during minimize from maximized.`);
             }
         } else {
             state.wasMaximizedBeforeMinimize = false;
@@ -2760,7 +2767,7 @@
         if (!appWindow) return;
 
         const state = appData.windowStates[windowId];
-        if (!state) { return; }
+        if (!state) { console.error(`State missing for ${windowId} in maximizeWindow`); return; }
 
         const isMinimized = appWindow.classList.contains('minimized');
         let currentLastNormal = lastNormalStates[windowId] || {};
@@ -2895,7 +2902,7 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            
+            console.warn(`Window state for ${windowId} was missing during saveWindowState. Re-initializing.`);
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
             state.hiddenByUser = (win.style.display === 'none');
@@ -2920,7 +2927,7 @@
     function restoreWindowState(windowId) {
         const win = getById(windowId);
         if (!win) {
-            
+            console.error(`Window element ${windowId} not found for restore.`);
             return;
         }
 
@@ -3019,7 +3026,7 @@
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (error) {
-            
+            console.error("Error saving data to localStorage:", error);
             if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
             }
@@ -3115,7 +3122,7 @@
                 }
 
             } catch (error) {
-                
+                console.error("Error parsing stored data, reverting to defaults:", error);
                 appData = JSON.parse(JSON.stringify(defaultAppData)); 
             }
         } else {
@@ -3136,6 +3143,14 @@
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); 
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
         return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); 
+    }
+
+    function getCurrentWeekId() {
+        if (!appData.currentWeekStartDate) {
+            appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
+        }
+        const startDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
+        return `${startDate.getFullYear()}-W${String(getWeekNumber(startDate)).padStart(2, '0')}`;
     }
 
     function navigateWeek(offsetInDays) {
@@ -3252,7 +3267,7 @@
         } else { 
             const selectedDate = new Date(currentMonday);
              const currentDayIndex = (typeof appData.selectedDayIndex === 'number' && appData.selectedDayIndex >= 0 && appData.selectedDayIndex <=6) ? appData.selectedDayIndex : 0;
-             selectedDate.setDate(currentMonday.getDate() + currentDayIndex);
+             selectedDate.setDate(selectedDate.getDate() + currentDayIndex);
             
             const dayDisplayOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             DOM.currentWeekDisplay.textContent = selectedDate.toLocaleDateString(undefined, dayDisplayOptions);
@@ -3897,7 +3912,7 @@
         saveData();
     }
 
-    
+    // --- PlayJockey Functions ---
 
     function getCurrentPlayJockeyPlaylist() {
         if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
@@ -3970,7 +3985,7 @@
             const response = await fetch(apiUrl);
             if (!response.ok) {
                 const errorData = await response.json();
-                
+                console.error('YouTube API Error:', errorData);
                 let errorMessage = `Error searching videos: ${response.statusText}`;
                 if (errorData.error && errorData.error.message) {
                     errorMessage += ` - ${errorData.error.message}`;
@@ -3986,7 +4001,7 @@
                 DOM.youtubeSearchStatus.textContent = 'No videos found for your search query.';
             }
         } catch (error) {
-            
+            console.error('Error fetching Youtube results:', error);
             DOM.youtubeSearchStatus.textContent = 'Failed to search videos. Check console for details.';
         }
     }
@@ -4053,9 +4068,8 @@
             return;
         }
 
-        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
         const videoEntry = {
-            id: tempId,
+            id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
             originalUrl: `https://www.youtube.com/watch?v=${videoId}`, 
             videoId: videoId,
             title: title, 
@@ -4089,7 +4103,7 @@
             addNewPlayJockeyPlaylist();
             currentPlaylist = getCurrentPlayJockeyPlaylist();
              if (!currentPlaylist) {
-                
+                console.error("Failed to create/get playlist after attempting to add a link.");
                 return;
             }
         }
@@ -4136,11 +4150,11 @@
                          newTitle = decodeHtmlEntities(data.items[0].snippet.title);
                          newArtist = decodeHtmlEntities(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim();
                      } else {
-                         
+                         console.warn(`No video data found via API for ${videoEntryToUpdate.videoId}`);
                          newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
                      }
                  } else {
-                     
+                     console.warn(`Failed to fetch title/author via API for ${videoEntryToUpdate.videoId}. Status: ${response.status}`);
                      newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
                  }
             } else {
@@ -4155,7 +4169,7 @@
                          newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
                     }
                 } catch (oEmbedError) {
-                    
+                    console.warn(`oEmbed fetch failed for ${videoEntryToUpdate.videoId}:`, oEmbedError);
                     newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
                 }
             }
@@ -4178,7 +4192,7 @@
                 }
             }
         } catch (error) {
-            
+            console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
              const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
@@ -4318,14 +4332,14 @@
     }
 
     function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) {
-        if (!videoId) { return; }
+        if (!videoId) { console.warn("playYouTubeVideoById called with no videoId"); return; }
 
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
-        if (!currentPlaylist) { return; }
+        if (!currentPlaylist) { console.warn("No current playlist to play from"); return; }
 
         const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
         if (!videoToPlay) {
-            
+            console.warn(`Video with ID ${videoId} not found in current playlist.`);
             appData.playJockeyCurrentVideo = null;
             updatePlayingClassInPlaylist(null);
             if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
@@ -4350,7 +4364,7 @@
 
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
-            
+            console.log("YouTube API not ready, video load queued:", videoId);
             if (typeof YT !== 'undefined' && YT.Player) { onYouTubeIframeAPIReady(); } 
             return;
         }
@@ -4908,6 +4922,7 @@
         }
     }
 
+    // --- Gemini Chat Functions ---
     function renderGeminiChatHistory() {
         if (!DOM.geminiChatDisplayArea) return;
         DOM.geminiChatDisplayArea.innerHTML = ''; 
@@ -4963,12 +4978,18 @@
         saveData(); 
     }
 
+    // MODIFIED: handleClearGeminiChatHistory to use modal
     function handleClearGeminiChatHistory() {
-        appData.geminiChatHistory = [];
-        renderGeminiChatHistory();
-        saveData();
-        closeModal(MODAL_IDS.CONFIRM_CLEAR_CHAT_HISTORY);
+        openModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); //
     }
+
+    // NEW FUNCTION: confirmClearChat
+    function confirmClearChat() { //
+        appData.geminiChatHistory = []; //
+        renderGeminiChatHistory(); //
+        saveData(); //
+        closeModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); //
+    } //
 
     async function handleSendGeminiPrompt() {
         const promptText = DOM.geminiChatPromptInput.value.trim();
@@ -5003,7 +5024,7 @@
                     parts: [{ "text": promptText }]
                 }]
             };
-            
+            // Use the model name you found working:
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: {
@@ -5017,7 +5038,7 @@
 
             if (!response.ok) {
                 const errorData = await response.json();
-                
+                console.error("Gemini API Error:", errorData);
                 const errorMessage = errorData?.error?.message || `API request failed with status ${response.status}`;
                 addMessageToGeminiChat('gemini', `Error: ${errorMessage}`, true);
             } else {
@@ -5031,11 +5052,11 @@
                 }
                  else {
                     addMessageToGeminiChat('gemini', "Received an empty or unexpected response from Gemini.", true);
-                    
+                    console.warn("Unexpected Gemini API response structure:", data);
                 }
             }
         } catch (error) {
-            
+            console.error("Error calling Gemini API:", error);
             const existingThinkingDiv = getById(thinkingMsgId); 
             if (existingThinkingDiv) existingThinkingDiv.remove();
             addMessageToGeminiChat('gemini', `Error: Could not connect to Gemini. ${error.message}`, true);
@@ -5051,7 +5072,7 @@
         if (modal) {
             modal.style.display = 'flex'; 
         } else {
-            
+            console.error(`Modal with ID "${modalId}" not found.`);
         }
     }
 
@@ -5060,7 +5081,7 @@
          if (modal) {
             modal.style.display = 'none';
         } else {
-            
+            console.error(`Modal with ID "${modalId}" not found for closing.`);
         }
     }
 
