@@ -1514,8 +1514,8 @@
         confirmFinalTrackRemoveBtn: getById('confirmFinalTrackRemoveBtn'),
         
         // NEW DOM ELEMENTS FOR GEMINI CHAT CLEAR HISTORY MODAL
-        confirmClearChatModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT), //
-        confirmClearChatBtn: getById('confirmClearChatBtn'), //
+        confirmClearChatModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT), 
+        confirmClearChatBtn: getById('confirmClearChatBtn'), 
 
         modalCloseButtons: null
     };
@@ -2129,19 +2129,19 @@
         function performSave() {
             let filename = prompt("Filename:", "jotter_content.html");
             if (filename) {
-                let htmlContent = \`<!DOCTYPE html>
+                let htmlContent = `<!DOCTYPE html>
 <html>
 <head>
     <title>Saved Content</title>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
+        body { font-family: 'Lucida Console', Monaco, monospace; font-size: ${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
-    \${editorArea.innerHTML}
+    ${editorArea.innerHTML}
 </body>
-</html>\`;
+</html>`;
                 let blob = new Blob([htmlContent], { type: "text/html" });
                 let url = URL.createObjectURL(blob);
                 let downloadLink = document.createElement("a");
@@ -2197,14 +2197,14 @@
         });
          fontSizeInput.addEventListener('input', () => { 
             let val = parseInt(fontSizeInput.value);
-            if(!isNaN(val) && val >=8 && val <=72){
+            if(!isNaN(val) && val >=8 && val >=8 && val <=72){
                  editorArea.style.fontSize = val + 'px';
             }
         });
 
         applyFontSize(fontSizeInput.value);
         editorArea.focus();
-    <\/script>
+    </script>
 </body>
 </html>`;
     }
@@ -2264,7 +2264,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar'))) { // Added .gemini-chat-controls-bar
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar'))) { 
                  bringToFront(windowElement);
             }
         }, true); 
@@ -2388,15 +2388,12 @@
             return;
         }
 
-        const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
-        const hasValidSavedPosition = state.x != null && state.y != null;
-
         let currentMinWidth, currentMinHeight, defaultWidth, defaultHeight, defaultOffsetX, defaultOffsetY;
 
         if (windowId === 'xpMainWindow') {
             currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT;
             defaultWidth = 905; defaultHeight = 705;
-            defaultOffsetX = 0; defaultOffsetY = 0; 
+            defaultOffsetX = (window.innerWidth - defaultWidth) / 2; defaultOffsetY = 20; 
         } else if (windowId === 'textEditorWindow') {
             currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
             defaultWidth = 450; defaultHeight = 705;
@@ -2413,32 +2410,46 @@
             return; 
         }
 
-        if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize || !hasValidSavedPosition) {
-            let newWidth = defaultWidth;
-            let newHeight = defaultHeight;
+        // Use saved state if it exists and was manually set, or if it's a browser resize and we had a non-maximized size
+        let newWidth = state.width;
+        let newHeight = state.height;
+        let newLeft = state.x;
+        let newTop = state.y;
 
-            newWidth = Math.max(currentMinWidth, newWidth);
-            newHeight = Math.max(currentMinHeight, newHeight);
-
-            let newLeft = (defaultOffsetX === 0 && window.innerWidth > newWidth) ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
-            let newTop = (defaultOffsetY === 0 && window.innerHeight > newHeight) ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
-            
-            newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
-            newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
-            if (window.innerHeight <= newHeight + 20) newTop = 10;
-            if (window.innerWidth <= newWidth + 20) newLeft = 10;
-
-            appWindow.style.width = newWidth + 'px';
-            appWindow.style.height = newHeight + 'px';
-            appWindow.style.left = newLeft + 'px';
-            appWindow.style.top = newTop + 'px';
-
-            state.width = newWidth;
-            state.height = newHeight;
-            state.x = newLeft;
-            state.y = newTop;
-            state.userManuallySet = false; 
+        // If not user-manually set or dimensions/positions are invalid, use defaults
+        if (!state.userManuallySet || newWidth === null || newHeight === null || newLeft === null || newTop === null || newWidth === 0 || newHeight === 0) {
+            newWidth = defaultWidth;
+            newHeight = defaultHeight;
+            newLeft = defaultOffsetX;
+            newTop = defaultOffsetY;
+            state.userManuallySet = false; // Reset userManuallySet if we're applying defaults
         }
+
+        // Apply minimums and ensure within viewport bounds
+        newWidth = Math.max(currentMinWidth, newWidth);
+        newHeight = Math.max(currentMinHeight, newHeight);
+
+        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
+        newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
+
+        // If window is larger than viewport, try to fit it
+        if (newWidth > window.innerWidth) newWidth = window.innerWidth - 20; // Add some margin
+        if (newHeight > window.innerHeight) newHeight = window.innerHeight - 20; // Add some margin
+        
+        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
+        newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
+
+
+        appWindow.style.width = newWidth + 'px';
+        appWindow.style.height = newHeight + 'px';
+        appWindow.style.left = newLeft + 'px';
+        appWindow.style.top = newTop + 'px';
+
+        // Update state with actual applied values
+        state.width = newWidth;
+        state.height = newHeight;
+        state.x = newLeft;
+        state.y = newTop;
     }
 
 
@@ -2657,7 +2668,7 @@
             }
         });
         DOM.geminiChatClearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
-        DOM.confirmClearChatBtn.addEventListener('click', confirmClearChat); //
+        DOM.confirmClearChatBtn.addEventListener('click', confirmClearChat); 
 
         DOM.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput);
         DOM.playJockeyLinkInput.addEventListener('keypress', (e) => {
@@ -2792,11 +2803,11 @@
                 else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
                 else if (windowId === 'geminiChatWindow') { minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT;}
 
-
+                // Apply saved normal state or fall back to default if not available
                 appWindow.style.width = Math.max(minW, state.width || parseInt(currentLastNormal.width) || 0) + 'px';
                 appWindow.style.height = Math.max(minH, state.height || parseInt(currentLastNormal.height) || 0) + 'px';
-                appWindow.style.left = (state.x || parseInt(currentLastNormal.left) || 0) + 'px';
-                appWindow.style.top = (state.y || parseInt(currentLastNormal.top) || 0) + 'px';
+                appWindow.style.left = (state.x != null ? state.x : parseInt(currentLastNormal.left) || 0) + 'px';
+                appWindow.style.top = (state.y != null ? state.y : parseInt(currentLastNormal.top) || 0) + 'px';
                 state.maximized = false;
             }
         } else if (appWindow.classList.contains('true-maximized')) { 
@@ -2810,17 +2821,14 @@
                 state.x = parseInt(currentLastNormal.left);
                 state.y = parseInt(currentLastNormal.top);
             } else {
-                let defaultNormalWidth, defaultNormalHeight, minW, minH, defaultX, defaultY;
-                 if (windowId === 'xpMainWindow') { defaultNormalWidth = 905; defaultNormalHeight = 705; minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = (window.innerWidth - defaultNormalWidth)/2; defaultY = 20;}
-                else if (windowId === 'textEditorWindow') { defaultNormalWidth = 450; defaultNormalHeight = 705; minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
-                else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
-                else if (windowId === 'geminiChatWindow') { defaultNormalWidth = 500; defaultNormalHeight = 400; minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT; defaultX = 150; defaultY = 150;}
+                // If no last normal state, set to a default normal size
                 setWindowDefaults(windowId, false); 
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
             state.userManuallySet = true; 
         } else { 
+            // Save current non-maximized state before maximizing
             lastNormalStates[windowId] = { 
                 width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                 height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
@@ -2913,12 +2921,16 @@
 
         state.minimized = win.classList.contains('minimized');
         state.maximized = win.classList.contains('true-maximized');
+        state.hiddenByUser = (win.style.display === 'none'); // Ensure this is correctly updated
         state.zIndex = parseInt(win.style.zIndex) || highestZIndex; 
+        
+        // Only save dimensions/position if not minimized or maximized
         if (!state.minimized && !state.maximized) {
             state.x = win.offsetLeft;
             state.y = win.offsetTop;
             state.width = win.offsetWidth;
             state.height = win.offsetHeight;
+            // state.userManuallySet is only set to true during dragging/resizing. Keep its current state unless explicitly reset.
         }
         saveData();
     }
@@ -2942,6 +2954,7 @@
             appData.windowStates[windowId] = { ...defaultStateTemplate };
             state = appData.windowStates[windowId];
         } else {
+            // Ensure all properties from default are present if missing in loaded state
             state = {
                 ...defaultStateTemplate, 
                 ...state,                 
@@ -2954,7 +2967,7 @@
             appData.windowStates[windowId] = state; 
         }
 
-        const wasHidden = win.style.display === 'none' || state.hiddenByUser;
+        // Apply display style based on hiddenByUser
         if (state.hiddenByUser) {
             win.style.display = 'none';
         } else {
@@ -2963,9 +2976,9 @@
         const isNowVisible = win.style.display === 'flex';
 
         let loadedZ = state.zIndex; 
-        if (loadedZ <= 5 && windowId !== 'desktop-icon') loadedZ = highestZIndex + 1;
+        if (loadedZ <= 5 && windowId !== 'desktop-icon') loadedZ = highestZIndex + 1; // Ensure windows are on top of icons
         win.style.zIndex = loadedZ;
-        state.zIndex = loadedZ;
+        state.zIndex = loadedZ; // Update the state with the possibly adjusted zIndex
         highestZIndex = Math.max(highestZIndex, loadedZ);
 
         if (state.minimized) {
@@ -2979,12 +2992,12 @@
             win.style.top = '0px';
             win.style.left = '0px';
 
+            // Store the "normal" size before maximization for restore down functionality
             let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
             if (windowId === 'xpMainWindow') { defaultNormalWidth = 905; defaultNormalHeight = 705; minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = (window.innerWidth - defaultNormalWidth)/2; defaultY = 20;}
             else if (windowId === 'textEditorWindow') { defaultNormalWidth = 450; defaultNormalHeight = 705; minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
             else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
             else if (windowId === 'geminiChatWindow') { defaultNormalWidth = 500; defaultNormalHeight = 400; minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT; defaultX = 150; defaultY = 150;}
-
 
             lastNormalStates[windowId] = { 
                 width: (state.width ? Math.max(minW, state.width) : defaultNormalWidth) + 'px',
@@ -2996,20 +3009,22 @@
             win.classList.remove('minimized');
             win.classList.remove('true-maximized');
 
+            // Apply saved dimensions/position if available and was user-set
             if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
                 let currentMinWidth, currentMinHeight;
                 if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; }
                 else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; }
                 else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; }
                 else if (windowId === 'geminiChatWindow') { currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT; }
-                else { currentMinWidth = 100; currentMinHeight = 100; }
+                else { currentMinWidth = 100; currentMinHeight = 100; } // Fallback default minimums
 
                 win.style.left = state.x + 'px';
                 win.style.top = state.y + 'px';
                 win.style.width = Math.max(currentMinWidth, state.width) + 'px';
                 win.style.height = Math.max(currentMinHeight, state.height) + 'px';
             } else {
-                if (!state.hiddenByUser) {
+                // If not user-set or dimensions invalid, set to defaults but only if not hidden
+                if (isNowVisible) { // Only set defaults if the window is supposed to be visible
                     setWindowDefaults(windowId, false); 
                 }
             }
@@ -4980,16 +4995,16 @@
 
     // MODIFIED: handleClearGeminiChatHistory to use modal
     function handleClearGeminiChatHistory() {
-        openModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); //
+        openModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); 
     }
 
     // NEW FUNCTION: confirmClearChat
-    function confirmClearChat() { //
-        appData.geminiChatHistory = []; //
-        renderGeminiChatHistory(); //
-        saveData(); //
-        closeModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); //
-    } //
+    function confirmClearChat() { 
+        appData.geminiChatHistory = []; 
+        renderGeminiChatHistory(); 
+        saveData(); 
+        closeModal(MODAL_IDS.CONFIRM_CLEAR_CHAT); 
+    } 
 
     async function handleSendGeminiPrompt() {
         const promptText = DOM.geminiChatPromptInput.value.trim();
