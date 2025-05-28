@@ -4412,11 +4412,8 @@
                 videoId: videoId,
                 playerVars: {
                     'autoplay': autoplayIntent ? 1 : 0,
-                    'controls': 1,
-                    'enablejsapi': 1,
-                    'origin': 'https://northonmingorance.github.io', // <--- ADD OR UPDATE THIS LINE
-                    'modestbranding': 1,
-                    'rel': 0
+                    'controls': 1, 'enablejsapi': 1, 'origin': window.location.origin,
+                    'modestbranding': 1, 'rel': 0
                 },
                 events: {
                     'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); },
