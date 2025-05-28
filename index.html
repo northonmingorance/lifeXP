@@ -1375,7 +1375,7 @@
         Youtube: 'youtubeSearchModal',
         RENAME_TRACK: 'renameTrackModal',
         CONFIRM_REMOVE_TRACK: 'confirmRemoveTrackModal',
-        CONFIRM_CLEAR_CHAT: 'confirmClearChatModal' //
+        CONFIRM_CLEAR_CHAT: 'confirmClearChatModal' 
     };
 
     const getById = (id) => document.getElementById(id);
@@ -1513,7 +1513,6 @@
         confirmRemoveTrackMessage: getById('confirmRemoveTrackMessage'),
         confirmFinalTrackRemoveBtn: getById('confirmFinalTrackRemoveBtn'),
         
-        // NEW DOM ELEMENTS FOR GEMINI CHAT CLEAR HISTORY MODAL
         confirmClearChatModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT), 
         confirmClearChatBtn: getById('confirmClearChatBtn'), 
 
@@ -1611,18 +1610,21 @@
              appData.selectedDayIndex = 0;
         }
 
-        initWindowInteractions('xpMainWindow');
-        restoreWindowState('xpMainWindow'); 
+        // Initialize window states first, using default template
+        const windowIds = ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow', 'geminiChatWindow'];
+        windowIds.forEach(id => {
+            // Ensure appData.windowStates has an entry for each window based on defaultAppData
+            if (!appData.windowStates[id]) {
+                appData.windowStates[id] = { ...defaultAppData.windowStates[id] };
+            }
+        });
+        
+        // Now restore window states, which will apply saved positions/sizes or set defaults if no valid saved state
+        windowIds.forEach(id => {
+            restoreWindowState(id);
+        });
 
         DOM.textEditorFrame.srcdoc = getTextEditorHTMLContent();
-        initWindowInteractions('textEditorWindow');
-        restoreWindowState('textEditorWindow'); 
-
-        initWindowInteractions('playJockeyWindow');
-        restoreWindowState('playJockeyWindow'); 
-
-        initWindowInteractions('geminiChatWindow');
-        restoreWindowState('geminiChatWindow'); 
 
 
         updateMinMaxButtonStates('xpMainWindow');
@@ -1876,6 +1878,7 @@
         let state = appData.windowStates[windowId];
         if (!state) {
             console.warn(`State for window ${windowId} was missing on double click. Attempting to restore/initialize.`);
+            // This case should be less frequent with improved loadData and init
             restoreWindowState(windowId); 
             state = appData.windowStates[windowId]; 
             if(!state) {
@@ -1891,7 +1894,7 @@
             
             windowElement.style.display = 'flex'; 
             windowElement.classList.remove('minimized');
-            restoreWindowState(windowId); 
+            restoreWindowState(windowId); // Re-restore to ensure proper sizing after unhiding
 
             if (windowId === 'playJockeyWindow') {
                 if (appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
@@ -1902,7 +1905,7 @@
                 }
             }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId); 
+            maximizeWindow(windowId); // This also handles restoring from minimized
         }
         
         bringToFront(windowElement);
@@ -2129,19 +2132,19 @@
         function performSave() {
             let filename = prompt("Filename:", "jotter_content.html");
             if (filename) {
-                let htmlContent = \`<!DOCTYPE html>
+                let htmlContent = `<!DOCTYPE html>
 <html>
 <head>
     <title>Saved Content</title>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
+        body { font-family: 'Lucida Console', Monaco, monospace; font-size: ${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
-    \${editorArea.innerHTML}
+    ${editorArea.innerHTML}
 </body>
-</html>\`;
+</html>`;
                 let blob = new Blob([htmlContent], { type: "text/html" });
                 let url = URL.createObjectURL(blob);
                 let downloadLink = document.createElement("a");
@@ -2204,7 +2207,7 @@
 
         applyFontSize(fontSizeInput.value);
         editorArea.focus();
-    <\/script>
+    </script>
 </body>
 </html>`;
     }
@@ -2374,14 +2377,11 @@
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
-        // If the window is currently maximized, do not change its dimensions based on defaults
-        // unless it's a browser resize and we need to re-center it.
-        if (appWindow.classList.contains('true-maximized')) {
-            if (isBrowserResize) {
-                // Re-center logic might be needed for maximized windows on resize,
-                // but usually, maximized windows simply fill the viewport.
-                // No specific action here as they usually handle their own resizing.
-            }
+        if (appWindow.classList.contains('true-maximized') && !isBrowserResize) {
+            appWindow.style.width = '100vw';
+            appWindow.style.height = '100vh';
+            appWindow.style.top = '0px';
+            appWindow.style.left = '0px';
             return;
         }
 
@@ -2391,69 +2391,68 @@
             return;
         }
 
-        let currentMinWidth, currentMinHeight, defaultWidth, defaultHeight, defaultOffsetX, defaultOffsetY;
+        // Use the initial default values for the window
+        let defaultWidth, defaultHeight, defaultOffsetX, defaultOffsetY;
+        const defaultTemplate = defaultAppData.windowStates[windowId];
+        
+        defaultWidth = defaultTemplate.width;
+        defaultHeight = defaultTemplate.height;
+        defaultOffsetX = defaultTemplate.x === null ? 0 : defaultTemplate.x; // Handle null in template
+        defaultOffsetY = defaultTemplate.y === null ? 0 : defaultTemplate.y; // Handle null in template
+
+
+        let currentMinWidth, currentMinHeight;
 
         if (windowId === 'xpMainWindow') {
             currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT;
-            defaultWidth = 905; defaultHeight = 705;
-            defaultOffsetX = 0; defaultOffsetY = 0; 
+            if(defaultOffsetX === 0) defaultOffsetX = (window.innerWidth - defaultWidth) / 2; // Center if 0
+            if(defaultOffsetY === 0) defaultOffsetY = 20; // Default top for main window
         } else if (windowId === 'textEditorWindow') {
             currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT;
-            defaultWidth = 450; defaultHeight = 705;
-            defaultOffsetX = 50; defaultOffsetY = 50;
         } else if (windowId === 'playJockeyWindow') {
             currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT;
-            defaultWidth = 480; defaultHeight = 705;
-            defaultOffsetX = 100; defaultOffsetY = 100;
         } else if (windowId === 'geminiChatWindow') { 
             currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT;
-            defaultWidth = 500; defaultHeight = 400; 
-            defaultOffsetX = 150; defaultOffsetY = 150; 
         } else {
             return; 
         }
 
-        let newWidth = state.width && state.width >= currentMinWidth ? state.width : defaultWidth;
-        let newHeight = state.height && state.height >= currentMinHeight ? state.height : defaultHeight;
+        let newWidth = state.width || defaultWidth;
+        let newHeight = state.height || defaultHeight;
+        let newLeft = state.x != null ? state.x : defaultOffsetX; // Use stored x, then default x
+        let newTop = state.y != null ? state.y : defaultOffsetY; // Use stored y, then default y
+
 
         newWidth = Math.max(currentMinWidth, newWidth);
         newHeight = Math.max(currentMinHeight, newHeight);
 
-        let newLeft, newTop;
+        // Ensure window stays within viewport boundaries after size adjustments
+        newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
+        newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
+        
+        // If window is larger than screen (with padding), force to top-left-ish corner
+        if (window.innerHeight <= newHeight + 20) newTop = 10;
+        if (window.innerWidth <= newWidth + 20) newLeft = 10;
 
-        if (state.userManuallySet && state.x != null && state.y != null) {
-            newLeft = state.x;
-            newTop = state.y;
-        } else {
-            // Calculate default centered position or offset
-            newLeft = (defaultOffsetX === 0 && window.innerWidth > newWidth) ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
-            newTop = (defaultOffsetY === 0 && window.innerHeight > newHeight) ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
-            
-            // Ensure default position is within bounds
-            newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
-            newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
-            if (window.innerHeight <= newHeight + 20) newTop = 10; // If window is almost as tall as viewport, stick to top
-            if (window.innerWidth <= newWidth + 20) newLeft = 10; // If window is almost as wide as viewport, stick to left
-        }
 
         appWindow.style.width = newWidth + 'px';
         appWindow.style.height = newHeight + 'px';
         appWindow.style.left = newLeft + 'px';
         appWindow.style.top = newTop + 'px';
 
-        // Update state with actual applied values
+        // Update state to reflect the applied values
         state.width = newWidth;
         state.height = newHeight;
         state.x = newLeft;
         state.y = newTop;
-        // Do NOT set userManuallySet to false here if it was already true.
-        // It should only be set to false if the initial load or a specific reset triggers it.
+        // The userManuallySet flag should reflect if the user has *ever* manually moved/resized it,
+        // not just if it's currently set to a default. This is why we need to be careful.
+        // If this function is called because of a browser resize, we don't clear the flag.
+        // The flag is cleared during `loadData` only if the saved state was invalid or missing for size/pos.
     }
 
 
     function handleAppWindowResize() {
-        // This function is observed for xpMainWindow. When its size changes (even from maximize/restore),
-        // we recalculate the controls bar layout.
         if (DOM.xpMainWindow.classList.contains('minimized') || DOM.xpMainWindow.style.display === 'none') return;
         checkControlsBarLayout();
         checkToggleDayView(); 
@@ -2723,11 +2722,12 @@
         DOM.confirmFinalTrackRemoveBtn.addEventListener('click', executeTrackDeletion);
 
         window.addEventListener('resize', () => {
+            // When browser resizes, recalculate positions/sizes based on existing state or defaults
             setWindowDefaults('xpMainWindow', true);
             setWindowDefaults('textEditorWindow', true);
             setWindowDefaults('playJockeyWindow', true);
             setWindowDefaults('geminiChatWindow', true);
-            saveData();
+            saveData(); // Save new positions/sizes after resize
         });
 
         document.addEventListener('click', (e) => { 
@@ -2747,20 +2747,31 @@
         const state = appData.windowStates[windowId]; 
         if (!state) { console.error(`State missing for ${windowId} in minimizeWindow`); return; }
 
-        // Capture current dimensions/position before minimizing IF not already maximized
-        if (!appWindow.classList.contains('true-maximized')) {
+        state.minimized = true;
+
+        // Store current non-maximized size/position before minimizing
+        if (appWindow.classList.contains('true-maximized')) {
+            state.wasMaximizedBeforeMinimize = true;
+            // If it was maximized, lastNormalStates should already hold its pre-maximized state
+            if (lastNormalStates[windowId]) {
+                state.width = parseInt(lastNormalStates[windowId].width);
+                state.height = parseInt(lastNormalStates[windowId].height);
+                state.x = parseInt(lastNormalStates[windowId].left);
+                state.y = parseInt(lastNormalStates[windowId].top);
+            } else {
+                console.warn(`lastNormalStates missing for ${windowId} during minimize from maximized. Using current maximized dimensions.`);
+                state.width = appWindow.offsetWidth;
+                state.height = appWindow.offsetHeight;
+                state.x = appWindow.offsetLeft;
+                state.y = appWindow.offsetTop;
+            }
+        } else {
+            state.wasMaximizedBeforeMinimize = false;
             state.width = appWindow.offsetWidth;
             state.height = appWindow.offsetHeight;
             state.x = appWindow.offsetLeft;
             state.y = appWindow.offsetTop;
-            state.userManuallySet = true; // Mark as manually set if minimized from a normal state
-        } else {
-            // If it was maximized, we rely on lastNormalStates for restoration
-            state.wasMaximizedBeforeMinimize = true;
-            // The width/height/x/y will be taken from lastNormalStates during restoration
         }
-        
-        state.minimized = true;
         appWindow.classList.remove('true-maximized');
         appWindow.classList.add('minimized');
 
@@ -2776,87 +2787,75 @@
         if (!state) { console.error(`State missing for ${windowId} in maximizeWindow`); return; }
 
         const isMinimized = appWindow.classList.contains('minimized');
-        const isCurrentlyMaximized = appWindow.classList.contains('true-maximized');
-
-        if (!isMinimized && !isCurrentlyMaximized) { 
-            // If not minimized and not maximized, it's in a 'normal' state. Store its current dimensions.
-            lastNormalStates[windowId] = { 
-                width: appWindow.offsetWidth + 'px',
-                height: appWindow.offsetHeight + 'px',
-                top: appWindow.offsetTop + 'px',
-                left: appWindow.offsetLeft + 'px'
-            };
-            state.userManuallySet = true; // Mark as manually set as user initiated a state change
-        }
+        let currentLastNormal = lastNormalStates[windowId] || {};
 
         if (isMinimized) { 
             appWindow.classList.remove('minimized');
             state.minimized = false;
-            const wasMaximizedBeforeMinimize = state.wasMaximizedBeforeMinimize;
+            const wasMaximized = state.wasMaximizedBeforeMinimize;
             delete state.wasMaximizedBeforeMinimize; 
 
-            if (wasMaximizedBeforeMinimize) { 
-                // Restore to maximized state
+            if (wasMaximized) { 
+                // Restore to maximized state if it was maximized before minimizing
                 appWindow.style.width = '100vw';
                 appWindow.style.height = '100vh';
                 appWindow.style.top = '0px';
                 appWindow.style.left = '0px';
                 appWindow.classList.add('true-maximized');
                 state.maximized = true;
-                state.userManuallySet = false; // Maximized state is not "userManuallySet" for dimension purposes
             } else { 
-                // Restore to last normal state (from before it was minimized)
+                // Restore from minimized to its *normal* (pre-minimized) state
                 let minW, minH;
                 if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT;}
                 else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT;}
                 else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
                 else if (windowId === 'geminiChatWindow') { minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT;}
 
-                // Use stored state dimensions, or fallback to defaults if not available
-                const restoreWidth = Math.max(minW, state.width || (parseInt(lastNormalStates[windowId]?.width) || 0));
-                const restoreHeight = Math.max(minH, state.height || (parseInt(lastNormalStates[windowId]?.height) || 0));
-                const restoreX = state.x != null ? state.x : (parseInt(lastNormalStates[windowId]?.left) || 0);
-                const restoreY = state.y != null ? state.y : (parseInt(lastNormalStates[windowId]?.top) || 0);
 
+                // Use the stored normal dimensions, or fallback to sensible defaults
+                const restoredWidth = Math.max(minW, state.width || (currentLastNormal.width ? parseInt(currentLastNormal.width) : (defaultAppData.windowStates[windowId].width || minW)));
+                const restoredHeight = Math.max(minH, state.height || (currentLastNormal.height ? parseInt(currentLastNormal.height) : (defaultAppData.windowStates[windowId].height || minH)));
+                const restoredX = state.x != null ? state.x : (currentLastNormal.left ? parseInt(currentLastNormal.left) : (defaultAppData.windowStates[windowId].x || 0));
+                const restoredY = state.y != null ? state.y : (currentLastNormal.top ? parseInt(currentLastNormal.top) : (defaultAppData.windowStates[windowId].y || 0));
 
-                appWindow.style.width = restoreWidth + 'px';
-                appWindow.style.height = restoreHeight + 'px';
-                appWindow.style.left = restoreX + 'px';
-                appWindow.style.top = restoreY + 'px';
-
-                state.width = restoreWidth;
-                state.height = restoreHeight;
-                state.x = restoreX;
-                state.y = restoreY;
-
+                appWindow.style.width = restoredWidth + 'px';
+                appWindow.style.height = restoredHeight + 'px';
+                appWindow.style.left = restoredX + 'px';
+                appWindow.style.top = restoredY + 'px';
+                
+                state.width = restoredWidth;
+                state.height = restoredHeight;
+                state.x = restoredX;
+                state.y = restoredY;
                 state.maximized = false;
-                state.userManuallySet = true; // Still considered manually set as it's a specific user-chosen size/position
             }
-        } else if (isCurrentlyMaximized) { 
-            // Restore from maximized to normal state
-            if (lastNormalStates[windowId]) {
-                appWindow.style.width = lastNormalStates[windowId].width;
-                appWindow.style.height = lastNormalStates[windowId].height;
-                appWindow.style.top = lastNormalStates[windowId].top;
-                appWindow.style.left = lastNormalStates[windowId].left;
-                state.width = parseInt(lastNormalStates[windowId].width);
-                state.height = parseInt(lastNormalStates[windowId].height);
-                state.x = parseInt(lastNormalStates[windowId].left);
-                state.y = parseInt(lastNormalStates[windowId].top);
+        } else if (appWindow.classList.contains('true-maximized')) { 
+            // Restore from maximized to its previous normal size/position
+            if (currentLastNormal.width && currentLastNormal.height) {
+                appWindow.style.width = currentLastNormal.width;
+                appWindow.style.height = currentLastNormal.height;
+                appWindow.style.top = currentLastNormal.top;
+                appWindow.style.left = currentLastNormal.left;
+                state.width = parseInt(currentLastNormal.width);
+                state.height = parseInt(currentLastNormal.height);
+                state.x = parseInt(currentLastNormal.left);
+                state.y = parseInt(currentLastNormal.top);
             } else {
-                // Fallback to calling setWindowDefaults if no last normal state was captured (e.g., first open)
-                setWindowDefaults(windowId, false); 
+                // If lastNormalStates is somehow missing, set to defaults but also mark as user-set
+                console.warn(`lastNormalStates missing for ${windowId} when restoring from maximized. Setting to default normal state.`);
+                setWindowDefaults(windowId, false); // This will re-evaluate and apply defaults
+                state.userManuallySet = true; // Mark as user-set if fallback to default occurs here
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
-            state.userManuallySet = true; // User explicitly restored down, so it's a manual state
         } else { 
-            // Maximize from a normal state
+            // Maximize from normal state
+            // Save current normal state BEFORE maximizing
             lastNormalStates[windowId] = { 
-                width: appWindow.offsetWidth + 'px',
-                height: appWindow.offsetHeight + 'px',
-                top: appWindow.offsetTop + 'px',
-                left: appWindow.offsetLeft + 'px'
+                width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
+                height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
+                top: appWindow.style.top || (appWindow.offsetTop + 'px'),
+                left: appWindow.style.left || (appWindow.offsetLeft + 'px')
             };
 
             appWindow.style.width = '100vw';
@@ -2865,12 +2864,11 @@
             appWindow.style.left = '0px';
             appWindow.classList.add('true-maximized');
             state.maximized = true;
-            state.userManuallySet = false; // Maximized state is not "userManuallySet" for dimension purposes
+            state.userManuallySet = false; // Maximized state is not considered "user-manually set" in the same way for restore
         }
 
         updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
-        // Only trigger layout check for main window if it's not minimized
         if (windowId === 'xpMainWindow' && !isMinimized) handleAppWindowResize(); 
     }
 
@@ -2914,20 +2912,6 @@
         }
     }
 
-    function updateViewControls() {
-        if (appData.viewMode === 'week') {
-            DOM.toggleViewBtn.textContent = 'Day View';
-            DOM.prevWeekBtn.textContent = '< Prev Week';
-            DOM.nextWeekBtn.textContent = 'Next Week >';
-            DOM.thisWeekBtn.textContent = 'This Week';
-        } else { 
-            DOM.toggleViewBtn.textContent = 'Week View';
-            DOM.prevWeekBtn.textContent = '< Prev Day';
-            DOM.nextWeekBtn.textContent = 'Next Day >';
-            DOM.thisWeekBtn.textContent = 'Today';
-        }
-    }
-
     function saveWindowState(windowId) {
         const win = getById(windowId);
         if (!win) return;
@@ -2937,42 +2921,30 @@
             console.warn(`Window state for ${windowId} was missing during saveWindowState. Re-initializing.`);
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
-            state.hiddenByUser = (win.style.display === 'none');
-            state.minimized = win.classList.contains('minimized');
-            state.maximized = win.classList.contains('true-maximized');
-            state.userManuallySet = false; 
         }
 
+        state.hiddenByUser = (win.style.display === 'none');
         state.minimized = win.classList.contains('minimized');
         state.maximized = win.classList.contains('true-maximized');
         state.zIndex = parseInt(win.style.zIndex) || highestZIndex; 
-        
-        // Only save position/size if not minimized and not maximized
-        // Also, only update these if the user *manually* resized/moved it OR if it's the first time
-        // (to ensure defaults are saved if no interaction yet).
+
+        // Only save x, y, width, height if not minimized or maximized
         if (!state.minimized && !state.maximized) {
             state.x = win.offsetLeft;
             state.y = win.offsetTop;
             state.width = win.offsetWidth;
             state.height = win.offsetHeight;
-            // userManuallySet remains true if user drag/resized it, otherwise it could be false initially
-            // if we just loaded defaults.
+            state.userManuallySet = true; // Mark as user-set if it's in a normal state
         } else if (state.maximized) {
-            // When maximized, we store the *last normal* state in lastNormalStates, not in appData.windowStates
-            // So, appData.windowStates for maximized windows should not override width/height/x/y.
-            // If it was maximized, we want to remember it *was* maximized for next load.
-            state.width = undefined; // Clear these for maximized state in saved data
-            state.height = undefined;
-            state.x = undefined;
-            state.y = undefined;
-            state.userManuallySet = false; // Maximized state dimensions are not user-defined
-        } else if (state.minimized && state.wasMaximizedBeforeMinimize) {
-             // If minimized from maximized, we rely on lastNormalStates. Don't save current dimensions.
-            state.width = undefined; 
-            state.height = undefined;
-            state.x = undefined;
-            state.y = undefined;
-            state.userManuallySet = false;
+            // For a maximized window, we keep the last normal state in `lastNormalStates`
+            // and the `userManuallySet` flag should reflect if it was *ever* user-set in its normal state.
+            // If lastNormalStates[windowId] exists and has dimensions, we assume it was user-set.
+            state.userManuallySet = !!(lastNormalStates[windowId]?.width && lastNormalStates[windowId]?.height);
+        } else { // Minimized
+            // When minimized, its x, y, width, height properties in state reflect its pre-minimized normal state.
+            // So its userManuallySet flag should reflect whether *that* normal state was user-set.
+            // We preserve state.userManuallySet as it was when it entered minimization.
+            // This ensures if a window was manually resized and then minimized, it restores to that manual size.
         }
 
         saveData();
@@ -2987,17 +2959,14 @@
         }
 
         let state = appData.windowStates[windowId];
-        const defaultStateTemplate = (defaultAppData.windowStates && defaultAppData.windowStates[windowId]) || {
-            x: null, y: null, width: null, height: null,
-            maximized: false, minimized: false, zIndex: highestZIndex + 1, userManuallySet: false,
-            hiddenByUser: true 
-        };
+        const defaultStateTemplate = defaultAppData.windowStates[windowId];
 
+        // Ensure state exists, and fill in any missing properties from the default template
         if (!state) {
             appData.windowStates[windowId] = { ...defaultStateTemplate };
             state = appData.windowStates[windowId];
         } else {
-            // Merge loaded state with defaults to ensure all properties exist
+            // Merge existing state with default template, prioritizing existing for defined properties
             state = {
                 ...defaultStateTemplate, 
                 ...state,                 
@@ -3005,12 +2974,12 @@
                 maximized: state.maximized === undefined ? defaultStateTemplate.maximized : state.maximized,
                 hiddenByUser: state.hiddenByUser === undefined ? defaultStateTemplate.hiddenByUser : state.hiddenByUser,
                 userManuallySet: state.userManuallySet === undefined ? defaultStateTemplate.userManuallySet : state.userManuallySet,
-                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex,
-                wasMaximizedBeforeMinimize: state.wasMaximizedBeforeMinimize === undefined ? false : state.wasMaximizedBeforeMinimize
+                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex
             };
             appData.windowStates[windowId] = state; 
         }
 
+        // Apply visibility
         if (state.hiddenByUser) {
             win.style.display = 'none';
         } else {
@@ -3018,16 +2987,19 @@
         }
         const isNowVisible = win.style.display === 'flex';
 
+
+        // Apply zIndex
         let loadedZ = state.zIndex; 
-        if (loadedZ <= 5 && windowId !== 'desktop-icon') loadedZ = highestZIndex + 1; // Ensure windows are on top of icons
+        if (loadedZ <= 5) loadedZ = highestZIndex + 1; // Ensure windows are above icons
         win.style.zIndex = loadedZ;
         state.zIndex = loadedZ;
         highestZIndex = Math.max(highestZIndex, loadedZ);
 
+
+        // Apply size and position based on state
         if (state.minimized) {
             win.classList.add('minimized');
             win.classList.remove('true-maximized');
-            // Dimensions are not applied when minimized
         } else if (state.maximized) {
             win.classList.add('true-maximized');
             win.classList.remove('minimized');
@@ -3036,69 +3008,59 @@
             win.style.top = '0px';
             win.style.left = '0px';
 
-            // When restoring a maximized window, its 'normal' state needs to be known for 'restore down'
-            // We need to capture the dimensions that were *before* it was maximized or use defaults.
-            let minW, minH, defaultNormalWidth, defaultNormalHeight, defaultX, defaultY;
-            if (windowId === 'xpMainWindow') { defaultNormalWidth = 905; defaultNormalHeight = 705; minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT; defaultX = (window.innerWidth - defaultNormalWidth)/2; defaultY = 20;}
-            else if (windowId === 'textEditorWindow') { defaultNormalWidth = 450; defaultNormalHeight = 705; minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
-            else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
-            else if (windowId === 'geminiChatWindow') { defaultNormalWidth = 500; defaultNormalHeight = 400; minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT; defaultX = 150; defaultY = 150;}
+            // Store the normal state dimensions, either from saved state or default template
+            let minW, minH;
+            if (windowId === 'xpMainWindow') { minW = minTrackerAppWidth; minH = MIN_TRACKER_APP_HEIGHT;}
+            else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT;}
+            else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
+            else if (windowId === 'geminiChatWindow') { minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT;}
 
-            // Restore width/height/x/y from saved state for the 'normal' dimensions, or use calculated defaults
-            const normalWidth = state.width ? Math.max(minW, state.width) : defaultNormalWidth;
-            const normalHeight = state.height ? Math.max(minH, state.height) : defaultNormalHeight;
-            const normalX = state.x != null ? state.x : defaultX;
-            const normalY = state.y != null ? state.y : defaultY;
-
+            // Ensure lastNormalStates is correctly set if loaded as maximized
             lastNormalStates[windowId] = { 
-                width: normalWidth + 'px',
-                height: normalHeight + 'px',
-                top: normalY + 'px',
-                left: normalX + 'px'
+                width: (state.width && state.width > 0 ? Math.max(minW, state.width) : (defaultStateTemplate.width || minW)) + 'px',
+                height: (state.height && state.height > 0 ? Math.max(minH, state.height) : (defaultStateTemplate.height || minH)) + 'px',
+                top: (state.y != null ? state.y : (defaultStateTemplate.y || 0)) + 'px',
+                left: (state.x != null ? state.x : (defaultStateTemplate.x || 0)) + 'px'
             };
-        } else { 
-            // Window is neither minimized nor maximized, restore its last normal size/position
+        } else { // Normal (neither minimized nor maximized)
             win.classList.remove('minimized');
             win.classList.remove('true-maximized');
 
-            // Apply saved dimensions/position if they exist and were manually set
-            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
+            // If user explicitly set position/size, or if it's coming from a minimized state with user set flag
+            // Ensure sizes are valid (not 0) before applying directly
+            if (state.userManuallySet && state.width > 0 && state.height > 0 && state.x != null && state.y != null) {
                 let currentMinWidth, currentMinHeight;
                 if (windowId === 'xpMainWindow') { currentMinWidth = minTrackerAppWidth; currentMinHeight = MIN_TRACKER_APP_HEIGHT; }
                 else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; }
                 else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; }
                 else if (windowId === 'geminiChatWindow') { currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT; }
-                else { currentMinWidth = 100; currentMinHeight = 100; } // Fallback for unknown windows
+                else { currentMinWidth = 100; currentMinHeight = 100; } // Fallback for other windows
 
                 win.style.left = state.x + 'px';
                 win.style.top = state.y + 'px';
                 win.style.width = Math.max(currentMinWidth, state.width) + 'px';
                 win.style.height = Math.max(currentMinHeight, state.height) + 'px';
             } else {
-                // If not manually set, or values are missing, apply defaults and mark as not manually set.
-                if (isNowVisible) { // Only set defaults if window is actually visible upon load
-                     setWindowDefaults(windowId, false); 
-                     // When setWindowDefaults runs, it updates the state. So no need to explicitly set userManuallySet=false here,
-                     // it's handled by setWindowDefaults if it determines it's using defaults.
+                // If not user-set, or invalid saved data, apply default values (setWindowDefaults handles this)
+                if (isNowVisible) { // Only apply defaults if it's meant to be visible
+                    setWindowDefaults(windowId, false); 
+                    // Important: setWindowDefaults already updates the state with the applied values
+                    // and sets userManuallySet to false.
                 }
             }
-
-            // Ensure lastNormalStates is populated for current window even if it's not maximized initially
-            if (!lastNormalStates[windowId]) {
-                 lastNormalStates[windowId] = {
-                    width: win.offsetWidth + 'px',
-                    height: win.offsetHeight + 'px',
-                    top: win.offsetTop + 'px',
-                    left: win.offsetLeft + 'px'
-                 };
-            }
+            // If the window is restored to normal state, update lastNormalStates
+            lastNormalStates[windowId] = {
+                width: win.offsetWidth + 'px',
+                height: win.offsetHeight + 'px',
+                top: win.offsetTop + 'px',
+                left: win.offsetLeft + 'px'
+            };
         }
         
         if (isNowVisible && windowId === 'geminiChatWindow') {
             renderGeminiChatHistory(); 
         }
         updateMinMaxButtonStates(windowId);
-        saveData(); // Save state after restoration to ensure consistency
     }
 
 
@@ -3117,14 +3079,16 @@
         const storedData = localStorage.getItem(STORAGE_KEY);
         const defaultPlaylistId = 'playlist_default_0';
 
+        // Define the initial default application data structure
+        // This is the source of truth for fresh starts or missing data
         defaultAppData = {
             viewMode: 'week',
             selectedDayIndex: 0,
             windowStates: {
-                xpMainWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false, wasMaximizedBeforeMinimize: false },
-                textEditorWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false, wasMaximizedBeforeMinimize: false },
-                playJockeyWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false },
-                geminiChatWindow: { x: null, y: null, width: null, height: null, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false }
+                xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false },
+                textEditorWindow: { x: 50, y: 50, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
+                playJockeyWindow: { x: 100, y: 100, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
+                geminiChatWindow: { x: 150, y: 150, width: 500, height: 400, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true }
             },
             iconPositions: {
                 trackerIcon: { x: 0, y: 0 },
@@ -3151,16 +3115,29 @@
         if (storedData) {
             try {
                 const loadedData = JSON.parse(storedData);
+                
+                // Deep merge for windowStates to preserve individual flags like userManuallySet
+                const mergedWindowStates = {};
+                for (const winId in defaultAppData.windowStates) {
+                    mergedWindowStates[winId] = { 
+                        ...defaultAppData.windowStates[winId], // Start with defaults
+                        ...(loadedData.windowStates ? loadedData.windowStates[winId] : {}) // Overlay with loaded data for that window
+                    };
+                    // Ensure that if x, y, width, height were NOT saved, userManuallySet is reset to false
+                    // allowing setWindowDefaults to apply initial sensible positions
+                    if (mergedWindowStates[winId].x === undefined || mergedWindowStates[winId].y === undefined ||
+                        mergedWindowStates[winId].width === undefined || mergedWindowStates[winId].height === undefined ||
+                        mergedWindowStates[winId].width <= 0 || mergedWindowStates[winId].height <= 0) {
+                        mergedWindowStates[winId].userManuallySet = false;
+                    }
+                }
+
                 appData = {
-                    ...defaultAppData, 
-                    ...loadedData,     
-                    windowStates: { 
-                        xpMainWindow: { ...defaultAppData.windowStates.xpMainWindow, ...(loadedData.windowStates ? loadedData.windowStates.xpMainWindow : {}) },
-                        textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(loadedData.windowStates ? loadedData.windowStates.textEditorWindow : {}) },
-                        playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) },
-                        geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(loadedData.windowStates ? loadedData.windowStates.geminiChatWindow : {}) }
-                    },
-                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}), geminiChatIcon: (loadedData.iconPositions && loadedData.iconPositions.geminiChatIcon) ? loadedData.iconPositions.geminiChatIcon : defaultAppData.iconPositions.geminiChatIcon },
+                    ...defaultAppData, // Start with all default values
+                    ...loadedData,     // Overlay with top-level loaded data
+                    windowStates: mergedWindowStates, // Use the carefully merged windowStates
+                    // Ensure specific nested objects/arrays are handled
+                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}) },
                     playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
                             ...pl, 
@@ -3184,6 +3161,7 @@
                     geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : []
                 };
                 
+                // Post-load consistency checks
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
                      if (appData.playJockeyPlaylists.length === 0) { 
@@ -3207,6 +3185,29 @@
             }
         } else {
              appData = JSON.parse(JSON.stringify(defaultAppData)); 
+        }
+
+        // Initialize lastNormalStates based on loaded/default appData.windowStates for normal state
+        // This is crucial for windows that might start as minimized or hidden but have a "normal" state saved
+        for (const winId in appData.windowStates) {
+            const state = appData.windowStates[winId];
+            if (!state.minimized && !state.maximized) { // If it's in a normal state after load
+                lastNormalStates[winId] = {
+                    width: state.width + 'px',
+                    height: state.height + 'px',
+                    top: state.y + 'px',
+                    left: state.x + 'px'
+                };
+            } else if (state.maximized) {
+                // If it was maximized, its normal state is implicitly the state.x/y/width/height if they were saved,
+                // or the default normal size/position if not user-set.
+                lastNormalStates[winId] = {
+                    width: (state.width && state.width > 0 ? state.width : defaultAppData.windowStates[winId].width) + 'px',
+                    height: (state.height && state.height > 0 ? state.height : defaultAppData.windowStates[winId].height) + 'px',
+                    top: (state.y != null ? state.y : defaultAppData.windowStates[winId].y) + 'px',
+                    left: (state.x != null ? state.x : defaultAppData.windowStates[winId].x) + 'px'
+                };
+            }
         }
     }
 
@@ -3316,15 +3317,14 @@
         }
 
         if (!wasMaximized && !wasMinimized) {
-            // Apply new min width if current is smaller, and update state to reflect
-            if (appWindow.offsetWidth < minTrackerAppWidth) {
+            let currentWidth = appWindow.offsetWidth;
+            if (currentWidth < minTrackerAppWidth) {
                 appWindow.style.width = minTrackerAppWidth + 'px';
                 if(state) {
                     state.width = minTrackerAppWidth; 
-                    state.userManuallySet = true; // Mark as manually set as this is a specific adjustment by code due to mode change
+                    state.userManuallySet = false; 
                 }
             } else if (state && !state.userManuallySet) { 
-                 // If not manually set, let setWindowDefaults try to reposition/resize relative to screen size
                  setWindowDefaults('xpMainWindow', false); 
             }
         }
