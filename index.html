@@ -2008,6 +2008,8 @@
 
 
     function getTextEditorHTMLContent() {
+        // This function generates the HTML content for the Jotter iframe.
+        // It includes the menu bar, editor area, and their respective styles and scripts.
         return `
 <html lang="en">
 <head>
@@ -2068,11 +2070,15 @@
             color: inherit;
             display: flex;
             align-items: center;
+            min-height: 22px; 
+            box-sizing: border-box; 
         }
-        .jotter-dropdown-item:hover:not(.disabled) {
+        /* MODIFICATION START: Adjust hover effect for dropdown items */
+        .jotter-dropdown-item:not(.font-size-control-container):hover:not(.disabled) {
             background-color: #005CFE;
             color: white;
         }
+        /* MODIFICATION END */
         .jotter-dropdown-item.disabled {
             color: #7F7F7F !important;
             background-color: #ECE9D8 !important;
@@ -2126,6 +2132,12 @@
         .font-size-btn:active {
             border-style: inset;
         }
+        /* MODIFICATION START: Add hover effect for font size buttons */
+        .font-size-btn:hover {
+            background-color: #005CFE;
+            color: white;
+        }
+        /* MODIFICATION END */
         .font-size-input {
             width: 30px;
             height: 18px;
@@ -4225,7 +4237,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$${videoId}`, 
+            originalUrl: `https://www.youtube.com/watch?v=$$$$${videoId}`, 
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim() 
@@ -4314,7 +4326,7 @@
                  }
             } else { 
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
