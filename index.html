@@ -283,32 +283,49 @@
             z-index: 1;
         }
 
+        /* --- MODIFICATION START: Centering achievement items --- */
         .achievement-item {
             background-color: #FFF;
             border: 1px solid #DDD;
-            padding: 4px;
+            padding: 8px; /* Adjusted padding for better spacing */
             margin-bottom: 4px;
             font-size: 0.9em;
             border-radius: 3px;
             word-wrap: break-word;
             box-sizing: border-box;
-            position: relative;
-            padding-bottom: 22px;
+            /* position: relative; */ /* Removed: No longer needed for absolute positioning of actions */
+            /* padding-bottom: 22px; */ /* Removed: Spacing handled by flex and margins */
+            display: flex; /* Added: Enable flexbox */
+            flex-direction: column; /* Added: Stack content and actions vertically */
+            align-items: center; /* Added: Center flex items (content and actions) horizontally */
         }
+
+        .achievement-content {
+            width: 100%; /* Added: Allows text-align to work effectively for block content */
+            text-align: center; /* Added: Centers inline content (text) within this div */
+            margin-bottom: 8px; /* Added: Space between content and actions */
+        }
+
         .achievement-content img {
             max-width: 100%;
             height: auto;
-            display: block;
-            margin-top: 0px;
+            display: block; /* Remains block for margin auto centering */
+            margin-left: auto; /* Added: Center the image block */
+            margin-right: auto; /* Added: Center the image block */
+            margin-top: 0px; /* Can be adjusted if more top space for image is needed */
             border-radius: 2px;
         }
+
         .achievement-item-actions {
-            position: absolute;
-            bottom: 3px;
-            right: 3px;
-            display: flex;
-            gap: 3px;
+            /* position: absolute; */ /* Removed */
+            /* bottom: 3px; */ /* Removed */
+            /* right: 3px; */ /* Removed */
+            display: flex; /* Kept: For aligning buttons within the actions container */
+            gap: 3px; /* Kept: For spacing between buttons */
+            /* This block itself will be centered by align-items:center on .achievement-item */
         }
+        /* --- MODIFICATION END --- */
+
         .achievement-add-btn-cell {
             display: block;
             width: 99.5%;
@@ -4156,7 +4173,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$${videoId}`, // Placeholder, actual URL not directly used for playing
+            originalUrl: `https://www.youtube.com/watch?v=$$$${videoId}`, // Placeholder, actual URL not directly used for playing
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim() // Clean up " - Topic" from channel names
@@ -4246,7 +4263,7 @@
             } else { // Fallback if API key isn't available (oEmbed is less reliable for all videos)
                 try {
                     // Note: oEmbed might be blocked by CORS in some environments or not provide full details.
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
