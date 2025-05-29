@@ -2382,6 +2382,12 @@
             dragOffsetX = e.clientX - activeDragWindow.offsetLeft;
             dragOffsetY = e.clientY - activeDragWindow.offsetTop;
             activeDragWindow.classList.add('disable-selection');
+
+            // MODIFICATION: Disable pointer events on Jotter's iframe during title bar drag
+            if (windowId === 'textEditorWindow' && DOM.textEditorFrame) {
+                DOM.textEditorFrame.style.pointerEvents = 'none';
+            }
+
             document.addEventListener('mousemove', doDrag);
             document.addEventListener('mouseup', stopDragOrResize);
             bringToFront(windowElement);
@@ -2397,6 +2403,7 @@
                 resizeInitialWidth = activeResizeWindow.offsetWidth;
                 resizeInitialHeight = activeResizeWindow.offsetHeight;
 
+                // Disable pointer events on Jotter's iframe during resize (already present in original code)
                 if (windowId === 'textEditorWindow' && DOM.textEditorFrame) {
                     DOM.textEditorFrame.style.pointerEvents = 'none';
                 }
@@ -2474,26 +2481,34 @@
         }
     }
 
+    // MODIFICATION: Updated stopDragOrResize to correctly re-enable pointer events for Jotter's iframe
     function stopDragOrResize() {
         let windowToSaveState = null;
+        let operatedWindow = null; // To store the window that was dragged or resized
+
         if (activeDragWindow) {
             activeDragWindow.classList.remove('disable-selection');
             windowToSaveState = activeDragWindow.id;
+            operatedWindow = activeDragWindow; 
+            activeDragWindow = null;
         }
         if (activeResizeWindow) {
             activeResizeWindow.classList.remove('disable-selection');
-            if (activeResizeWindow.id === 'textEditorWindow' && DOM.textEditorFrame) {
-                DOM.textEditorFrame.style.pointerEvents = 'auto';
-            }
-            windowToSaveState = activeResizeWindow.id;
+            // If both were somehow active, windowToSaveState would be overwritten by resize, which is fine.
+            windowToSaveState = activeResizeWindow.id; 
+            operatedWindow = activeResizeWindow; 
+            activeResizeWindow = null;
+        }
+
+        // Centralized reset for textEditorFrame's pointer events
+        if (operatedWindow && operatedWindow.id === 'textEditorWindow' && DOM.textEditorFrame) {
+            DOM.textEditorFrame.style.pointerEvents = 'auto';
         }
 
         if (windowToSaveState) {
             saveWindowState(windowToSaveState);
         }
 
-        activeDragWindow = null;
-        activeResizeWindow = null;
         document.removeEventListener('mousemove', doDrag);
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopDragOrResize);
@@ -4259,7 +4274,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$${videoId}`, 
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$$${videoId}`, 
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim() 
@@ -4348,7 +4363,7 @@
                  }
             } else { 
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
