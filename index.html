@@ -286,38 +286,38 @@
         .achievement-item {
             background-color: #FFF;
             border: 1px solid #DDD;
-            padding: 8px; 
+            padding: 8px;
             margin-bottom: 4px;
             font-size: 0.9em;
             border-radius: 3px;
             word-wrap: break-word;
             box-sizing: border-box;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .achievement-content {
-            width: 100%; 
-            text-align: center; 
-            margin-bottom: 8px; 
+            width: 100%;
+            text-align: center;
+            margin-bottom: 8px;
         }
 
         .achievement-content img {
             max-width: 100%;
             height: auto;
-            display: block; 
-            margin-left: auto; 
-            margin-right: auto; 
-            margin-top: 0px; 
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 0px;
             border-radius: 2px;
         }
 
         .achievement-item-actions {
-            display: flex; 
-            gap: 3px; 
+            display: flex;
+            gap: 3px;
         }
-        
+
         .achievement-add-btn-cell {
             display: block;
             width: 99.5%;
@@ -835,7 +835,7 @@
             background-color: #FFFFFF;
             padding: 8px;
             margin: 5px;
-            margin-top: 0; /* Adjusted */
+            margin-top: 0;
             overflow-y: auto;
             font-family: "Tahoma", "Geneva", sans-serif;
             font-size: 11px;
@@ -859,7 +859,6 @@
             font-size: 10px;
         }
         .gemini-chat-message .message-content {
-           /* Individual content styling if needed */
         }
          .gemini-chat-message .message-timestamp {
             font-size: 9px;
@@ -928,6 +927,115 @@
             box-sizing: border-box;
         }
 
+        /* Pixel App Specific Styles */
+        #pixelWindow .window-body {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+        .pixel-menu-bar {
+            background-color: #ECE9D8;
+            padding: 2px 3px;
+            border-bottom: 1px solid #ACA899;
+            display: flex;
+            flex-shrink: 0;
+            user-select: none;
+            color: #000000;
+        }
+        .pixel-menu-item {
+            padding: 3px 8px;
+            cursor: default;
+            position: relative;
+            color: inherit;
+        }
+        .pixel-menu-item:hover {
+            background-color: #005CFE;
+            color: white;
+        }
+        .pixel-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #ECE9D8;
+            border: 1px solid #000;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            z-index: 100;
+            padding: 2px 0;
+            color: #000000;
+        }
+        .pixel-dropdown-item {
+            padding: 4px 12px 4px 25px;
+            cursor: default;
+            white-space: nowrap;
+            color: inherit;
+        }
+        .pixel-dropdown-item:hover:not(.disabled) {
+            background-color: #005CFE;
+            color: white;
+        }
+        .pixel-menu-item:focus-within .pixel-dropdown-content,
+        .pixel-menu-item.open .pixel-dropdown-content {
+            display: block;
+        }
+
+        .pixel-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            border-bottom: 1px solid #ACA899;
+            background-color: #F0F0F0;
+            flex-shrink: 0;
+            gap: 5px;
+        }
+        .pixel-tool-button {
+            font-family: "Tahoma", "Geneva", sans-serif;
+            font-size: 10px;
+            border: 1px outset #7F7F7F;
+            background-color: #ECE9D8;
+            min-width: 28px;
+            height: 28px;
+            padding: 0;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pixel-tool-button.active {
+            border-style: inset;
+            background-color: #D4D0C8;
+        }
+        .pixel-tool-button:active:not(.active) {
+            border-style: inset;
+        }
+        .pixel-color-picker {
+            width: 30px;
+            height: 28px;
+            border: 1px solid #7F7F7F;
+            padding: 0;
+            background-color: #FFFFFF;
+            cursor: pointer;
+        }
+        .pixel-canvas-container {
+            flex-grow: 1;
+            background-color: #808080; /* Checkerboard or similar could be complex, using grey for now */
+            padding: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; /* If canvas is larger than container */
+        }
+        #pixelCanvas {
+            background-color: white;
+            border: 1px solid #000;
+            cursor: default; /* Will be overridden by tool */
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Ensure canvas scales down if needed, though direct sizing is better */
+        }
+
+
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -952,6 +1060,11 @@
         <div class="icon-image">✨</div>
         <div class="icon-label">Gemini Chat</div>
     </div>
+    <div class="desktop-icon" id="pixelIcon" data-window-id="pixelWindow">
+        <div class="icon-image">🎨</div>
+        <div class="icon-label">Pixel</div>
+    </div>
+
 
     <div class="xp-window" id="xpMainWindow">
         <div class="title-bar" id="xpMainWindowTitleBar">
@@ -1063,6 +1176,38 @@
         </div>
         <div class="resize-handle" id="geminiChatResizeHandle"></div>
     </div>
+
+    <div class="xp-window" id="pixelWindow">
+        <div class="title-bar" id="pixelWindowTitleBar">
+            <span class="title-bar-text">Pixel</span>
+            <div class="title-bar-controls">
+                <button id="pixelMinimizeBtn" title="Minimize">0</button>
+                <button id="pixelMaximizeBtn" title="Maximize">1</button>
+                <button title="Close" id="pixelCloseBtn">r</button>
+            </div>
+        </div>
+        <div class="window-body" id="pixelWindowBody">
+            <div class="pixel-menu-bar" id="pixelMenuBar">
+                <div class="pixel-menu-item" tabindex="0">
+                    File
+                    <div class="pixel-dropdown-content">
+                        <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
+                    </div>
+                </div>
+            </div>
+            <div class="pixel-toolbar">
+                <button class="pixel-tool-button active" id="pixelPencilTool" title="Pencil">✏️</button>
+                <button class="pixel-tool-button" id="pixelEraserTool" title="Eraser">🧼</button>
+                <button class="pixel-tool-button" id="pixelBucketTool" title="Paint Bucket">🗑️</button>
+                <input type="color" class="pixel-color-picker" id="pixelColorPicker" value="#000000" title="Color Picker">
+            </div>
+            <div class="pixel-canvas-container">
+                <canvas id="pixelCanvas"></canvas>
+            </div>
+        </div>
+        <div class="resize-handle" id="pixelResizeHandle"></div>
+    </div>
+
 
     <div id="newAreaModal" class="modal">
         <div class="modal-content">
@@ -1339,14 +1484,13 @@
 <script>
     "use strict";
 
-    // These will be populated from Firebase Remote Config
     let YOUTUBE_API_KEY = "";
     let GEMINI_API_KEY = "";
 
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.10.0'; // Consider incrementing version if schema changes significantly
+    const STORAGE_KEY = 'lifeXpData_v1.11.0';
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25;
 
@@ -1358,6 +1502,8 @@
     const MIN_PLAYJOCKEY_HEIGHT = 250;
     const MIN_GEMINI_CHAT_WIDTH = 375;
     const MIN_GEMINI_CHAT_HEIGHT = 250;
+    const MIN_PIXEL_WIDTH = 400;
+    const MIN_PIXEL_HEIGHT = 350;
 
 
     const STANDARD_COLORS = [
@@ -1393,7 +1539,6 @@
         CONFIRM_CLEAR_CHAT: 'confirmClearChatModal'
     };
 
-    // Firebase configuration (Provided by user)
     const firebaseConfig = {
       apiKey: "AIzaSyCVWUnnXiOvKRqbvngafdZC7DedEY-7vpg",
       authDomain: "lifexpapp-f5578.firebaseapp.com",
@@ -1403,18 +1548,15 @@
       appId: "1:194098013746:web:720ba296ee9e40dee37e2b"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const remoteConfig = firebase.remoteConfig();
 
-    // Set default values for Remote Config
     remoteConfig.defaultConfig = {
       'youtube_api_key': '',
       'gemini_api_key': ''
     };
 
-    // Set cache expiration
-    remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+    remoteConfig.settings.minimumFetchIntervalMillis = 3600000;
 
 
     const getById = (id) => document.getElementById(id);
@@ -1491,9 +1633,27 @@
         geminiChatClearHistoryBtn: getById('geminiChatClearHistoryBtn'),
         geminiChatIcon: getById('geminiChatIcon'),
 
+        pixelWindow: getById('pixelWindow'),
+        pixelWindowTitleBar: getById('pixelWindowTitleBar'),
+        pixelWindowBody: getById('pixelWindowBody'),
+        pixelResizeHandle: getById('pixelResizeHandle'),
+        pixelMinimizeBtn: getById('pixelMinimizeBtn'),
+        pixelMaximizeBtn: getById('pixelMaximizeBtn'),
+        pixelCloseBtn: getById('pixelCloseBtn'),
+        pixelMenuBar: getById('pixelMenuBar'),
+        pixelFileSave: getById('pixelFileSave'),
+        pixelPencilTool: getById('pixelPencilTool'),
+        pixelEraserTool: getById('pixelEraserTool'),
+        pixelBucketTool: getById('pixelBucketTool'),
+        pixelColorPicker: getById('pixelColorPicker'),
+        pixelCanvas: getById('pixelCanvas'),
+        pixelCanvasContainer: getById('pixelCanvasContainer'),
+
+
         textEditorIcon: getById('textEditorIcon'),
         trackerIcon: getById('trackerIcon'),
         playJockeyIcon: getById('playJockeyIcon'),
+        pixelIcon: getById('pixelIcon'),
 
         newAreaModal: getById(MODAL_IDS.NEW_AREA),
         newAreaNameInput: getById('newAreaName'),
@@ -1563,7 +1723,7 @@
 
     let appData = {
         areas: [],
-        achievements: {}, // Each achievement will now have: { id, timestamp, xp, scheduledDate, xpAwarded, type, content }
+        achievements: {},
         quests: {},
         currentWeekStartDate: null,
         viewMode: 'week',
@@ -1579,7 +1739,13 @@
         playJockeyRandomEnabled: false,
         playJockeyRepeatState: "off",
         playJockeyRandomHistory: [],
-        geminiChatHistory: []
+        geminiChatHistory: [],
+        pixelAppData: {
+            currentColor: '#000000',
+            currentTool: 'pencil',
+            canvasWidth: 600,
+            canvasHeight: 400
+        }
     };
 
     let lastNormalStates = {};
@@ -1599,13 +1765,17 @@
     let isYouTubeApiReady = false;
     let pendingVideoToLoad = null;
 
+    let pixelCtx = null;
+    let pixelIsDrawing = false;
+    let pixelLastX, pixelLastY;
+
 
     function parseYYYYMMDDToLocalDate(dateString) {
-        if (!dateString || typeof dateString !== 'string') return null; // Robustness
+        if (!dateString || typeof dateString !== 'string') return null;
         const parts = dateString.split('-');
-        if (parts.length !== 3) return null; // Robustness
+        if (parts.length !== 3) return null;
         const [year, month, day] = parts.map(Number);
-        if (isNaN(year) || isNaN(month) || isNaN(day)) return null; // Robustness
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
         return new Date(year, month - 1, day);
     }
 
@@ -1629,10 +1799,9 @@
         }
     }
 
-    // --- MODIFICATION START: New function to check and award XP for scheduled achievements ---
     function checkAndAwardScheduledXP() {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to the start of today
+        today.setHours(0, 0, 0, 0);
         let xpWasAwardedThisCheck = false;
 
         for (const achievementsKey in appData.achievements) {
@@ -1640,21 +1809,19 @@
                 const achievementsInCell = appData.achievements[achievementsKey];
                 const keyParts = achievementsKey.split('_');
 
-                if (keyParts.length < 3) { // Basic validation for key structure
+                if (keyParts.length < 3) {
                     console.warn(`Skipping invalid achievementsKey during XP check: ${achievementsKey}`);
                     continue;
                 }
-                // Area name can contain underscores, so join all parts between date and dayIndex
                 const areaName = keyParts.slice(1, keyParts.length - 1).join('_');
 
                 for (const ach of achievementsInCell) {
-                    // Ensure achievement has necessary properties
                     if (ach.xpAwarded === undefined) {
-                        ach.xpAwarded = false; // Default for older achievements
+                        ach.xpAwarded = false;
                     }
                     if (!ach.scheduledDate) {
                         console.warn(`Achievement ${ach.id} in ${areaName} is missing scheduledDate. Cannot process for auto XP.`);
-                        continue; // Skip if no scheduled date
+                        continue;
                     }
 
                     if (!ach.xpAwarded) {
@@ -1672,11 +1839,10 @@
         }
 
         if (xpWasAwardedThisCheck) {
-            renderGrid(); // Re-render grid if any XP was awarded to update UI
-            saveData();   // Save data if changes were made
+            renderGrid();
+            saveData();
         }
     }
-    // --- MODIFICATION END ---
 
 
     function init() {
@@ -1684,10 +1850,9 @@
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons();
+        initPixelApp();
 
-        // --- MODIFICATION: Call checkAndAwardScheduledXP after data is loaded ---
         checkAndAwardScheduledXP();
-        // --- END MODIFICATION ---
 
         if (appData.viewMode === 'week') {
             minTrackerAppWidth = 905;
@@ -1720,11 +1885,15 @@
         initWindowInteractions('geminiChatWindow');
         restoreWindowState('geminiChatWindow');
 
+        initWindowInteractions('pixelWindow');
+        restoreWindowState('pixelWindow');
+
 
         updateMinMaxButtonStates('xpMainWindow');
         updateMinMaxButtonStates('textEditorWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         updateMinMaxButtonStates('geminiChatWindow');
+        updateMinMaxButtonStates('pixelWindow');
 
 
         renderPlayJockeyTabs();
@@ -1751,7 +1920,7 @@
         }
 
         let maxLoadedWindowZ = highestZIndex;
-        ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow', 'geminiChatWindow'].forEach(windowId => {
+        ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow', 'geminiChatWindow', 'pixelWindow'].forEach(windowId => {
             if (appData.windowStates[windowId] && appData.windowStates[windowId].zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(appData.windowStates[windowId].zIndex));
             }
@@ -1773,17 +1942,19 @@
 
         const trackerWindowObserver = new ResizeObserver(handleAppWindowResize);
         trackerWindowObserver.observe(DOM.xpMainWindow);
+        const pixelWindowObserver = new ResizeObserver(handlePixelWindowResize);
+        pixelWindowObserver.observe(DOM.pixelWindow);
 
-        // saveData(); // Rely on individual functions to save data when they make changes.
     }
 
     function initDesktopIcons() {
-        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon];
+        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon];
         const iconData = [
             { id: 'trackerIcon', defaultX: 0, defaultY: 0, element: DOM.trackerIcon },
             { id: 'textEditorIcon', defaultX: 0, defaultY: 100, element: DOM.textEditorIcon },
             { id: 'playJockeyIcon', defaultX: 0, defaultY: 200, element: DOM.playJockeyIcon },
-            { id: 'geminiChatIcon', defaultX: 0, defaultY: 300, element: DOM.geminiChatIcon }
+            { id: 'geminiChatIcon', defaultX: 0, defaultY: 300, element: DOM.geminiChatIcon },
+            { id: 'pixelIcon', defaultX: 0, defaultY: 400, element: DOM.pixelIcon }
         ];
 
         iconData.forEach(data => {
@@ -1856,7 +2027,7 @@
         const iconHeight = draggedIcon.offsetHeight || 100;
 
         const checkCollisionAt = (x, y, currentDraggedIcon) => {
-            const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon].filter(
+            const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon].filter(
                 icon => icon && icon !== currentDraggedIcon && icon.style.left && icon.style.top
             );
 
@@ -1997,6 +2168,9 @@
                     pendingVideoToLoad = null;
                 }
             }
+            if (windowId === 'pixelWindow') {
+                handlePixelWindowResize();
+            }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
             maximizeWindow(windowId);
         }
@@ -2007,310 +2181,75 @@
 
 
     function getTextEditorHTMLContent() {
-        // This function generates the HTML content for the Jotter iframe.
-        // It includes the menu bar, editor area, and their respective styles and scripts.
         return `
 <html lang="en">
 <head>
     <title>Jotter</title>
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        body {
-            font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 11px;
-            background-color: #ECE9D8;
-            color: #000000;
-            display: flex;
-            flex-direction: column;
-        }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        body { font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #ECE9D8; color: #000000; display: flex; flex-direction: column; }
         [contenteditable]:focus { outline: none; }
-
-        .jotter-menu-bar {
-            background-color: #ECE9D8;
-            padding: 2px 3px;
-            border-bottom: 1px solid #ACA899;
-            display: flex;
-            flex-shrink: 0;
-            user-select: none;
-            color: #000000;
-        }
-        .jotter-menu-item {
-            padding: 3px 8px;
-            cursor: default;
-            position: relative;
-            color: inherit;
-        }
-        .jotter-menu-item:hover {
-            background-color: #005CFE;
-            color: white;
-        }
-        .jotter-dropdown-content {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background-color: #ECE9D8;
-            border: 1px solid #000;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-            z-index: 100;
-            padding: 2px 0;
-            color: #000000;
-        }
-        .jotter-dropdown-item {
-            padding: 4px 12px 4px 25px;
-            cursor: default;
-            white-space: nowrap;
-            position: relative;
-            color: inherit;
-            display: flex;
-            align-items: center;
-            min-height: 22px; 
-            box-sizing: border-box; 
-        }
-        /* MODIFICATION START: Adjust hover effect for dropdown items */
-        .jotter-dropdown-item:not(.font-size-control-container):hover:not(.disabled) {
-            background-color: #005CFE;
-            color: white;
-        }
-        /* MODIFICATION END */
-        .jotter-dropdown-item.disabled {
-            color: #7F7F7F !important;
-            background-color: #ECE9D8 !important;
-            cursor: default;
-        }
-        .jotter-menu-item:focus-within .jotter-dropdown-content,
-        .jotter-menu-item.open .jotter-dropdown-content {
-            display: block;
-        }
-        .jotter-menu-item .underline {
-            text-decoration: underline;
-        }
-
-        #editorArea {
-            border: 1px solid #7F7F7F;
-            padding: 5px;
-            background-color: white;
-            overflow-y: auto;
-            font-family: 'Lucida Console', Monaco, monospace;
-            font-size: 14px;
-            line-height: 1.4;
-            color: #000000;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            box-sizing: border-box;
-            margin: 5px;
-            flex-grow: 1;
-        }
-
-        .font-size-control-container {
-            display: flex;
-            align-items: center;
-            padding: 0px 5px 0px 15px !important;
-        }
-        .font-size-control-container span {
-            margin-right: 8px;
-        }
-        .font-size-btn {
-            font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 10px;
-            border: 1px outset #7F7F7F;
-            background-color: #ECE9D8;
-            width: 20px;
-            height: 20px;
-            line-height: 18px;
-            text-align: center;
-            padding: 0;
-            cursor: default;
-            color: black;
-        }
-        .font-size-btn:active {
-            border-style: inset;
-        }
-        /* MODIFICATION START: Add hover effect for font size buttons */
-        .font-size-btn:hover {
-            background-color: #005CFE;
-            color: white;
-        }
-        /* MODIFICATION END */
-        .font-size-input {
-            width: 30px;
-            height: 18px;
-            border: 1px solid #7F7F7F;
-            text-align: center;
-            margin: 0 3px;
-            font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 11px;
-            padding: 1px;
-            box-sizing: border-box;
-        }
+        .jotter-menu-bar { background-color: #ECE9D8; padding: 2px 3px; border-bottom: 1px solid #ACA899; display: flex; flex-shrink: 0; user-select: none; color: #000000; }
+        .jotter-menu-item { padding: 3px 8px; cursor: default; position: relative; color: inherit; }
+        .jotter-menu-item:hover { background-color: #005CFE; color: white; }
+        .jotter-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); z-index: 100; padding: 2px 0; color: #000000; }
+        .jotter-dropdown-item { padding: 4px 12px 4px 25px; cursor: default; white-space: nowrap; position: relative; color: inherit; display: flex; align-items: center; min-height: 22px; box-sizing: border-box; }
+        .jotter-dropdown-item:not(.font-size-control-container):hover:not(.disabled) { background-color: #005CFE; color: white; }
+        .jotter-dropdown-item.disabled { color: #7F7F7F !important; background-color: #ECE9D8 !important; cursor: default; }
+        .jotter-menu-item:focus-within .jotter-dropdown-content, .jotter-menu-item.open .jotter-dropdown-content { display: block; }
+        #editorArea { border: 1px solid #7F7F7F; padding: 5px; background-color: white; overflow-y: auto; font-family: 'Lucida Console', Monaco, monospace; font-size: 14px; line-height: 1.4; color: #000000; white-space: pre-wrap; word-wrap: break-word; box-sizing: border-box; margin: 5px; flex-grow: 1; }
+        .font-size-control-container { display: flex; align-items: center; padding: 0px 5px 0px 15px !important; }
+        .font-size-control-container span { margin-right: 8px; }
+        .font-size-btn { font-family: "Tahoma", "Geneva", sans-serif; font-size: 10px; border: 1px outset #7F7F7F; background-color: #ECE9D8; width: 20px; height: 20px; line-height: 18px; text-align: center; padding: 0; cursor: default; color: black; }
+        .font-size-btn:active { border-style: inset; }
+        .font-size-btn:hover { background-color: #005CFE; color: white; }
+        .font-size-input { width: 30px; height: 18px; border: 1px solid #7F7F7F; text-align: center; margin: 0 3px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; padding: 1px; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="jotter-menu-bar" id="jotterMenuBarInFrame">
-        <div class="jotter-menu-item" tabindex="0">
-            File
-            <div class="jotter-dropdown-content">
-                <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div>
-            </div>
-        </div>
-        <div class="jotter-menu-item" tabindex="0">
-            View
-            <div class="jotter-dropdown-content">
-                <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame">
-                    <span>Font Size:</span>
-                    <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button>
-                    <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72">
-                    <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button>
-                </div>
-            </div>
-        </div>
+        <div class="jotter-menu-item" tabindex="0"> File <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div> </div> </div>
+        <div class="jotter-menu-item" tabindex="0"> View <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame"> <span>Font Size:</span> <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button> <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72"> <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button> </div> </div> </div>
     </div>
-
     <div id="editorArea" contenteditable="true"></div>
-
     <script>
         const editorArea = document.getElementById('editorArea');
         const jotterMenuBar = document.getElementById('jotterMenuBarInFrame');
-        const bodyElement = document.body;
         let activeMenu = null;
-
         const fontDecrementBtn = document.getElementById('fontDecrementBtnInFrame');
         const fontIncrementBtn = document.getElementById('fontIncrementBtnInFrame');
         const fontSizeInput = document.getElementById('fontSizeInputInFrame');
-
         jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
             menuItem.addEventListener('click', (event) => {
                 event.stopPropagation();
                 if (event.target.closest('.font-size-control-container')) {
-                    if(!menuItem.classList.contains('open')) {
-                         if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
-                         menuItem.classList.add('open');
-                         activeMenu = menuItem;
-                    }
-                    return;
+                    if(!menuItem.classList.contains('open')) { if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open'); menuItem.classList.add('open'); activeMenu = menuItem; } return;
                 }
-
-                if (activeMenu && activeMenu !== menuItem) {
-                    activeMenu.classList.remove('open');
-                }
-                menuItem.classList.toggle('open');
-                activeMenu = menuItem.classList.contains('open') ? menuItem : null;
+                if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
+                menuItem.classList.toggle('open'); activeMenu = menuItem.classList.contains('open') ? menuItem : null;
             });
-
-            menuItem.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    if (event.target === menuItem || menuItem.contains(event.target) && !event.target.closest('.jotter-dropdown-content .jotter-menu-item')) {
-                        menuItem.click();
-                    }
-                }
-            });
+            menuItem.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (event.target === menuItem || menuItem.contains(event.target) && !event.target.closest('.jotter-dropdown-content .jotter-menu-item')) menuItem.click(); } });
         });
-
-        window.addEventListener('click', (event) => {
-            if (activeMenu && !activeMenu.contains(event.target) && !event.target.closest('.font-size-control-container')) {
-                activeMenu.classList.remove('open');
-                activeMenu = null;
-            }
-        });
-
-        window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && activeMenu) {
-                activeMenu.classList.remove('open');
-                activeMenu.focus();
-                activeMenu = null;
-            }
-        });
-
-        const fileSaveButton = document.getElementById('fileSaveInFrame');
-        fileSaveButton.addEventListener('click', (event) => {
-             event.stopPropagation();
-            performSave();
-        });
-
+        window.addEventListener('click', (event) => { if (activeMenu && !activeMenu.contains(event.target) && !event.target.closest('.font-size-control-container')) { activeMenu.classList.remove('open'); activeMenu = null; } });
+        window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && activeMenu) { activeMenu.classList.remove('open'); activeMenu.focus(); activeMenu = null; } });
+        document.getElementById('fileSaveInFrame').addEventListener('click', (event) => { event.stopPropagation(); performSave(); });
         function performSave() {
             let filename = prompt("Filename:", "jotter_content.html");
             if (filename) {
-                let htmlContent = \`<!DOCTYPE html>
-<html>
-<head>
-    <title>Saved Content</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }
-    </style>
-</head>
-<body>
-    \${editorArea.innerHTML}
-</body>
-</html>\`;
-                let blob = new Blob([htmlContent], { type: "text/html" });
-                let url = URL.createObjectURL(blob);
-                let downloadLink = document.createElement("a");
-                downloadLink.setAttribute("href", url);
-                downloadLink.setAttribute("download", filename);
-                downloadLink.click();
-                URL.revokeObjectURL(url);
+                let htmlContent = \`<!DOCTYPE html><html><head><title>Saved Content</title><meta charset="UTF-8"><style>body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }</style></head><body>\${editorArea.innerHTML}</body></html>\`;
+                let blob = new Blob([htmlContent], { type: "text/html" }); let url = URL.createObjectURL(blob); let downloadLink = document.createElement("a"); downloadLink.setAttribute("href", url); downloadLink.setAttribute("download", filename); downloadLink.click(); URL.revokeObjectURL(url);
             }
-            if (activeMenu) {
-                 activeMenu.classList.remove('open');
-                 activeMenu = null;
-            }
+            if (activeMenu) { activeMenu.classList.remove('open'); activeMenu = null; }
         }
-
-        editorArea.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
-                e.preventDefault();
-                performSave();
-            }
-        });
-        window.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && (e.key === 's' || e.key === 'S') && !e.target.closest('#editorArea')) {
-                e.preventDefault();
-                performSave();
-            }
-        });
-
-        function applyFontSize(size) {
-            const newSize = Math.max(8, Math.min(72, parseInt(size)));
-            if (!isNaN(newSize)) {
-                editorArea.style.fontSize = newSize + 'px';
-                fontSizeInput.value = newSize;
-            }
-        }
-
-        fontDecrementBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            let currentSize = parseInt(fontSizeInput.value) || 14;
-            applyFontSize(currentSize - 1);
-        });
-
-        fontIncrementBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            let currentSize = parseInt(fontSizeInput.value) || 14;
-            applyFontSize(currentSize + 1);
-        });
-
-        fontSizeInput.addEventListener('change', () => {
-            applyFontSize(fontSizeInput.value);
-        });
-        fontSizeInput.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
-         fontSizeInput.addEventListener('input', () => {
-            let val = parseInt(fontSizeInput.value);
-            if(!isNaN(val) && val >=8 && val <=72){
-                 editorArea.style.fontSize = val + 'px';
-            }
-        });
-
-        applyFontSize(fontSizeInput.value);
-        editorArea.focus();
+        editorArea.addEventListener('keydown', function(e) { if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); performSave(); } });
+        window.addEventListener('keydown', function(e) { if (e.ctrlKey && (e.key === 's' || e.key === 'S') && !e.target.closest('#editorArea')) { e.preventDefault(); performSave(); } });
+        function applyFontSize(size) { const newSize = Math.max(8, Math.min(72, parseInt(size))); if (!isNaN(newSize)) { editorArea.style.fontSize = newSize + 'px'; fontSizeInput.value = newSize; } }
+        fontDecrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize - 1); });
+        fontIncrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize + 1); });
+        fontSizeInput.addEventListener('change', () => { applyFontSize(fontSizeInput.value); });
+        fontSizeInput.addEventListener('click', (event) => { event.stopPropagation(); });
+        fontSizeInput.addEventListener('input', () => { let val = parseInt(fontSizeInput.value); if(!isNaN(val) && val >=8 && val <=72){ editorArea.style.fontSize = val + 'px'; } });
+        applyFontSize(fontSizeInput.value); editorArea.focus();
     <\/script>
 </body>
 </html>`;
@@ -2359,6 +2298,9 @@
         } else if (windowId === 'geminiChatWindow') {
             titleBarElement = DOM.geminiChatWindowTitleBar;
             resizeHandleElement = DOM.geminiChatResizeHandle;
+        } else if (windowId === 'pixelWindow') {
+            titleBarElement = DOM.pixelWindowTitleBar;
+            resizeHandleElement = DOM.pixelResizeHandle;
         }
 
 
@@ -2371,7 +2313,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar'))) {
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar, #pixelCanvas, .pixel-tool-button, .pixel-color-picker, .pixel-menu-item'))) {
                  bringToFront(windowElement);
             }
         }, true);
@@ -2383,9 +2325,11 @@
             dragOffsetY = e.clientY - activeDragWindow.offsetTop;
             activeDragWindow.classList.add('disable-selection');
 
-            // MODIFICATION: Disable pointer events on Jotter's iframe during title bar drag
             if (windowId === 'textEditorWindow' && DOM.textEditorFrame) {
                 DOM.textEditorFrame.style.pointerEvents = 'none';
+            }
+            if (windowId === 'pixelWindow' && DOM.pixelCanvas) {
+                DOM.pixelCanvas.style.pointerEvents = 'none';
             }
 
             document.addEventListener('mousemove', doDrag);
@@ -2403,9 +2347,11 @@
                 resizeInitialWidth = activeResizeWindow.offsetWidth;
                 resizeInitialHeight = activeResizeWindow.offsetHeight;
 
-                // Disable pointer events on Jotter's iframe during resize (already present in original code)
                 if (windowId === 'textEditorWindow' && DOM.textEditorFrame) {
                     DOM.textEditorFrame.style.pointerEvents = 'none';
+                }
+                if (windowId === 'pixelWindow' && DOM.pixelCanvas) {
+                    DOM.pixelCanvas.style.pointerEvents = 'none';
                 }
                 document.addEventListener('mousemove', doResize);
                 document.addEventListener('mouseup', stopDragOrResize);
@@ -2417,27 +2363,19 @@
     function doDrag(e) {
         if (!activeDragWindow) return;
 
-        // Calculate the new tentative position
         let newLeft = e.clientX - dragOffsetX;
         let newTop = e.clientY - dragOffsetY;
 
-        // Get window and viewport dimensions
         const windowWidth = activeDragWindow.offsetWidth;
         const windowHeight = activeDragWindow.offsetHeight;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        // Constrain the position within the viewport
-        // The window's left edge cannot be less than 0
         newLeft = Math.max(0, newLeft);
-        // The window's top edge cannot be less than 0
         newTop = Math.max(0, newTop);
-        // The window's right edge (left + width) cannot exceed viewport width
         newLeft = Math.min(newLeft, viewportWidth - windowWidth);
-        // The window's bottom edge (top + height) cannot exceed viewport height
         newTop = Math.min(newTop, viewportHeight - windowHeight);
-        
-        // Apply the constrained position
+
         activeDragWindow.style.left = newLeft + 'px';
         activeDragWindow.style.top = newTop + 'px';
 
@@ -2463,6 +2401,9 @@
         } else if (windowId === 'geminiChatWindow') {
             currentMinWidth = MIN_GEMINI_CHAT_WIDTH;
             currentMinHeight = MIN_GEMINI_CHAT_HEIGHT;
+        } else if (windowId === 'pixelWindow') {
+            currentMinWidth = MIN_PIXEL_WIDTH;
+            currentMinHeight = MIN_PIXEL_HEIGHT;
         } else {
             return;
         }
@@ -2479,31 +2420,35 @@
         if (windowId === 'xpMainWindow') {
             handleAppWindowResize();
         }
+        if (windowId === 'pixelWindow') {
+            handlePixelWindowResize();
+        }
     }
 
-    // MODIFICATION: Updated stopDragOrResize to correctly re-enable pointer events for Jotter's iframe
     function stopDragOrResize() {
         let windowToSaveState = null;
-        let operatedWindow = null; // To store the window that was dragged or resized
+        let operatedWindow = null;
 
         if (activeDragWindow) {
             activeDragWindow.classList.remove('disable-selection');
             windowToSaveState = activeDragWindow.id;
-            operatedWindow = activeDragWindow; 
+            operatedWindow = activeDragWindow;
             activeDragWindow = null;
         }
         if (activeResizeWindow) {
             activeResizeWindow.classList.remove('disable-selection');
-            // If both were somehow active, windowToSaveState would be overwritten by resize, which is fine.
-            windowToSaveState = activeResizeWindow.id; 
-            operatedWindow = activeResizeWindow; 
+            windowToSaveState = activeResizeWindow.id;
+            operatedWindow = activeResizeWindow;
             activeResizeWindow = null;
         }
 
-        // Centralized reset for textEditorFrame's pointer events
         if (operatedWindow && operatedWindow.id === 'textEditorWindow' && DOM.textEditorFrame) {
             DOM.textEditorFrame.style.pointerEvents = 'auto';
         }
+        if (operatedWindow && operatedWindow.id === 'pixelWindow' && DOM.pixelCanvas) {
+            DOM.pixelCanvas.style.pointerEvents = 'auto';
+        }
+
 
         if (windowToSaveState) {
             saveWindowState(windowToSaveState);
@@ -2554,6 +2499,10 @@
             currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT;
             defaultWidth = 450; defaultHeight = 705;
             defaultOffsetX = 150; defaultOffsetY = 150;
+        } else if (windowId === 'pixelWindow') {
+            currentMinWidth = MIN_PIXEL_WIDTH; currentMinHeight = MIN_PIXEL_HEIGHT;
+            defaultWidth = 650; defaultHeight = 500;
+            defaultOffsetX = 200; defaultOffsetY = 200;
         } else {
             return;
         }
@@ -2628,7 +2577,7 @@
     }
 
 
-    function checkToggleDayView() { /* Placeholder if specific logic is needed */ }
+    function checkToggleDayView() { }
 
 
     function addEventListeners() {
@@ -2810,6 +2759,20 @@
             win.style.display = 'none';
         });
 
+        DOM.pixelMinimizeBtn.addEventListener('click', () => minimizeWindow('pixelWindow'));
+        DOM.pixelMaximizeBtn.addEventListener('click', () => maximizeWindow('pixelWindow'));
+        DOM.pixelCloseBtn.addEventListener('click', () => {
+            const win = DOM.pixelWindow;
+            const windowId = 'pixelWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
+            saveWindowState(windowId);
+            win.style.display = 'none';
+        });
+
+
         DOM.geminiChatSendBtn.addEventListener('click', handleSendGeminiPrompt);
         DOM.geminiChatPromptInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -2856,7 +2819,7 @@
             const key = this.dataset.achievementKey;
             const id = this.dataset.achievementId;
             if (key && id) {
-                confirmRemoveAchievement(key, id); // This function will handle closing the modal
+                confirmRemoveAchievement(key, id);
             }
         });
 
@@ -2876,6 +2839,7 @@
             setWindowDefaults('textEditorWindow', true);
             setWindowDefaults('playJockeyWindow', true);
             setWindowDefaults('geminiChatWindow', true);
+            setWindowDefaults('pixelWindow', true);
             saveData();
         });
 
@@ -2951,6 +2915,7 @@
                 else if (windowId === 'textEditorWindow') { minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT;}
                 else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
                 else if (windowId === 'geminiChatWindow') { minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT;}
+                else if (windowId === 'pixelWindow') { minW = MIN_PIXEL_WIDTH; minH = MIN_PIXEL_HEIGHT;}
 
 
                 appWindow.style.width = Math.max(minW, state.width || parseInt(currentLastNormal.width) || 0) + 'px';
@@ -2970,7 +2935,7 @@
                 state.x = parseInt(currentLastNormal.left);
                 state.y = parseInt(currentLastNormal.top);
             } else {
-                setWindowDefaults(windowId, false); 
+                setWindowDefaults(windowId, false);
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
@@ -2995,6 +2960,7 @@
         updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
         if (windowId === 'xpMainWindow' && !isMinimized) handleAppWindowResize();
+        if (windowId === 'pixelWindow' && !isMinimized) handlePixelWindowResize();
     }
 
 
@@ -3014,6 +2980,9 @@
         } else if (windowId === 'geminiChatWindow') {
             minimizeBtn = DOM.geminiChatMinimizeBtn;
             maximizeBtn = DOM.geminiChatMaximizeBtn;
+        } else if (windowId === 'pixelWindow') {
+            minimizeBtn = DOM.pixelMinimizeBtn;
+            maximizeBtn = DOM.pixelMaximizeBtn;
         }
 
 
@@ -3138,6 +3107,7 @@
             else if (windowId === 'textEditorWindow') { defaultNormalWidth = 450; defaultNormalHeight = 705; minW = MIN_TEXTEDITOR_WIDTH; minH = MIN_TEXTEDITOR_HEIGHT; defaultX = 50; defaultY = 50;}
             else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
             else if (windowId === 'geminiChatWindow') { defaultNormalWidth = 500; defaultNormalHeight = 400; minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT; defaultX = 150; defaultY = 150;}
+            else if (windowId === 'pixelWindow') { defaultNormalWidth = 650; defaultNormalHeight = 500; minW = MIN_PIXEL_WIDTH; minH = MIN_PIXEL_HEIGHT; defaultX = 200; defaultY = 200;}
 
 
             lastNormalStates[windowId] = {
@@ -3156,6 +3126,7 @@
                 else if (windowId === 'textEditorWindow') { currentMinWidth = MIN_TEXTEDITOR_WIDTH; currentMinHeight = MIN_TEXTEDITOR_HEIGHT; }
                 else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; }
                 else if (windowId === 'geminiChatWindow') { currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT; }
+                else if (windowId === 'pixelWindow') { currentMinWidth = MIN_PIXEL_WIDTH; currentMinHeight = MIN_PIXEL_HEIGHT; }
                 else { currentMinWidth = 100; currentMinHeight = 100; }
 
                 win.style.left = state.x + 'px';
@@ -3171,6 +3142,9 @@
 
         if (isNowVisible && windowId === 'geminiChatWindow') {
             renderGeminiChatHistory();
+        }
+        if (isNowVisible && windowId === 'pixelWindow') {
+            handlePixelWindowResize();
         }
         updateMinMaxButtonStates(windowId);
     }
@@ -3198,13 +3172,15 @@
                 xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false },
                 textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
                 playJockeyWindow: { x: null, y: null, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
-                geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true }
+                geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true },
+                pixelWindow: { x: null, y: null, width: 650, height: 500, maximized: false, minimized: false, zIndex: 7, userManuallySet: false, hiddenByUser: true }
             },
             iconPositions: {
                 trackerIcon: { x: 0, y: 0 },
                 textEditorIcon: { x: 0, y: 100 },
                 playJockeyIcon: { x: 0, y: 200 },
-                geminiChatIcon: { x: 0, y: 300 }
+                geminiChatIcon: { x: 0, y: 300 },
+                pixelIcon: { x: 0, y: 400 }
             },
             areas: [],
             achievements: {},
@@ -3219,7 +3195,13 @@
             playJockeyRandomEnabled: false,
             playJockeyRepeatState: "off",
             playJockeyRandomHistory: [],
-            geminiChatHistory: []
+            geminiChatHistory: [],
+            pixelAppData: {
+                currentColor: '#000000',
+                currentTool: 'pencil',
+                canvasWidth: 600,
+                canvasHeight: 400
+            }
         };
 
         if (storedData) {
@@ -3232,10 +3214,11 @@
                         xpMainWindow: { ...defaultAppData.windowStates.xpMainWindow, ...(loadedData.windowStates ? loadedData.windowStates.xpMainWindow : {}) },
                         textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(loadedData.windowStates ? loadedData.windowStates.textEditorWindow : {}) },
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) },
-                        geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(loadedData.windowStates ? loadedData.windowStates.geminiChatWindow : {}) }
+                        geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(loadedData.windowStates ? loadedData.windowStates.geminiChatWindow : {}) },
+                        pixelWindow: { ...defaultAppData.windowStates.pixelWindow, ...(loadedData.windowStates ? loadedData.windowStates.pixelWindow : {}) }
                     },
 
-                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}), geminiChatIcon: (loadedData.iconPositions && loadedData.iconPositions.geminiChatIcon) ? loadedData.iconPositions.geminiChatIcon : defaultAppData.iconPositions.geminiChatIcon },
+                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}), pixelIcon: (loadedData.iconPositions && loadedData.iconPositions.pixelIcon) ? loadedData.iconPositions.pixelIcon : defaultAppData.iconPositions.pixelIcon },
                     playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
                             ...pl,
@@ -3256,7 +3239,8 @@
                     playJockeyRandomEnabled: typeof loadedData.playJockeyRandomEnabled === 'boolean' ? loadedData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
                     playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [],
-                    geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : []
+                    geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : [],
+                    pixelAppData: { ...defaultAppData.pixelAppData, ...(loadedData.pixelAppData || {}) }
                 };
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
@@ -3268,12 +3252,10 @@
                 }
                 appData.areas = appData.areas || [];
                 appData.achievements = appData.achievements || {};
-                // Ensure achievements from older versions have the new fields defaulted if necessary
                 for (const key in appData.achievements) {
                     if (appData.achievements.hasOwnProperty(key)) {
                         appData.achievements[key].forEach(ach => {
-                            if (ach.xpAwarded === undefined) ach.xpAwarded = false; // Default for old data
-                            // scheduledDate should exist from previous version based on user's code
+                            if (ach.xpAwarded === undefined) ach.xpAwarded = false;
                         });
                     }
                 }
@@ -3324,7 +3306,7 @@
         appData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0];
         updateDateDisplay();
         renderWeekdayHeaders();
-        checkAndAwardScheduledXP(); // --- MODIFICATION: Check XP on navigation ---
+        checkAndAwardScheduledXP();
         renderGrid();
         generateQuestsForCurrentWeekIfNeeded();
         saveData();
@@ -3349,7 +3331,7 @@
 
         updateDateDisplay();
         renderWeekdayHeaders();
-        checkAndAwardScheduledXP(); // --- MODIFICATION: Check XP on navigation ---
+        checkAndAwardScheduledXP();
         renderGrid();
         if (weekChanged) {
             generateQuestsForCurrentWeekIfNeeded();
@@ -3367,7 +3349,7 @@
         updateViewControls();
         updateDateDisplay();
         renderWeekdayHeaders();
-        checkAndAwardScheduledXP(); // --- MODIFICATION: Check XP on navigation ---
+        checkAndAwardScheduledXP();
         renderGrid();
         generateQuestsForCurrentWeekIfNeeded();
         saveData();
@@ -3667,7 +3649,6 @@
         }
     }
 
-    // --- MODIFICATION START: XP Awarding Logic and xpAwarded flag ---
     function getAchievementDate(weekStartDateStr, dayIdx) {
         const achievementDate = parseYYYYMMDDToLocalDate(weekStartDateStr);
         achievementDate.setDate(achievementDate.getDate() + dayIdx);
@@ -3697,17 +3678,13 @@
                 alert("Error: Could not find achievement to update.");
                 return;
             }
-            // When editing, we preserve the original scheduledDate and xpAwarded status.
-            // If the user changes type/content, that's fine.
-            // If scheduledDate itself needs to be editable, that's a larger UI change.
-            // For now, assume scheduledDate is fixed upon creation.
-        } else { // Creating a new achievement
+        } else {
             achievement = {
                 id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
                 timestamp: new Date().toISOString(),
                 xp: XP_PER_REGULAR_ACHIEVEMENT,
                 scheduledDate: getAchievementDate(appData.currentWeekStartDate, dayIndex).toISOString().split('T')[0],
-                xpAwarded: false // Initialize as not awarded
+                xpAwarded: false
             };
         }
 
@@ -3716,10 +3693,7 @@
         const processSave = (contentToSave) => {
             achievement.content = contentToSave;
             if (isEditing) {
-                // XP is not re-awarded or changed on simple edit.
-                // The checkAndAwardScheduledXP function will handle awarding XP if the date becomes due
-                // and it wasn't awarded before.
-            } else { // New achievement
+            } else {
                 achievementList.push(achievement);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -3728,10 +3702,10 @@
                 if (achievementScheduledDateObj && achievementScheduledDateObj <= today) {
                     addXpToArea(areaName, achievement.xp);
                     updateQuestProgress(areaName, achievement.xp);
-                    achievement.xpAwarded = true; // Mark as awarded
+                    achievement.xpAwarded = true;
                 } else {
-                    achievement.xpAwarded = false; // Explicitly mark as not awarded yet
-                    if(achievementScheduledDateObj) { // only log if date is valid
+                    achievement.xpAwarded = false;
+                    if(achievementScheduledDateObj) {
                         console.log(`XP for new achievement "${achievement.id}" (scheduled: ${achievement.scheduledDate}) will be awarded on its scheduled date.`);
                     }
                 }
@@ -3752,7 +3726,7 @@
         } else if (type === 'image') {
             const file = DOM.achievementImageInput.files[0];
             if (file) {
-                if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                if (file.size > 2 * 1024 * 1024) {
                     alert("Image file is too large. Please choose an image under 2MB.");
                     return;
                 }
@@ -3763,14 +3737,13 @@
                 reader.onerror = function() { alert("Error reading image file."); }
                 reader.readAsDataURL(file);
             } else if (isEditing && achievement.type === 'image' && achievement.content) {
-                processSave(achievement.content); // Keep old image if not changed
+                processSave(achievement.content);
             } else if (!isEditing || (isEditing && achievement.type !== 'image')) {
                 alert("Please select an image file for an image type achievement.");
                 return;
             }
         }
     }
-    // --- MODIFICATION END ---
 
     function promptRemoveAchievement(achievementKey, achievementId) {
         DOM.confirmDeleteAchievementBtn.dataset.achievementKey = achievementKey;
@@ -3778,7 +3751,6 @@
         openModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT);
     }
 
-    // --- MODIFICATION START: Adjust XP subtraction based on xpAwarded flag ---
     function confirmRemoveAchievement(achievementKey, achievementId) {
         if (!appData.achievements[achievementKey]) return;
 
@@ -3789,30 +3761,28 @@
         const xpToRemove = achievementToRemove.xp;
 
         const keyParts = achievementKey.split('_');
-        const areaName = keyParts.slice(1, keyParts.length -1).join('_'); 
+        const areaName = keyParts.slice(1, keyParts.length -1).join('_');
 
         appData.achievements[achievementKey].splice(achIndex, 1);
         if (appData.achievements[achievementKey].length === 0) {
             delete appData.achievements[achievementKey];
         }
 
-        // Only subtract XP if it was actually awarded
         if (achievementToRemove.xpAwarded) {
             subtractXpFromArea(areaName, xpToRemove);
-            updateQuestProgress(areaName, -xpToRemove); // Pass negative value for subtraction
+            updateQuestProgress(areaName, -xpToRemove);
         } else {
             console.log(`XP for deleted achievement "${achievementToRemove.id}" (scheduled: ${achievementToRemove.scheduledDate}) was not yet awarded, so no XP subtracted.`);
         }
-        
-        closeModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT); // Close modal after processing
+
+        closeModal(MODAL_IDS.CONFIRM_DELETE_ACHIEVEMENT);
         renderGrid();
         saveData();
     }
-    // --- MODIFICATION END ---
 
 
     function xpForNextLevel(currentLevel) {
-        if (currentLevel <= 0) return 50; 
+        if (currentLevel <= 0) return 50;
         return Math.floor(50 * Math.pow(currentLevel, 1.5));
     }
 
@@ -3832,7 +3802,7 @@
 
             if (leveledUp) {
                 alert(`${decodeHtmlEntities(area.name)} leveled up to Level ${area.level}!`);
-                generateQuestsForCurrentWeekIfNeeded(true); 
+                generateQuestsForCurrentWeekIfNeeded(true);
             }
         }
     }
@@ -3846,9 +3816,9 @@
                 if (area.level > 1) {
                     area.level--;
                     deLeveled = true;
-                    area.xp += xpForNextLevel(area.level); 
+                    area.xp += xpForNextLevel(area.level);
                 } else {
-                    area.xp = 0; 
+                    area.xp = 0;
                     break;
                 }
             }
@@ -3868,19 +3838,19 @@
         }
 
         if (appData.areas.length < 1 && !forceRegenerate) {
-            if(appData.quests[weekId].length === 0) return; 
+            if(appData.quests[weekId].length === 0) return;
         }
 
         if (forceRegenerate || (appData.quests[weekId].length === 0 && appData.areas.length > 0)) {
-            if (forceRegenerate) appData.quests[weekId] = []; 
+            if (forceRegenerate) appData.quests[weekId] = [];
 
-            const questsToPotentiallyGenerate = Math.min(MAX_WEEKLY_QUESTS, appData.areas.length, 3); 
+            const questsToPotentiallyGenerate = Math.min(MAX_WEEKLY_QUESTS, appData.areas.length, 3);
             let generatedCount = 0;
 
             const availableAreasForNewQuests = [...appData.areas].filter(area =>
                 !appData.quests[weekId].some(q => q.areaName === area.name)
             );
-            let shuffledAreas = [...(availableAreasForNewQuests.length > 0 ? availableAreasForNewQuests : appData.areas)]; 
+            let shuffledAreas = [...(availableAreasForNewQuests.length > 0 ? availableAreasForNewQuests : appData.areas)];
             for (let i = shuffledAreas.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffledAreas[i], shuffledAreas[j]] = [shuffledAreas[j], shuffledAreas[i]];
@@ -3888,15 +3858,15 @@
 
 
             for (let i = 0; i < questsToPotentiallyGenerate && appData.quests[weekId].length < MAX_WEEKLY_QUESTS; i++) {
-                if (shuffledAreas.length === 0) break; 
+                if (shuffledAreas.length === 0) break;
 
                 const selectedArea = shuffledAreas.pop();
                 if (!selectedArea) continue;
                 if(!forceRegenerate && appData.quests[weekId].some(q => q.areaName === selectedArea.name)) continue;
 
 
-                const targetXPEarned = 20 + (selectedArea.level * 10); 
-                const rewardXP = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5); 
+                const targetXPEarned = 20 + (selectedArea.level * 10);
+                const rewardXP = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5);
 
                 appData.quests[weekId].push({
                     id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}_${i}`,
@@ -3920,12 +3890,12 @@
         appData.quests[weekId].forEach(quest => {
             if (quest.areaName === areaName && !quest.completed) {
                 quest.currentXPEarned += xpGained;
-                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0; 
+                if (quest.currentXPEarned < 0) quest.currentXPEarned = 0;
 
                 if (quest.currentXPEarned >= quest.targetXPEarned) {
                     quest.completed = true;
-                    quest.currentXPEarned = quest.targetXPEarned; 
-                    addXpToArea(quest.areaName, quest.rewardXP); 
+                    quest.currentXPEarned = quest.targetXPEarned;
+                    addXpToArea(quest.areaName, quest.rewardXP);
                     alert(`Quest Completed: ${decodeHtmlEntities(quest.description)}\n+${quest.rewardXP} XP to ${decodeHtmlEntities(quest.areaName)}!`);
                     questCompletedThisUpdate = true;
                 }
@@ -3933,7 +3903,7 @@
         });
 
         if (questCompletedThisUpdate) {
-            renderGrid(); 
+            renderGrid();
             saveData();
         }
     }
@@ -3942,7 +3912,7 @@
         const weekId = getCurrentWeekId();
         DOM.questsList.innerHTML = '';
 
-        generateQuestsForCurrentWeekIfNeeded(); 
+        generateQuestsForCurrentWeekIfNeeded();
 
         const currentQuests = appData.quests[weekId] || [];
 
@@ -4065,15 +4035,15 @@
             }
         }
 
-        if(potentialAreas.length === 0) potentialAreas = [...appData.areas]; 
+        if(potentialAreas.length === 0) potentialAreas = [...appData.areas];
 
         const randomAreaIndex = Math.floor(Math.random() * potentialAreas.length);
         const selectedArea = potentialAreas[randomAreaIndex];
 
         const baseTarget = 20 + (selectedArea.level * 10);
-        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) ); 
+        const targetXPEarned = Math.max(10, Math.round(baseTarget + (Math.random() * baseTarget * 0.3) - (baseTarget * 0.15)) );
         const baseReward = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5);
-        const rewardXP = Math.max(10, Math.round(baseReward + (Math.random() * baseReward * 0.2) - (baseReward * 0.1))); 
+        const rewardXP = Math.max(10, Math.round(baseReward + (Math.random() * baseReward * 0.2) - (baseReward * 0.1)));
 
         return {
             id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}`,
@@ -4102,9 +4072,9 @@
         }
 
         const oldQuest = appData.quests[weekId][questIndex];
-        appData.quests[weekId].splice(questIndex, 1); 
+        appData.quests[weekId].splice(questIndex, 1);
 
-        const newQuest = generateSingleRandomQuest(weekId, oldQuest); 
+        const newQuest = generateSingleRandomQuest(weekId, oldQuest);
         if (newQuest) {
             appData.quests[weekId].push(newQuest);
         } else if (appData.areas.length > 0) {
@@ -4112,7 +4082,7 @@
         }
 
         closeModal(MODAL_IDS.CONFIRM_REFRESH_QUEST);
-        showQuests(); 
+        showQuests();
         saveData();
     }
 
@@ -4274,10 +4244,10 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$$${videoId}`, 
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$${videoId}`,
             videoId: videoId,
             title: title,
-            artist: artist.replace(/\s-\sTopic$/, '').trim() 
+            artist: artist.replace(/\s-\sTopic$/, '').trim()
         };
 
         currentPlaylist.videos.push(videoEntry);
@@ -4285,7 +4255,7 @@
         DOM.playJockeyLinkInput.value = '';
 
         if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) {
-            playYouTubeVideoById(videoId, true, true); 
+            playYouTubeVideoById(videoId, true, true);
         }
         saveData();
     }
@@ -4323,15 +4293,15 @@
             id: tempId,
             originalUrl: link,
             videoId: videoId,
-            title: "Loading title...", 
-            artist: "" 
+            title: "Loading title...",
+            artist: ""
         };
 
         currentPlaylist.videos.push(videoEntry);
         renderPlayJockeyPlaylist();
         DOM.playJockeyLinkInput.value = '';
 
-        fetchYouTubeTitle(videoEntry, currentPlaylist.id); 
+        fetchYouTubeTitle(videoEntry, currentPlaylist.id);
 
         if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) {
             playYouTubeVideoById(videoId, true, true);
@@ -4355,26 +4325,26 @@
                          newArtist = decodeHtmlEntities(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim();
                      } else {
                          console.warn(`No video data found via API for ${videoEntryToUpdate.videoId}`);
-                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
+                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl);
                      }
                  } else {
                      console.warn(`Failed to fetch title/author via API for ${videoEntryToUpdate.videoId}. Status: ${response.status}`);
-                     newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
+                     newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl);
                  }
-            } else { 
+            } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
                         newTitle = decodeHtmlEntities(oEmbedData.title);
                         newArtist = decodeHtmlEntities(oEmbedData.author_name).replace(/\s-\sTopic$/, '').trim();
                     } else {
-                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
+                         newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl);
                     }
                 } catch (oEmbedError) {
                     console.warn(`oEmbed fetch failed for ${videoEntryToUpdate.videoId}:`, oEmbedError);
-                    newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl); 
+                    newTitle = decodeHtmlEntities(videoEntryToUpdate.originalUrl);
                 }
             }
 
@@ -4386,7 +4356,7 @@
                     itemInPlaylist.title = newTitle;
                     itemInPlaylist.artist = newArtist;
                     if (appData.playJockeyCurrentPlaylistId === playlistId) {
-                        renderPlayJockeyPlaylist(); 
+                        renderPlayJockeyPlaylist();
                     }
                     if(appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === itemInPlaylist.id) {
                         appData.playJockeyCurrentVideo.title = newTitle;
@@ -4401,7 +4371,7 @@
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist && (itemInPlaylist.title === "Loading title..." || !itemInPlaylist.title.trim())) {
-                    itemInPlaylist.title = decodeHtmlEntities(itemInPlaylist.originalUrl); 
+                    itemInPlaylist.title = decodeHtmlEntities(itemInPlaylist.originalUrl);
                     if (appData.playJockeyCurrentPlaylistId === playlistId) renderPlayJockeyPlaylist();
                     saveData();
                 }
@@ -4454,18 +4424,18 @@
             name: newPlaylistName,
             videos: []
         });
-        switchPlayJockeyPlaylist(newPlaylistId); 
+        switchPlayJockeyPlaylist(newPlaylistId);
     }
 
     function switchPlayJockeyPlaylist(playlistId) {
         if (appData.playJockeyCurrentPlaylistId === playlistId) return;
 
         appData.playJockeyCurrentPlaylistId = playlistId;
-        appData.playJockeyCurrentVideo = null; 
-        appData.playJockeyRandomHistory = []; 
+        appData.playJockeyCurrentVideo = null;
+        appData.playJockeyRandomHistory = [];
 
         if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
-            ytPlayerInstance.stopVideo(); 
+            ytPlayerInstance.stopVideo();
         }
         renderPlayJockeyTabs();
         renderPlayJockeyPlaylist();
@@ -4484,7 +4454,7 @@
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
             DOM.playJockeyPlaylist.appendChild(emptyMsg);
-            updatePlayingClassInPlaylist(null); 
+            updatePlayingClassInPlaylist(null);
             return;
         }
 
@@ -4523,12 +4493,12 @@
                 item.classList.add('playing');
             }
             item.addEventListener('click', (event) => {
-                if (event.target.closest('.context-modal')) return; 
-                if (item.classList.contains('dragging')) return; 
+                if (event.target.closest('.context-modal')) return;
+                if (item.classList.contains('dragging')) return;
 
                 const clickedItem = event.currentTarget;
                 if (clickedItem && clickedItem.dataset.videoId) {
-                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true); 
+                    playYouTubeVideoById(clickedItem.dataset.videoId, true, true);
                 }
             });
             DOM.playJockeyPlaylist.appendChild(item);
@@ -4551,25 +4521,25 @@
         }
 
         if ( isManualPlay && videoToPlay && appData.playJockeyRandomEnabled &&
-             appData.playJockeyAutoPlayEnabled && appData.playJockeyRepeatState === "off" && 
+             appData.playJockeyAutoPlayEnabled && appData.playJockeyRepeatState === "off" &&
              currentPlaylist.videos.length > 0 ) {
             const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id));
             if (new Set(appData.playJockeyRandomHistory).size >= uniqueVideoIdsInPlaylist.size) {
-                 appData.playJockeyRandomHistory = [videoToPlay.id]; 
+                 appData.playJockeyRandomHistory = [videoToPlay.id];
             } else if (!appData.playJockeyRandomHistory.includes(videoToPlay.id)) {
                  appData.playJockeyRandomHistory.push(videoToPlay.id);
             }
         }
 
 
-        appData.playJockeyCurrentVideo = { ...videoToPlay }; 
+        appData.playJockeyCurrentVideo = { ...videoToPlay };
         updatePlayingClassInPlaylist(videoToPlay.id);
         saveData();
 
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
             console.log("YouTube API not ready, video load queued:", videoId);
-            if (typeof YT !== 'undefined' && YT.Player) { onYouTubeIframeAPIReady(); } 
+            if (typeof YT !== 'undefined' && YT.Player) { onYouTubeIframeAPIReady(); }
             return;
         }
 
@@ -4580,7 +4550,7 @@
             }
         } else {
             if (DOM.playJockeyPlayer.firstChild && DOM.playJockeyPlayer.firstChild.tagName === 'IFRAME') {
-                 DOM.playJockeyPlayer.innerHTML = ''; 
+                 DOM.playJockeyPlayer.innerHTML = '';
             }
             ytPlayerInstance = new YT.Player('playJockeyPlayer', {
                 height: '100%',
@@ -4621,38 +4591,38 @@
         } else if (appData.playJockeyRandomEnabled) {
             if (activePlaylistVideos.length === 0) return;
 
-            if (activePlaylistVideos.length === 1) { 
+            if (activePlaylistVideos.length === 1) {
                 if (appData.playJockeyRepeatState === "off") {
                     if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return;
                     nextVideoItem = activePlaylistVideos[0];
-                } else { 
+                } else {
                     nextVideoItem = activePlaylistVideos[0];
                 }
-            } else { 
+            } else {
                 let eligibleVideos = activePlaylistVideos.filter(
                     video => !appData.playJockeyRandomHistory.includes(video.id) || video.id === currentVideoUniqueId
                 );
 
                 if (eligibleVideos.length === 1 && eligibleVideos[0].id === currentVideoUniqueId && appData.playJockeyRepeatState !== "song") {
-                     eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); 
+                     eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                      if (eligibleVideos.length === 0 && appData.playJockeyRepeatState === "playlist") {
-                        appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
+                        appData.playJockeyRandomHistory = [currentVideoUniqueId];
                         eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                      }
                 } else if (eligibleVideos.length === 0 && appData.playJockeyRepeatState === "playlist") {
-                    appData.playJockeyRandomHistory = [currentVideoUniqueId]; 
+                    appData.playJockeyRandomHistory = [currentVideoUniqueId];
                     eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                 }
 
 
-                if (eligibleVideos.length === 0) { 
-                    if (appData.playJockeyRepeatState === "playlist") { 
-                        appData.playJockeyRandomHistory = []; 
+                if (eligibleVideos.length === 0) {
+                    if (appData.playJockeyRepeatState === "playlist") {
+                        appData.playJockeyRandomHistory = [];
                         eligibleVideos = [...activePlaylistVideos];
                         if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0];
-                    } else { 
-                        appData.playJockeyRandomHistory = []; 
-                        return; 
+                    } else {
+                        appData.playJockeyRandomHistory = [];
+                        return;
                     }
                 }
                 if (eligibleVideos.length > 0 && !nextVideoItem) {
@@ -4666,23 +4636,23 @@
                      appData.playJockeyRandomHistory.push(nextVideoItem.id);
                 }
                 if (appData.playJockeyRepeatState === "playlist") {
-                    const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); 
+                    const maxHistorySize = Math.max(0, activePlaylistVideos.length -1);
                     while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) {
                         appData.playJockeyRandomHistory.shift();
                     }
                 }
             }
 
-        } else { 
+        } else {
             const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId);
-            if (currentIndex === -1) return; 
+            if (currentIndex === -1) return;
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= activePlaylistVideos.length) { 
+            if (nextIndex >= activePlaylistVideos.length) {
                 if (appData.playJockeyRepeatState === "playlist") {
-                    nextIndex = 0; 
+                    nextIndex = 0;
                 } else {
-                    return; 
+                    return;
                 }
             }
             if (activePlaylistVideos[nextIndex]) {
@@ -4691,7 +4661,7 @@
         }
 
         if (nextVideoItem && nextVideoItem.videoId) {
-            playYouTubeVideoById(nextVideoItem.videoId, true, false); 
+            playYouTubeVideoById(nextVideoItem.videoId, true, false);
         }
     }
 
@@ -4867,9 +4837,9 @@
                 }
                 appData.playJockeyCurrentVideo = null;
                 if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) {
-                    playNextPjVideo(); 
+                    playNextPjVideo();
                 } else if (currentPlaylist.videos.length === 0) {
-                     DOM.playJockeyPlayer.innerHTML = ''; 
+                     DOM.playJockeyPlayer.innerHTML = '';
                 }
             }
             renderPlayJockeyPlaylist();
@@ -4966,11 +4936,11 @@
         if (target) {
             pjDraggedItem = target;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId); 
-            setTimeout(() => { 
+            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
+            setTimeout(() => {
                 target.classList.add('dragging');
             }, 0);
-            hidePjContextMenu(); 
+            hidePjContextMenu();
         }
     }
 
@@ -4991,10 +4961,10 @@
     }
 
     function handlePjDragOver(e) {
-        e.preventDefault(); 
+        e.preventDefault();
         const targetItem = e.target.closest('.playjockey-playlist-item');
 
-        clearPjDragOverHighlights(); 
+        clearPjDragOverHighlights();
 
         if (targetItem && pjDraggedItem && targetItem !== pjDraggedItem) {
             const rect = targetItem.getBoundingClientRect();
@@ -5030,10 +5000,10 @@
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
 
         const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId);
-        if (draggedItemIndex === -1) return; 
+        if (draggedItemIndex === -1) return;
 
         const itemToMove = currentPlaylist.videos[draggedItemIndex];
-        currentPlaylist.videos.splice(draggedItemIndex, 1); 
+        currentPlaylist.videos.splice(draggedItemIndex, 1);
 
         let targetIndex = -1;
 
@@ -5044,8 +5014,8 @@
             if (targetIndex !== -1) {
                 const rect = targetItemElement.getBoundingClientRect();
                 const midpointY = rect.top + rect.height / 2;
-                if (e.clientY >= midpointY) { 
-                    targetIndex++; 
+                if (e.clientY >= midpointY) {
+                    targetIndex++;
                 }
             }
         }
@@ -5059,7 +5029,7 @@
 
         renderPlayJockeyPlaylist();
         saveData();
-        pjDraggedItem = null; 
+        pjDraggedItem = null;
     }
 
 
@@ -5076,10 +5046,10 @@
 
     function togglePlayJockeyRandom() {
         appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled;
-        appData.playJockeyRandomHistory = []; 
+        appData.playJockeyRandomHistory = [];
         const currentPlaylist = getCurrentPlayJockeyPlaylist();
         if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
-             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") { 
+             if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") {
                  appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id);
             }
         }
@@ -5110,7 +5080,7 @@
     }
 
     function updatePlayJockeyRepeatButtonState() {
-        DOM.playJockeyRepeatBtn.classList.remove('repeat-on'); 
+        DOM.playJockeyRepeatBtn.classList.remove('repeat-on');
         switch (appData.playJockeyRepeatState) {
             case "off":
                 DOM.playJockeyRepeatBtn.textContent = 'Repeat: Off';
@@ -5141,7 +5111,7 @@
 
             const contentSpan = document.createElement('span');
             contentSpan.classList.add('message-content');
-            contentSpan.textContent = msg.content; 
+            contentSpan.textContent = msg.content;
 
             const timestampSpan = document.createElement('span');
             timestampSpan.classList.add('message-timestamp');
@@ -5165,7 +5135,7 @@
             DOM.geminiChatDisplayArea.appendChild(messageDiv);
         });
 
-        DOM.geminiChatDisplayArea.scrollTop = DOM.geminiChatDisplayArea.scrollHeight; 
+        DOM.geminiChatDisplayArea.scrollTop = DOM.geminiChatDisplayArea.scrollHeight;
     }
 
     function addMessageToGeminiChat(type, content, isError = false) {
@@ -5198,7 +5168,7 @@
         if (!promptText) return;
 
         addMessageToGeminiChat('user', promptText);
-        DOM.geminiChatPromptInput.value = ''; 
+        DOM.geminiChatPromptInput.value = '';
         DOM.geminiChatPromptInput.disabled = true;
         DOM.geminiChatSendBtn.disabled = true;
 
@@ -5258,7 +5228,7 @@
             }
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            const existingThinkingDiv = getById(thinkingMsgId); 
+            const existingThinkingDiv = getById(thinkingMsgId);
             if (existingThinkingDiv) existingThinkingDiv.remove();
             addMessageToGeminiChat('gemini', `Error: Could not connect to Gemini. ${error.message}`, true);
         } finally {
@@ -5267,6 +5237,221 @@
             DOM.geminiChatPromptInput.focus();
         }
     }
+
+    // --- Pixel App Functions ---
+    function initPixelApp() {
+        pixelCtx = DOM.pixelCanvas.getContext('2d');
+        DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
+        DOM.pixelCanvas.height = appData.pixelAppData.canvasHeight;
+        pixelCtx.fillStyle = 'white';
+        pixelCtx.fillRect(0, 0, DOM.pixelCanvas.width, DOM.pixelCanvas.height);
+        pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
+        pixelCtx.lineWidth = 2;
+        pixelCtx.lineCap = 'round';
+
+        DOM.pixelColorPicker.value = appData.pixelAppData.currentColor;
+        DOM.pixelColorPicker.addEventListener('input', (e) => {
+            appData.pixelAppData.currentColor = e.target.value;
+            pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
+            pixelCtx.fillStyle = appData.pixelAppData.currentColor;
+        });
+
+        DOM.pixelPencilTool.addEventListener('click', () => setPixelTool('pencil'));
+        DOM.pixelEraserTool.addEventListener('click', () => setPixelTool('eraser'));
+        DOM.pixelBucketTool.addEventListener('click', () => setPixelTool('bucket'));
+
+        DOM.pixelCanvas.addEventListener('mousedown', startPixelDrawing);
+        DOM.pixelCanvas.addEventListener('mouseup', stopPixelDrawing);
+        DOM.pixelCanvas.addEventListener('mouseout', stopPixelDrawing);
+        DOM.pixelCanvas.addEventListener('mousemove', pixelDraw);
+        DOM.pixelCanvas.addEventListener('click', pixelBucketFill);
+
+        DOM.pixelFileSave.addEventListener('click', savePixelCanvas);
+
+        let pixelActiveMenu = null;
+        DOM.pixelMenuBar.querySelectorAll('.pixel-menu-bar > .pixel-menu-item').forEach(menuItem => {
+            menuItem.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (pixelActiveMenu && pixelActiveMenu !== menuItem) {
+                    pixelActiveMenu.classList.remove('open');
+                }
+                menuItem.classList.toggle('open');
+                pixelActiveMenu = menuItem.classList.contains('open') ? menuItem : null;
+            });
+        });
+        window.addEventListener('click', (event) => {
+            if (pixelActiveMenu && !pixelActiveMenu.contains(event.target)) {
+                pixelActiveMenu.classList.remove('open');
+                pixelActiveMenu = null;
+            }
+        });
+
+
+        setPixelTool(appData.pixelAppData.currentTool);
+    }
+
+    function setPixelTool(tool) {
+        appData.pixelAppData.currentTool = tool;
+        DOM.pixelPencilTool.classList.remove('active');
+        DOM.pixelEraserTool.classList.remove('active');
+        DOM.pixelBucketTool.classList.remove('active');
+
+        if (tool === 'pencil') {
+            DOM.pixelPencilTool.classList.add('active');
+            DOM.pixelCanvas.style.cursor = 'crosshair';
+        } else if (tool === 'eraser') {
+            DOM.pixelEraserTool.classList.add('active');
+            DOM.pixelCanvas.style.cursor = 'crosshair'; // Or a custom eraser cursor
+        } else if (tool === 'bucket') {
+            DOM.pixelBucketTool.classList.add('active');
+            DOM.pixelCanvas.style.cursor = 'copy'; // Or a custom bucket cursor
+        }
+        saveData();
+    }
+
+    function handlePixelWindowResize() {
+        if (DOM.pixelWindow.classList.contains('minimized') || DOM.pixelWindow.style.display === 'none') return;
+
+        const container = DOM.pixelCanvasContainer;
+        const canvas = DOM.pixelCanvas;
+
+        const padding = 10;
+        const menuBarHeight = DOM.pixelMenuBar.offsetHeight;
+        const toolbarHeight = DOM.pixelWindow.querySelector('.pixel-toolbar').offsetHeight;
+
+        const availableWidth = container.clientWidth - padding;
+        const availableHeight = DOM.pixelWindowBody.clientHeight - menuBarHeight - toolbarHeight - padding - 5;
+
+
+        if (availableWidth > 0 && availableHeight > 0) {
+            const aspectRatio = appData.pixelAppData.canvasWidth / appData.pixelAppData.canvasHeight;
+            let newCanvasWidth = availableWidth;
+            let newCanvasHeight = newCanvasWidth / aspectRatio;
+
+            if (newCanvasHeight > availableHeight) {
+                newCanvasHeight = availableHeight;
+                newCanvasWidth = newCanvasHeight * aspectRatio;
+            }
+
+            canvas.style.width = Math.max(50, newCanvasWidth) + 'px';
+            canvas.style.height = Math.max(50, newCanvasHeight) + 'px';
+        }
+    }
+
+
+    function startPixelDrawing(e) {
+        if (appData.pixelAppData.currentTool === 'bucket') return;
+        pixelIsDrawing = true;
+        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
+    }
+
+    function stopPixelDrawing() {
+        pixelIsDrawing = false;
+    }
+
+    function pixelDraw(e) {
+        if (!pixelIsDrawing || appData.pixelAppData.currentTool === 'bucket') return;
+
+        pixelCtx.beginPath();
+        pixelCtx.moveTo(pixelLastX, pixelLastY);
+        pixelCtx.lineTo(e.offsetX, e.offsetY);
+
+        if (appData.pixelAppData.currentTool === 'pencil') {
+            pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
+            pixelCtx.lineWidth = 2;
+        } else if (appData.pixelAppData.currentTool === 'eraser') {
+            pixelCtx.strokeStyle = '#FFFFFF'; // Eraser color (canvas background)
+            pixelCtx.lineWidth = 10; // Eraser size
+        }
+        pixelCtx.stroke();
+        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
+    }
+
+    function pixelBucketFill(e) {
+        if (appData.pixelAppData.currentTool !== 'bucket') return;
+
+        const x = e.offsetX;
+        const y = e.offsetY;
+        const targetColorData = pixelCtx.getImageData(x, y, 1, 1).data;
+        const targetColor = { r: targetColorData[0], g: targetColorData[1], b: targetColorData[2], a: targetColorData[3] };
+
+        const fillColorHex = appData.pixelAppData.currentColor;
+        const r = parseInt(fillColorHex.slice(1, 3), 16);
+        const g = parseInt(fillColorHex.slice(3, 5), 16);
+        const b = parseInt(fillColorHex.slice(5, 7), 16);
+        const fillColor = { r, g, b, a: 255 };
+
+        if (targetColor.r === fillColor.r && targetColor.g === fillColor.g && targetColor.b === fillColor.b && targetColor.a === fillColor.a) {
+            return; // Clicked on same color
+        }
+
+        floodFill(x, y, targetColor, fillColor);
+    }
+
+    function floodFill(startX, startY, targetColor, fillColor) {
+        const canvasWidth = DOM.pixelCanvas.width;
+        const canvasHeight = DOM.pixelCanvas.height;
+        const imageData = pixelCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+        const data = imageData.data;
+        const stack = [[startX, startY]];
+
+        function getColorAtPixel(x, y) {
+            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) {
+                return null; // Out of bounds
+            }
+            const index = (y * canvasWidth + x) * 4;
+            return { r: data[index], g: data[index + 1], b: data[index + 2], a: data[index + 3] };
+        }
+
+        function setColorAtPixel(x, y, color) {
+            const index = (y * canvasWidth + x) * 4;
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
+            data[index + 3] = color.a;
+        }
+
+        function colorsMatch(c1, c2) {
+            return c1 && c2 && c1.r === c2.r && c1.g === c2.g && c1.b === c2.b && c1.a === c2.a;
+        }
+
+        while (stack.length) {
+            const [x, y] = stack.pop();
+            const currentColor = getColorAtPixel(x, y);
+
+            if (colorsMatch(currentColor, targetColor)) {
+                setColorAtPixel(x, y, fillColor);
+
+                if (x + 1 < canvasWidth) stack.push([x + 1, y]);
+                if (x - 1 >= 0) stack.push([x - 1, y]);
+                if (y + 1 < canvasHeight) stack.push([x, y + 1]);
+                if (y - 1 >= 0) stack.push([x, y - 1]);
+            }
+        }
+        pixelCtx.putImageData(imageData, 0, 0);
+    }
+
+
+    function savePixelCanvas() {
+        let filename = prompt("Filename for your masterpiece:", "pixel_art.png");
+        if (filename) {
+            if (!filename.toLowerCase().endsWith('.png')) {
+                filename += '.png';
+            }
+            const dataURL = DOM.pixelCanvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataURL;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+        const pixelFileMenu = DOM.pixelFileSave.closest('.pixel-menu-item');
+        if(pixelFileMenu && pixelFileMenu.classList.contains('open')) {
+            pixelFileMenu.classList.remove('open');
+        }
+    }
+
 
     function openModal(modalId) {
         const modal = getById(modalId);
@@ -5310,7 +5495,7 @@
         } catch (err) {
             console.error("Firebase Remote Config failed to load. Using default/empty keys.", err);
         } finally {
-            init(); 
+            init();
         }
     }
 
