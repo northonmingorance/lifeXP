@@ -2409,8 +2409,31 @@
 
     function doDrag(e) {
         if (!activeDragWindow) return;
-        activeDragWindow.style.left = (e.clientX - dragOffsetX) + 'px';
-        activeDragWindow.style.top = (e.clientY - dragOffsetY) + 'px';
+
+        // Calculate the new tentative position
+        let newLeft = e.clientX - dragOffsetX;
+        let newTop = e.clientY - dragOffsetY;
+
+        // Get window and viewport dimensions
+        const windowWidth = activeDragWindow.offsetWidth;
+        const windowHeight = activeDragWindow.offsetHeight;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Constrain the position within the viewport
+        // The window's left edge cannot be less than 0
+        newLeft = Math.max(0, newLeft);
+        // The window's top edge cannot be less than 0
+        newTop = Math.max(0, newTop);
+        // The window's right edge (left + width) cannot exceed viewport width
+        newLeft = Math.min(newLeft, viewportWidth - windowWidth);
+        // The window's bottom edge (top + height) cannot exceed viewport height
+        newTop = Math.min(newTop, viewportHeight - windowHeight);
+        
+        // Apply the constrained position
+        activeDragWindow.style.left = newLeft + 'px';
+        activeDragWindow.style.top = newTop + 'px';
+
         if (appData.windowStates[activeDragWindow.id]) {
             appData.windowStates[activeDragWindow.id].userManuallySet = true;
         }
@@ -4236,7 +4259,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$${videoId}`, 
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$${videoId}`, 
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim() 
@@ -4325,7 +4348,7 @@
                  }
             } else { 
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
