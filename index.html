@@ -1018,7 +1018,7 @@
             cursor: pointer;
         }
         .pixel-size-input {
-            width: 40px;
+            width: 25px;
             height: 22px;
             border: 1px inset #7F7F7F;
             padding: 2px 4px;
@@ -1768,7 +1768,7 @@
         pixelAppData: {
             currentColor: '#000000',
             currentTool: 'pencil',
-            pencilSize: 2,
+            pencilSize: 1,
             canvasWidth: 600,
             canvasHeight: 400
         }
@@ -3225,7 +3225,7 @@
             pixelAppData: {
                 currentColor: '#000000',
                 currentTool: 'pencil',
-                pencilSize: 2,
+                pencilSize: 1,
                 canvasWidth: 600,
                 canvasHeight: 400
             }
@@ -4271,7 +4271,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4360,7 +4360,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
@@ -5266,6 +5266,11 @@
     }
 
     // --- Pixel App Functions ---
+    function getEffectivePixelLineWidth() {
+        const displayedSize = parseInt(appData.pixelAppData.pencilSize);
+        return displayedSize === 1 ? 0.5 : displayedSize;
+    }
+
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
@@ -5278,7 +5283,7 @@
         if (appData.pixelAppData.pencilSize > 50) appData.pixelAppData.pencilSize = 50;
 
         pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
-        pixelCtx.lineWidth = appData.pixelAppData.pencilSize;
+        pixelCtx.lineWidth = getEffectivePixelLineWidth();
         pixelCtx.lineCap = 'round';
         pixelCtx.lineJoin = 'round';
 
@@ -5297,18 +5302,18 @@
             let newSize = parseInt(e.target.value);
             if (isNaN(newSize) || newSize < 1) newSize = 1;
             if (newSize > 50) newSize = 50;
-            e.target.value = newSize; // Correct the input field if out of bounds
+            e.target.value = newSize;
             appData.pixelAppData.pencilSize = newSize;
-            pixelCtx.lineWidth = appData.pixelAppData.pencilSize;
+            pixelCtx.lineWidth = getEffectivePixelLineWidth();
             saveData();
         });
-         DOM.pixelSizeInput.addEventListener('change', (e) => { // Ensure value is saved if user blurs after typing
+         DOM.pixelSizeInput.addEventListener('change', (e) => {
             let newSize = parseInt(e.target.value);
             if (isNaN(newSize) || newSize < 1) newSize = 1;
             if (newSize > 50) newSize = 50;
             e.target.value = newSize;
             appData.pixelAppData.pencilSize = newSize;
-            pixelCtx.lineWidth = appData.pixelAppData.pencilSize;
+            pixelCtx.lineWidth = getEffectivePixelLineWidth();
             saveData();
         });
 
@@ -5353,7 +5358,7 @@
         DOM.pixelEraserTool.classList.remove('active');
         DOM.pixelBucketTool.classList.remove('active');
 
-        pixelCtx.lineWidth = appData.pixelAppData.pencilSize;
+        pixelCtx.lineWidth = getEffectivePixelLineWidth();
 
         if (tool === 'pencil') {
             DOM.pixelPencilTool.classList.add('active');
@@ -5363,7 +5368,7 @@
         } else if (tool === 'eraser') {
             DOM.pixelEraserTool.classList.add('active');
             DOM.pixelCanvas.style.cursor = 'crosshair';
-            pixelCtx.globalCompositeOperation = 'destination-out'; // This makes subsequent strokes erase
+            pixelCtx.globalCompositeOperation = 'destination-out';
         } else if (tool === 'bucket') {
             DOM.pixelBucketTool.classList.add('active');
             DOM.pixelCanvas.style.cursor = 'copy';
@@ -5407,7 +5412,7 @@
         pixelIsDrawing = true;
         [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
 
-        pixelCtx.lineWidth = appData.pixelAppData.pencilSize;
+        pixelCtx.lineWidth = getEffectivePixelLineWidth();
         if (appData.pixelAppData.currentTool === 'pencil') {
             pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
             pixelCtx.globalCompositeOperation = 'source-over';
@@ -5436,7 +5441,7 @@
 
     function pixelBucketFill(e) {
         if (appData.pixelAppData.currentTool !== 'bucket') return;
-        pixelCtx.globalCompositeOperation = 'source-over'; // Ensure bucket uses normal drawing
+        pixelCtx.globalCompositeOperation = 'source-over';
 
         const x = Math.floor(e.offsetX);
         const y = Math.floor(e.offsetY);
@@ -5456,7 +5461,7 @@
         const fillColor = [rFill, gFill, bFill, 255];
 
         if (targetColor[0] === fillColor[0] && targetColor[1] === fillColor[1] && targetColor[2] === fillColor[2] && targetColor[3] === fillColor[3]) {
-            return; // Clicked on same color
+            return;
         }
 
         const stack = [[x, y]];
