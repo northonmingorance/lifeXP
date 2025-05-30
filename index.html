@@ -1768,7 +1768,7 @@
         pixelAppData: {
             currentColor: '#000000',
             currentTool: 'pencil',
-            pencilSize: 2, // Default pencil size
+            pencilSize: 2,
             canvasWidth: 600,
             canvasHeight: 400
         }
@@ -1876,7 +1876,7 @@
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons();
-        initPixelApp(); // Initialize Pixel App specific elements and logic
+        initPixelApp();
 
         checkAndAwardScheduledXP();
 
@@ -1911,8 +1911,8 @@
         initWindowInteractions('geminiChatWindow');
         restoreWindowState('geminiChatWindow');
 
-        initWindowInteractions('pixelWindow'); // Ensure pixel window interactions are set up
-        restoreWindowState('pixelWindow'); // And its state is restored
+        initWindowInteractions('pixelWindow');
+        restoreWindowState('pixelWindow');
 
 
         updateMinMaxButtonStates('xpMainWindow');
@@ -1968,7 +1968,7 @@
 
         const trackerWindowObserver = new ResizeObserver(handleAppWindowResize);
         trackerWindowObserver.observe(DOM.xpMainWindow);
-        const pixelWindowObserver = new ResizeObserver(handlePixelWindowResize); // Observe pixel window for resize
+        const pixelWindowObserver = new ResizeObserver(handlePixelWindowResize);
         pixelWindowObserver.observe(DOM.pixelWindow);
 
     }
@@ -4113,8 +4113,6 @@
         saveData();
     }
 
-    // --- PlayJockey Functions ---
-
     function getCurrentPlayJockeyPlaylist() {
         if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
             if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
@@ -5123,7 +5121,6 @@
         }
     }
 
-    // --- Gemini Chat Functions ---
     function renderGeminiChatHistory() {
         if (!DOM.geminiChatDisplayArea) return;
         DOM.geminiChatDisplayArea.innerHTML = '';
@@ -5265,7 +5262,6 @@
         }
     }
 
-    // --- Pixel App Functions ---
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
@@ -5421,8 +5417,8 @@
         const dy = y1 - y0;
         const steps = Math.max(Math.abs(dx), Math.abs(dy));
 
-        const xIncrement = steps === 0 ? 0 : dx / steps; // Avoid division by zero if no movement
-        const yIncrement = steps === 0 ? 0 : dy / steps; // Avoid division by zero
+        const xIncrement = steps === 0 ? 0 : dx / steps;
+        const yIncrement = steps === 0 ? 0 : dy / steps;
 
         let currentX = x0;
         let currentY = y0;
@@ -5434,7 +5430,7 @@
             pixelCtx.globalCompositeOperation = 'destination-out';
         }
 
-        for (let i = 0; i <= steps; i++) { // Use <= to ensure the end point is drawn
+        for (let i = 0; i <= steps; i++) {
             const drawX = Math.floor(currentX - size / 2);
             const drawY = Math.floor(currentY - size / 2);
             pixelCtx.fillRect(drawX, drawY, size, size);
