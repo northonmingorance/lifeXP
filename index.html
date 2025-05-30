@@ -1768,7 +1768,7 @@
         pixelAppData: {
             currentColor: '#000000',
             currentTool: 'pencil',
-            pencilSize: 1,
+            pencilSize: 2, // Default pencil size
             canvasWidth: 600,
             canvasHeight: 400
         }
@@ -1876,7 +1876,7 @@
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         initDesktopIcons();
-        initPixelApp();
+        initPixelApp(); // Initialize Pixel App specific elements and logic
 
         checkAndAwardScheduledXP();
 
@@ -1911,8 +1911,8 @@
         initWindowInteractions('geminiChatWindow');
         restoreWindowState('geminiChatWindow');
 
-        initWindowInteractions('pixelWindow');
-        restoreWindowState('pixelWindow');
+        initWindowInteractions('pixelWindow'); // Ensure pixel window interactions are set up
+        restoreWindowState('pixelWindow'); // And its state is restored
 
 
         updateMinMaxButtonStates('xpMainWindow');
@@ -1968,7 +1968,7 @@
 
         const trackerWindowObserver = new ResizeObserver(handleAppWindowResize);
         trackerWindowObserver.observe(DOM.xpMainWindow);
-        const pixelWindowObserver = new ResizeObserver(handlePixelWindowResize);
+        const pixelWindowObserver = new ResizeObserver(handlePixelWindowResize); // Observe pixel window for resize
         pixelWindowObserver.observe(DOM.pixelWindow);
 
     }
@@ -3225,7 +3225,7 @@
             pixelAppData: {
                 currentColor: '#000000',
                 currentTool: 'pencil',
-                pencilSize: 1,
+                pencilSize: 2,
                 canvasWidth: 600,
                 canvasHeight: 400
             }
@@ -4271,7 +4271,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4360,7 +4360,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
@@ -5266,11 +5266,6 @@
     }
 
     // --- Pixel App Functions ---
-    function getEffectivePixelLineWidth() {
-        const displayedSize = parseInt(appData.pixelAppData.pencilSize);
-        return displayedSize === 1 ? 0.33 : displayedSize;
-    }
-
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
@@ -5282,19 +5277,11 @@
         if (appData.pixelAppData.pencilSize < 1) appData.pixelAppData.pencilSize = 1;
         if (appData.pixelAppData.pencilSize > 50) appData.pixelAppData.pencilSize = 50;
 
-        pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
-        pixelCtx.lineWidth = getEffectivePixelLineWidth();
-        pixelCtx.lineCap = 'round';
-        pixelCtx.lineJoin = 'round';
-
-
         DOM.pixelColorPicker.value = appData.pixelAppData.currentColor;
         DOM.pixelSizeInput.value = appData.pixelAppData.pencilSize;
 
         DOM.pixelColorPicker.addEventListener('input', (e) => {
             appData.pixelAppData.currentColor = e.target.value;
-            pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
-            pixelCtx.fillStyle = appData.pixelAppData.currentColor;
             saveData();
         });
 
@@ -5304,7 +5291,6 @@
             if (newSize > 50) newSize = 50;
             e.target.value = newSize;
             appData.pixelAppData.pencilSize = newSize;
-            pixelCtx.lineWidth = getEffectivePixelLineWidth();
             saveData();
         });
          DOM.pixelSizeInput.addEventListener('change', (e) => {
@@ -5313,7 +5299,6 @@
             if (newSize > 50) newSize = 50;
             e.target.value = newSize;
             appData.pixelAppData.pencilSize = newSize;
-            pixelCtx.lineWidth = getEffectivePixelLineWidth();
             saveData();
         });
 
@@ -5348,7 +5333,6 @@
             }
         });
 
-
         setPixelTool(appData.pixelAppData.currentTool);
     }
 
@@ -5358,21 +5342,15 @@
         DOM.pixelEraserTool.classList.remove('active');
         DOM.pixelBucketTool.classList.remove('active');
 
-        pixelCtx.lineWidth = getEffectivePixelLineWidth();
-
         if (tool === 'pencil') {
             DOM.pixelPencilTool.classList.add('active');
             DOM.pixelCanvas.style.cursor = 'crosshair';
-            pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
-            pixelCtx.globalCompositeOperation = 'source-over';
         } else if (tool === 'eraser') {
             DOM.pixelEraserTool.classList.add('active');
             DOM.pixelCanvas.style.cursor = 'crosshair';
-            pixelCtx.globalCompositeOperation = 'destination-out';
         } else if (tool === 'bucket') {
             DOM.pixelBucketTool.classList.add('active');
             DOM.pixelCanvas.style.cursor = 'copy';
-            pixelCtx.globalCompositeOperation = 'source-over';
         }
         saveData();
     }
@@ -5412,32 +5390,61 @@
         pixelIsDrawing = true;
         [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
 
-        pixelCtx.lineWidth = getEffectivePixelLineWidth();
+        const size = parseInt(appData.pixelAppData.pencilSize);
+        const drawX = Math.floor(e.offsetX - size / 2);
+        const drawY = Math.floor(e.offsetY - size / 2);
+
         if (appData.pixelAppData.currentTool === 'pencil') {
-            pixelCtx.strokeStyle = appData.pixelAppData.currentColor;
+            pixelCtx.fillStyle = appData.pixelAppData.currentColor;
             pixelCtx.globalCompositeOperation = 'source-over';
+            pixelCtx.fillRect(drawX, drawY, size, size);
         } else if (appData.pixelAppData.currentTool === 'eraser') {
-             pixelCtx.globalCompositeOperation = 'destination-out';
+            pixelCtx.globalCompositeOperation = 'destination-out';
+            pixelCtx.fillRect(drawX, drawY, size, size);
         }
-         pixelCtx.beginPath();
-         pixelCtx.moveTo(pixelLastX, pixelLastY);
     }
 
     function stopPixelDrawing() {
-        if (pixelIsDrawing) {
-            pixelCtx.closePath();
-            pixelIsDrawing = false;
-        }
+        pixelIsDrawing = false;
     }
 
     function pixelDraw(e) {
         if (!pixelIsDrawing || appData.pixelAppData.currentTool === 'bucket') return;
 
-        pixelCtx.lineTo(e.offsetX, e.offsetY);
-        pixelCtx.stroke();
+        const x1 = e.offsetX;
+        const y1 = e.offsetY;
+        const x0 = pixelLastX;
+        const y0 = pixelLastY;
+        const size = parseInt(appData.pixelAppData.pencilSize);
 
-        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const steps = Math.max(Math.abs(dx), Math.abs(dy));
+
+        const xIncrement = steps === 0 ? 0 : dx / steps; // Avoid division by zero if no movement
+        const yIncrement = steps === 0 ? 0 : dy / steps; // Avoid division by zero
+
+        let currentX = x0;
+        let currentY = y0;
+
+        if (appData.pixelAppData.currentTool === 'pencil') {
+            pixelCtx.fillStyle = appData.pixelAppData.currentColor;
+            pixelCtx.globalCompositeOperation = 'source-over';
+        } else if (appData.pixelAppData.currentTool === 'eraser') {
+            pixelCtx.globalCompositeOperation = 'destination-out';
+        }
+
+        for (let i = 0; i <= steps; i++) { // Use <= to ensure the end point is drawn
+            const drawX = Math.floor(currentX - size / 2);
+            const drawY = Math.floor(currentY - size / 2);
+            pixelCtx.fillRect(drawX, drawY, size, size);
+            currentX += xIncrement;
+            currentY += yIncrement;
+        }
+
+        [pixelLastX, pixelLastY] = [x1, y1];
     }
+
 
     function pixelBucketFill(e) {
         if (appData.pixelAppData.currentTool !== 'bucket') return;
