@@ -1052,6 +1052,66 @@
             object-fit: contain;
         }
 
+        #captureWindow .window-body {
+            padding: 0;
+            overflow: hidden;
+        }
+        .capture-body-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background-color: #ECE9D8;
+        }
+        .capture-viewport-area {
+            flex-grow: 1;
+            position: relative;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-bottom: 1px solid #ACA899;
+        }
+        #captureVideoFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #captureCountdownOverlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+        }
+        .capture-controls-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            background-color: #ECE9D8;
+            flex-shrink: 0;
+            height: 50px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .capture-main-action-btn {
+            padding: 6px 15px;
+            font-size: 12px;
+            min-width: 120px;
+        }
+        .capture-mode-toggle-btn {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+        }
 
     </style>
 
@@ -1080,6 +1140,10 @@
     <div class="desktop-icon" id="pixelIcon" data-window-id="pixelWindow">
         <div class="icon-image">🎨</div>
         <div class="icon-label">Pixel Craft</div>
+    </div>
+    <div class="desktop-icon" id="captureIcon" data-window-id="captureWindow">
+        <div class="icon-image">📸</div>
+        <div class="icon-label">Capture</div>
     </div>
 
 
@@ -1226,6 +1290,31 @@
             </div>
         </div>
         <div class="resize-handle" id="pixelResizeHandle"></div>
+    </div>
+
+    <div class="xp-window" id="captureWindow">
+        <div class="title-bar" id="captureWindowTitleBar">
+            <span class="title-bar-text">Capture</span>
+            <div class="title-bar-controls">
+                <button id="captureMinimizeBtn" title="Minimize">0</button>
+                <button id="captureMaximizeBtn" title="Maximize">1</button>
+                <button title="Close" id="captureCloseBtn">r</button>
+            </div>
+        </div>
+        <div class="window-body" id="captureWindowBody">
+            <div class="capture-body-container">
+                <div class="capture-viewport-area">
+                    <video id="captureVideoFeed" playsinline muted></video>
+                    <div id="captureCountdownOverlay">3</div>
+                    <canvas id="captureCanvas" style="display:none;"></canvas>
+                </div>
+                <div class="capture-controls-bar">
+                    <button id="captureActionBtn" class="xp-button capture-main-action-btn">📷 Take Photo</button>
+                    <button id="captureModeBtn" class="xp-button xp-button-small capture-mode-toggle-btn">🎞️ Video Mode</button>
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle" id="captureResizeHandle"></div>
     </div>
 
 
@@ -1561,6 +1650,8 @@
     const MIN_GEMINI_CHAT_HEIGHT = 250;
     const MIN_PIXEL_WIDTH = 375;
     const MIN_PIXEL_HEIGHT = 250;
+    const MIN_CAPTURE_WIDTH = 320;
+    const MIN_CAPTURE_HEIGHT = 300;
 
 
     const STANDARD_COLORS = [
@@ -1599,12 +1690,12 @@
     };
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCVWUnnXiOvKRqbvngafdZC7DedEY-7vpg",
-      authDomain: "lifexpapp-f5578.firebaseapp.com",
-      projectId: "lifexpapp-f5578",
-      storageBucket: "lifexpapp-f5578.appspot.com",
-      messagingSenderId: "194098013746",
-      appId: "1:194098013746:web:720ba296ee9e40dee37e2b"
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+      projectId: "YOUR_FIREBASE_PROJECT_ID",
+      storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+      appId: "YOUR_FIREBASE_APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -1711,11 +1802,25 @@
         pixelCanvas: getById('pixelCanvas'),
         pixelCanvasContainer: getById('pixelCanvasContainer'),
 
+        captureWindow: getById('captureWindow'),
+        captureWindowTitleBar: getById('captureWindowTitleBar'),
+        captureWindowBody: getById('captureWindowBody'),
+        captureResizeHandle: getById('captureResizeHandle'),
+        captureMinimizeBtn: getById('captureMinimizeBtn'),
+        captureMaximizeBtn: getById('captureMaximizeBtn'),
+        captureCloseBtn: getById('captureCloseBtn'),
+        captureVideoFeed: getById('captureVideoFeed'),
+        captureCountdownOverlay: getById('captureCountdownOverlay'),
+        captureCanvas: getById('captureCanvas'),
+        captureActionBtn: getById('captureActionBtn'),
+        captureModeBtn: getById('captureModeBtn'),
+
 
         textEditorIcon: getById('textEditorIcon'),
         trackerIcon: getById('trackerIcon'),
         playJockeyIcon: getById('playJockeyIcon'),
         pixelIcon: getById('pixelIcon'),
+        captureIcon: getById('captureIcon'),
 
         newAreaModal: getById(MODAL_IDS.NEW_AREA),
         newAreaNameInput: getById('newAreaName'),
@@ -1816,6 +1921,9 @@
             pencilSize: 2,
             canvasWidth: 600,
             canvasHeight: 400
+        },
+        captureAppData: {
+            currentMode: 'photo', // 'photo' or 'video'
         }
     };
 
@@ -1839,6 +1947,13 @@
     let pixelCtx = null;
     let pixelIsDrawing = false;
     let pixelLastX, pixelLastY;
+
+    let captureStream = null;
+    let captureMediaRecorder = null;
+    let captureRecordedChunks = [];
+    let captureIsRecording = false;
+    let captureCountdownTimer = null;
+    let captureIsProcessing = false;
 
 
     function parseYYYYMMDDToLocalDate(dateString) {
@@ -1881,7 +1996,6 @@
                 const keyParts = achievementsKey.split('_');
 
                 if (keyParts.length < 3) {
-                    
                     continue;
                 }
                 const areaName = keyParts.slice(1, keyParts.length - 1).join('_');
@@ -1891,14 +2005,12 @@
                         ach.xpAwarded = false;
                     }
                     if (!ach.scheduledDate) {
-                        
                         continue;
                     }
 
                     if (!ach.xpAwarded) {
                         const achievementScheduledDate = parseYYYYMMDDToLocalDate(ach.scheduledDate);
                         if (achievementScheduledDate && achievementScheduledDate <= today) {
-                            
                             addXpToArea(areaName, ach.xp);
                             updateQuestProgress(areaName, ach.xp);
                             ach.xpAwarded = true;
@@ -1922,6 +2034,7 @@
         populateColorSwatches();
         initDesktopIcons();
         initPixelApp();
+        initCaptureApp();
 
         checkAndAwardScheduledXP();
 
@@ -1931,7 +2044,6 @@
             minTrackerAppWidth = 375;
         }
         if (appData.viewMode !== 'week' && appData.viewMode !== 'day') {
-             
              appData.viewMode = 'week';
              minTrackerAppWidth = 905;
         }
@@ -1959,12 +2071,16 @@
         initWindowInteractions('pixelWindow');
         restoreWindowState('pixelWindow');
 
+        initWindowInteractions('captureWindow');
+        restoreWindowState('captureWindow');
+
 
         updateMinMaxButtonStates('xpMainWindow');
         updateMinMaxButtonStates('textEditorWindow');
         updateMinMaxButtonStates('playJockeyWindow');
         updateMinMaxButtonStates('geminiChatWindow');
         updateMinMaxButtonStates('pixelWindow');
+        updateMinMaxButtonStates('captureWindow');
 
 
         renderPlayJockeyTabs();
@@ -1991,7 +2107,7 @@
         }
 
         let maxLoadedWindowZ = highestZIndex;
-        ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow', 'geminiChatWindow', 'pixelWindow'].forEach(windowId => {
+        ['xpMainWindow', 'textEditorWindow', 'playJockeyWindow', 'geminiChatWindow', 'pixelWindow', 'captureWindow'].forEach(windowId => {
             if (appData.windowStates[windowId] && appData.windowStates[windowId].zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(appData.windowStates[windowId].zIndex));
             }
@@ -2019,13 +2135,14 @@
     }
 
     function initDesktopIcons() {
-        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon];
+        const icons = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon, DOM.captureIcon];
         const iconData = [
             { id: 'trackerIcon', defaultX: 0, defaultY: 0, element: DOM.trackerIcon },
             { id: 'textEditorIcon', defaultX: 0, defaultY: 100, element: DOM.textEditorIcon },
             { id: 'playJockeyIcon', defaultX: 0, defaultY: 200, element: DOM.playJockeyIcon },
             { id: 'geminiChatIcon', defaultX: 0, defaultY: 300, element: DOM.geminiChatIcon },
-            { id: 'pixelIcon', defaultX: 0, defaultY: 400, element: DOM.pixelIcon }
+            { id: 'pixelIcon', defaultX: 0, defaultY: 400, element: DOM.pixelIcon },
+            { id: 'captureIcon', defaultX: 0, defaultY: 500, element: DOM.captureIcon }
         ];
 
         iconData.forEach(data => {
@@ -2098,7 +2215,7 @@
         const iconHeight = draggedIcon.offsetHeight || 100;
 
         const checkCollisionAt = (x, y, currentDraggedIcon) => {
-            const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon].filter(
+            const iconsToCompare = [DOM.textEditorIcon, DOM.trackerIcon, DOM.playJockeyIcon, DOM.geminiChatIcon, DOM.pixelIcon, DOM.captureIcon].filter(
                 icon => icon && icon !== currentDraggedIcon && icon.style.left && icon.style.top
             );
 
@@ -2160,12 +2277,9 @@
             if (attempt >= maxAttempts) break;
             layer++;
             if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
-                 
                  break;
             }
         }
-
-        
         return { x: snappedX, y: snappedY };
     }
 
@@ -2214,11 +2328,9 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            
             restoreWindowState(windowId);
             state = appData.windowStates[windowId];
             if(!state) {
-                
                 return;
             }
         }
@@ -2230,7 +2342,7 @@
 
             windowElement.style.display = 'flex';
             windowElement.classList.remove('minimized');
-            restoreWindowState(windowId);
+            restoreWindowState(windowId); // This will reapply saved/default positions/sizes
 
             if (windowId === 'playJockeyWindow') {
                 if (appData.playJockeyCurrentVideo && !ytPlayerInstance && isYouTubeApiReady) {
@@ -2243,8 +2355,11 @@
             if (windowId === 'pixelWindow') {
                 handlePixelWindowResize();
             }
+            if (windowId === 'captureWindow') {
+                startCaptureStream();
+            }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId);
+            maximizeWindow(windowId); // This handles restoring from minimized state
         }
 
         bringToFront(windowElement);
@@ -2373,11 +2488,13 @@
         } else if (windowId === 'pixelWindow') {
             titleBarElement = DOM.pixelWindowTitleBar;
             resizeHandleElement = DOM.pixelResizeHandle;
+        } else if (windowId === 'captureWindow') {
+            titleBarElement = DOM.captureWindowTitleBar;
+            resizeHandleElement = DOM.captureResizeHandle;
         }
 
 
         if (!windowElement || !titleBarElement) {
-            
             return;
         }
 
@@ -2385,7 +2502,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar, #pixelCanvas, .pixel-tool-button, .pixel-color-picker, .pixel-menu-item'))) {
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar, #pixelCanvas, .pixel-tool-button, .pixel-color-picker, .pixel-menu-item, #captureVideoFeed, .capture-main-action-btn, .capture-mode-toggle-btn'))) {
                  bringToFront(windowElement);
             }
         }, true);
@@ -2402,6 +2519,9 @@
             }
             if (windowId === 'pixelWindow' && DOM.pixelCanvas) {
                 DOM.pixelCanvas.style.pointerEvents = 'none';
+            }
+             if (windowId === 'captureWindow' && DOM.captureVideoFeed) {
+                DOM.captureVideoFeed.style.pointerEvents = 'none';
             }
 
             document.addEventListener('mousemove', doDrag);
@@ -2424,6 +2544,9 @@
                 }
                 if (windowId === 'pixelWindow' && DOM.pixelCanvas) {
                     DOM.pixelCanvas.style.pointerEvents = 'none';
+                }
+                if (windowId === 'captureWindow' && DOM.captureVideoFeed) {
+                    DOM.captureVideoFeed.style.pointerEvents = 'none';
                 }
                 document.addEventListener('mousemove', doResize);
                 document.addEventListener('mouseup', stopDragOrResize);
@@ -2476,6 +2599,9 @@
         } else if (windowId === 'pixelWindow') {
             currentMinWidth = MIN_PIXEL_WIDTH;
             currentMinHeight = MIN_PIXEL_HEIGHT;
+        } else if (windowId === 'captureWindow') {
+            currentMinWidth = MIN_CAPTURE_WIDTH;
+            currentMinHeight = MIN_CAPTURE_HEIGHT;
         } else {
             return;
         }
@@ -2520,6 +2646,9 @@
         if (operatedWindow && operatedWindow.id === 'pixelWindow' && DOM.pixelCanvas) {
             DOM.pixelCanvas.style.pointerEvents = 'auto';
         }
+        if (operatedWindow && operatedWindow.id === 'captureWindow' && DOM.captureVideoFeed) {
+            DOM.captureVideoFeed.style.pointerEvents = 'auto';
+        }
 
 
         if (windowToSaveState) {
@@ -2546,7 +2675,6 @@
 
         const state = appData.windowStates[windowId];
         if (!state) {
-            
             return;
         }
 
@@ -2575,6 +2703,10 @@
             currentMinWidth = MIN_PIXEL_WIDTH; currentMinHeight = MIN_PIXEL_HEIGHT;
             defaultWidth = 650; defaultHeight = 500;
             defaultOffsetX = 200; defaultOffsetY = 200;
+        } else if (windowId === 'captureWindow') {
+            currentMinWidth = MIN_CAPTURE_WIDTH; currentMinHeight = MIN_CAPTURE_HEIGHT;
+            defaultWidth = 400; defaultHeight = 350;
+            defaultOffsetX = 250; defaultOffsetY = 250;
         } else {
             return;
         }
@@ -2844,6 +2976,23 @@
             win.style.display = 'none';
         });
 
+        DOM.captureMinimizeBtn.addEventListener('click', () => minimizeWindow('captureWindow'));
+        DOM.captureMaximizeBtn.addEventListener('click', () => maximizeWindow('captureWindow'));
+        DOM.captureCloseBtn.addEventListener('click', () => {
+            const win = DOM.captureWindow;
+            const windowId = 'captureWindow';
+            let state = appData.windowStates[windowId];
+            if (state) {
+                state.hiddenByUser = true;
+            }
+            if (captureIsRecording) {
+                stopCaptureVideoRecording();
+            }
+            stopCaptureStream();
+            saveWindowState(windowId);
+            win.style.display = 'none';
+        });
+
 
         DOM.geminiChatSendBtn.addEventListener('click', handleSendGeminiPrompt);
         DOM.geminiChatPromptInput.addEventListener('keypress', (e) => {
@@ -2910,6 +3059,9 @@
         DOM.savePixelCanvasSizeBtn.addEventListener('click', handleSavePixelCanvasSize);
         DOM.confirmPixelResizeBtn.addEventListener('click', executePixelCanvasResize);
 
+        DOM.captureActionBtn.addEventListener('click', handleCaptureAction);
+        DOM.captureModeBtn.addEventListener('click', toggleCaptureMode);
+
 
         window.addEventListener('resize', () => {
             setWindowDefaults('xpMainWindow', true);
@@ -2917,6 +3069,7 @@
             setWindowDefaults('playJockeyWindow', true);
             setWindowDefaults('geminiChatWindow', true);
             setWindowDefaults('pixelWindow', true);
+            setWindowDefaults('captureWindow', true);
             saveData();
         });
 
@@ -2946,8 +3099,6 @@
                 state.height = parseInt(lastNormalStates[windowId].height);
                 state.x = parseInt(lastNormalStates[windowId].left);
                 state.y = parseInt(lastNormalStates[windowId].top);
-            } else {
-                
             }
         } else {
             state.wasMaximizedBeforeMinimize = false;
@@ -2958,6 +3109,13 @@
         }
         appWindow.classList.remove('true-maximized');
         appWindow.classList.add('minimized');
+
+        if (windowId === 'captureWindow') {
+            if (captureIsRecording) {
+                stopCaptureVideoRecording();
+            }
+            stopCaptureStream();
+        }
 
         updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
@@ -2993,6 +3151,7 @@
                 else if (windowId === 'playJockeyWindow') { minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT;}
                 else if (windowId === 'geminiChatWindow') { minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT;}
                 else if (windowId === 'pixelWindow') { minW = MIN_PIXEL_WIDTH; minH = MIN_PIXEL_HEIGHT;}
+                else if (windowId === 'captureWindow') { minW = MIN_CAPTURE_WIDTH; minH = MIN_CAPTURE_HEIGHT;}
 
 
                 appWindow.style.width = Math.max(minW, state.width || parseInt(currentLastNormal.width) || 0) + 'px';
@@ -3000,6 +3159,9 @@
                 appWindow.style.left = (state.x || parseInt(currentLastNormal.left) || 0) + 'px';
                 appWindow.style.top = (state.y || parseInt(currentLastNormal.top) || 0) + 'px';
                 state.maximized = false;
+            }
+            if (windowId === 'captureWindow') {
+                startCaptureStream();
             }
         } else if (appWindow.classList.contains('true-maximized')) {
             if (currentLastNormal.width && currentLastNormal.height) {
@@ -3060,6 +3222,9 @@
         } else if (windowId === 'pixelWindow') {
             minimizeBtn = DOM.pixelMinimizeBtn;
             maximizeBtn = DOM.pixelMaximizeBtn;
+        } else if (windowId === 'captureWindow') {
+            minimizeBtn = DOM.captureMinimizeBtn;
+            maximizeBtn = DOM.captureMaximizeBtn;
         }
 
 
@@ -3103,7 +3268,6 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
             state.hiddenByUser = (win.style.display === 'none');
@@ -3128,7 +3292,6 @@
     function restoreWindowState(windowId) {
         const win = getById(windowId);
         if (!win) {
-            
             return;
         }
 
@@ -3185,6 +3348,7 @@
             else if (windowId === 'playJockeyWindow') { defaultNormalWidth = 480; defaultNormalHeight = 705; minW = MIN_PLAYJOCKEY_WIDTH; minH = MIN_PLAYJOCKEY_HEIGHT; defaultX = 100; defaultY = 100;}
             else if (windowId === 'geminiChatWindow') { defaultNormalWidth = 500; defaultNormalHeight = 400; minW = MIN_GEMINI_CHAT_WIDTH; minH = MIN_GEMINI_CHAT_HEIGHT; defaultX = 150; defaultY = 150;}
             else if (windowId === 'pixelWindow') { defaultNormalWidth = 650; defaultNormalHeight = 500; minW = MIN_PIXEL_WIDTH; minH = MIN_PIXEL_HEIGHT; defaultX = 200; defaultY = 200;}
+            else if (windowId === 'captureWindow') { defaultNormalWidth = 400; defaultNormalHeight = 350; minW = MIN_CAPTURE_WIDTH; minH = MIN_CAPTURE_HEIGHT; defaultX = 250; defaultY = 250;}
 
 
             lastNormalStates[windowId] = {
@@ -3204,6 +3368,7 @@
                 else if (windowId === 'playJockeyWindow') { currentMinWidth = MIN_PLAYJOCKEY_WIDTH; currentMinHeight = MIN_PLAYJOCKEY_HEIGHT; }
                 else if (windowId === 'geminiChatWindow') { currentMinWidth = MIN_GEMINI_CHAT_WIDTH; currentMinHeight = MIN_GEMINI_CHAT_HEIGHT; }
                 else if (windowId === 'pixelWindow') { currentMinWidth = MIN_PIXEL_WIDTH; currentMinHeight = MIN_PIXEL_HEIGHT; }
+                else if (windowId === 'captureWindow') { currentMinWidth = MIN_CAPTURE_WIDTH; currentMinHeight = MIN_CAPTURE_HEIGHT; }
                 else { currentMinWidth = 100; currentMinHeight = 100; }
 
                 win.style.left = state.x + 'px';
@@ -3223,6 +3388,9 @@
         if (isNowVisible && windowId === 'pixelWindow') {
             handlePixelWindowResize();
         }
+        if (isNowVisible && windowId === 'captureWindow' && !state.minimized) {
+            startCaptureStream();
+        }
         updateMinMaxButtonStates(windowId);
     }
 
@@ -3231,7 +3399,6 @@
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (error) {
-            
             if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
             }
@@ -3250,14 +3417,16 @@
                 textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: true },
                 playJockeyWindow: { x: null, y: null, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
                 geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true },
-                pixelWindow: { x: null, y: null, width: 650, height: 500, maximized: false, minimized: false, zIndex: 7, userManuallySet: false, hiddenByUser: true }
+                pixelWindow: { x: null, y: null, width: 650, height: 500, maximized: false, minimized: false, zIndex: 7, userManuallySet: false, hiddenByUser: true },
+                captureWindow: { x: null, y: null, width: 400, height: 350, maximized: false, minimized: false, zIndex: 6, userManuallySet: false, hiddenByUser: true }
             },
             iconPositions: {
                 trackerIcon: { x: 0, y: 0 },
                 textEditorIcon: { x: 0, y: 100 },
                 playJockeyIcon: { x: 0, y: 200 },
                 geminiChatIcon: { x: 0, y: 300 },
-                pixelIcon: { x: 0, y: 400 }
+                pixelIcon: { x: 0, y: 400 },
+                captureIcon: {x: 0, y: 500}
             },
             areas: [],
             achievements: {},
@@ -3279,6 +3448,9 @@
                 pencilSize: 2,
                 canvasWidth: 600,
                 canvasHeight: 400
+            },
+            captureAppData: {
+                currentMode: 'photo'
             }
         };
 
@@ -3293,10 +3465,14 @@
                         textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(loadedData.windowStates ? loadedData.windowStates.textEditorWindow : {}) },
                         playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(loadedData.windowStates ? loadedData.windowStates.playJockeyWindow : {}) },
                         geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(loadedData.windowStates ? loadedData.windowStates.geminiChatWindow : {}) },
-                        pixelWindow: { ...defaultAppData.windowStates.pixelWindow, ...(loadedData.windowStates ? loadedData.windowStates.pixelWindow : {}) }
+                        pixelWindow: { ...defaultAppData.windowStates.pixelWindow, ...(loadedData.windowStates ? loadedData.windowStates.pixelWindow : {}) },
+                        captureWindow: { ...defaultAppData.windowStates.captureWindow, ...(loadedData.windowStates ? loadedData.windowStates.captureWindow : {}) }
                     },
 
-                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}), pixelIcon: (loadedData.iconPositions && loadedData.iconPositions.pixelIcon) ? loadedData.iconPositions.pixelIcon : defaultAppData.iconPositions.pixelIcon },
+                    iconPositions: { ...defaultAppData.iconPositions, ...(loadedData.iconPositions || {}),
+                        pixelIcon: (loadedData.iconPositions && loadedData.iconPositions.pixelIcon) ? loadedData.iconPositions.pixelIcon : defaultAppData.iconPositions.pixelIcon,
+                        captureIcon: (loadedData.iconPositions && loadedData.iconPositions.captureIcon) ? loadedData.iconPositions.captureIcon : defaultAppData.iconPositions.captureIcon
+                     },
                     playJockeyPlaylists: (loadedData.playJockeyPlaylists && loadedData.playJockeyPlaylists.length > 0)
                         ? loadedData.playJockeyPlaylists.map(pl => ({
                             ...pl,
@@ -3318,7 +3494,8 @@
                     playJockeyRepeatState: ["off", "playlist", "song"].includes(loadedData.playJockeyRepeatState) ? loadedData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
                     playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [],
                     geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : [],
-                    pixelAppData: { ...defaultAppData.pixelAppData, ...(loadedData.pixelAppData || {}), pencilSize: (loadedData.pixelAppData && typeof loadedData.pixelAppData.pencilSize === 'number') ? loadedData.pixelAppData.pencilSize : defaultAppData.pixelAppData.pencilSize }
+                    pixelAppData: { ...defaultAppData.pixelAppData, ...(loadedData.pixelAppData || {}), pencilSize: (loadedData.pixelAppData && typeof loadedData.pixelAppData.pencilSize === 'number') ? loadedData.pixelAppData.pencilSize : defaultAppData.pixelAppData.pencilSize },
+                    captureAppData: { ...defaultAppData.captureAppData, ...(loadedData.captureAppData || {}) }
                 };
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
@@ -3347,7 +3524,6 @@
                 }
 
             } catch (error) {
-                
                 appData = JSON.parse(JSON.stringify(defaultAppData));
             }
         } else {
@@ -3375,7 +3551,7 @@
             appData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
         }
         const startDate = parseYYYYMMDDToLocalDate(appData.currentWeekStartDate);
-        return `${startDate.getFullYear()}-W${String(getWeekNumber(startDate)).padStart(2, '0')}`;
+        return `<span class="math-inline">\{startDate\.getFullYear\(\)\}\-W</span>{String(getWeekNumber(startDate)).padStart(2, '0')}`;
     }
 
     function navigateWeek(offsetInDays) {
@@ -3535,20 +3711,20 @@
 
             nameTd.innerHTML = `
                 <div class="area-name-wrapper">
-                    <span>${decodeHtmlEntities(area.name)}</span>
-                    <button class="xp-button delete-area-btn" data-area-name="${area.name}" title="Delete ${area.name}">X</button>
-                </div>
-                <div class="area-stats">
-                    <span>Level: <span class="area-level">${area.level}</span></span>
+                    <span><span class="math-inline">\{decodeHtmlEntities\(area\.name\)\}</span\>
+<button class\="xp\-button delete\-area\-btn" data\-area\-name\="</span>{area.name}" title="Delete <span class="math-inline">\{area\.name\}"\>X</button\>
+</div\>
+<div class\="area\-stats"\>
+<span\>Level\: <span class\="area\-level"\></span>{area.level}</span></span>
                     <div class="xp-bar-container">
-                        <div class="xp-bar" style="width: ${percentage}%;"></div>
-                        <div class="xp-bar-text"><span class="area-xp">${currentXP}</span> / ${xpToNext} XP</div>
+                        <div class="xp-bar" style="width: <span class="math-inline">\{percentage\}%;"\></div\>
+<div class\="xp\-bar\-text"\><span class\="area\-xp"\></span>{currentXP}</span> / ${xpToNext} XP</div>
                     </div>
                 </div>`;
             tr.appendChild(nameTd);
 
             const renderCellContent = (td, areaName, dayIdx) => {
-                const achievementsKey = `${appData.currentWeekStartDate}_${areaName}_${dayIdx}`;
+                const achievementsKey = `<span class="math-inline">\{appData\.currentWeekStartDate\}\_</span>{areaName}_${dayIdx}`;
                 const cellAchievements = appData.achievements[achievementsKey] || [];
 
                 cellAchievements.forEach(ach => {
@@ -3572,8 +3748,8 @@
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'achievement-item-actions';
                     actionsDiv.innerHTML = `
-                        <button class="xp-button xp-button-small edit-ach-btn" data-ach-key="${achievementsKey}" data-ach-id="${ach.id}" title="Edit">Edit</button>
-                        <button class="xp-button xp-button-small remove-ach-btn" data-ach-key="${achievementsKey}" data-ach-id="${ach.id}" title="Delete">Delete</button>
+                        <button class="xp-button xp-button-small edit-ach-btn" data-ach-key="<span class="math-inline">\{achievementsKey\}" data\-ach\-id\="</span>{ach.id}" title="Edit">Edit</button>
+                        <button class="xp-button xp-button-small remove-ach-btn" data-ach-key="<span class="math-inline">\{achievementsKey\}" data\-ach\-id\="</span>{ach.id}" title="Delete">Delete</button>
                     `;
                     achDiv.appendChild(actionsDiv);
                     let titleText = `XP: ${ach.xp} | Added: ${new Date(ach.timestamp).toLocaleString()}`;
@@ -3743,7 +3919,7 @@
         const isEditing = editingKey && editingId;
         let achievement;
 
-        const achievementsKey = isEditing ? editingKey : `${appData.currentWeekStartDate}_${areaName}_${dayIndex}`;
+        const achievementsKey = isEditing ? editingKey : `<span class="math-inline">\{appData\.currentWeekStartDate\}\_</span>{areaName}_${dayIndex}`;
         if (!appData.achievements[achievementsKey] && !isEditing) {
             appData.achievements[achievementsKey] = [];
         }
@@ -3949,7 +4125,7 @@
                 appData.quests[weekId].push({
                     id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}_${i}`,
                     areaName: selectedArea.name,
-                    description: `Earn ${targetXPEarned} XP in "${decodeHtmlEntities(selectedArea.name)}" this week.`,
+                    description: `Earn <span class="math-inline">\{targetXPEarned\} XP in "</span>{decodeHtmlEntities(selectedArea.name)}" this week.`,
                     targetXPEarned: targetXPEarned,
                     currentXPEarned: 0,
                     rewardXP: rewardXP,
@@ -3974,7 +4150,7 @@
                     quest.completed = true;
                     quest.currentXPEarned = quest.targetXPEarned;
                     addXpToArea(quest.areaName, quest.rewardXP);
-                    alert(`Quest Completed: ${decodeHtmlEntities(quest.description)}\n+${quest.rewardXP} XP to ${decodeHtmlEntities(quest.areaName)}!`);
+                    alert(`Quest Completed: <span class="math-inline">\{decodeHtmlEntities\(quest\.description\)\}\\n\+</span>{quest.rewardXP} XP to ${decodeHtmlEntities(quest.areaName)}!`);
                     questCompletedThisUpdate = true;
                 }
             }
@@ -4126,7 +4302,7 @@
         return {
             id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}`,
             areaName: selectedArea.name,
-            description: `Earn ${targetXPEarned} XP in "${decodeHtmlEntities(selectedArea.name)}" this week. (Refreshed)`,
+            description: `Earn <span class="math-inline">\{targetXPEarned\} XP in "</span>{decodeHtmlEntities(selectedArea.name)}" this week. (Refreshed)`,
             targetXPEarned: targetXPEarned,
             currentXPEarned: 0,
             rewardXP: rewardXP,
