@@ -5628,6 +5628,8 @@
             return;
         }
 
+        closeModal(MODAL_IDS.CONFIRM_PIXEL_RESIZE);
+
         appData.pixelAppData.canvasWidth = newWidth;
         appData.pixelAppData.canvasHeight = newHeight;
 
@@ -5637,8 +5639,6 @@
         clearPixelCanvas();
         handlePixelWindowResize();
         saveData();
-
-        closeModal(MODAL_IDS.CONFIRM_PIXEL_RESIZE);
     }
 
 
