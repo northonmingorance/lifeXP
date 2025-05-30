@@ -991,11 +991,11 @@
         }
         .pixel-tool-button {
             font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 24px;
+            font-size: 32px;
             border: 1px outset #7F7F7F;
             background-color: #ECE9D8;
-            min-width: 35px;
-            height: 35px;
+            min-width: 40px;
+            height: 40px;
             padding: 0;
             cursor: default;
             display: flex;
@@ -1010,15 +1010,15 @@
             border-style: inset;
         }
         .pixel-color-picker {
-            width: 35px;
-            height: 35px;
+            width: 40px;
+            height: 40px;
             border: 1px solid #7F7F7F;
             padding: 0;
             background-color: #ECE9D8;
             cursor: pointer;
         }
         .pixel-size-input {
-            width: 30px;
+            width: 35px;
             height: 30px;
             border: 1px inset #7F7F7F;
             padding: 2px 4px;
@@ -1215,6 +1215,7 @@
                     File
                     <div class="pixel-dropdown-content">
                         <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
+                        <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear canvas</div>
                     </div>
                 </div>
             </div>
@@ -1666,6 +1667,7 @@
         pixelCloseBtn: getById('pixelCloseBtn'),
         pixelMenuBar: getById('pixelMenuBar'),
         pixelFileSave: getById('pixelFileSave'),
+        pixelFileClearCanvas: getById('pixelFileClearCanvas'),
         pixelPencilTool: getById('pixelPencilTool'),
         pixelEraserTool: getById('pixelEraserTool'),
         pixelBucketTool: getById('pixelBucketTool'),
@@ -4113,6 +4115,8 @@
         saveData();
     }
 
+    // --- PlayJockey Functions ---
+
     function getCurrentPlayJockeyPlaylist() {
         if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
             if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
@@ -5121,6 +5125,7 @@
         }
     }
 
+    // --- Gemini Chat Functions ---
     function renderGeminiChatHistory() {
         if (!DOM.geminiChatDisplayArea) return;
         DOM.geminiChatDisplayArea.innerHTML = '';
@@ -5262,6 +5267,7 @@
         }
     }
 
+    // --- Pixel App Functions ---
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
@@ -5310,6 +5316,8 @@
         DOM.pixelCanvas.addEventListener('click', pixelBucketFill);
 
         DOM.pixelFileSave.addEventListener('click', savePixelCanvas);
+        DOM.pixelFileClearCanvas.addEventListener('click', clearPixelCanvas);
+
 
         let pixelActiveMenu = null;
         DOM.pixelMenuBar.querySelectorAll('.pixel-menu-bar > .pixel-menu-item').forEach(menuItem => {
@@ -5323,7 +5331,7 @@
             });
         });
         window.addEventListener('click', (event) => {
-            if (pixelActiveMenu && !pixelActiveMenu.contains(event.target)) {
+            if (pixelActiveMenu && !pixelActiveMenu.contains(event.target) && !event.target.closest('.pixel-menu-item')) {
                 pixelActiveMenu.classList.remove('open');
                 pixelActiveMenu = null;
             }
@@ -5386,9 +5394,15 @@
         pixelIsDrawing = true;
         [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
 
+        const scaleX = DOM.pixelCanvas.width / DOM.pixelCanvas.offsetWidth;
+        const scaleY = DOM.pixelCanvas.height / DOM.pixelCanvas.offsetHeight;
+        const canvasX = e.offsetX * scaleX;
+        const canvasY = e.offsetY * scaleY;
+
         const size = parseInt(appData.pixelAppData.pencilSize);
-        const drawX = Math.floor(e.offsetX - size / 2);
-        const drawY = Math.floor(e.offsetY - size / 2);
+        const drawX = Math.floor(canvasX - size / 2);
+        const drawY = Math.floor(canvasY - size / 2);
+
 
         if (appData.pixelAppData.currentTool === 'pencil') {
             pixelCtx.fillStyle = appData.pixelAppData.currentColor;
@@ -5407,10 +5421,15 @@
     function pixelDraw(e) {
         if (!pixelIsDrawing || appData.pixelAppData.currentTool === 'bucket') return;
 
-        const x1 = e.offsetX;
-        const y1 = e.offsetY;
-        const x0 = pixelLastX;
-        const y0 = pixelLastY;
+        const scaleX = DOM.pixelCanvas.width / DOM.pixelCanvas.offsetWidth;
+        const scaleY = DOM.pixelCanvas.height / DOM.pixelCanvas.offsetHeight;
+
+        const x1 = e.offsetX * scaleX;
+        const y1 = e.offsetY * scaleY;
+        const x0 = pixelLastX * scaleX; // Ensure last coordinates are also scaled if they weren't from startPixelDrawing
+        const y0 = pixelLastY * scaleY;
+
+
         const size = parseInt(appData.pixelAppData.pencilSize);
 
         const dx = x1 - x0;
@@ -5438,7 +5457,7 @@
             currentY += yIncrement;
         }
 
-        [pixelLastX, pixelLastY] = [x1, y1];
+        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY]; // Store unscaled for next mousemove
     }
 
 
@@ -5446,8 +5465,11 @@
         if (appData.pixelAppData.currentTool !== 'bucket') return;
         pixelCtx.globalCompositeOperation = 'source-over';
 
-        const x = Math.floor(e.offsetX);
-        const y = Math.floor(e.offsetY);
+        const scaleX = DOM.pixelCanvas.width / DOM.pixelCanvas.offsetWidth;
+        const scaleY = DOM.pixelCanvas.height / DOM.pixelCanvas.offsetHeight;
+        const x = Math.floor(e.offsetX * scaleX);
+        const y = Math.floor(e.offsetY * scaleY);
+
 
         const canvasWidth = DOM.pixelCanvas.width;
         const canvasHeight = DOM.pixelCanvas.height;
@@ -5513,6 +5535,17 @@
             document.body.removeChild(downloadLink);
         }
         const pixelFileMenu = DOM.pixelFileSave.closest('.pixel-menu-item');
+        if(pixelFileMenu && pixelFileMenu.classList.contains('open')) {
+            pixelFileMenu.classList.remove('open');
+        }
+    }
+
+    function clearPixelCanvas() {
+        if (pixelCtx && DOM.pixelCanvas) {
+            pixelCtx.fillStyle = 'white';
+            pixelCtx.fillRect(0, 0, DOM.pixelCanvas.width, DOM.pixelCanvas.height);
+        }
+        const pixelFileMenu = DOM.pixelFileClearCanvas.closest('.pixel-menu-item');
         if(pixelFileMenu && pixelFileMenu.classList.contains('open')) {
             pixelFileMenu.classList.remove('open');
         }
