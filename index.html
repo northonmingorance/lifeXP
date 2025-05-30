@@ -1018,7 +1018,7 @@
             cursor: pointer;
         }
         .pixel-size-input {
-            width: 25px;
+            width: 35px; /* Reduced width */
             height: 22px;
             border: 1px inset #7F7F7F;
             padding: 2px 4px;
@@ -1768,7 +1768,7 @@
         pixelAppData: {
             currentColor: '#000000',
             currentTool: 'pencil',
-            pencilSize: 1,
+            pencilSize: 2, // This is the value displayed in the input
             canvasWidth: 600,
             canvasHeight: 400
         }
@@ -3225,7 +3225,7 @@
             pixelAppData: {
                 currentColor: '#000000',
                 currentTool: 'pencil',
-                pencilSize: 1,
+                pencilSize: 2,
                 canvasWidth: 600,
                 canvasHeight: 400
             }
@@ -4271,7 +4271,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4360,7 +4360,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
