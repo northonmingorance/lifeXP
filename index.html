@@ -569,7 +569,6 @@
             max-width: 100%;
         }
 
-        /* PlayJockey Specific Styles */
         .playjockey-body-container {
             display: flex;
             flex-direction: column;
@@ -754,7 +753,6 @@
             color: white;
         }
 
-        /* Youtube Modal Specific Styles */
         #youtubeSearchResultsBody {
             max-height: 400px;
             overflow-y: auto;
@@ -804,7 +802,6 @@
             font-size: 12px;
         }
 
-        /* Gemini Chat Specific Styles */
         .gemini-chat-body-container {
             display: flex;
             flex-direction: column;
@@ -927,7 +924,6 @@
             box-sizing: border-box;
         }
 
-        /* Pixel App Specific Styles */
         #pixelWindow .window-body {
             display: flex;
             flex-direction: column;
@@ -985,7 +981,7 @@
             align-items: center;
             padding: 4px;
             border-bottom: 1px solid #000000;
-            background-color: #F0F0F0;
+            background-color: #ECE9D8;
             flex-shrink: 0;
             gap: 5px;
         }
@@ -1029,13 +1025,11 @@
             margin-right: 3px;
             box-sizing: border-box;
         }
-        /* Hide spinner buttons for number input in WebKit/Blink */
         .pixel-size-input::-webkit-outer-spin-button,
         .pixel-size-input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        /* Hide spinner buttons for number input in Firefox */
         .pixel-size-input[type=number] {
             -moz-appearance: textfield;
         }
@@ -1216,6 +1210,7 @@
                     <div class="pixel-dropdown-content">
                         <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
                         <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear canvas</div>
+                        <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas size...</div>
                     </div>
                 </div>
             </div>
@@ -1504,6 +1499,43 @@
         </div>
     </div>
 
+    <div id="pixelCanvasSizeModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Set Canvas Size</span>
+                <span class="close-button" data-modal-id="pixelCanvasSizeModal">r</span>
+            </div>
+            <div class="modal-body">
+                <label for="pixelNewCanvasWidth">New Width (px):</label>
+                <input type="number" id="pixelNewCanvasWidth" min="50" max="2000" value="600">
+                <label for="pixelNewCanvasHeight">New Height (px):</label>
+                <input type="number" id="pixelNewCanvasHeight" min="50" max="2000" value="400">
+                <p><small>Min: 50px, Max: 2000px per dimension.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button id="savePixelCanvasSizeBtn" class="xp-button">Save New Size</button>
+                <button class="xp-button" data-modal-id="pixelCanvasSizeModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmPixelResizeModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-title-bar">
+                <span>Confirm Canvas Resize</span>
+                <span class="close-button" data-modal-id="confirmPixelResizeModal">r</span>
+            </div>
+            <div class="modal-body">
+                <p>Changing the canvas size will clear the current drawing. Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmPixelResizeBtn" class="xp-button">Proceed & Clear</button>
+                <button class="xp-button" data-modal-id="confirmPixelResizeModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
@@ -1561,7 +1593,9 @@
         Youtube: 'youtubeSearchModal',
         RENAME_TRACK: 'renameTrackModal',
         CONFIRM_REMOVE_TRACK: 'confirmRemoveTrackModal',
-        CONFIRM_CLEAR_CHAT: 'confirmClearChatModal'
+        CONFIRM_CLEAR_CHAT: 'confirmClearChatModal',
+        PIXEL_CANVAS_SIZE: 'pixelCanvasSizeModal',
+        CONFIRM_PIXEL_RESIZE: 'confirmPixelResizeModal'
     };
 
     const firebaseConfig = {
@@ -1668,6 +1702,7 @@
         pixelMenuBar: getById('pixelMenuBar'),
         pixelFileSave: getById('pixelFileSave'),
         pixelFileClearCanvas: getById('pixelFileClearCanvas'),
+        pixelFileCanvasSize: getById('pixelFileCanvasSize'),
         pixelPencilTool: getById('pixelPencilTool'),
         pixelEraserTool: getById('pixelEraserTool'),
         pixelBucketTool: getById('pixelBucketTool'),
@@ -1741,6 +1776,14 @@
 
         confirmClearChatModal: getById(MODAL_IDS.CONFIRM_CLEAR_CHAT),
         confirmClearChatBtn: getById('confirmClearChatBtn'),
+
+        pixelCanvasSizeModal: getById(MODAL_IDS.PIXEL_CANVAS_SIZE),
+        pixelNewCanvasWidthInput: getById('pixelNewCanvasWidth'),
+        pixelNewCanvasHeightInput: getById('pixelNewCanvasHeight'),
+        savePixelCanvasSizeBtn: getById('savePixelCanvasSizeBtn'),
+        confirmPixelResizeModal: getById(MODAL_IDS.CONFIRM_PIXEL_RESIZE),
+        confirmPixelResizeBtn: getById('confirmPixelResizeBtn'),
+
 
         modalCloseButtons: null
     };
@@ -2861,6 +2904,11 @@
         DOM.trackNewNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM.saveRenamedTrackBtn.click();});
         DOM.trackNewArtistInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM.saveRenamedTrackBtn.click();});
         DOM.confirmFinalTrackRemoveBtn.addEventListener('click', executeTrackDeletion);
+
+        DOM.pixelFileCanvasSize.addEventListener('click', openPixelCanvasSizeModal);
+        DOM.savePixelCanvasSizeBtn.addEventListener('click', handleSavePixelCanvasSize);
+        DOM.confirmPixelResizeBtn.addEventListener('click', executePixelCanvasResize);
+
 
         window.addEventListener('resize', () => {
             setWindowDefaults('xpMainWindow', true);
@@ -5426,7 +5474,7 @@
 
         const x1 = e.offsetX * scaleX;
         const y1 = e.offsetY * scaleY;
-        const x0 = pixelLastX * scaleX; // Ensure last coordinates are also scaled if they weren't from startPixelDrawing
+        const x0 = pixelLastX * scaleX;
         const y0 = pixelLastY * scaleY;
 
 
@@ -5457,7 +5505,7 @@
             currentY += yIncrement;
         }
 
-        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY]; // Store unscaled for next mousemove
+        [pixelLastX, pixelLastY] = [e.offsetX, e.offsetY];
     }
 
 
@@ -5549,6 +5597,51 @@
         if(pixelFileMenu && pixelFileMenu.classList.contains('open')) {
             pixelFileMenu.classList.remove('open');
         }
+    }
+
+    function openPixelCanvasSizeModal() {
+        DOM.pixelNewCanvasWidthInput.value = appData.pixelAppData.canvasWidth;
+        DOM.pixelNewCanvasHeightInput.value = appData.pixelAppData.canvasHeight;
+        openModal(MODAL_IDS.PIXEL_CANVAS_SIZE);
+        const pixelFileMenu = DOM.pixelFileCanvasSize.closest('.pixel-menu-item');
+         if(pixelFileMenu && pixelFileMenu.classList.contains('open')) {
+            pixelFileMenu.classList.remove('open');
+        }
+    }
+
+    function handleSavePixelCanvasSize() {
+        const newWidth = parseInt(DOM.pixelNewCanvasWidthInput.value);
+        const newHeight = parseInt(DOM.pixelNewCanvasHeightInput.value);
+
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
+            alert("Invalid canvas dimensions. Width and height must be between 50 and 2000 pixels.");
+            return;
+        }
+        closeModal(MODAL_IDS.PIXEL_CANVAS_SIZE);
+        openModal(MODAL_IDS.CONFIRM_PIXEL_RESIZE);
+    }
+
+    function executePixelCanvasResize() {
+        const newWidth = parseInt(DOM.pixelNewCanvasWidthInput.value);
+        const newHeight = parseInt(DOM.pixelNewCanvasHeightInput.value);
+
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
+            alert("Invalid canvas dimensions. Width and height must be between 50 and 2000 pixels.");
+            closeModal(MODAL_IDS.CONFIRM_PIXEL_RESIZE);
+            return;
+        }
+
+        appData.pixelAppData.canvasWidth = newWidth;
+        appData.pixelAppData.canvasHeight = newHeight;
+
+        DOM.pixelCanvas.width = newWidth;
+        DOM.pixelCanvas.height = newHeight;
+
+        clearPixelCanvas();
+        handlePixelWindowResize();
+        saveData();
+
+        closeModal(MODAL_IDS.CONFIRM_PIXEL_RESIZE);
     }
 
 
