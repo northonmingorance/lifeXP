@@ -1210,7 +1210,7 @@
                     <div class="pixel-dropdown-content">
                         <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
                         <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear canvas</div>
-                        <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas size...</div>
+                        <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas size</div>
                     </div>
                 </div>
             </div>
@@ -3246,8 +3246,8 @@
             viewMode: 'week',
             selectedDayIndex: 0,
             windowStates: {
-                xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: false },
-                textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: false },
+                xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: true },
+                textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: true },
                 playJockeyWindow: { x: null, y: null, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
                 geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true },
                 pixelWindow: { x: null, y: null, width: 650, height: 500, maximized: false, minimized: false, zIndex: 7, userManuallySet: false, hiddenByUser: true }
@@ -5312,7 +5312,7 @@
             DOM.geminiChatPromptInput.focus();
         }
     }
-    
+
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
