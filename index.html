@@ -569,7 +569,6 @@
             max-width: 100%;
         }
 
-        /* PlayJockey Specific Styles */
         .playjockey-body-container {
             display: flex;
             flex-direction: column;
@@ -754,7 +753,6 @@
             color: white;
         }
 
-        /* Youtube Modal Specific Styles */
         #youtubeSearchResultsBody {
             max-height: 400px;
             overflow-y: auto;
@@ -804,7 +802,6 @@
             font-size: 12px;
         }
 
-        /* Gemini Chat Specific Styles */
         .gemini-chat-body-container {
             display: flex;
             flex-direction: column;
@@ -927,7 +924,6 @@
             box-sizing: border-box;
         }
 
-        /* Pixel App Specific Styles */
         #pixelWindow .window-body {
             display: flex;
             flex-direction: column;
@@ -1029,13 +1025,11 @@
             margin-right: 3px;
             box-sizing: border-box;
         }
-        /* Hide spinner buttons for number input in WebKit/Blink */
         .pixel-size-input::-webkit-outer-spin-button,
         .pixel-size-input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        /* Hide spinner buttons for number input in Firefox */
         .pixel-size-input[type=number] {
             -moz-appearance: textfield;
         }
@@ -1887,7 +1881,7 @@
                 const keyParts = achievementsKey.split('_');
 
                 if (keyParts.length < 3) {
-                    console.warn(`Skipping invalid achievementsKey during XP check: ${achievementsKey}`);
+                    
                     continue;
                 }
                 const areaName = keyParts.slice(1, keyParts.length - 1).join('_');
@@ -1897,14 +1891,14 @@
                         ach.xpAwarded = false;
                     }
                     if (!ach.scheduledDate) {
-                        console.warn(`Achievement ${ach.id} in ${areaName} is missing scheduledDate. Cannot process for auto XP.`);
+                        
                         continue;
                     }
 
                     if (!ach.xpAwarded) {
                         const achievementScheduledDate = parseYYYYMMDDToLocalDate(ach.scheduledDate);
                         if (achievementScheduledDate && achievementScheduledDate <= today) {
-                            console.log(`Awarding XP for past due achievement: ${ach.id} (scheduled: ${ach.scheduledDate}) in area ${areaName}`);
+                            
                             addXpToArea(areaName, ach.xp);
                             updateQuestProgress(areaName, ach.xp);
                             ach.xpAwarded = true;
@@ -1937,7 +1931,7 @@
             minTrackerAppWidth = 375;
         }
         if (appData.viewMode !== 'week' && appData.viewMode !== 'day') {
-             console.warn("Invalid viewMode loaded, defaulting to week.");
+             
              appData.viewMode = 'week';
              minTrackerAppWidth = 905;
         }
@@ -2166,11 +2160,12 @@
             if (attempt >= maxAttempts) break;
             layer++;
             if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
-                 console.warn("Collision search boundary too large for icon placement. Layer:", layer); break;
+                 
+                 break;
             }
         }
 
-        console.warn("Could not find a non-colliding position for icon " + draggedIcon.id + " after " + attempt + " attempts. Using original snapped position which might collide.");
+        
         return { x: snappedX, y: snappedY };
     }
 
@@ -2219,11 +2214,11 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            console.warn(`State for window ${windowId} was missing on double click. Attempting to restore/initialize.`);
+            
             restoreWindowState(windowId);
             state = appData.windowStates[windowId];
             if(!state) {
-                console.error(`Failed to initialize state for ${windowId} on double click.`);
+                
                 return;
             }
         }
@@ -2382,7 +2377,7 @@
 
 
         if (!windowElement || !titleBarElement) {
-            console.error("Window or TitleBar element not found for ID:", windowId);
+            
             return;
         }
 
@@ -2551,7 +2546,7 @@
 
         const state = appData.windowStates[windowId];
         if (!state) {
-            console.error(`State missing for ${windowId} in setWindowDefaults`);
+            
             return;
         }
 
@@ -2940,7 +2935,7 @@
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
         const state = appData.windowStates[windowId];
-        if (!state) { console.error(`State missing for ${windowId} in minimizeWindow`); return; }
+        if (!state) {  return; }
 
         state.minimized = true;
 
@@ -2952,7 +2947,7 @@
                 state.x = parseInt(lastNormalStates[windowId].left);
                 state.y = parseInt(lastNormalStates[windowId].top);
             } else {
-                console.warn(`lastNormalStates missing for ${windowId} during minimize from maximized.`);
+                
             }
         } else {
             state.wasMaximizedBeforeMinimize = false;
@@ -2973,7 +2968,7 @@
         if (!appWindow) return;
 
         const state = appData.windowStates[windowId];
-        if (!state) { console.error(`State missing for ${windowId} in maximizeWindow`); return; }
+        if (!state) {  return; }
 
         const isMinimized = appWindow.classList.contains('minimized');
         let currentLastNormal = lastNormalStates[windowId] || {};
@@ -3108,7 +3103,7 @@
 
         let state = appData.windowStates[windowId];
         if (!state) {
-            console.warn(`Window state for ${windowId} was missing during saveWindowState. Re-initializing.`);
+            
             appData.windowStates[windowId] = {};
             state = appData.windowStates[windowId];
             state.hiddenByUser = (win.style.display === 'none');
@@ -3133,7 +3128,7 @@
     function restoreWindowState(windowId) {
         const win = getById(windowId);
         if (!win) {
-            console.error(`Window element ${windowId} not found for restore.`);
+            
             return;
         }
 
@@ -3236,7 +3231,7 @@
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (error) {
-            console.error("Error saving data to localStorage:", error);
+            
             if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
             }
@@ -3352,7 +3347,7 @@
                 }
 
             } catch (error) {
-                console.error("Error parsing stored data, reverting to defaults:", error);
+                
                 appData = JSON.parse(JSON.stringify(defaultAppData));
             }
         } else {
@@ -4168,8 +4163,6 @@
         showQuests();
         saveData();
     }
-
-    // --- PlayJockey Functions ---
 
     function getCurrentPlayJockeyPlaylist() {
         if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
@@ -5179,7 +5172,6 @@
         }
     }
 
-    // --- Gemini Chat Functions ---
     function renderGeminiChatHistory() {
         if (!DOM.geminiChatDisplayArea) return;
         DOM.geminiChatDisplayArea.innerHTML = '';
@@ -5320,8 +5312,7 @@
             DOM.geminiChatPromptInput.focus();
         }
     }
-
-    // --- Pixel App Functions ---
+    
     function initPixelApp() {
         pixelCtx = DOM.pixelCanvas.getContext('2d');
         DOM.pixelCanvas.width = appData.pixelAppData.canvasWidth;
