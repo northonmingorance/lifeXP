@@ -116,7 +116,7 @@
             background-color: #000000;
             justify-content: center;
             align-items: center;
-            position: relative; /* Added for button positioning */
+            position: relative;
         }
 
         #captureVideo {
@@ -125,14 +125,23 @@
             object-fit: contain;
         }
 
-        #captureTakePhotoBtn {
+        #captureActionBtn { /* Renamed from captureTakePhotoBtn */
             position: absolute;
-            bottom: 20px; /* Adjust as needed */
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
             padding: 8px 15px;
             font-size: 14px;
+        }
+        #captureToggleModeBtn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            padding: 6px 12px;
+            font-size: 11px;
+            min-width: auto;
         }
 
 
@@ -348,6 +357,16 @@
             width: 99.5%;
             box-sizing: border-box;
             margin-top: 5px;
+        }
+
+        #captureActionBtn.recording {
+            background-color: #FF6347; /* Tomato red */
+            border-color: #CD5C5C; /* Indian Red for border */
+            color: white;
+        }
+        #captureActionBtn.recording:hover {
+            background-color: #E55337;
+            border-color: #B24331;
         }
 
 
@@ -1268,7 +1287,8 @@
         </div>
         <div class="window-body" id="captureWindowBody">
             <video id="captureVideo" autoplay playsinline></video>
-            <button id="captureTakePhotoBtn" class="xp-button">Take Photo</button>
+            <button id="captureActionBtn" class="xp-button">Take Photo</button>
+            <button id="captureToggleModeBtn" class="xp-button">📹</button>
         </div>
         <div class="resize-handle" id="captureResizeHandle"></div>
     </div>
@@ -1761,7 +1781,8 @@
         captureWindowTitleBar: getById('captureWindowTitleBar'),
         captureWindowBody: getById('captureWindowBody'),
         captureVideo: getById('captureVideo'),
-        captureTakePhotoBtn: getById('captureTakePhotoBtn'),
+        captureActionBtn: getById('captureActionBtn'), // Renamed
+        captureToggleModeBtn: getById('captureToggleModeBtn'), // New
         captureResizeHandle: getById('captureResizeHandle'),
         captureMinimizeBtn: getById('captureMinimizeBtn'),
         captureMaximizeBtn: getById('captureMaximizeBtn'),
@@ -1876,7 +1897,9 @@
             canvasWidth: 600,
             canvasHeight: 400
         },
-        captureStream: null
+        captureStream: null,
+        captureMode: 'photo', // 'photo' or 'video'
+        isRecording: false
     };
 
     let lastNormalStates = {};
@@ -1900,6 +1923,8 @@
     let pixelIsDrawing = false;
     let pixelLastX, pixelLastY;
 
+    let mediaRecorder = null;
+    let recordedChunks = [];
 
     function parseYYYYMMDDToLocalDate(dateString) {
         if (!dateString || typeof dateString !== 'string') return null;
@@ -2036,6 +2061,10 @@
         updatePlayJockeyAutoPlayButtonState();
         updatePlayJockeyRandomButtonState();
         updatePlayJockeyRepeatButtonState();
+
+
+        updateCaptureAppUI(); // Initialize UI based on loaded/default state
+
 
 
         if (appData.playJockeyCurrentVideo && (isYouTubeApiReady || typeof YT !== 'undefined')) {
@@ -2950,7 +2979,8 @@
             saveWindowState(windowId);
             win.style.display = 'none';
         });
-        DOM.captureTakePhotoBtn.addEventListener('click', takeAndDownloadPhoto);
+        DOM.captureActionBtn.addEventListener('click', handleMainCaptureAction);
+        DOM.captureToggleModeBtn.addEventListener('click', toggleCaptureMode);
 
 
         DOM.geminiChatSendBtn.addEventListener('click', handleSendGeminiPrompt);
@@ -3407,7 +3437,9 @@
                 canvasWidth: 600,
                 canvasHeight: 400
             },
-            captureStream: null
+            captureStream: null,
+            captureMode: 'photo',
+            isRecording: false
         };
 
         if (storedData) {
@@ -3448,7 +3480,9 @@
                     playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [],
                     geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : [],
                     pixelAppData: { ...defaultAppData.pixelAppData, ...(loadedData.pixelAppData || {}), pencilSize: (loadedData.pixelAppData && typeof loadedData.pixelAppData.pencilSize === 'number') ? loadedData.pixelAppData.pencilSize : defaultAppData.pixelAppData.pencilSize },
-                    captureStream: null
+                    captureStream: null, // Always reset stream
+                    isRecording: false, // Always reset recording state
+                    captureMode: loadedData.captureMode === 'video' ? 'video' : 'photo' // Ensure valid mode
                 };
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
@@ -5773,25 +5807,27 @@
 
     async function startCaptureApp() {
         if (appData.captureStream && DOM.captureVideo.srcObject === appData.captureStream) {
+            updateCaptureAppUI();
             return;
         }
-        DOM.captureWindowBody.innerHTML = '';
+        DOM.captureWindowBody.innerHTML = ''; // Clear previous error messages
         DOM.captureWindowBody.appendChild(DOM.captureVideo);
-        DOM.captureWindowBody.appendChild(DOM.captureTakePhotoBtn);
+        DOM.captureWindowBody.appendChild(DOM.captureActionBtn);
+        DOM.captureWindowBody.appendChild(DOM.captureToggleModeBtn);
 
 
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("getUserMedia is not supported in your browser. Capture app cannot function.");
                 DOM.captureWindowBody.innerHTML = '<p style="color:white; padding:10px; text-align:center;">Webcam access is not supported or is disabled in your browser.</p>';
+                updateCaptureAppUI(); // Reflect that stream is not available
                 return;
             }
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); // Request audio for video recording
             appData.captureStream = stream;
             DOM.captureVideo.srcObject = stream;
             DOM.captureVideo.play();
         } catch (err) {
-            console.error("Error accessing webcam:", err);
             let message = "Could not access webcam. Please ensure it's connected and permissions are allowed.";
             if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
                 message = "Webcam access denied. Please allow camera permission in your browser settings for this site.";
@@ -5805,18 +5841,23 @@
             errorP.style.padding = '10px';
             errorP.style.textAlign = 'center';
             errorP.textContent = message;
-            DOM.captureWindowBody.innerHTML = '';
+            DOM.captureWindowBody.innerHTML = ''; // Clear video/buttons
             DOM.captureWindowBody.appendChild(errorP);
             appData.captureStream = null;
         }
+        updateCaptureAppUI(); // Update UI based on stream status
     }
 
     function stopCaptureApp() {
+        if (appData.isRecording) {
+            stopRecording(); // Ensure recording is stopped first
+        }
         if (appData.captureStream) {
             appData.captureStream.getTracks().forEach(track => track.stop());
             appData.captureStream = null;
             DOM.captureVideo.srcObject = null;
         }
+        updateCaptureAppUI(); // Reflect that stream is stopped
     }
 
     function takeAndDownloadPhoto() {
@@ -5824,14 +5865,12 @@
             alert("Webcam stream is not active. Cannot take photo.");
             return;
         }
-
         const video = DOM.captureVideo;
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const context = canvas.getContext('2d');
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         const dataURL = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = dataURL;
@@ -5842,6 +5881,128 @@
         document.body.removeChild(link);
     }
 
+    function toggleCaptureMode() {
+        if (appData.isRecording) {
+            alert("Please stop recording before switching modes.");
+            return;
+        }
+        appData.captureMode = (appData.captureMode === 'photo') ? 'video' : 'photo';
+        updateCaptureAppUI();
+        saveData();
+    }
+
+    function handleMainCaptureAction() {
+        if (!appData.captureStream) {
+            alert("Webcam not active. Please ensure camera is connected and permissions are allowed.");
+            startCaptureApp(); // Try to re-initialize
+            return;
+        }
+        if (appData.captureMode === 'photo') {
+            takeAndDownloadPhoto();
+        } else { // video mode
+            if (appData.isRecording) {
+                stopVideoRecording();
+            } else {
+                startVideoRecording();
+            }
+        }
+    }
+
+    function startVideoRecording() {
+        if (!appData.captureStream) {
+            alert("Webcam stream is not active. Cannot start recording.");
+            return;
+        }
+        recordedChunks = [];
+        // Try common MIME types
+        const mimeTypes = [
+            'video/webm;codecs=vp9,opus',
+            'video/webm;codecs=vp8,opus',
+            'video/webm;codecs=h264,opus',
+            'video/mp4;codecs=h264,aac', // MP4 might need specific browser support / flags
+            'video/webm'
+        ];
+        let supportedMimeType = "";
+        for (const type of mimeTypes) {
+            if (MediaRecorder.isTypeSupported(type)) {
+                supportedMimeType = type;
+                break;
+            }
+        }
+        if (!supportedMimeType) {
+            alert("Video recording is not supported with available codecs in this browser, or no suitable MIME type found.");
+            return;
+        }
+
+        try {
+            mediaRecorder = new MediaRecorder(appData.captureStream, { mimeType: supportedMimeType });
+        } catch (e) {
+            alert("Failed to create MediaRecorder: " + e.message);
+            return;
+        }
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.style.display = 'none';
+            a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const extension = (mediaRecorder.mimeType || 'video/webm').split('/')[1].split(';')[0];
+            a.download = `recording-${timestamp}.${extension}`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            recordedChunks = [];
+        };
+        mediaRecorder.start();
+        appData.isRecording = true;
+        updateCaptureAppUI();
+    }
+
+    function stopVideoRecording() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop(); // This will trigger the 'onstop' event for download
+        }
+        appData.isRecording = false;
+        updateCaptureAppUI();
+    }
+    
+    function updateCaptureAppUI() {
+        if (!DOM.captureActionBtn || !DOM.captureToggleModeBtn) return;
+
+        const streamActive = !!appData.captureStream;
+        DOM.captureActionBtn.disabled = !streamActive;
+        DOM.captureToggleModeBtn.disabled = appData.isRecording; // Disable mode switch only if recording
+
+        if (appData.captureMode === 'photo') {
+            DOM.captureActionBtn.textContent = 'Take Photo';
+            DOM.captureActionBtn.classList.remove('recording');
+            DOM.captureToggleModeBtn.textContent = '📹';
+            DOM.captureToggleModeBtn.title = "Switch to Video Mode";
+        } else { // video mode
+            DOM.captureToggleModeBtn.textContent = '📷';
+            DOM.captureToggleModeBtn.title = "Switch to Photo Mode";
+            if (appData.isRecording) {
+                DOM.captureActionBtn.textContent = 'Stop Recording';
+                DOM.captureActionBtn.classList.add('recording');
+            } else {
+                DOM.captureActionBtn.textContent = 'Start Recording';
+                DOM.captureActionBtn.classList.remove('recording');
+            }
+        }
+         if (!streamActive) {
+            DOM.captureActionBtn.textContent = (appData.captureMode === 'photo') ? 'Take Photo' : 'Start Recording';
+            DOM.captureActionBtn.classList.remove('recording');
+        }
+    }
 
     function openModal(modalId) {
         const modal = getById(modalId);
