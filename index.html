@@ -113,15 +113,26 @@
         #captureWindow .window-body {
             padding: 0;
             display: flex;
-            background-color: #000000; /* Black background for webcam area */
+            background-color: #000000;
             justify-content: center;
             align-items: center;
+            position: relative; /* Added for button positioning */
         }
 
         #captureVideo {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Or 'cover' or 'fill' depending on desired behavior */
+            object-fit: contain;
+        }
+
+        #captureTakePhotoBtn {
+            position: absolute;
+            bottom: 20px; /* Adjust as needed */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 8px 15px;
+            font-size: 14px;
         }
 
 
@@ -1257,6 +1268,7 @@
         </div>
         <div class="window-body" id="captureWindowBody">
             <video id="captureVideo" autoplay playsinline></video>
+            <button id="captureTakePhotoBtn" class="xp-button">Take Photo</button>
         </div>
         <div class="resize-handle" id="captureResizeHandle"></div>
     </div>
@@ -1580,7 +1592,7 @@
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const STORAGE_KEY = 'lifeXpData_v1.12.0'; // Incremented version for new app
+    const STORAGE_KEY = 'lifeXpData_v1.12.0';
     const MAX_WEEKLY_QUESTS = 5;
     const ICON_GRID_SIZE = 25;
 
@@ -1749,6 +1761,7 @@
         captureWindowTitleBar: getById('captureWindowTitleBar'),
         captureWindowBody: getById('captureWindowBody'),
         captureVideo: getById('captureVideo'),
+        captureTakePhotoBtn: getById('captureTakePhotoBtn'),
         captureResizeHandle: getById('captureResizeHandle'),
         captureMinimizeBtn: getById('captureMinimizeBtn'),
         captureMaximizeBtn: getById('captureMaximizeBtn'),
@@ -1867,7 +1880,7 @@
     };
 
     let lastNormalStates = {};
-    let highestZIndex = 10; // Adjusted for new app
+    let highestZIndex = 10;
 
     let activeDragWindow = null;
     let activeResizeWindow = null;
@@ -2118,7 +2131,7 @@
         iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
 
         activeDragIcon.style.cursor = 'grabbing';
-        activeDragIcon.style.zIndex = '6'; // Ensure icon is above other icons while dragging
+        activeDragIcon.style.zIndex = '6';
 
         document.addEventListener('mousemove', handleIconMouseMove);
         document.addEventListener('mouseup', handleIconMouseUp);
@@ -2299,9 +2312,9 @@
                 startCaptureApp();
             }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId); // This will unminimize and restore or maximize
+            maximizeWindow(windowId);
             if (windowId === 'captureWindow' && !appData.captureStream) {
-                 startCaptureApp(); // Start stream if unminimized and not already active
+                 startCaptureApp();
             }
         }
 
@@ -2446,7 +2459,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar, #pixelCanvas, .pixel-tool-button, .pixel-color-picker, .pixel-menu-item, #captureVideo'))) {
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, .achievement-item, .xp-button, iframe, #playJockeyPlayer, .playjockey-playlist-item, .playjockey-tab, .gemini-chat-input-area, .gemini-chat-display-area, .gemini-chat-controls-bar, #pixelCanvas, .pixel-tool-button, .pixel-color-picker, .pixel-menu-item, #captureVideo, #captureTakePhotoBtn'))) {
                  bringToFront(windowElement);
             }
         }, true);
@@ -2937,6 +2950,7 @@
             saveWindowState(windowId);
             win.style.display = 'none';
         });
+        DOM.captureTakePhotoBtn.addEventListener('click', takeAndDownloadPhoto);
 
 
         DOM.geminiChatSendBtn.addEventListener('click', handleSendGeminiPrompt);
@@ -3263,10 +3277,10 @@
 
         if (state.hiddenByUser) {
             win.style.display = 'none';
-            if (windowId === 'captureWindow') stopCaptureApp(); // Stop stream if hidden
+            if (windowId === 'captureWindow') stopCaptureApp();
         } else {
             win.style.display = 'flex';
-            if (windowId === 'captureWindow' && !state.minimized) startCaptureApp(); // Start if visible and not minimized
+            if (windowId === 'captureWindow' && !state.minimized) startCaptureApp();
         }
         const isNowVisible = win.style.display === 'flex';
 
@@ -3279,7 +3293,7 @@
         if (state.minimized) {
             win.classList.add('minimized');
             win.classList.remove('true-maximized');
-            if (windowId === 'captureWindow') stopCaptureApp(); // Stop stream if minimized
+            if (windowId === 'captureWindow') stopCaptureApp();
         } else if (state.maximized) {
             win.classList.add('true-maximized');
             win.classList.remove('minimized');
@@ -3434,7 +3448,7 @@
                     playJockeyRandomHistory: Array.isArray(loadedData.playJockeyRandomHistory) ? loadedData.playJockeyRandomHistory : [],
                     geminiChatHistory: Array.isArray(loadedData.geminiChatHistory) ? loadedData.geminiChatHistory : [],
                     pixelAppData: { ...defaultAppData.pixelAppData, ...(loadedData.pixelAppData || {}), pencilSize: (loadedData.pixelAppData && typeof loadedData.pixelAppData.pencilSize === 'number') ? loadedData.pixelAppData.pencilSize : defaultAppData.pixelAppData.pencilSize },
-                    captureStream: null // Always reset stream on load
+                    captureStream: null
                 };
 
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
@@ -4436,7 +4450,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4525,7 +4539,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
@@ -5758,9 +5772,14 @@
     }
 
     async function startCaptureApp() {
-        if (appData.captureStream) {
-            return; // Already streaming
+        if (appData.captureStream && DOM.captureVideo.srcObject === appData.captureStream) {
+            return;
         }
+        DOM.captureWindowBody.innerHTML = '';
+        DOM.captureWindowBody.appendChild(DOM.captureVideo);
+        DOM.captureWindowBody.appendChild(DOM.captureTakePhotoBtn);
+
+
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("getUserMedia is not supported in your browser. Capture app cannot function.");
@@ -5770,8 +5789,7 @@
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             appData.captureStream = stream;
             DOM.captureVideo.srcObject = stream;
-            DOM.captureWindowBody.innerHTML = ''; // Clear any error messages
-            DOM.captureWindowBody.appendChild(DOM.captureVideo); // Re-add video if it was removed
+            DOM.captureVideo.play();
         } catch (err) {
             console.error("Error accessing webcam:", err);
             let message = "Could not access webcam. Please ensure it's connected and permissions are allowed.";
@@ -5782,7 +5800,13 @@
             } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
                 message = "Webcam is already in use or could not be read.";
             }
-            DOM.captureWindowBody.innerHTML = `<p style="color:white; padding:10px; text-align:center;">${message}</p>`;
+            const errorP = document.createElement('p');
+            errorP.style.color = 'white';
+            errorP.style.padding = '10px';
+            errorP.style.textAlign = 'center';
+            errorP.textContent = message;
+            DOM.captureWindowBody.innerHTML = '';
+            DOM.captureWindowBody.appendChild(errorP);
             appData.captureStream = null;
         }
     }
@@ -5793,6 +5817,29 @@
             appData.captureStream = null;
             DOM.captureVideo.srcObject = null;
         }
+    }
+
+    function takeAndDownloadPhoto() {
+        if (!appData.captureStream || !DOM.captureVideo.srcObject) {
+            alert("Webcam stream is not active. Cannot take photo.");
+            return;
+        }
+
+        const video = DOM.captureVideo;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `capture-${timestamp}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
 
@@ -5849,3 +5896,4 @@
 </script>
 </body>
 </html>
+    
