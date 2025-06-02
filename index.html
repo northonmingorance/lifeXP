@@ -5747,13 +5747,14 @@ function pixelDraw(e) {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const audioDevices = devices.filter(device => device.kind === 'audioinput');
-            if (audioDevices.length === 0) {
+            const uniqueAudioDevices = audioDevices.filter(device => device.deviceId !== 'default');
+            if (uniqueAudioDevices.length === 0) {
                 const noDevice = document.createElement('div');
                 noDevice.classList.add('xp-submenu-item');
                 noDevice.textContent = 'No audio devices';
                 DOM.audioDeviceList.appendChild(noDevice); return;
             }
-            audioDevices.forEach(device => {
+            uniqueAudioDevices.forEach(device => {
                 const item = document.createElement('div');
                 item.classList.add('xp-submenu-item');
                 item.textContent = device.label || `Microphone ${DOM.audioDeviceList.children.length + 1}`;
@@ -5778,7 +5779,6 @@ function pixelDraw(e) {
         }
         updateSelectedInMenu();
     }
-    
     function updateResolutionItemsState(disabled) {
         if (!DOM.videoResolutionList) return;
         DOM.videoResolutionList.querySelectorAll('.xp-submenu-item').forEach(item => {
@@ -5960,7 +5960,7 @@ function pixelDraw(e) {
                     captureStream: null,
                     isRecording: false
                 };
-                
+
                 if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
                     appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
                      if (appData.playJockeyPlaylists.length === 0) {
