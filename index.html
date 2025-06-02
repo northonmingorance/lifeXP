@@ -114,7 +114,7 @@
             right: 0;
             bottom: 0;
             cursor: nwse-resize;
-            z-index: 10;
+            z-index: 10; /* Ensure it's above window body content but below other windows if overlapped */
             box-sizing: border-box;
             opacity: 0.6;
             background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10L10 7' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M3 10L10 3' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -152,7 +152,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 1000; /* Modals should be above most things */
             left: 0;
             top: 0;
             width: 100%;
@@ -249,6 +249,29 @@
         .xp-button:active { border-style: inset; }
         .xp-button:hover { border-color: #005CFE; }
         .xp-button:disabled { color: #7F7F7F; border-color: #ACA899; cursor: default; }
+
+        /* Styles for context menus that might be used by apps via OS API */
+        .context-modal {
+            display: none;
+            position: fixed;
+            background-color: #ECE9D8;
+            border: 1px solid #000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 2000; /* Above normal modals */
+            padding: 3px 0;
+            min-width: 120px;
+            font-family: "Tahoma", "Geneva", sans-serif;
+            font-size: 11px;
+        }
+        .context-modal-item {
+            padding: 5px 12px;
+            cursor: default;
+            color: black;
+        }
+        .context-modal-item:hover {
+            background-color: #005CFE;
+            color: white;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-remote-config.js"></script>
@@ -333,6 +356,7 @@
             iconPositions: {},
             customBgImage: null,
             customBgColor: null,
+            appSpecificData: {} // Centralized app data storage
         };
         const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.0';
 
@@ -345,9 +369,9 @@
         let activeDragIcon = null;
         let iconDragOffsetX, iconDragOffsetY;
 
-        const appRegistry = {};
+        const appRegistry = {}; // Stores loaded app configurations and data
 
-        const APP_FILES = [
+        const APP_FILES = [ // List of app files to load
             'xp-tracker.app.html',
             'jotter.app.html',
             'play-jockey.app.html',
@@ -361,9 +385,10 @@
                 document.body.style.backgroundImage = 'none';
                 document.body.style.backgroundColor = osData.customBgColor;
             } else if (osData.customBgImage) {
-                document.body.style.backgroundColor = '';
+                document.body.style.backgroundColor = ''; // Clear color if image is set
                 document.body.style.backgroundImage = `url('${osData.customBgImage}')`;
             } else {
+                // Default background
                 document.body.style.backgroundColor = '#3A6EA5';
                 document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')";
             }
@@ -381,23 +406,27 @@
                 swatch.style.cursor = 'pointer';
                 swatch.title = color.name;
                 swatch.dataset.colorValue = color.value;
-                swatch.classList.add('color-swatch-item');
+                swatch.classList.add('color-swatch-item'); // For potential hover/active effects
                 container.appendChild(swatch);
             });
         }
 
         function bringToFront(windowElement) {
-            if (!windowElement) return;
+            if (!windowElement || !(windowElement instanceof HTMLElement)) return;
             highestZIndex++;
             windowElement.style.zIndex = highestZIndex;
             const windowId = windowElement.id;
-            if (!osData.windowStates[windowId]) osData.windowStates[windowId] = {};
-            osData.windowStates[windowId].zIndex = highestZIndex;
-            saveOsData();
+            if (windowId && osData.windowStates[windowId]) { // Only save if it's a tracked window
+                osData.windowStates[windowId].zIndex = highestZIndex;
+                saveOsData();
+            }
         }
 
         function initWindowInteractions(windowId, windowElement, titleBarElement, resizeHandleElement) {
-            if (!windowElement || !titleBarElement) return;
+            if (!windowElement || !titleBarElement || !(windowElement instanceof HTMLElement) || !(titleBarElement instanceof HTMLElement)) {
+                 console.error("initWindowInteractions: Invalid elements for windowId:", windowId, "windowElement:", windowElement, "titleBarElement:", titleBarElement);
+                 return;
+            }
 
             windowElement.addEventListener('mousedown', (e) => {
                  if (e.target.closest('.desktop-icon-container') || e.target.closest('.context-modal') || e.target.closest('.xp-menu-bar')) return;
@@ -428,7 +457,7 @@
                 bringToFront(windowElement);
             });
 
-            if (resizeHandleElement) {
+            if (resizeHandleElement && resizeHandleElement instanceof HTMLElement) {
                 resizeHandleElement.addEventListener('mousedown', (e) => {
                     if (windowElement.classList.contains('true-maximized') || activeDragIcon) return;
                     activeResizeWindow = windowElement;
@@ -470,8 +499,8 @@
         function doResize(e) {
             if (!activeResizeWindow) return;
             const windowId = activeResizeWindow.id;
-            const appConfig = appRegistry[windowId.replace('Window', '')];
-            const currentMinWidth = appConfig?.minWidth || 200;
+            const appConfig = appRegistry[windowId.replace('Window', '')]; // Get app's config
+            const currentMinWidth = appConfig?.minWidth || 200; // Use app-specific or default
             const currentMinHeight = appConfig?.minHeight || 150;
 
             let newWidth = resizeInitialWidth + (e.clientX - resizeInitialX);
@@ -481,6 +510,7 @@
             if (osData.windowStates[windowId]) {
                 osData.windowStates[windowId].userManuallySet = true;
             }
+            // Call app-specific resize handler if it exists
             if (typeof appConfig?.onResize === 'function') {
                 appConfig.onResize(activeResizeWindow);
             }
@@ -488,7 +518,6 @@
 
         function stopDragOrResize() {
             let windowToSaveState = null;
-            let operatedWindow = null;
             if (activeDragWindow) {
                 activeDragWindow.classList.remove('disable-selection');
                 const iframe = activeDragWindow.querySelector('iframe');
@@ -588,7 +617,7 @@
             iconDragOffsetX = e.clientX - activeDragIcon.offsetLeft;
             iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
             activeDragIcon.style.cursor = 'grabbing';
-            activeDragIcon.style.zIndex = (highestZIndex + 1).toString();
+            activeDragIcon.style.zIndex = (highestZIndex + 1).toString(); // Ensure icon is on top while dragging
             document.addEventListener('mousemove', handleIconMouseMove);
             document.addEventListener('mouseup', handleIconMouseUp);
             e.preventDefault();
@@ -599,7 +628,7 @@
             let newX = e.clientX - iconDragOffsetX;
             let newY = e.clientY - iconDragOffsetY;
             const bodyRect = document.body.getBoundingClientRect();
-            const iconWidth = activeDragIcon.offsetWidth || 90;
+            const iconWidth = activeDragIcon.offsetWidth || 90; // Use actual or default
             const iconHeight = activeDragIcon.offsetHeight || 100;
             newX = Math.max(0, Math.min(newX, bodyRect.width - iconWidth));
             newY = Math.max(0, Math.min(newY, bodyRect.height - iconHeight));
@@ -609,7 +638,7 @@
 
         function handleIconMouseUp() {
             if (!activeDragIcon) return;
-            activeDragIcon.style.zIndex = '5';
+            activeDragIcon.style.zIndex = '5'; // Reset z-index
             let finalX = activeDragIcon.offsetLeft;
             let finalY = activeDragIcon.offsetTop;
             
@@ -633,19 +662,48 @@
             const iconElement = e.currentTarget;
             const appId = iconElement.dataset.appId;
             const appConfig = appRegistry[appId];
-            if (!appConfig) return;
+            if (!appConfig) {
+                console.error("No appConfig found for appId:", appId);
+                return;
+            }
 
             let windowElement = getById(appConfig.windowId);
+
             if (!windowElement) {
                 const windowTemplate = appConfig.windowTemplate;
-                if (!windowTemplate) return;
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = windowTemplate.innerHTML;
-                windowElement = tempDiv.firstChild;
+                if (!windowTemplate || !(windowTemplate instanceof HTMLTemplateElement) || !(windowTemplate.content instanceof DocumentFragment)) {
+                    console.error(`Invalid windowTemplate or content for ${appId}`);
+                    return;
+                }
+
+                const clonedFragment = windowTemplate.content.cloneNode(true);
+                // The main window div inside the template should have the ID appConfig.windowId
+                let actualWindowElement = clonedFragment.querySelector('#' + appConfig.windowId); 
+
+                if (!actualWindowElement || typeof actualWindowElement.querySelector !== 'function') {
+                    // Fallback: try to get the first element child if ID query fails
+                    for (let i = 0; i < clonedFragment.childNodes.length; i++) {
+                        if (clonedFragment.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+                            actualWindowElement = clonedFragment.childNodes[i];
+                            break;
+                        }
+                    }
+                    if (!actualWindowElement || typeof actualWindowElement.querySelector !== 'function') {
+                        console.error(`Could not extract a valid window element with ID ${appConfig.windowId} or as first child from template for ${appId}.`);
+                        console.log("Template's innerHTML:", appConfig.windowTemplate.innerHTML);
+                        const tempDivLog = document.createElement('div');
+                        tempDivLog.appendChild(clonedFragment.cloneNode(true));
+                        console.log("Cloned fragment structure for " + appId + ":", tempDivLog.innerHTML);
+                        return;
+                    }
+                }
+                windowElement = actualWindowElement;
                 document.body.appendChild(windowElement);
                 
                 const titleBar = windowElement.querySelector('.title-bar');
                 const resizeHandle = windowElement.querySelector('.resize-handle');
+                if (!titleBar) console.error("Title bar not found in window for", appId, "Template:", windowTemplate.innerHTML);
+                
                 initWindowInteractions(appConfig.windowId, windowElement, titleBar, resizeHandle);
                 
                 const minimizeBtn = windowElement.querySelector(`[data-app-action="minimize"]`);
@@ -656,16 +714,45 @@
                 if(maximizeBtn) maximizeBtn.addEventListener('click', () => maximizeWindow(appConfig.windowId));
                 if(closeBtn) closeBtn.addEventListener('click', () => closeWindow(appConfig.windowId));
 
+                if (!osData.appSpecificData || !osData.appSpecificData[appId]) {
+                    osData.appSpecificData = osData.appSpecificData || {};
+                    osData.appSpecificData[appId] = {}; 
+                }
+                appRegistry[appId].appData = osData.appSpecificData[appId];
+
                 if (appConfig.script) {
                     try {
+                        const scriptContext = {
+                            appWindow: windowElement,
+                            appData: appRegistry[appId].appData,
+                            os: createOsApiForApp(appId),
+                            onOpen: null, onClose: null, onMinimize: null, onRestore: null, onResize: null
+                        };
                         const scriptFunction = new Function('appWindow', 'appData', 'os', appConfig.script);
-                        scriptFunction(windowElement, appConfig.appData, createOsApiForApp(appId));
+                        scriptFunction.call(scriptContext, scriptContext.appWindow, scriptContext.appData, scriptContext.os);
+                        
+                        if(typeof scriptContext.onOpen === 'function') appConfig.onOpen = scriptContext.onOpen;
+                        if(typeof scriptContext.onClose === 'function') appConfig.onClose = scriptContext.onClose;
+                        if(typeof scriptContext.onMinimize === 'function') appConfig.onMinimize = scriptContext.onMinimize;
+                        if(typeof scriptContext.onRestore === 'function') appConfig.onRestore = scriptContext.onRestore;
+                        if(typeof scriptContext.onResize === 'function') appConfig.onResize = scriptContext.onResize;
+
                     } catch (err) {
                         console.error(`Error executing script for ${appId}:`, err);
                     }
                 }
-                 if (typeof appConfig.onOpen === 'function') {
-                    appConfig.onOpen(windowElement, appConfig.appData, createOsApiForApp(appId));
+                if (typeof appConfig.onOpen === 'function') {
+                    appConfig.onOpen(windowElement, appRegistry[appId].appData, createOsApiForApp(appId));
+                }
+                restoreWindowState(appConfig.windowId, appConfig);
+
+            } else { // Window element already exists
+                 if (typeof windowElement.querySelector !== 'function') { // Check if it's a valid element
+                    console.error("Existing windowElement for", appConfig.windowId, "is not a valid DOM element:", windowElement);
+                    windowElement.remove(); // Remove corrupted element
+                    if (osData.windowStates[appConfig.windowId]) delete osData.windowStates[appConfig.windowId];
+                    handleIconDoubleClick({ currentTarget: iconElement }); // Retry
+                    return;
                 }
             }
             
@@ -674,17 +761,28 @@
                 restoreWindowState(appConfig.windowId, appConfig);
                 state = osData.windowStates[appConfig.windowId];
             }
+             if (!state) {
+                console.error("Window state could not be initialized for", appConfig.windowId);
+                return;
+            }
 
             if (state.hiddenByUser || windowElement.style.display === 'none') {
                 state.hiddenByUser = false;
                 windowElement.style.display = 'flex';
-                if (state.minimized) { // If it was hidden AND minimized, unminimize it
+                if (state.minimized) { 
                     state.minimized = false;
                     windowElement.classList.remove('minimized');
                 }
-                restoreWindowState(appConfig.windowId, appConfig); // Apply last known/default state
+                restoreWindowState(appConfig.windowId, appConfig); 
+                if (typeof appConfig.onRestore === 'function') {
+                    appConfig.onRestore(windowElement);
+                } else if (typeof appConfig.onOpen === 'function' && !state.minimized) {
+                    // If it was just hidden, not minimized, onOpen might be more appropriate
+                    // But onRestore is generally for making it visible again from minimized or restoring size
+                    appConfig.onOpen(windowElement, appRegistry[appId].appData, createOsApiForApp(appId));
+                }
             } else if (state.minimized) {
-                maximizeWindow(appConfig.windowId); // This handles un-minimizing
+                maximizeWindow(appConfig.windowId); 
             }
             
             bringToFront(windowElement);
@@ -702,21 +800,29 @@
                 getAppWindow: () => getById(appRegistry[appId].windowId),
                 getAppData: () => appRegistry[appId].appData,
                 saveAppData: () => {
-                    osData.appSpecificData = osData.appSpecificData || {};
-                    osData.appSpecificData[appId] = appRegistry[appId].appData;
+                    // osData.appSpecificData is already the reference to appRegistry[appId].appData
+                    // So just saving osData is enough.
                     saveOsData();
                 },
                 openModal: (modalElementOrSelector) => {
-                    let modal = typeof modalElementOrSelector === 'string' ? getById(modalElementOrSelector) : modalElementOrSelector;
+                    let modal = typeof modalElementOrSelector === 'string' 
+                        ? (appRegistry[appId] && getById(appRegistry[appId].windowId)?.querySelector('#'+modalElementOrSelector) || getById(modalElementOrSelector)) 
+                        : modalElementOrSelector;
                     if (modal && modal.classList.contains('modal')) {
                         modal.style.display = 'flex';
-                        bringToFront(modal);
+                        bringToFront(modal); // Modals should be on top
+                    } else {
+                        console.warn("OS API: Modal not found or not a modal:", modalElementOrSelector);
                     }
                 },
                 closeModal: (modalElementOrSelector) => {
-                     let modal = typeof modalElementOrSelector === 'string' ? getById(modalElementOrSelector) : modalElementOrSelector;
+                     let modal = typeof modalElementOrSelector === 'string' 
+                        ? (appRegistry[appId] && getById(appRegistry[appId].windowId)?.querySelector('#'+modalElementOrSelector) || getById(modalElementOrSelector)) 
+                        : modalElementOrSelector;
                     if (modal && modal.classList.contains('modal')) {
                         modal.style.display = 'none';
+                    } else {
+                         console.warn("OS API: Modal to close not found or not a modal:", modalElementOrSelector);
                     }
                 },
                 bringToFront: (element) => bringToFront(element),
@@ -726,7 +832,7 @@
                     textarea.innerHTML = text;
                     return textarea.value;
                 },
-                getById: (id) => document.getElementById(id) // Allow app to get elements by ID
+                getById: (id) => document.getElementById(id)
             };
         }
 
@@ -835,7 +941,7 @@
             }
             updateMinMaxButtonStates(windowId, appWindow);
             saveWindowState(windowId);
-            if (appConfig && typeof appConfig.onResize === 'function' && !isMinimized) {
+            if (appConfig && typeof appConfig.onResize === 'function' && !isMinimized) { // Call onResize if window changed size
                  appConfig.onResize(appWindow);
             }
         }
@@ -846,6 +952,8 @@
             let state = osData.windowStates[windowId];
             if (state) {
                 state.hiddenByUser = true;
+            } else { // Should not happen if window exists, but as a fallback
+                osData.windowStates[windowId] = { hiddenByUser: true };
             }
             appWindow.style.display = 'none';
             const appConfig = appRegistry[windowId.replace('Window', '')];
@@ -858,7 +966,7 @@
 
         function updateMinMaxButtonStates(windowId, win) {
             if (!win) win = getById(windowId);
-            if (!win) return;
+            if (!win || !(win instanceof HTMLElement)) return;
 
             const minimizeBtn = win.querySelector(`[data-app-action="minimize"]`);
             const maximizeBtn = win.querySelector(`[data-app-action="maximize"]`);
@@ -883,7 +991,7 @@
         }
         
         function setWindowDefaults(windowId, appWindow, appConfig, isBrowserResize = false) {
-            if (!appWindow || appWindow.classList.contains('minimized')) return;
+            if (!appWindow || !(appWindow instanceof HTMLElement) || appWindow.classList.contains('minimized')) return;
             if (appWindow.classList.contains('true-maximized') && !isBrowserResize) {
                 appWindow.style.width = '100vw';
                 appWindow.style.height = '100vh';
@@ -902,8 +1010,10 @@
             const currentMinHeight = appConfig?.minHeight || 150;
             const defaultWidth = appConfig?.defaultWidth || 500;
             const defaultHeight = appConfig?.defaultHeight || 400;
-            const defaultOffsetX = appConfig?.defaultOffsetX ?? ((Object.keys(appRegistry).indexOf(appConfig.id) % 5) * 50 + 20);
-            const defaultOffsetY = appConfig?.defaultOffsetY ?? ((Object.keys(appRegistry).indexOf(appConfig.id) % 5) * 50 + 20);
+            // Default positioning: cascade slightly based on number of apps loaded
+            const appIndex = Object.keys(appRegistry).indexOf(appConfig.id);
+            const defaultOffsetX = appConfig?.defaultOffsetX ?? ((appIndex % 5) * 50 + 20);
+            const defaultOffsetY = appConfig?.defaultOffsetY ?? ((appIndex % 5) * 50 + 20);
 
 
             if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize || !hasValidSavedPosition) {
@@ -915,10 +1025,12 @@
                 let newLeft = defaultOffsetX;
                 let newTop = defaultOffsetY;
 
+                // Ensure window is within viewport bounds
                 newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
                 newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
-                if (window.innerHeight <= newHeight + 20) newTop = 10;
-                if (window.innerWidth <= newWidth + 20) newLeft = 10;
+                if (window.innerHeight <= newHeight + 20) newTop = 10; // If viewport too small, stick to top
+                if (window.innerWidth <= newWidth + 20) newLeft = 10;  // If viewport too small, stick to left
+
 
                 appWindow.style.width = newWidth + 'px';
                 appWindow.style.height = newHeight + 'px';
@@ -929,7 +1041,7 @@
                 state.height = newHeight;
                 state.x = newLeft;
                 state.y = newTop;
-                state.userManuallySet = false;
+                state.userManuallySet = false; // Reset since we are setting defaults
             }
         }
 
@@ -939,14 +1051,15 @@
             if (!win) return;
             let state = osData.windowStates[windowId];
             if (!state) {
-                osData.windowStates[windowId] = {};
+                osData.windowStates[windowId] = {}; // Initialize if not present
                 state = osData.windowStates[windowId];
             }
             state.hiddenByUser = (win.style.display === 'none');
             state.minimized = win.classList.contains('minimized');
             state.maximized = win.classList.contains('true-maximized');
-            state.zIndex = parseInt(win.style.zIndex) || highestZIndex;
+            state.zIndex = parseInt(win.style.zIndex) || highestZIndex; // Ensure zIndex is saved
 
+            // Only save position/size if not minimized or maximized, to preserve normal state
             if (!state.minimized && !state.maximized) {
                 state.x = win.offsetLeft;
                 state.y = win.offsetTop;
@@ -958,7 +1071,10 @@
 
         function restoreWindowState(windowId, appConfig) {
             const win = getById(windowId);
-            if (!win) return;
+            if (!win || !(win instanceof HTMLElement)) {
+                console.warn("restoreWindowState: Window element not found or invalid for ID:", windowId);
+                return;
+            }
 
             let state = osData.windowStates[windowId];
             const defaultStateTemplate = {
@@ -971,6 +1087,7 @@
                 osData.windowStates[windowId] = { ...defaultStateTemplate };
                 state = osData.windowStates[windowId];
             } else {
+                 // Ensure all properties from template exist if loading older saved data
                  state = { ...defaultStateTemplate, ...state };
                  osData.windowStates[windowId] = state;
             }
@@ -982,9 +1099,9 @@
             }
 
             let loadedZ = state.zIndex;
-            if (loadedZ <= 5) loadedZ = highestZIndex + 1;
+            if (loadedZ <= 5) loadedZ = highestZIndex + 1; // Ensure it's above icons
             win.style.zIndex = loadedZ;
-            state.zIndex = loadedZ;
+            state.zIndex = loadedZ; // Save the potentially updated zIndex
             highestZIndex = Math.max(highestZIndex, loadedZ);
 
             if (state.minimized) {
@@ -997,13 +1114,17 @@
                 win.style.height = '100vh';
                 win.style.top = '0px';
                 win.style.left = '0px';
+                // Ensure lastNormalStates has a fallback if state.width/height are null
+                const lnWidth = state.width ? Math.max(appConfig?.minWidth || 200, state.width) : (appConfig?.defaultWidth || 500);
+                const lnHeight = state.height ? Math.max(appConfig?.minHeight || 150, state.height) : (appConfig?.defaultHeight || 400);
+                const lnTop = state.y ?? appConfig?.defaultOffsetY ?? 50;
+                const lnLeft = state.x ?? appConfig?.defaultOffsetX ?? 50;
+
                 lastNormalStates[windowId] = {
-                    width: (state.width ? Math.max(appConfig?.minWidth || 200, state.width) : (appConfig?.defaultWidth || 500)) + 'px',
-                    height: (state.height ? Math.max(appConfig?.minHeight || 150, state.height) : (appConfig?.defaultHeight || 400)) + 'px',
-                    top: (state.y ?? appConfig?.defaultOffsetY ?? 50) + 'px',
-                    left: (state.x ?? appConfig?.defaultOffsetX ?? 50) + 'px'
+                    width: lnWidth + 'px', height: lnHeight + 'px',
+                    top: lnTop + 'px', left: lnLeft + 'px'
                 };
-            } else {
+            } else { // Normal state
                 win.classList.remove('minimized', 'true-maximized');
                 if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
                     const currentMinWidth = appConfig?.minWidth || 200;
@@ -1012,8 +1133,8 @@
                     win.style.top = state.y + 'px';
                     win.style.width = Math.max(currentMinWidth, state.width) + 'px';
                     win.style.height = Math.max(currentMinHeight, state.height) + 'px';
-                } else {
-                    if (!state.hiddenByUser) {
+                } else { // Not manually set, or missing some state properties
+                    if (!state.hiddenByUser) { // Only apply defaults if it's supposed to be visible
                          setWindowDefaults(windowId, win, appConfig);
                     }
                 }
@@ -1026,6 +1147,10 @@
                 localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(osData));
             } catch (error) {
                 console.error("Could not save OS data:", error);
+                // Potentially alert user if storage is full
+                if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                    alert("Storage limit exceeded. OS settings might not be saved.");
+                }
             }
         }
 
@@ -1034,11 +1159,12 @@
             const defaultOsData = {
                 windowStates: {}, iconPositions: {},
                 customBgImage: null, customBgColor: null,
-                appSpecificData: {}
+                appSpecificData: {} // Initialize appSpecificData
             };
             if (storedData) {
                 try {
                     const parsed = JSON.parse(storedData);
+                    // Merge deeply for windowStates and iconPositions to preserve defaults for new apps
                     osData = { ...defaultOsData, ...parsed };
                     osData.windowStates = { ...defaultOsData.windowStates, ...(parsed.windowStates || {}) };
                     osData.iconPositions = { ...defaultOsData.iconPositions, ...(parsed.iconPositions || {}) };
@@ -1046,7 +1172,7 @@
 
                 } catch (e) {
                     console.error("Error parsing OS data, using defaults.", e);
-                    osData = defaultOsData;
+                    osData = defaultOsData; // Fallback to complete defaults
                 }
             } else {
                 osData = defaultOsData;
@@ -1073,11 +1199,13 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                const appId = doc.body.dataset.appId;
-                if (!appId) {
-                    console.error(`App ID missing in ${appFile}`);
+                const appIdFromBody = doc.body.dataset.appId; // Get appId from body data attribute
+                if (!appIdFromBody) {
+                    console.error(`App ID missing in body data-app-id of ${appFile}`);
                     return;
                 }
+                const appId = appIdFromBody;
+
 
                 const iconTemplate = doc.getElementById(`${appId}-icon-template`);
                 const windowTemplate = doc.getElementById(`${appId}-window-template`);
@@ -1090,7 +1218,7 @@
                     return;
                 }
                 
-                let appConfigData = {
+                let appConfigData = { // Base defaults for an app
                     id: appId,
                     windowId: `${appId}Window`,
                     iconId: `${appId}Icon`,
@@ -1102,7 +1230,7 @@
                 if (appConfigElement) {
                     try {
                         const jsonData = JSON.parse(appConfigElement.textContent);
-                        appConfigData = {...appConfigData, ...jsonData};
+                        appConfigData = {...appConfigData, ...jsonData}; // Merge with JSON config
                     } catch (e) {
                         console.error(`Error parsing config for ${appId}:`, e);
                     }
@@ -1113,14 +1241,17 @@
                 iconContainer.id = appConfigData.iconId;
                 iconContainer.className = 'desktop-icon-container';
                 iconContainer.innerHTML = iconTemplate.innerHTML;
-                iconContainer.dataset.appId = appId;
-                iconContainer.dataset.windowId = appConfigData.windowId; 
+                iconContainer.dataset.appId = appId; // Store appId on the icon
+                iconContainer.dataset.windowId = appConfigData.windowId; // Store windowId for dblclick
                 
                 const iconPos = osData.iconPositions[iconContainer.id];
-                const defaultX = (Object.keys(appRegistry).length % 8) * (90 + 10);
-                const defaultY = Math.floor(Object.keys(appRegistry).length / 8) * (100 + 10);
+                // Simple default positioning for new icons
+                const appCount = Object.keys(appRegistry).length;
+                const defaultX = (appCount % 8) * (90 + 10); // 90px width + 10px gap
+                const defaultY = Math.floor(appCount / 8) * (100 + 10); // 100px height + 10px gap
 
-                if (iconPos) {
+
+                if (iconPos && typeof iconPos.x === 'number' && typeof iconPos.y === 'number') {
                     iconContainer.style.left = iconPos.x + 'px';
                     iconContainer.style.top = iconPos.y + 'px';
                 } else {
@@ -1129,7 +1260,7 @@
                      const { x: finalX, y: finalY } = findNonCollidingPosition(iconContainer, defaultX, defaultY, allIcons);
                      iconContainer.style.left = finalX + 'px';
                      iconContainer.style.top = finalY + 'px';
-                     osData.iconPositions[iconContainer.id] = { x: finalX, y: finalY };
+                     osData.iconPositions[iconContainer.id] = { x: finalX, y: finalY }; // Save new position
                 }
 
 
@@ -1137,16 +1268,18 @@
                 iconContainer.addEventListener('dblclick', handleIconDoubleClick);
                 desktopElement.appendChild(iconContainer);
 
+                // Store app configuration and its data (loaded from osData or default)
                 appRegistry[appId] = {
-                    ...appConfigData,
+                    ...appConfigData, // Merged defaults and JSON config
                     iconTemplate: iconTemplate,
                     windowTemplate: windowTemplate,
                     script: scriptElement ? scriptElement.textContent : null,
-                    appData: (osData.appSpecificData && osData.appSpecificData[appId]) || {}
+                    appData: (osData.appSpecificData && osData.appSpecificData[appId]) || {} // Load saved app data or init empty
                 };
                 
+                // If window was open previously, attempt to reopen it
                 if (osData.windowStates[appConfigData.windowId] && !osData.windowStates[appConfigData.windowId].hiddenByUser) {
-                    handleIconDoubleClick({ currentTarget: iconContainer });
+                    handleIconDoubleClick({ currentTarget: iconContainer }); // Simulate double click to open/restore
                 }
 
 
@@ -1159,28 +1292,28 @@
             for (const appFile of APP_FILES) {
                 await loadApp(appFile);
             }
-            saveOsData(); // Save any new default icon positions
+            saveOsData(); // Save any new default icon positions or initial appData structures
         }
         
         function initOsEventListeners() {
             document.body.addEventListener('contextmenu', function(event) {
                 if (event.target === document.body || event.target === desktopElement) {
                     event.preventDefault();
-                    getById('newBgImageInput').value = null;
-                    getById('bgImageUrlInput').value = '';
+                    getById('newBgImageInput').value = null; // Clear file input
+                    getById('bgImageUrlInput').value = ''; // Clear URL input
                     openModal(MODAL_IDS_OS.CHANGE_BG_IMAGE);
                 }
             });
             getById('uploadBgImageBtn').addEventListener('click', function() {
                 const file = getById('newBgImageInput').files[0];
                 if (file) {
-                    if (file.size > 5 * 1024 * 1024) alert("Image file is large (over 5MB).");
+                    if (file.size > 5 * 1024 * 1024) alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
                     const reader = new FileReader();
                     reader.onloadend = function() {
-                        document.body.style.backgroundColor = '';
+                        document.body.style.backgroundColor = ''; // Clear color
                         document.body.style.backgroundImage = `url('${reader.result}')`;
                         osData.customBgImage = reader.result;
-                        osData.customBgColor = null;
+                        osData.customBgColor = null; // Clear color preference
                         saveOsData();
                         closeModal(MODAL_IDS_OS.CHANGE_BG_IMAGE);
                     }
@@ -1194,15 +1327,15 @@
                 const imageUrl = getById('bgImageUrlInput').value.trim();
                 if (imageUrl) {
                     try {
-                        new URL(imageUrl);
-                        document.body.style.backgroundColor = '';
+                        new URL(imageUrl); // Basic URL validation
+                        document.body.style.backgroundColor = ''; // Clear color
                         document.body.style.backgroundImage = `url('${imageUrl}')`;
                         osData.customBgImage = imageUrl;
-                        osData.customBgColor = null;
+                        osData.customBgColor = null; // Clear color preference
                         saveOsData();
                         closeModal(MODAL_IDS_OS.CHANGE_BG_IMAGE);
                     } catch (e) {
-                        alert("Invalid image URL.");
+                        alert("Invalid image URL provided. Please enter a complete and valid URL (e.g., https://example.com/image.png).");
                     }
                 } else {
                     alert("Please enter an image URL.");
@@ -1212,17 +1345,18 @@
                 if (event.target.classList.contains('color-swatch-item')) {
                     const selectedColor = event.target.dataset.colorValue;
                     if (selectedColor) {
-                        document.body.style.backgroundImage = 'none';
+                        document.body.style.backgroundImage = 'none'; // Clear image
                         document.body.style.backgroundColor = selectedColor;
                         osData.customBgColor = selectedColor;
-                        osData.customBgImage = null;
+                        osData.customBgImage = null; // Clear image preference
                         saveOsData();
                         closeModal(MODAL_IDS_OS.CHANGE_BG_IMAGE);
                     }
                 }
             });
             
-            document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]').forEach(button => {
+            // Generic modal close buttons (for OS modals)
+            document.querySelectorAll(`#${MODAL_IDS_OS.CHANGE_BG_IMAGE} .close-button, #${MODAL_IDS_OS.CHANGE_BG_IMAGE} .xp-button[data-modal-id]`).forEach(button => {
                 button.addEventListener('click', (event) => {
                     const modalId = event.target.dataset.modalId || event.target.closest('.modal').id;
                     if (modalId) closeModal(modalId);
@@ -1232,17 +1366,17 @@
             window.addEventListener('resize', () => {
                 Object.values(appRegistry).forEach(appConfig => {
                     const win = getById(appConfig.windowId);
-                    if (win && win.style.display !== 'none') {
-                         setWindowDefaults(appConfig.windowId, win, appConfig, true);
+                    if (win && win.style.display !== 'none' && !(win instanceof SVGElement)) { // Check if it's an HTMLElement
+                         setWindowDefaults(appConfig.windowId, win, appConfig, true); // Pass true for browser resize
                          if(typeof appConfig.onResize === 'function') appConfig.onResize(win);
                     }
                 });
-                saveOsData();
+                saveOsData(); // Save potentially adjusted window states
             });
         }
 
         async function main() {
-            loadOsData();
+            loadOsData(); // Load OS and all app data first
             applyCurrentBackgroundStyle();
             populateColorSwatches();
             initOsEventListeners();
@@ -1252,11 +1386,12 @@
                 YOUTUBE_API_KEY = remoteConfig.getString('youtube_api_key');
                 GEMINI_API_KEY = remoteConfig.getString('gemini_api_key');
             } catch (err) {
-                console.error("Firebase Remote Config failed to load.", err);
+                console.error("Firebase Remote Config failed to load. API keys might be unavailable.", err);
             }
             
-            await loadAllApps();
+            await loadAllApps(); // This will create icons and restore open windows
             
+            // Ensure highestZIndex is correctly set after all windows might have been restored
             let maxLoadedZ = highestZIndex;
              Object.values(osData.windowStates).forEach(state => {
                 if (state && state.zIndex) {
