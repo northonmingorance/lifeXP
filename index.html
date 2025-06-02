@@ -980,6 +980,24 @@
             color: #990000;
         }
 
+        /* Gemini Thinking Animation */
+        @keyframes thinking {
+            0% { content: 'Thinking.'; }
+            25% { content: 'Thinking..'; }
+            50% { content: 'Thinking...'; }
+            75% { content: 'Thinking..'; }
+            100% { content: 'Thinking.'; }
+        }
+
+        .gemini-thinking-animation::after {
+            content: '...'; /* Initial content before animation starts */
+            animation: thinking 1.5s infinite;
+            display: inline-block; /* Needed for content property to work */
+        }
+        .gemini-thinking-animation {
+            /* This class is a placeholder for the ::after pseudo-element animation */
+        }
+
 
         .gemini-chat-input-area {
             display: flex;
@@ -4529,7 +4547,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4618,7 +4636,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
@@ -5395,7 +5413,13 @@
 
             const contentSpan = document.createElement('span');
             contentSpan.classList.add('message-content');
-            contentSpan.textContent = msg.content;
+            if (msg.id && msg.id.startsWith('gemini-thinking-')) { // Check if it's the thinking message
+                contentSpan.classList.add('gemini-thinking-animation'); // Add animation class
+                contentSpan.textContent = ''; // Animation will provide "Thinking..."
+            } else {
+                contentSpan.textContent = msg.content;
+            }
+
 
             const timestampSpan = document.createElement('span');
             timestampSpan.classList.add('message-timestamp');
@@ -5412,6 +5436,9 @@
                     messageDiv.classList.add('error-message');
                 }
             }
+            if (msg.id) {
+                messageDiv.id = msg.id;
+            }
 
             messageDiv.appendChild(senderSpan);
             messageDiv.appendChild(contentSpan);
@@ -5422,19 +5449,39 @@
         DOM.geminiChatDisplayArea.scrollTop = DOM.geminiChatDisplayArea.scrollHeight;
     }
 
-    function addMessageToGeminiChat(type, content, isError = false) {
+    function addMessageToGeminiChat(type, content, isError = false, messageId = null) {
         if (!appData.geminiChatHistory) {
             appData.geminiChatHistory = [];
         }
-        appData.geminiChatHistory.push({
+        const newMessage = {
             type: type,
             content: content,
             isError: isError,
             timestamp: new Date().toISOString()
-        });
+        };
+        if (messageId) {
+            newMessage.id = messageId;
+        }
+        appData.geminiChatHistory.push(newMessage);
         renderGeminiChatHistory();
         saveData();
     }
+    
+    function updateGeminiChatMessage(messageId, newContent, isError = false) {
+        if (!appData.geminiChatHistory) return;
+        const messageIndex = appData.geminiChatHistory.findIndex(msg => msg.id === messageId);
+        if (messageIndex !== -1) {
+            appData.geminiChatHistory[messageIndex].content = newContent;
+            appData.geminiChatHistory[messageIndex].isError = isError;
+            // Remove the ID if it was a temporary thinking message ID
+            if (messageId.startsWith('gemini-thinking-')) {
+                 delete appData.geminiChatHistory[messageIndex].id;
+            }
+            renderGeminiChatHistory();
+            saveData();
+        }
+    }
+
 
     function handleClearGeminiChatHistory() {
         openModal(MODAL_IDS.CONFIRM_CLEAR_CHAT);
@@ -5465,18 +5512,14 @@
         }
 
         const thinkingMsgId = `gemini-thinking-${Date.now()}`;
-        const thinkingDiv = document.createElement('div');
-        thinkingDiv.classList.add('gemini-chat-message', 'gemini-message');
-        thinkingDiv.id = thinkingMsgId;
-        thinkingDiv.innerHTML = `<span class="message-sender">Gemini</span><span class="message-content">Thinking...</span>`;
-        DOM.geminiChatDisplayArea.appendChild(thinkingDiv);
-        DOM.geminiChatDisplayArea.scrollTop = DOM.geminiChatDisplayArea.scrollHeight;
+        addMessageToGeminiChat('gemini', '', false, thinkingMsgId); // Add empty message with ID, animation will be applied by renderGeminiChatHistory
 
         const messagesToSend = [];
         const recentHistory = appData.geminiChatHistory.slice(-MAX_GEMINI_HISTORY_MESSAGES);
 
         recentHistory.forEach(msg => {
-            if (!msg.isError) { 
+            // Exclude the thinking message itself from the history sent to API
+            if (!msg.isError && msg.id !== thinkingMsgId) { 
                 messagesToSend.push({
                     role: msg.type === 'user' ? 'user' : 'model',
                     parts: [{ text: msg.content }]
@@ -5484,7 +5527,8 @@
             }
         });
         
-        if (messagesToSend.length === 0 || messagesToSend[messagesToSend.length -1].role !== 'user') {
+        // Ensure the last message sent is the current user prompt if it wasn't already added
+        if (messagesToSend.length === 0 || messagesToSend[messagesToSend.length -1].role !== 'user' || messagesToSend[messagesToSend.length -1].parts[0].text !== promptText) {
              messagesToSend.push({
                 role: 'user',
                 parts: [{ text: promptText }]
@@ -5505,33 +5549,29 @@
                 body: JSON.stringify(requestBody),
             });
 
-            const existingThinkingDiv = getById(thinkingMsgId);
-            if (existingThinkingDiv) existingThinkingDiv.remove();
 
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Gemini API Error:", errorData);
                 const errorMessage = errorData?.error?.message || `API request failed with status ${response.status}`;
-                addMessageToGeminiChat('gemini', `Error: ${errorMessage}`, true);
+                updateGeminiChatMessage(thinkingMsgId, `Error: ${errorMessage}`, true);
             } else {
                 const data = await response.json();
                 if (data.candidates && data.candidates.length > 0 &&
                     data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
                     const geminiResponse = data.candidates[0].content.parts[0].text;
-                    addMessageToGeminiChat('gemini', geminiResponse);
+                    updateGeminiChatMessage(thinkingMsgId, geminiResponse, false);
                 } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                     addMessageToGeminiChat('gemini', `Blocked: ${data.promptFeedback.blockReason}. ${data.promptFeedback.blockReasonMessage || ''}`, true);
+                     updateGeminiChatMessage(thinkingMsgId, `Blocked: ${data.promptFeedback.blockReason}. ${data.promptFeedback.blockReasonMessage || ''}`, true);
                 }
                  else {
-                    addMessageToGeminiChat('gemini', "Received an empty or unexpected response from Gemini.", true);
+                    updateGeminiChatMessage(thinkingMsgId, "Received an empty or unexpected response from Gemini.", true);
                     console.warn("Unexpected Gemini API response structure:", data);
                 }
             }
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            const existingThinkingDiv = getById(thinkingMsgId);
-            if (existingThinkingDiv) existingThinkingDiv.remove();
-            addMessageToGeminiChat('gemini', `Error: Could not connect to Gemini. ${error.message}`, true);
+            updateGeminiChatMessage(thinkingMsgId, `Error: Could not connect to Gemini. ${error.message}`, true);
         } finally {
             DOM.geminiChatPromptInput.disabled = false;
             DOM.geminiChatSendBtn.disabled = false;
