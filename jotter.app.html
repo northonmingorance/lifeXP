@@ -1,56 +1,48 @@
-<div class="desktop-icon" id="textEditorIcon" data-window-id="textEditorWindow">
-    <div class="icon-image">🗒️</div>
-    <div class="icon-label">Jotter</div>
-</div>
+<body data-app-id="jotter">
 
-<div class="xp-window" id="textEditorWindow">
-    <div class="title-bar" id="textEditorWindowTitleBar">
-        <span class="title-bar-text">Jotter</span>
-        <div class="title-bar-controls">
-            <button id="textEditorMinimizeBtn" title="Minimize">0</button>
-            <button id="textEditorMaximizeBtn" title="Maximize">1</button>
-            <button title="Close" id="textEditorCloseBtn">r</button>
+    <template id="jotter-icon-template">
+        <div class="icon-image">🗒️</div>
+        <div class="icon-label">Jotter</div>
+    </template>
+
+    <template id="jotter-window-template">
+        <div class="xp-window" id="jotterWindow" style="display:none;">
+            <div class="title-bar">
+                <span class="title-bar-text">Jotter</span>
+                <div class="title-bar-controls">
+                    <button data-app-action="minimize" title="Minimize">0</button>
+                    <button data-app-action="maximize" title="Maximize">1</button>
+                    <button data-app-action="close" title="Close">r</button>
+                </div>
+            </div>
+            <div class="window-body" id="jotterWindowBody" style="padding:0; overflow:hidden;">
+                <iframe id="jotterFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+            <div class="resize-handle"></div>
         </div>
-    </div>
-    <div class="window-body" id="textEditorWindowBody">
-        <iframe id="textEditorFrame" style="width: 100%; height: 100%; border: none;"></iframe>
-    </div>
-    <div class="resize-handle" id="textEditorResizeHandle"></div>
-</div>
+    </template>
 
-<style>
-    /* Jotter Specific Styles (if any beyond iframe) */
-    #textEditorWindow .window-body {
-        padding: 0; /* Remove padding as iframe takes full space */
-        overflow: hidden; /* iframe handles its own scroll */
+    <script type="application/json" id="jotter-config">
+    {
+        "minWidth": 375,
+        "minHeight": 250,
+        "defaultWidth": 450,
+        "defaultHeight": 705,
+        "defaultOffsetX": 70,
+        "defaultOffsetY": 70
     }
-</style>
+    </script>
 
-<script>
-(function() {
-    const APP_ID = 'textEditorWindow';
-    const STORAGE_KEY_APP = `app_${APP_ID}_data_v1.0`; // Though content is in iframe
-    const MIN_APP_WIDTH = 375;
-    const MIN_APP_HEIGHT = 250;
-    const DEFAULT_APP_WIDTH = 450;
-    const DEFAULT_APP_HEIGHT = 705;
+    <script id="jotter-script">
+    const appWindow = this.appWindow;
+    const os = this.os;
+    const jotterFrame = appWindow.querySelector('#jotterFrame');
 
-    const DOM_APP = {
-        textEditorWindow: null,
-        textEditorWindowTitleBar: null,
-        textEditorResizeHandle: null,
-        textEditorMinimizeBtn: null,
-        textEditorMaximizeBtn: null,
-        textEditorCloseBtn: null,
-        textEditorFrame: null,
-    };
-    let appData = { editorContent: '' }; // Minimal state, iframe manages most
-
-    function getJotterHTMLContent(initialContent = '', fontSize = 14) {
+    function getTextEditorHTMLContent() {
         return `
 <html lang="en">
 <head>
-    <title>Jotter</title>
+    <title>Jotter Content</title>
     <style>
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         body { font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #ECE9D8; color: #000000; display: flex; flex-direction: column; }
@@ -58,24 +50,25 @@
         .jotter-menu-bar { background-color: #ECE9D8; padding: 2px 3px; border-bottom: 1px solid #ACA899; display: flex; flex-shrink: 0; user-select: none; color: #000000; }
         .jotter-menu-item { padding: 3px 8px; cursor: default; position: relative; color: inherit; }
         .jotter-menu-item:hover { background-color: #005CFE; color: white; }
-        .jotter-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); z-index: 100; padding: 2px 0; color: #000000; }
+        .jotter-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); z-index: 100; padding: 2px 0; color: #000000; min-width: 150px; }
         .jotter-dropdown-item { padding: 4px 12px; cursor: default; white-space: nowrap; position: relative; color: inherit; display: flex; align-items: center; min-height: 22px; box-sizing: border-box; }
         .jotter-dropdown-item:not(.font-size-control-container):hover:not(.disabled) { background-color: #005CFE; color: white; }
-        .jotter-menu-item:focus-within .jotter-dropdown-content, .jotter-menu-item.open .jotter-dropdown-content { display: block; }
-        #editorArea { border: 1px solid #7F7F7F; padding: 5px; background-color: white; overflow-y: auto; font-family: 'Lucida Console', Monaco, monospace; font-size: ${fontSize}px; line-height: 1.4; color: #000000; white-space: pre-wrap; word-wrap: break-word; box-sizing: border-box; margin: 5px; flex-grow: 1; }
+        .jotter-menu-item.open .jotter-dropdown-content { display: block; }
+        #editorArea { border: 1px solid #7F7F7F; padding: 5px; background-color: white; overflow-y: auto; font-family: 'Lucida Console', Monaco, monospace; font-size: 14px; line-height: 1.4; color: #000000; white-space: pre-wrap; word-wrap: break-word; box-sizing: border-box; margin: 5px; flex-grow: 1; }
         .font-size-control-container { display: flex; align-items: center; padding: 0px 5px 0px 15px !important; }
         .font-size-control-container span { margin-right: 8px; }
         .font-size-btn { font-family: "Tahoma", "Geneva", sans-serif; font-size: 10px; border: 1px outset #7F7F7F; background-color: #ECE9D8; width: 20px; height: 20px; line-height: 18px; text-align: center; padding: 0; cursor: default; color: black; }
-        .font-size-btn:active { border-style: inset; } .font-size-btn:hover { background-color: #005CFE; color: white; }
+        .font-size-btn:active { border-style: inset; }
+        .font-size-btn:hover { background-color: #005CFE; color: white; }
         .font-size-input { width: 30px; height: 18px; border: 1px solid #7F7F7F; text-align: center; margin: 0 3px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; padding: 1px; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="jotter-menu-bar" id="jotterMenuBarInFrame">
         <div class="jotter-menu-item" tabindex="0"> File <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div> </div> </div>
-        <div class="jotter-menu-item" tabindex="0"> View <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame"> <span>Font Size:</span> <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button> <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="${fontSize}" min="8" max="72"> <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button> </div> </div> </div>
+        <div class="jotter-menu-item" tabindex="0"> View <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame"> <span>Font Size:</span> <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button> <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72"> <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button> </div> </div> </div>
     </div>
-    <div id="editorArea" contenteditable="true">${initialContent}</div>
+    <div id="editorArea" contenteditable="true"></div>
     <script>
         const editorArea = document.getElementById('editorArea');
         const jotterMenuBar = document.getElementById('jotterMenuBarInFrame');
@@ -84,21 +77,12 @@
         const fontIncrementBtn = document.getElementById('fontIncrementBtnInFrame');
         const fontSizeInput = document.getElementById('fontSizeInputInFrame');
         
-        function saveContentToParent() {
-            if (window.parent && window.parent.appData && window.parent.appData['${APP_ID}']) {
-                window.parent.appData['${APP_ID}'].editorContent = editorArea.innerHTML;
-                window.parent.appData['${APP_ID}'].fontSize = parseInt(editorArea.style.fontSize) || ${fontSize};
-                 if (window.parent.saveAppData && typeof window.parent.saveAppData['${APP_ID}'] === 'function') {
-                    window.parent.saveAppData['${APP_ID}']();
-                }
-            }
-        }
-        editorArea.addEventListener('input', saveContentToParent);
-
         jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
             menuItem.addEventListener('click', (event) => {
                 event.stopPropagation();
-                if (event.target.closest('.font-size-control-container')) { if(!menuItem.classList.contains('open')) { if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open'); menuItem.classList.add('open'); activeMenu = menuItem; } return; }
+                if (event.target.closest('.font-size-control-container')) {
+                    if(!menuItem.classList.contains('open')) { if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open'); menuItem.classList.add('open'); activeMenu = menuItem; } return;
+                }
                 if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
                 menuItem.classList.toggle('open'); activeMenu = menuItem.classList.contains('open') ? menuItem : null;
             });
@@ -108,172 +92,26 @@
         function performSave() {
             let filename = prompt("Filename:", "jotter_content.html");
             if (filename) {
-                let htmlContent = \`<!DOCTYPE html><html><head><title>Saved Content</title><meta charset="UTF-8"><style>body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '${fontSize}px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }</style></head><body>\${editorArea.innerHTML}</body></html>\`;
-                let blob = new Blob([htmlContent], { type: "text/html" }); let url = URL.createObjectURL(blob); let downloadLink = document.createElement("a"); downloadLink.setAttribute("href", url); downloadLink.setAttribute("download", filename); downloadLink.click(); URL.revokeObjectURL(url);
+                let htmlContent = \`<!DOCTYPE html><html><head><title>Saved Content</title><meta charset="UTF-8"><style>body { font-family: 'Lucida Console', Monaco, monospace; font-size: \${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }</style></head><body>\${editorArea.innerHTML}</body></html>\`;
+                let blob = new Blob([htmlContent], { type: "text/html" }); let url = URL.createObjectURL(blob); let downloadLink = document.createElement("a"); downloadLink.href = url; downloadLink.download = filename; downloadLink.click(); URL.revokeObjectURL(url);
             }
             if (activeMenu) { activeMenu.classList.remove('open'); activeMenu = null; }
         }
-        function applyFontSize(size) { const newSize = Math.max(8, Math.min(72, parseInt(size))); if (!isNaN(newSize)) { editorArea.style.fontSize = newSize + 'px'; fontSizeInput.value = newSize; saveContentToParent(); } }
-        fontDecrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || ${fontSize}; applyFontSize(currentSize - 1); });
-        fontIncrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || ${fontSize}; applyFontSize(currentSize + 1); });
-        fontSizeInput.addEventListener('change', () => { applyFontSize(fontSizeInput.value); });
-        fontSizeInput.addEventListener('click', (event) => { event.stopPropagation(); });
-        fontSizeInput.addEventListener('input', () => { let val = parseInt(fontSizeInput.value); if(!isNaN(val) && val >=8 && val <=72){ editorArea.style.fontSize = val + 'px'; saveContentToParent();} });
-        editorArea.focus();
+        editorArea.addEventListener('keydown', function(e) { if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); performSave(); } });
+        function applyFontSize(size) { const newSize = Math.max(8, Math.min(72, parseInt(size))); if (!isNaN(newSize)) { editorArea.style.fontSize = newSize + 'px'; fontSizeInput.value = newSize; } }
+        fontDecrementBtn.addEventListener('click', (event) => { event.stopPropagation(); applyFontSize(parseInt(fontSizeInput.value) - 1); });
+        fontIncrementBtn.addEventListener('click', (event) => { event.stopPropagation(); applyFontSize(parseInt(fontSizeInput.value) + 1); });
+        fontSizeInput.addEventListener('change', () => applyFontSize(fontSizeInput.value));
+        fontSizeInput.addEventListener('click', (event) => event.stopPropagation());
+        fontSizeInput.addEventListener('input', () => { let val = parseInt(fontSizeInput.value); if(!isNaN(val) && val >=8 && val <=72){ editorArea.style.fontSize = val + 'px'; } });
+        applyFontSize(fontSizeInput.value); editorArea.focus();
     <\/script>
 </body>
 </html>`;
     }
 
-    function saveAppData_Jotter() {
-        const win = DOM_APP.textEditorWindow;
-        if (!win) return;
-        let currentOsData = window.osData.windowStates[APP_ID] || {};
-        const iframeDoc = DOM_APP.textEditorFrame.contentDocument;
-        if (iframeDoc) {
-            const editorArea = iframeDoc.getElementById('editorArea');
-            if (editorArea) {
-                 appData.editorContent = editorArea.innerHTML;
-                 appData.fontSize = parseInt(editorArea.style.fontSize) || 14;
-            }
-        }
-        const stateToSave = {
-            appSpecific: {
-                editorContent: appData.editorContent,
-                fontSize: appData.fontSize
-            },
-            windowGeneric: {
-                x: win.offsetLeft, y: win.offsetTop, width: win.offsetWidth, height: win.offsetHeight,
-                minimized: win.classList.contains('minimized'), maximized: win.classList.contains('true-maximized'),
-                zIndex: parseInt(win.style.zIndex) || currentOsData.zIndex || window.highestZIndex,
-                hiddenByUser: win.style.display === 'none', userManuallySet: currentOsData.userManuallySet || false,
-                wasMaximizedBeforeMinimize: currentOsData.wasMaximizedBeforeMinimize || false
-            }
-        };
-         if(stateToSave.windowGeneric.minimized || stateToSave.windowGeneric.maximized){
-            if(window.osData.lastNormalStates[APP_ID]){
-                stateToSave.windowGeneric.x = parseInt(window.osData.lastNormalStates[APP_ID].left);
-                stateToSave.windowGeneric.y = parseInt(window.osData.lastNormalStates[APP_ID].top);
-                stateToSave.windowGeneric.width = parseInt(window.osData.lastNormalStates[APP_ID].width);
-                stateToSave.windowGeneric.height = parseInt(window.osData.lastNormalStates[APP_ID].height);
-            }  else if (currentOsData.x != null) {
-                 stateToSave.windowGeneric.x = currentOsData.x;
-                 stateToSave.windowGeneric.y = currentOsData.y;
-                 stateToSave.windowGeneric.width = currentOsData.width;
-                 stateToSave.windowGeneric.height = currentOsData.height;
-            }
-        }
-        localStorage.setItem(STORAGE_KEY_APP, JSON.stringify(stateToSave));
-        window.osData.windowStates[APP_ID] = stateToSave.windowGeneric;
+    if (jotterFrame) {
+        jotterFrame.srcdoc = getTextEditorHTMLContent();
     }
-    window.saveAppData[APP_ID] = saveAppData_Jotter;
-
-    function loadAppData_Jotter() {
-        const storedData = localStorage.getItem(STORAGE_KEY_APP);
-         const defaultAppData = { editorContent: '', fontSize: 14 };
-         const defaultWindowState = {
-             x: null, y: null, width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
-             maximized: false, minimized: false, zIndex: window.highestZIndex + 1, 
-             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
-        };
-
-        if (storedData) {
-            try {
-                const loaded = JSON.parse(storedData);
-                appData = { ...defaultAppData, ...(loaded.appSpecific || {}) };
-                window.osData.windowStates[APP_ID] = { ...defaultWindowState, ...(loaded.windowGeneric || {}) };
-            } catch (e) {
-                appData = { ...defaultAppData };
-                window.osData.windowStates[APP_ID] = { ...defaultWindowState };
-            }
-        } else {
-            appData = { ...defaultAppData };
-            window.osData.windowStates[APP_ID] = { ...defaultWindowState };
-        }
-    }
-
-    function restoreAppWindowState_Jotter(forceVisible = false) {
-        const win = DOM_APP.textEditorWindow;
-        if (!win) return;
-        let state = window.osData.windowStates[APP_ID] || {};
-        const defaultState = {
-             x: (window.innerWidth - DEFAULT_APP_WIDTH)/2, y: (window.innerHeight - DEFAULT_APP_HEIGHT)/2, 
-             width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
-             maximized: false, minimized: false, zIndex: window.highestZIndex +1, 
-             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
-        };
-        state = {...defaultState, ...state};
-
-        if (forceVisible) {
-            state.hiddenByUser = false;
-            state.minimized = false;
-        }
-
-        if (state.hiddenByUser && !forceVisible) {
-            win.style.display = 'none';
-        } else {
-            win.style.display = 'flex';
-            DOM_APP.textEditorFrame.srcdoc = getJotterHTMLContent(appData.editorContent, appData.fontSize);
-        }
-        win.style.zIndex = state.zIndex || (window.highestZIndex + 1);
-        window.highestZIndex = Math.max(window.highestZIndex, parseInt(win.style.zIndex));
-
-        if (state.minimized && !forceVisible) {
-            win.classList.add('minimized');
-            win.classList.remove('true-maximized');
-        } else if (state.maximized) {
-            win.classList.add('true-maximized');
-            win.classList.remove('minimized');
-            win.style.width = '100vw'; win.style.height = '100vh';
-            win.style.top = '0px'; win.style.left = '0px';
-             window.osData.lastNormalStates[APP_ID] = {
-                width: (state.width ? Math.max(MIN_APP_WIDTH, state.width) : DEFAULT_APP_WIDTH) + 'px',
-                height: (state.height ? Math.max(MIN_APP_HEIGHT, state.height) : DEFAULT_APP_HEIGHT) + 'px',
-                top: (state.y != null ? state.y : defaultState.y) + 'px',
-                left: (state.x != null ? state.x : defaultState.x) + 'px'
-            };
-        } else {
-            win.classList.remove('minimized'); win.classList.remove('true-maximized');
-            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
-                win.style.left = state.x + 'px'; win.style.top = state.y + 'px';
-                win.style.width = Math.max(MIN_APP_WIDTH, state.width) + 'px';
-                win.style.height = Math.max(MIN_APP_HEIGHT, state.height) + 'px';
-            } else {
-                window.setWindowDefaults(APP_ID, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT, false);
-            }
-        }
-         window.updateMinMaxButtonStates_OS(APP_ID);
-    }
-     window.restoreAppWindowState[APP_ID] = restoreAppWindowState_Jotter;
-
-
-    function initAppEventListeners_Jotter() {
-        DOM_APP.textEditorMinimizeBtn.addEventListener('click', () => window.minimizeAppWindow(APP_ID));
-        DOM_APP.textEditorMaximizeBtn.addEventListener('click', () => window.maximizeAppWindowGlobal[APP_ID]());
-        DOM_APP.textEditorCloseBtn.addEventListener('click', () => window.closeAppWindow(APP_ID));
-    }
-
-    function init_Jotter() {
-        const fields = [
-            'textEditorWindow', 'textEditorWindowTitleBar', 'textEditorResizeHandle',
-            'textEditorMinimizeBtn', 'textEditorMaximizeBtn', 'textEditorCloseBtn', 'textEditorFrame'
-        ];
-        fields.forEach(field => DOM_APP[field] = document.getElementById(field));
-        
-        window.appData[APP_ID] = appData; 
-        window.appInitialConfig[APP_ID] = {
-            id: APP_ID,
-            defaultWidth: DEFAULT_APP_WIDTH, defaultHeight: DEFAULT_APP_HEIGHT,
-            minWidth: MIN_APP_WIDTH, minHeight: MIN_APP_HEIGHT,
-            titleBarId: 'textEditorWindowTitleBar', resizeHandleId: 'textEditorResizeHandle'
-        };
-        window.maximizeAppWindowGlobal[APP_ID] = () => window.maximizeAppWindow(APP_ID, MIN_APP_WIDTH, MIN_APP_HEIGHT, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT);
-
-        loadAppData_Jotter();
-        window.initWindowInteractions(APP_ID, 'textEditorWindowTitleBar', 'textEditorResizeHandle', MIN_APP_WIDTH, MIN_APP_HEIGHT);
-        restoreAppWindowState_Jotter();
-        initAppEventListeners_Jotter();
-    }
-    init_Jotter();
-})();
-</script>
+    </script>
+</body>

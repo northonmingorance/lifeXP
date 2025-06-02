@@ -1,581 +1,696 @@
-<div class="desktop-icon" id="playJockeyIcon" data-window-id="playJockeyWindow">
-    <div class="icon-image-pJ">⏯️</div> <div class="icon-image-pJ2">⏯️</div> <div class="icon-label-pJ">Play Jockey</div> </div>
+<body data-app-id="playJockey">
 
-<div class="xp-window" id="playJockeyWindow">
-    <div class="title-bar" id="playJockeyTitleBar">
-        <span class="title-bar-text">Play Jockey</span>
-        <div class="title-bar-controls">
-            <button id="playJockeyMinimizeBtn" title="Minimize">0</button>
-            <button id="playJockeyMaximizeBtn" title="Maximize">1</button>
-            <button title="Close" id="playJockeyCloseBtn">r</button>
-        </div>
-    </div>
-    <div class="window-body" id="playJockeyWindowBody">
-        <div class="playjockey-body-container">
-            <div class="playjockey-input-bar">
-                <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link or Search Query">
-                <button id="playJockeyAddBtn" class="xp-button">Add</button>
+    <template id="playJockey-icon-template">
+        <div style="font-size: 48px; line-height: 1; margin-bottom: 8px; filter: hue-rotate(140deg) saturate(1000%) brightness(70%);">⏯️</div>
+        <div style="position: absolute; width: 90px; height: 100px; text-align: center; color: white; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; box-sizing: border-box; z-index: 5; font-size: 48px; line-height: 1; text-shadow: none; margin-bottom: 8px; top: -66px; filter: hue-rotate(140deg) saturate(1000%); mix-blend-mode: luminosity;">⏯️</div>
+        <div style="font-size: 12px; font-weight: normal; word-wrap: break-word; max-width: 100%; position: relative; top: -66px;">Play Jockey</div>
+    </template>
+
+    <template id="playJockey-window-template">
+        <div class="xp-window" id="playJockeyWindow" style="display:none;">
+            <div class="title-bar">
+                <span class="title-bar-text">Play Jockey</span>
+                <div class="title-bar-controls">
+                    <button data-app-action="minimize" title="Minimize">0</button>
+                    <button data-app-action="maximize" title="Maximize">1</button>
+                    <button data-app-action="close" title="Close">r</button>
+                </div>
             </div>
-            <div class="playjockey-player-area">
-                <div id="playJockeyPlayer"></div>
+            <div class="window-body" id="playJockeyWindowBody" style="padding:0;">
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%; background-color: #D4D0C8; padding: 5px; box-sizing: border-box;">
+                    <div style="display: flex; margin-bottom: 5px; padding: 5px; background-color: #C0C0C0; border: 1px outset #FFFFFF; border-right-color: #808080; border-bottom-color: #808080; flex-shrink: 0;">
+                        <input type="text" id="playJockeyLinkInput" placeholder="Paste YouTube Link or Search Query" style="flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 4px; font-family: 'Tahoma', sans-serif; font-size: 11px; background-color: #FFFFFF;">
+                        <button id="playJockeyAddBtn" class="xp-button" style="min-width: 60px; padding: 3px 8px; font-size: 11px;">Add</button>
+                    </div>
+                    <div style="flex-grow: 1; margin-bottom: 5px; border: 2px inset #808080; background-color: black; min-height: 150px; overflow: hidden;">
+                        <div id="playJockeyPlayer" style="width: 100%; height: 100%;"></div>
+                    </div>
+                     <div id="playJockeyTabsBar" style="display: flex; flex-wrap: nowrap; overflow-x: auto; background-color: #C0C0C0; padding: 3px 3px 0 3px; border-bottom: 1px solid #808080; flex-shrink: 0; gap: 2px;"></div>
+                    <div id="playJockeyPlaylist" style="height: 100px; overflow-y: auto; border: 1px inset #7F7F7F; background-color: #FFFFFF; padding: 3px; flex-shrink: 0; border-top: none; position: relative; z-index: 0;"></div>
+                    <div style="display: flex; justify-content: center; padding: 5px 0px; flex-shrink: 0; gap: 5px; border-top: 1px solid #ACA899; background-color: #F0F0F0;">
+                        <button id="playJockeyRandomBtn" class="xp-button" style="min-width: 90px; padding: 3px 8px; font-size: 11px;">Random: Off</button>
+                        <button id="playJockeyAutoPlayBtn" class="xp-button" style="min-width: 90px; padding: 3px 8px; font-size: 11px;">Auto Play: On</button>
+                        <button id="playJockeyRepeatBtn" class="xp-button" style="min-width: 90px; padding: 3px 8px; font-size: 11px;">Repeat: Off</button>
+                    </div>
+                </div>
             </div>
-             <div class="playjockey-tabs-bar" id="playJockeyTabsBar"></div>
-            <div class="playjockey-playlist-area" id="playJockeyPlaylist"></div>
-            <div class="playjockey-controls-bar">
-                <button id="playJockeyRandomBtn" class="xp-button">Random: Off</button>
-                <button id="playJockeyAutoPlayBtn" class="xp-button">Auto Play: On</button>
-                <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
+            <div class="resize-handle"></div>
+            
+            <div id="playJockeyContextMenu" class="context-modal" style="display: none; position: fixed; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); z-index: 2000; padding: 3px 0; min-width: 120px; font-family: 'Tahoma', sans-serif; font-size: 11px;">
+                <div class="context-modal-item" id="pjContextRename" style="padding: 5px 12px; cursor: default; color: black;">Rename Track</div>
+                <div class="context-modal-item" id="pjContextRemove" style="padding: 5px 12px; cursor: default; color: black;">Remove Track</div>
             </div>
+            <div id="playJockeyTabContextMenu" class="context-modal" style="display: none; position: fixed; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); z-index: 2000; padding: 3px 0; min-width: 120px; font-family: 'Tahoma', sans-serif; font-size: 11px;">
+                <div class="context-modal-item" id="pjTabContextRename" style="padding: 5px 12px; cursor: default; color: black;">Rename Playlist</div>
+                <div class="context-modal-item" id="pjTabContextRemove" style="padding: 5px 12px; cursor: default; color: black;">Remove Playlist</div>
+            </div>
+            <div id="pjRenamePlaylistModal" class="modal"><div class="modal-content" style="max-width:400px"><div class="modal-title-bar"><span>Rename Playlist</span><span class="close-button" data-modal-id="pjRenamePlaylistModal">r</span></div><div class="modal-body"><label for="pjPlaylistNewNameInput">New name:</label><input type="text" id="pjPlaylistNewNameInput"></div><div class="modal-footer"><button id="pjSaveRenamedPlaylistBtn" class="xp-button">Save</button><button class="xp-button" data-modal-id="pjRenamePlaylistModal">Cancel</button></div></div></div>
+            <div id="pjConfirmRemovePlaylistModal" class="modal"><div class="modal-content" style="max-width:400px"><div class="modal-title-bar"><span>Confirm Deletion</span><span class="close-button" data-modal-id="pjConfirmRemovePlaylistModal">r</span></div><div class="modal-body"><p id="pjConfirmRemovePlaylistMessage">Are you sure?</p></div><div class="modal-footer"><button id="pjConfirmFinalPlaylistRemoveBtn" class="xp-button">Delete</button><button class="xp-button" data-modal-id="pjConfirmRemovePlaylistModal">Cancel</button></div></div></div>
+            <div id="pjYoutubeSearchModal" class="modal"><div class="modal-content" style="max-width:600px"><div class="modal-title-bar"><span>Youtube Results</span><span class="close-button" data-modal-id="pjYoutubeSearchModal">r</span></div><div class="modal-body" id="pjYoutubeSearchResultsBody" style="max-height:400px;overflow-y:auto;"><p id="pjYoutubeSearchStatus" style="text-align:center;display:none;"></p></div><div class="modal-footer"><button class="xp-button" data-modal-id="pjYoutubeSearchModal">Cancel</button></div></div></div>
+            <div id="pjRenameTrackModal" class="modal"><div class="modal-content" style="max-width:400px"><div class="modal-title-bar"><span>Rename Track</span><span class="close-button" data-modal-id="pjRenameTrackModal">r</span></div><div class="modal-body"><label for="pjTrackNewNameInput">New name:</label><input type="text" id="pjTrackNewNameInput"><label for="pjTrackNewArtistInput" style="margin-top:10px;">Artist (optional):</label><input type="text" id="pjTrackNewArtistInput"></div><div class="modal-footer"><button id="pjSaveRenamedTrackBtn" class="xp-button">Save</button><button class="xp-button" data-modal-id="pjRenameTrackModal">Cancel</button></div></div></div>
+            <div id="pjConfirmRemoveTrackModal" class="modal"><div class="modal-content" style="max-width:400px"><div class="modal-title-bar"><span>Confirm Deletion</span><span class="close-button" data-modal-id="pjConfirmRemoveTrackModal">r</span></div><div class="modal-body"><p id="pjConfirmRemoveTrackMessage">Are you sure?</p></div><div class="modal-footer"><button id="pjConfirmFinalTrackRemoveBtn" class="xp-button">Delete</button><button class="xp-button" data-modal-id="pjConfirmRemoveTrackModal">Cancel</button></div></div></div>
         </div>
-    </div>
-    <div class="resize-handle" id="playJockeyResizeHandle"></div>
-</div>
+    </template>
 
-<div id="playJockeyContextMenu" class="context-modal">
-    <div class="context-modal-item" id="pjContextRename">Rename Track</div>
-    <div class="context-modal-item" id="pjContextRemove">Remove Track</div>
-</div>
-<div id="playJockeyTabContextMenu" class="context-modal">
-    <div class="context-modal-item" id="pjTabContextRename">Rename Playlist</div>
-    <div class="context-modal-item" id="pjTabContextRemove">Remove Playlist</div>
-</div>
-<div id="renamePlaylistModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-title-bar">
-            <span>Rename Playlist</span>
-            <span class="close-button" data-modal-id="renamePlaylistModal">r</span>
-        </div>
-        <div class="modal-body">
-            <label for="playlistNewNameInput">New playlist name:</label>
-            <input type="text" id="playlistNewNameInput" placeholder="Enter playlist name">
-        </div>
-        <div class="modal-footer">
-            <button id="saveRenamedPlaylistBtn" class="xp-button">Save</button>
-            <button class="xp-button" data-modal-id="renamePlaylistModal">Cancel</button>
-        </div>
-    </div>
-</div>
-<div id="confirmRemovePlaylistModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-title-bar">
-            <span>Confirm Playlist Deletion</span>
-            <span class="close-button" data-modal-id="confirmRemovePlaylistModal">r</span>
-        </div>
-        <div class="modal-body">
-            <p id="confirmRemovePlaylistMessage">Are you sure you want to remove this playlist?</p>
-        </div>
-        <div class="modal-footer">
-            <button id="confirmFinalPlaylistRemoveBtn" class="xp-button">Delete</button>
-            <button class="xp-button" data-modal-id="confirmRemovePlaylistModal">Cancel</button>
-        </div>
-    </div>
-</div>
-<div id="youtubeSearchModalPj" class="modal"> <div class="modal-content" style="max-width: 600px;">
-        <div class="modal-title-bar">
-            <span>Youtube Results</span>
-            <span class="close-button" data-modal-id="youtubeSearchModalPj">r</span>
-        </div>
-        <div class="modal-body" id="youtubeSearchResultsBodyPj">
-            <p id="youtubeSearchStatusPj" style="text-align: center; display: none;"></p>
-        </div>
-        <div class="modal-footer">
-            <button class="xp-button" data-modal-id="youtubeSearchModalPj">Cancel</button>
-        </div>
-    </div>
-</div>
-<div id="renameTrackModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-title-bar">
-            <span>Rename Track</span>
-            <span class="close-button" data-modal-id="renameTrackModal">r</span>
-        </div>
-        <div class="modal-body">
-            <label for="trackNewNameInput">New track name:</label>
-            <input type="text" id="trackNewNameInput" placeholder="Enter track name">
-            <label for="trackNewArtistInput" style="margin-top:10px;">New artist name (optional):</label>
-            <input type="text" id="trackNewArtistInput" placeholder="Enter artist name">
-        </div>
-        <div class="modal-footer">
-            <button id="saveRenamedTrackBtn" class="xp-button">Save</button>
-            <button class="xp-button" data-modal-id="renameTrackModal">Cancel</button>
-        </div>
-    </div>
-</div>
-<div id="confirmRemoveTrackModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-title-bar">
-            <span>Confirm Track Deletion</span>
-            <span class="close-button" data-modal-id="confirmRemoveTrackModal">r</span>
-        </div>
-        <div class="modal-body">
-            <p id="confirmRemoveTrackMessage">Are you sure you want to remove this track from the playlist?</p>
-        </div>
-        <div class="modal-footer">
-            <button id="confirmFinalTrackRemoveBtn" class="xp-button">Delete</button>
-            <button class="xp-button" data-modal-id="confirmRemoveTrackModal">Cancel</button>
-        </div>
-    </div>
-</div>
+    <script type="application/json" id="playJockey-config">
+    {
+        "minWidth": 375,
+        "minHeight": 350,
+        "defaultWidth": 480,
+        "defaultHeight": 705,
+        "defaultOffsetX": 120,
+        "defaultOffsetY": 120
+    }
+    </script>
+    
+    <script id="playJockey-script">
+    const appWindow = this.appWindow;
+    const appData = this.appData; // app-specific data managed by OS
+    const os = this.os; // OS API
 
-
-<style>
-    /* Play Jockey Specific Styles */
-    .icon-image-pJ { font-size: 48px; line-height: 1; margin-bottom: 8px; filter: hue-rotate(140deg) saturate(1000%) brightness(70%); }
-    .icon-image-pJ2 { position: absolute; width: 90px; height: 100px; text-align: center; color: white; cursor: grab; user-select: none; -webkit-user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; box-sizing: border-box; z-index: 5; font-size: 48px; line-height: 1; text-shadow: none; margin-bottom: 8px; position: relative; top: -66px; filter: hue-rotate(140deg) saturate(1000%); mix-blend-mode: luminosity; }
-    .icon-image-pJ2:active { cursor: grabbing; }
-    .icon-label-pJ { font-size: 12px; font-weight: normal; word-wrap: break-word; max-width: 100%; position: relative; top: -66px; }
-    #playJockeyWindow .window-body { padding: 0; display: flex; }
-    .playjockey-body-container { display: flex; flex-direction: column; width: 100%; height: 100%; background-color: #D4D0C8; padding: 5px; box-sizing: border-box; }
-    .playjockey-input-bar { display: flex; margin-bottom: 5px; padding: 5px; background-color: #C0C0C0; border: 1px outset #FFFFFF; border-right-color: #808080; border-bottom-color: #808080; flex-shrink: 0; }
-    #playJockeyLinkInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 4px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; }
-    #playJockeyAddBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; }
-    .playjockey-player-area { flex-grow: 1; margin-bottom: 5px; border: 2px inset #808080; background-color: black; min-height: 150px; overflow: hidden; }
-    #playJockeyPlayer { width: 100%; height: 100%; }
-    .playjockey-tabs-bar { display: flex; flex-wrap: nowrap; overflow-x: auto; background-color: #C0C0C0; padding: 3px 3px 0 3px; border-bottom: 1px solid #808080; flex-shrink: 0; gap: 2px; }
-    .playjockey-tab { padding: 6px 10px; border: 1px inset #FFFFFF; border-bottom: none; background-color: #D4D0C8; cursor: default; font-size: 10px; white-space: nowrap; border-top-left-radius: 3px; border-top-right-radius: 3px; }
-    .playjockey-tab:hover { background-color: #E0E0E0; }
-    .playjockey-tab.active { background-color: #F0F0F0; border-style: inset; border-bottom: 1px solid #F0F0F0; position: relative; z-index: 1; font-weight: bold; }
-    .playjockey-add-tab-btn { padding: 6px 8px; margin-left: 0px; font-weight: bold; }
-    .playjockey-controls-bar { display: flex; justify-content: center; padding: 5px 0px 5px 0px; flex-shrink: 0; gap: 5px; border-top: 1px solid #ACA899; background-color: #F0F0F0; }
-    #playJockeyRandomBtn, #playJockeyAutoPlayBtn, #playJockeyRepeatBtn { min-width: 90px; padding: 3px 8px; font-size: 11px; }
-    #playJockeyRandomBtn.random-on, #playJockeyAutoPlayBtn.autoplay-on, #playJockeyRepeatBtn.repeat-on { border-style: inset; font-weight: bold; }
-    .playjockey-playlist-area { height: 100px; overflow-y: auto; border: 1px inset #7F7F7F; background-color: #FFFFFF; padding: 3px; flex-shrink: 0; border-top: none; position: relative; z-index: 0; }
-    .playjockey-playlist-item { padding: 4px 6px; cursor: grab; border-bottom: 1px solid #ECE9D8; font-size: 10px; color: #000080; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none; }
-    .playjockey-playlist-item:hover { background-color: #000080; color: white; }
-    .playjockey-playlist-item.playing { background-color: #005CFE; color: white; font-weight: bold; }
-    .playjockey-playlist-item:last-child { border-bottom: none; }
-    .playjockey-playlist-item.dragging { opacity: 0.5; background-color: #AED6F1; }
-    .playjockey-playlist-item.drag-over-target-before { border-top: 2px dashed #005CFE; }
-    .playjockey-playlist-item.drag-over-target-after { border-bottom: 2px dashed #005CFE; }
-    .context-modal { display: none; position: fixed; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); z-index: 2000; padding: 3px 0; min-width: 120px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; }
-    .context-modal-item { padding: 5px 12px; cursor: default; color: black; }
-    .context-modal-item:hover { background-color: #005CFE; color: white; }
-    #youtubeSearchResultsBodyPj { max-height: 400px; overflow-y: auto; } /* Renamed ID */
-    .Youtube-result-item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #ACA899; cursor: pointer; background-color: #FFFFFF; }
-    .Youtube-result-item:hover { background-color: #E0E0E0; }
-    .Youtube-result-item:last-child { border-bottom: none; }
-    .Youtube-result-item img { width: 120px; height: 90px; margin-right: 10px; border: 1px solid #ACA899; object-fit: cover; }
-    .Youtube-result-item-details { display: flex; flex-direction: column; }
-    .Youtube-result-item-title { font-weight: bold; color: #0039A9; font-size: 12px; margin-bottom: 3px; }
-    .Youtube-result-item-channel { font-size: 10px; color: #555; }
-    #youtubeSearchStatusPj { padding: 15px; font-size: 12px; } /* Renamed ID */
-    .modal-body label { display: block; margin-bottom: 5px; }
-    .modal-body input[type="text"] { width: calc(100% - 12px); padding: 5px; margin-bottom: 10px; border: 1px solid #ACA899; box-sizing: border-box; }
-</style>
-
-<script>
-(function() {
-    const APP_ID = 'playJockeyWindow';
-    const STORAGE_KEY_APP = `app_${APP_ID}_data_v1.0`;
-    const MIN_APP_WIDTH = 375;
-    const MIN_APP_HEIGHT = 250;
-    const DEFAULT_APP_WIDTH = 480;
-    const DEFAULT_APP_HEIGHT = 705;
-
-    const MODAL_IDS_APP = {
-        RENAME_PLAYLIST: 'renamePlaylistModal',
-        CONFIRM_REMOVE_PLAYLIST: 'confirmRemovePlaylistModal',
-        Youtube: 'youtubeSearchModalPj',
-        RENAME_TRACK: 'renameTrackModal',
-        CONFIRM_REMOVE_TRACK: 'confirmRemoveTrackModal',
-    };
-
-    const DOM_APP = {};
-    let appData = {};
+    let YOUTUBE_API_KEY = os.getGlobalConfig('YOUTUBE_API_KEY');
     let ytPlayerInstance = null;
     let isYouTubeApiReady = false;
     let pendingVideoToLoad = null;
     let pjDraggedItem = null;
 
-    function getAppById(id) { return document.getElementById(id); }
-    function decodeHtmlEntities_App(text) {
-        if (typeof text !== 'string') return text;
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = text;
-        return textarea.value;
-    }
-    
-    function saveAppData_PlayJockey() {
-        const win = DOM_APP.playJockeyWindow;
-        if (!win) return;
-        let currentOsData = window.osData.windowStates[APP_ID] || {};
-        const stateToSave = {
-            appSpecific: {
-                playJockeyPlaylists: appData.playJockeyPlaylists,
-                playJockeyCurrentPlaylistId: appData.playJockeyCurrentPlaylistId,
-                playJockeyCurrentVideo: appData.playJockeyCurrentVideo,
-                playJockeyAutoPlayEnabled: appData.playJockeyAutoPlayEnabled,
-                playJockeyRandomEnabled: appData.playJockeyRandomEnabled,
-                playJockeyRepeatState: appData.playJockeyRepeatState,
-                playJockeyRandomHistory: appData.playJockeyRandomHistory,
-            },
-            windowGeneric: {
-                x: win.offsetLeft, y: win.offsetTop, width: win.offsetWidth, height: win.offsetHeight,
-                minimized: win.classList.contains('minimized'), maximized: win.classList.contains('true-maximized'),
-                zIndex: parseInt(win.style.zIndex) || currentOsData.zIndex || window.highestZIndex,
-                hiddenByUser: win.style.display === 'none', userManuallySet: currentOsData.userManuallySet || false,
-                wasMaximizedBeforeMinimize: currentOsData.wasMaximizedBeforeMinimize || false
-            }
-        };
-         if(stateToSave.windowGeneric.minimized || stateToSave.windowGeneric.maximized){
-            if(window.osData.lastNormalStates[APP_ID]){
-                stateToSave.windowGeneric.x = parseInt(window.osData.lastNormalStates[APP_ID].left);
-                stateToSave.windowGeneric.y = parseInt(window.osData.lastNormalStates[APP_ID].top);
-                stateToSave.windowGeneric.width = parseInt(window.osData.lastNormalStates[APP_ID].width);
-                stateToSave.windowGeneric.height = parseInt(window.osData.lastNormalStates[APP_ID].height);
-            } else if (currentOsData.x != null) {
-                 stateToSave.windowGeneric.x = currentOsData.x;
-                 stateToSave.windowGeneric.y = currentOsData.y;
-                 stateToSave.windowGeneric.width = currentOsData.width;
-                 stateToSave.windowGeneric.height = currentOsData.height;
-            }
-        }
-        localStorage.setItem(STORAGE_KEY_APP, JSON.stringify(stateToSave));
-        window.osData.windowStates[APP_ID] = stateToSave.windowGeneric;
-    }
-    window.saveAppData[APP_ID] = saveAppData_PlayJockey;
-
-    function loadAppData_PlayJockey() {
-        const storedData = localStorage.getItem(STORAGE_KEY_APP);
-        const defaultPlaylistId = 'playlist_default_0_pj';
-        const defaultAppData = {
-            playJockeyPlaylists: [{id: defaultPlaylistId, name: "Playlist", videos: []}],
-            playJockeyCurrentPlaylistId: defaultPlaylistId,
-            playJockeyCurrentVideo: null,
-            playJockeyAutoPlayEnabled: true,
-            playJockeyRandomEnabled: false,
-            playJockeyRepeatState: "off",
-            playJockeyRandomHistory: [],
-        };
-         const defaultWindowState = {
-             x: null, y: null, width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
-             maximized: false, minimized: false, zIndex: window.highestZIndex + 1, 
-             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
-        };
-
-        if (storedData) {
-            try {
-                const loaded = JSON.parse(storedData);
-                appData = { ...defaultAppData, ...(loaded.appSpecific || {}) };
-                window.osData.windowStates[APP_ID] = { ...defaultWindowState, ...(loaded.windowGeneric || {}) };
-
-                appData.playJockeyPlaylists = (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0)
-                    ? appData.playJockeyPlaylists.map(pl => ({
-                        ...pl,
-                        videos: (pl.videos || []).map(video => ({
-                            ...video,
-                            title: video.title ? decodeHtmlEntities_App(video.title) : (video.originalUrl ? decodeHtmlEntities_App(video.originalUrl) : "Unknown Title"),
-                            artist: video.artist ? decodeHtmlEntities_App(video.artist) : ""
-                        }))
-                      }))
-                    : defaultAppData.playJockeyPlaylists;
-                appData.playJockeyCurrentVideo = appData.playJockeyCurrentVideo ? {
-                    ...(appData.playJockeyCurrentVideo),
-                    title: appData.playJockeyCurrentVideo.title ? decodeHtmlEntities_App(appData.playJockeyCurrentVideo.title) : "Unknown Title",
-                    artist: appData.playJockeyCurrentVideo.artist ? decodeHtmlEntities_App(appData.playJockeyCurrentVideo.artist) : ""
-                } : null;
-
-            } catch (e) {
-                appData = { ...defaultAppData };
-                window.osData.windowStates[APP_ID] = { ...defaultWindowState };
-            }
-        } else {
-            appData = { ...defaultAppData };
-            window.osData.windowStates[APP_ID] = { ...defaultWindowState };
-        }
-        if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
-            appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
-             if (appData.playJockeyPlaylists.length === 0) {
-                appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
-                appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
-            }
-        }
-    }
-    
-    function restoreAppWindowState_PlayJockey(forceVisible = false) {
-        const win = DOM_APP.playJockeyWindow;
-        if (!win) return;
-        let state = window.osData.windowStates[APP_ID] || {};
-        const defaultState = {
-             x: (window.innerWidth - DEFAULT_APP_WIDTH)/2, y: (window.innerHeight - DEFAULT_APP_HEIGHT)/2, 
-             width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
-             maximized: false, minimized: false, zIndex: window.highestZIndex +1, 
-             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
-        };
-        state = {...defaultState, ...state};
-
-        if (forceVisible) {
-            state.hiddenByUser = false;
-            state.minimized = false;
-        }
-
-        if (state.hiddenByUser && !forceVisible) {
-            win.style.display = 'none';
-        } else {
-            win.style.display = 'flex';
-            if (isYouTubeApiReady && appData.playJockeyCurrentVideo && !ytPlayerInstance) {
-                 const currentPlaylist = getCurrentPlayJockeyPlaylist_App();
-                 if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                    playYouTubeVideoById_App(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
-                }
-            } else if (isYouTubeApiReady && pendingVideoToLoad) {
-                playYouTubeVideoById_App(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
-                pendingVideoToLoad = null;
-            }
-        }
-        win.style.zIndex = state.zIndex || (window.highestZIndex + 1);
-        window.highestZIndex = Math.max(window.highestZIndex, parseInt(win.style.zIndex));
-
-        if (state.minimized && !forceVisible) {
-            win.classList.add('minimized'); win.classList.remove('true-maximized');
-            if (ytPlayerInstance && typeof ytPlayerInstance.pauseVideo === 'function') ytPlayerInstance.pauseVideo();
-        } else if (state.maximized) {
-            win.classList.add('true-maximized'); win.classList.remove('minimized');
-            win.style.width = '100vw'; win.style.height = '100vh';
-            win.style.top = '0px'; win.style.left = '0px';
-             window.osData.lastNormalStates[APP_ID] = {
-                width: (state.width ? Math.max(MIN_APP_WIDTH, state.width) : DEFAULT_APP_WIDTH) + 'px',
-                height: (state.height ? Math.max(MIN_APP_HEIGHT, state.height) : DEFAULT_APP_HEIGHT) + 'px',
-                top: (state.y != null ? state.y : defaultState.y) + 'px',
-                left: (state.x != null ? state.x : defaultState.x) + 'px'
-            };
-        } else {
-            win.classList.remove('minimized'); win.classList.remove('true-maximized');
-            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
-                win.style.left = state.x + 'px'; win.style.top = state.y + 'px';
-                win.style.width = Math.max(MIN_APP_WIDTH, state.width) + 'px';
-                win.style.height = Math.max(MIN_APP_HEIGHT, state.height) + 'px';
-            } else {
-                 window.setWindowDefaults(APP_ID, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT, false);
-            }
-        }
-         window.updateMinMaxButtonStates_OS(APP_ID);
-    }
-    window.restoreAppWindowState[APP_ID] = restoreAppWindowState_PlayJockey;
-    window.onAppMinimize[APP_ID] = () => { if (ytPlayerInstance && typeof ytPlayerInstance.pauseVideo === 'function') ytPlayerInstance.pauseVideo(); };
-    window.onAppRestore[APP_ID] = () => {
-        if (appData.playJockeyCurrentVideo && ytPlayerInstance && typeof ytPlayerInstance.playVideo === 'function' && appData.playJockeyAutoPlayEnabled) {
-             ytPlayerInstance.playVideo();
-        } else if (isYouTubeApiReady && appData.playJockeyCurrentVideo && !ytPlayerInstance) {
-            const currentPlaylist = getCurrentPlayJockeyPlaylist_App();
-            if (currentPlaylist && currentPlaylist.videos.some(v => v.id === appData.playJockeyCurrentVideo.id)) {
-                playYouTubeVideoById_App(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
-            }
-        }
+    const DOM = {
+        linkInput: appWindow.querySelector('#playJockeyLinkInput'),
+        addBtn: appWindow.querySelector('#playJockeyAddBtn'),
+        playerContainer: appWindow.querySelector('#playJockeyPlayer'),
+        tabsBar: appWindow.querySelector('#playJockeyTabsBar'),
+        playlistArea: appWindow.querySelector('#playJockeyPlaylist'),
+        randomBtn: appWindow.querySelector('#playJockeyRandomBtn'),
+        autoPlayBtn: appWindow.querySelector('#playJockeyAutoPlayBtn'),
+        repeatBtn: appWindow.querySelector('#playJockeyRepeatBtn'),
+        contextMenu: appWindow.querySelector('#playJockeyContextMenu'),
+        contextRenameBtn: appWindow.querySelector('#pjContextRename'),
+        contextRemoveBtn: appWindow.querySelector('#pjContextRemove'),
+        tabContextMenu: appWindow.querySelector('#playJockeyTabContextMenu'),
+        tabContextRenameBtn: appWindow.querySelector('#pjTabContextRename'),
+        tabContextRemoveBtn: appWindow.querySelector('#pjTabContextRemove'),
+        renamePlaylistModal: appWindow.querySelector('#pjRenamePlaylistModal'),
+        playlistNewNameInput: appWindow.querySelector('#pjPlaylistNewNameInput'),
+        saveRenamedPlaylistBtn: appWindow.querySelector('#pjSaveRenamedPlaylistBtn'),
+        confirmRemovePlaylistModal: appWindow.querySelector('#pjConfirmRemovePlaylistModal'),
+        confirmRemovePlaylistMessage: appWindow.querySelector('#pjConfirmRemovePlaylistMessage'),
+        confirmFinalPlaylistRemoveBtn: appWindow.querySelector('#pjConfirmFinalPlaylistRemoveBtn'),
+        youtubeSearchModal: appWindow.querySelector('#pjYoutubeSearchModal'),
+        youtubeSearchResultsBody: appWindow.querySelector('#pjYoutubeSearchResultsBody'),
+        youtubeSearchStatus: appWindow.querySelector('#pjYoutubeSearchStatus'),
+        renameTrackModal: appWindow.querySelector('#pjRenameTrackModal'),
+        trackNewNameInput: appWindow.querySelector('#pjTrackNewNameInput'),
+        trackNewArtistInput: appWindow.querySelector('#pjTrackNewArtistInput'),
+        saveRenamedTrackBtn: appWindow.querySelector('#pjSaveRenamedTrackBtn'),
+        confirmRemoveTrackModal: appWindow.querySelector('#pjConfirmRemoveTrackModal'),
+        confirmRemoveTrackMessage: appWindow.querySelector('#pjConfirmRemoveTrackMessage'),
+        confirmFinalTrackRemoveBtn: appWindow.querySelector('#pjConfirmFinalTrackRemoveBtn'),
     };
-    window.onAppClose[APP_ID] = () => { if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();};
 
-
-    function getCurrentPlayJockeyPlaylist_App() {
-        if (!appData.playJockeyCurrentPlaylistId || !appData.playJockeyPlaylists) {
-            if (appData.playJockeyPlaylists && appData.playJockeyPlaylists.length > 0) {
-                appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id;
-            } else return null;
+    function initializeDefaultAppData() {
+        const defaultPlaylistId = 'playlist_default_0';
+        if (!appData.playlists) appData.playlists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
+        if (!appData.currentPlaylistId) appData.currentPlaylistId = appData.playlists[0]?.id || defaultPlaylistId;
+        if (appData.autoPlayEnabled === undefined) appData.autoPlayEnabled = true;
+        if (appData.randomEnabled === undefined) appData.randomEnabled = false;
+        if (!appData.repeatState) appData.repeatState = "off";
+        if (!appData.randomHistory) appData.randomHistory = [];
+        if (appData.playlists.length === 0) { // Ensure at least one playlist exists
+             appData.playlists.push({id: defaultPlaylistId, name: "Playlist", videos: []});
+             appData.currentPlaylistId = defaultPlaylistId;
         }
-        return appData.playJockeyPlaylists.find(p => p.id === appData.playJockeyCurrentPlaylistId);
+    }
+    initializeDefaultAppData();
+    
+    function getCurrentPlaylist() {
+        if (!appData.currentPlaylistId || !appData.playlists) return appData.playlists[0] || null;
+        return appData.playlists.find(p => p.id === appData.currentPlaylistId) || appData.playlists[0] || null;
     }
 
-    function onYouTubeIframeAPIReady_App() {
+    function onYouTubeIframeAPIReadyInternal() { // Renamed to avoid conflict with global
         isYouTubeApiReady = true;
-        const currentPlaylist = getCurrentPlayJockeyPlaylist_App();
-        const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.playJockeyCurrentVideo?.id);
+        const currentPlaylist = getCurrentPlaylist();
+        const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.currentVideo?.id);
 
         if (pendingVideoToLoad && currentVideoInPlaylist) {
-            playYouTubeVideoById_App(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
+            playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
-        } else if (appData.playJockeyCurrentVideo && currentVideoInPlaylist && !ytPlayerInstance && DOM_APP.playJockeyWindow.style.display !== 'none' && !DOM_APP.playJockeyWindow.classList.contains('minimized')) {
-            playYouTubeVideoById_App(appData.playJockeyCurrentVideo.videoId, appData.playJockeyAutoPlayEnabled);
+        } else if (appData.currentVideo && currentVideoInPlaylist && !ytPlayerInstance && appWindow.style.display !== 'none' && !appWindow.classList.contains('minimized')) {
+            playYouTubeVideoById(appData.currentVideo.videoId, appData.autoPlayEnabled);
         }
     }
-    if (typeof window.onYouTubeIframeAPIReady === 'undefined') {
-        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady_App;
-    } else {
-        const oldOnYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady;
-        window.onYouTubeIframeAPIReady = function() {
-            oldOnYouTubeIframeAPIReady();
-            onYouTubeIframeAPIReady_App();
-        }
-    }
-
-
-    function extractYouTubeVideoId_App(url) { /* ... */ return null;} // Placeholder
-    function isValidYouTubeUrl_App(url) { /* ... */ return false;} // Placeholder
-    async function handlePlayJockeyInput_App() { /* ... */} // Placeholder
-    async function searchYouTubeVideos_App(query) { /* ... */} // Placeholder
-    function renderYouTubeSearchResults_App(items) { /* ... */} // Placeholder
-    function addVideoFromSearchResult_App(videoId, title, artist) { /* ... */} // Placeholder
-    function addYouTubeLinkToPlayJockey_App(link) { /* ... */} // Placeholder
-    async function fetchYouTubeTitle_App(videoEntryToUpdate, playlistId) { /* ... */} // Placeholder
-    function renderPlayJockeyTabs_App() { /* ... */} // Placeholder
-    function addNewPlayJockeyPlaylist_App() { /* ... */} // Placeholder
-    function switchPlayJockeyPlaylist_App(playlistId) { /* ... */} // Placeholder
-    function renderPlayJockeyPlaylist_App() { /* ... */} // Placeholder
-    function playYouTubeVideoById_App(videoId, autoplayIntent = true, isManualPlay = false) { /* ... */} // Placeholder
-    function onPlayerStateChange_App(event) { /* ... */} // Placeholder
-    function playNextPjVideo_App() { /* ... */} // Placeholder
-    function updatePlayingClassInPlaylist_App(playingItemId) { /* ... */} // Placeholder
-    function initPlayJockeyContextMenu_App() { /* ... */} // Placeholder
-    function initPlayJockeyTabContextMenu_App() { /* ... */} // Placeholder
-    function showPjContextMenu_App(e) { /* ... */} // Placeholder
-    function hidePjContextMenu_App() { /* ... */} // Placeholder
-    function showPjTabContextMenu_App(e, playlistId) { /* ... */} // Placeholder
-    function hidePjTabContextMenu_App() { /* ... */} // Placeholder
-    function handlePjContextRename_App() { /* ... */} // Placeholder
-    function handlePjContextRemove_App() { /* ... */} // Placeholder
-    function saveRenamedTrack_App() { /* ... */} // Placeholder
-    function executeTrackDeletion_App() { /* ... */} // Placeholder
-    function openRenamePlaylistModalFromContextMenu_App() { /* ... */} // Placeholder
-    function saveRenamedPlaylist_App() { /* ... */} // Placeholder
-    function openConfirmRemovePlaylistModalFromContextMenu_App() { /* ... */} // Placeholder
-    function executePlaylistDeletion_App() { /* ... */} // Placeholder
-    function handlePjDragStart_App(e) { /* ... */} // Placeholder
-    function handlePjDragEnd_App(e) { /* ... */} // Placeholder
-    function clearPjDragOverHighlights_App() { /* ... */} // Placeholder
-    function handlePjDragOver_App(e) { /* ... */} // Placeholder
-    function handlePjDragLeave_App(e) { /* ... */} // Placeholder
-    function handlePjDrop_App(e) { /* ... */} // Placeholder
-    function togglePlayJockeyAutoPlay_App() { /* ... */} // Placeholder
-    function updatePlayJockeyAutoPlayButtonState_App() { /* ... */} // Placeholder
-    function togglePlayJockeyRandom_App() { /* ... */} // Placeholder
-    function updatePlayJockeyRandomButtonState_App() { /* ... */} // Placeholder
-    function cyclePlayJockeyRepeat_App() { /* ... */} // Placeholder
-    function updatePlayJockeyRepeatButtonState_App() { /* ... */} // Placeholder
-    
-    // Minimal implementations for brevity. The full logic from original file would go here.
-    extractYouTubeVideoId_App = function(url) { if (!url) return null; const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/; const match = url.match(regex); return match ? match[1] : null; };
-    isValidYouTubeUrl_App = function(url) { if (!url) return false; const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})([&?].*)?$/; return regex.test(url); };
-    handlePlayJockeyInput_App = async function() { const input = DOM_APP.playJockeyLinkInput.value.trim(); if (!input) { alert("Please enter a YouTube link or search query."); return; } if (isValidYouTubeUrl_App(input)) { addYouTubeLinkToPlayJockey_App(input); } else { if (!window.YOUTUBE_API_KEY) { alert("YouTube API Key is not configured. Video search is disabled."); return; } searchYouTubeVideos_App(input); }};
-    searchYouTubeVideos_App = async function(query) {DOM_APP.youtubeSearchResultsBody.innerHTML = ''; DOM_APP.youtubeSearchStatus.textContent = 'Searching...'; DOM_APP.youtubeSearchStatus.style.display = 'block'; window.openModal_OS(MODAL_IDS_APP.Youtube); const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${window.YOUTUBE_API_KEY}&maxResults=10`; try { const response = await fetch(apiUrl); if (!response.ok) { const errorData = await response.json(); DOM_APP.youtubeSearchStatus.textContent = `Error: ${errorData.error.message}`; return; } const data = await response.json(); if (data.items && data.items.length > 0) { DOM_APP.youtubeSearchStatus.style.display = 'none'; renderYouTubeSearchResults_App(data.items); } else { DOM_APP.youtubeSearchStatus.textContent = 'No videos found.'; } } catch (error) { DOM_APP.youtubeSearchStatus.textContent = 'Failed to search videos.'; }};
-    renderYouTubeSearchResults_App = function(items) {DOM_APP.youtubeSearchResultsBody.innerHTML = ''; items.forEach(item => { const videoId = item.id.videoId; const title = decodeHtmlEntities_App(item.snippet.title); const channelTitle = decodeHtmlEntities_App(item.snippet.channelTitle); const thumbnailUrl = item.snippet.thumbnails.default.url; const resultDiv = document.createElement('div'); resultDiv.className = 'Youtube-result-item'; resultDiv.dataset.videoId = videoId; const img = document.createElement('img'); img.src = thumbnailUrl; const detailsDiv = document.createElement('div'); detailsDiv.className = 'Youtube-result-item-details'; const titleDiv = document.createElement('div'); titleDiv.className = 'Youtube-result-item-title'; titleDiv.textContent = title; const channelDiv = document.createElement('div'); channelDiv.className = 'Youtube-result-item-channel'; channelDiv.textContent = channelTitle; detailsDiv.appendChild(titleDiv); detailsDiv.appendChild(channelDiv); resultDiv.appendChild(img); resultDiv.appendChild(detailsDiv); resultDiv.addEventListener('click', () => { addVideoFromSearchResult_App(videoId, title, channelTitle); window.closeModal_OS(MODAL_IDS_APP.Youtube); }); DOM_APP.youtubeSearchResultsBody.appendChild(resultDiv); }); };
-    addVideoFromSearchResult_App = function(videoId, title, artist) { let currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist) { addNewPlayJockeyPlaylist_App(); currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist) return; } if (currentPlaylist.videos.some(video => video.videoId === videoId)) { alert("This video is already in the current playlist."); DOM_APP.playJockeyLinkInput.value = ''; return; } const videoEntry = { id: 'pjv_' + Date.now(), originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$${videoId}`, videoId: videoId, title: title, artist: artist.replace(/\s-\sTopic$/, '').trim() }; currentPlaylist.videos.push(videoEntry); renderPlayJockeyPlaylist_App(); DOM_APP.playJockeyLinkInput.value = ''; if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) playYouTubeVideoById_App(videoId, true, true); saveAppData_PlayJockey(); };
-    addYouTubeLinkToPlayJockey_App = function(link) {const videoId = extractYouTubeVideoId_App(link); if (!videoId) { alert("Invalid YouTube link."); return; } let currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist) { addNewPlayJockeyPlaylist_App(); currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist) return;} if (currentPlaylist.videos.some(video => video.videoId === videoId)) { alert("This video is already in the current playlist."); DOM_APP.playJockeyLinkInput.value = ''; return; } const videoEntry = { id: 'pjv_' + Date.now(), originalUrl: link, videoId: videoId, title: "Loading title...", artist: "" }; currentPlaylist.videos.push(videoEntry); renderPlayJockeyPlaylist_App(); DOM_APP.playJockeyLinkInput.value = ''; fetchYouTubeTitle_App(videoEntry, currentPlaylist.id); if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || currentPlaylist.videos.length === 1) playYouTubeVideoById_App(videoId, true, true); saveAppData_PlayJockey(); };
-    fetchYouTubeTitle_App = async function(videoEntryToUpdate, playlistId) { try { let newTitle = "Unknown Title", newArtist = ""; if (window.YOUTUBE_API_KEY) { const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoEntryToUpdate.videoId}&key=${window.YOUTUBE_API_KEY}`); if (response.ok) { const data = await response.json(); if (data.items && data.items.length > 0) { newTitle = decodeHtmlEntities_App(data.items[0].snippet.title); newArtist = decodeHtmlEntities_App(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim(); } else newTitle = decodeHtmlEntities_App(videoEntryToUpdate.originalUrl); } else newTitle = decodeHtmlEntities_App(videoEntryToUpdate.originalUrl); } else { const oEmbedResponse = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$$${videoEntryToUpdate.videoId}&format=json`); if (oEmbedResponse.ok) { const oEmbedData = await oEmbedResponse.json(); newTitle = decodeHtmlEntities_App(oEmbedData.title); newArtist = decodeHtmlEntities_App(oEmbedData.author_name).replace(/\s-\sTopic$/, '').trim(); } else newTitle = decodeHtmlEntities_App(videoEntryToUpdate.originalUrl); } const targetPlaylist = appData.playJockeyPlaylists.find(pl => pl.id === playlistId); if (targetPlaylist) { const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id); if (itemInPlaylist) { itemInPlaylist.title = newTitle; itemInPlaylist.artist = newArtist; if (appData.playJockeyCurrentPlaylistId === playlistId) renderPlayJockeyPlaylist_App(); if(appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === itemInPlaylist.id) { appData.playJockeyCurrentVideo.title = newTitle; appData.playJockeyCurrentVideo.artist = newArtist; } saveAppData_PlayJockey(); } } } catch (error) { console.error(error);}};
-    renderPlayJockeyTabs_App = function() {DOM_APP.playJockeyTabsBar.innerHTML = ''; appData.playJockeyPlaylists.forEach(playlist => { const tab = document.createElement('div'); tab.className = 'playjockey-tab'; const displayName = decodeHtmlEntities_App(playlist.name); tab.textContent = displayName; tab.title = displayName; tab.dataset.playlistId = playlist.id; if (playlist.id === appData.playJockeyCurrentPlaylistId) tab.classList.add('active'); tab.addEventListener('click', () => switchPlayJockeyPlaylist_App(playlist.id)); tab.addEventListener('contextmenu', (e) => showPjTabContextMenu_App(e, playlist.id)); DOM_APP.playJockeyTabsBar.appendChild(tab); }); const addTabBtn = document.createElement('button'); addTabBtn.className = 'playjockey-tab playjockey-add-tab-btn xp-button xp-button-small'; addTabBtn.textContent = '+'; addTabBtn.title = "New Playlist"; addTabBtn.addEventListener('click', addNewPlayJockeyPlaylist_App); DOM_APP.playJockeyTabsBar.appendChild(addTabBtn); };
-    addNewPlayJockeyPlaylist_App = function() { let newPlaylistName = "Playlist", counter = 1; const existingNames = appData.playJockeyPlaylists.map(p => p.name.toLowerCase()); let potentialName = newPlaylistName.toLowerCase(); while (existingNames.includes(potentialName)) { potentialName = `${newPlaylistName} ${counter}`.toLowerCase(); counter++; } if (counter > 1) newPlaylistName = `${newPlaylistName} ${counter-1}`; const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9); appData.playJockeyPlaylists.push({ id: newPlaylistId, name: newPlaylistName, videos: [] }); switchPlayJockeyPlaylist_App(newPlaylistId); };
-    switchPlayJockeyPlaylist_App = function(playlistId) { if (appData.playJockeyCurrentPlaylistId === playlistId) return; appData.playJockeyCurrentPlaylistId = playlistId; appData.playJockeyCurrentVideo = null; appData.playJockeyRandomHistory = []; if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); renderPlayJockeyTabs_App(); renderPlayJockeyPlaylist_App(); saveAppData_PlayJockey(); };
-    renderPlayJockeyPlaylist_App = function() { DOM_APP.playJockeyPlaylist.innerHTML = ''; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist || currentPlaylist.videos.length === 0) { const emptyMsg = document.createElement('div'); emptyMsg.textContent = "Playlist is empty."; emptyMsg.style.padding = "10px"; DOM_APP.playJockeyPlaylist.appendChild(emptyMsg); updatePlayingClassInPlaylist_App(null); return; } currentPlaylist.videos.forEach(video => { const item = document.createElement('div'); item.className = 'playjockey-playlist-item'; let cleanTitle = decodeHtmlEntities_App(video.title); let cleanArtist = decodeHtmlEntities_App(video.artist); let displayTitle = (cleanTitle === "Loading title..." || cleanTitle === video.originalUrl || !cleanTitle.trim()) ? (decodeHtmlEntities_App(video.originalUrl).length > 40 ? decodeHtmlEntities_App(video.originalUrl).substring(0, 37) + '...' : decodeHtmlEntities_App(video.originalUrl)) : (cleanTitle.length > 40 ? cleanTitle.substring(0, 37) + '...' : cleanTitle); let itemText = displayTitle; let itemTooltip = (cleanTitle !== "Loading title..." && cleanTitle.trim()) ? cleanTitle : decodeHtmlEntities_App(video.originalUrl); if (cleanArtist && cleanArtist.trim() !== "") { const artistShort = cleanArtist.length > 20 ? cleanArtist.substring(0, 17) + '...' : cleanArtist; itemText = `${displayTitle} - ${artistShort}`; itemTooltip = `${itemTooltip} by ${cleanArtist}`; } item.textContent = itemText; item.title = itemTooltip; item.dataset.videoId = video.videoId; item.dataset.playlistItemId = video.id; item.draggable = true; if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === video.id) item.classList.add('playing'); item.addEventListener('click', (event) => { if (event.target.closest('.context-modal') || item.classList.contains('dragging')) return; const clickedItem = event.currentTarget; if (clickedItem && clickedItem.dataset.videoId) playYouTubeVideoById_App(clickedItem.dataset.videoId, true, true); }); DOM_APP.playJockeyPlaylist.appendChild(item); });};
-    playYouTubeVideoById_App = function(videoId, autoplayIntent = true, isManualPlay = false) { if (!videoId) return; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!currentPlaylist) return; const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId); if (!videoToPlay) { appData.playJockeyCurrentVideo = null; updatePlayingClassInPlaylist_App(null); if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); return; } if ( isManualPlay && videoToPlay && appData.playJockeyRandomEnabled && appData.playJockeyAutoPlayEnabled && appData.playJockeyRepeatState === "off" && currentPlaylist.videos.length > 0 ) { const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id)); if (new Set(appData.playJockeyRandomHistory).size >= uniqueVideoIdsInPlaylist.size) appData.playJockeyRandomHistory = [videoToPlay.id]; else if (!appData.playJockeyRandomHistory.includes(videoToPlay.id)) appData.playJockeyRandomHistory.push(videoToPlay.id); } appData.playJockeyCurrentVideo = { ...videoToPlay }; updatePlayingClassInPlaylist_App(videoToPlay.id); saveAppData_PlayJockey(); if (!isYouTubeApiReady) { pendingVideoToLoad = { videoId, autoplayIntent }; if (typeof YT !== 'undefined' && YT.Player) onYouTubeIframeAPIReady_App(); return; } if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') { ytPlayerInstance.loadVideoById({ 'videoId': videoId }); if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') ytPlayerInstance.playVideo(); } else { if (DOM_APP.playJockeyPlayer.firstChild && DOM_APP.playJockeyPlayer.firstChild.tagName === 'IFRAME') DOM_APP.playJockeyPlayer.innerHTML = ''; ytPlayerInstance = new YT.Player('playJockeyPlayer', { height: '100%', width: '100%', videoId: videoId, playerVars: { 'autoplay': autoplayIntent ? 1 : 0, 'controls': 1, 'enablejsapi': 1, 'origin': window.location.origin, 'modestbranding': 1, 'rel': 0 }, events: { 'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); }, 'onStateChange': onPlayerStateChange_App } }); }};
-    onPlayerStateChange_App = function(event) { if (event.data === YT.PlayerState.ENDED && appData.playJockeyAutoPlayEnabled) playNextPjVideo_App(); };
-    playNextPjVideo_App = function() {const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!ytPlayerInstance || !appData.playJockeyCurrentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) return; let nextVideoItem = null; const currentVideoUniqueId = appData.playJockeyCurrentVideo.id; const activePlaylistVideos = currentPlaylist.videos; if (appData.playJockeyRepeatState === "song") { nextVideoItem = activePlaylistVideos.find(item => item.id === currentVideoUniqueId); } else if (appData.playJockeyRandomEnabled) { if (activePlaylistVideos.length === 0) return; if (activePlaylistVideos.length === 1) { if (appData.playJockeyRepeatState === "off") { if (appData.playJockeyRandomHistory.includes(currentVideoUniqueId)) return; nextVideoItem = activePlaylistVideos[0]; } else nextVideoItem = activePlaylistVideos[0]; } else { let eligibleVideos = activePlaylistVideos.filter(video => !appData.playJockeyRandomHistory.includes(video.id) || video.id === currentVideoUniqueId ); if (eligibleVideos.length === 1 && eligibleVideos[0].id === currentVideoUniqueId && appData.playJockeyRepeatState !== "song") { eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); if (eligibleVideos.length === 0 && appData.playJockeyRepeatState === "playlist") { appData.playJockeyRandomHistory = [currentVideoUniqueId]; eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); }} else if (eligibleVideos.length === 0 && appData.playJockeyRepeatState === "playlist") { appData.playJockeyRandomHistory = [currentVideoUniqueId]; eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); } if (eligibleVideos.length === 0) { if (appData.playJockeyRepeatState === "playlist") { appData.playJockeyRandomHistory = []; eligibleVideos = [...activePlaylistVideos]; if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0]; } else { appData.playJockeyRandomHistory = []; return; } } if (eligibleVideos.length > 0 && !nextVideoItem) { const randomIndex = Math.floor(Math.random() * eligibleVideos.length); nextVideoItem = eligibleVideos[randomIndex]; } } if (nextVideoItem) { if (!appData.playJockeyRandomHistory.includes(nextVideoItem.id)) appData.playJockeyRandomHistory.push(nextVideoItem.id); if (appData.playJockeyRepeatState === "playlist") { const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); while (appData.playJockeyRandomHistory.length > maxHistorySize && maxHistorySize > 0 && appData.playJockeyRandomHistory.length >= activePlaylistVideos.length) appData.playJockeyRandomHistory.shift(); } } } else { const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId); if (currentIndex === -1) return; let nextIndex = currentIndex + 1; if (nextIndex >= activePlaylistVideos.length) { if (appData.playJockeyRepeatState === "playlist") nextIndex = 0; else return; } if (activePlaylistVideos[nextIndex]) nextVideoItem = activePlaylistVideos[nextIndex]; } if (nextVideoItem && nextVideoItem.videoId) playYouTubeVideoById_App(nextVideoItem.videoId, true, false); };
-    updatePlayingClassInPlaylist_App = function(playingItemId) { const items = DOM_APP.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item'); items.forEach(item => { if (item.dataset.playlistItemId === playingItemId) item.classList.add('playing'); else item.classList.remove('playing'); }); };
-    initPlayJockeyContextMenu_App = function() { DOM_APP.pjContextRenameBtn.addEventListener('click', handlePjContextRename_App); DOM_APP.pjContextRemoveBtn.addEventListener('click', handlePjContextRemove_App); };
-    initPlayJockeyTabContextMenu_App = function() { DOM_APP.pjTabContextRenameBtn.addEventListener('click', openRenamePlaylistModalFromContextMenu_App); DOM_APP.pjTabContextRemoveBtn.addEventListener('click', openConfirmRemovePlaylistModalFromContextMenu_App); };
-    showPjContextMenu_App = function(e) { e.preventDefault(); hidePjContextMenu_App(); hidePjTabContextMenu_App(); const clickedPlaylistItem = e.target.closest('.playjockey-playlist-item'); if (clickedPlaylistItem) { DOM_APP.playJockeyContextMenu.style.display = 'block'; let x = e.clientX, y = e.clientY; const menuWidth = DOM_APP.playJockeyContextMenu.offsetWidth, menuHeight = DOM_APP.playJockeyContextMenu.offsetHeight, viewportWidth = window.innerWidth, viewportHeight = window.innerHeight; if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; x = Math.max(0, x); y = Math.max(0, y); DOM_APP.playJockeyContextMenu.style.left = `${x}px`; DOM_APP.playJockeyContextMenu.style.top = `${y}px`; DOM_APP.playJockeyContextMenu.dataset.currentItemId = clickedPlaylistItem.dataset.playlistItemId; }};
-    hidePjContextMenu_App = function() { DOM_APP.playJockeyContextMenu.style.display = 'none'; delete DOM_APP.playJockeyContextMenu.dataset.currentItemId; };
-    showPjTabContextMenu_App = function(e, playlistId) { e.preventDefault(); hidePjContextMenu_App(); hidePjTabContextMenu_App(); DOM_APP.playJockeyTabContextMenu.style.display = 'block'; let x = e.clientX, y = e.clientY; const menuWidth = DOM_APP.playJockeyTabContextMenu.offsetWidth, menuHeight = DOM_APP.playJockeyTabContextMenu.offsetHeight, viewportWidth = window.innerWidth, viewportHeight = window.innerHeight; if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; x = Math.max(0, x); y = Math.max(0, y); DOM_APP.playJockeyTabContextMenu.style.left = `${x}px`; DOM_APP.playJockeyTabContextMenu.style.top = `${y}px`; DOM_APP.playJockeyTabContextMenu.dataset.playlistId = playlistId; };
-    hidePjTabContextMenu_App = function() { DOM_APP.playJockeyTabContextMenu.style.display = 'none'; delete DOM_APP.playJockeyTabContextMenu.dataset.playlistId; };
-    handlePjContextRename_App = function() { const itemId = DOM_APP.playJockeyContextMenu.dataset.currentItemId; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!itemId || !currentPlaylist) { hidePjContextMenu_App(); return; } const itemToRename = currentPlaylist.videos.find(video => video.id === itemId); if (itemToRename) { DOM_APP.trackNewNameInput.value = decodeHtmlEntities_App(itemToRename.title) || ''; DOM_APP.trackNewArtistInput.value = decodeHtmlEntities_App(itemToRename.artist) || ''; DOM_APP.saveRenamedTrackBtn.dataset.itemId = itemId; window.openModal_OS(MODAL_IDS_APP.RENAME_TRACK); DOM_APP.trackNewNameInput.focus(); } hidePjContextMenu_App(); };
-    handlePjContextRemove_App = function() { const itemId = DOM_APP.playJockeyContextMenu.dataset.currentItemId; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!itemId || !currentPlaylist) { hidePjContextMenu_App(); return; } const itemToRemove = currentPlaylist.videos.find(video => video.id === itemId); if (itemToRemove) { DOM_APP.confirmRemoveTrackMessage.textContent = `Remove "${decodeHtmlEntities_App(itemToRemove.title)}"?`; DOM_APP.confirmFinalTrackRemoveBtn.dataset.itemId = itemId; window.openModal_OS(MODAL_IDS_APP.CONFIRM_REMOVE_TRACK); } hidePjContextMenu_App(); };
-    saveRenamedTrack_App = function() { const itemId = DOM_APP.saveRenamedTrackBtn.dataset.itemId; const newName = DOM_APP.trackNewNameInput.value.trim(); const newArtist = DOM_APP.trackNewArtistInput.value.trim(); const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!itemId || !currentPlaylist) { window.closeModal_OS(MODAL_IDS_APP.RENAME_TRACK); return; } if (!newName) { alert("Track name cannot be empty."); return; } const itemToRename = currentPlaylist.videos.find(video => video.id === itemId); if (itemToRename) { itemToRename.title = newName; itemToRename.artist = newArtist; if(appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === itemId) { appData.playJockeyCurrentVideo.title = newName; appData.playJockeyCurrentVideo.artist = newArtist; } renderPlayJockeyPlaylist_App(); saveAppData_PlayJockey(); } window.closeModal_OS(MODAL_IDS_APP.RENAME_TRACK); delete DOM_APP.saveRenamedTrackBtn.dataset.itemId; };
-    executeTrackDeletion_App = function() { const itemId = DOM_APP.confirmFinalTrackRemoveBtn.dataset.itemId; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!itemId || !currentPlaylist) { window.closeModal_OS(MODAL_IDS_APP.CONFIRM_REMOVE_TRACK); return; } const itemIndex = currentPlaylist.videos.findIndex(video => video.id === itemId); if (itemIndex > -1) { const removedItem = currentPlaylist.videos.splice(itemIndex, 1)[0]; const historyIndex = appData.playJockeyRandomHistory.indexOf(removedItem.id); if (historyIndex > -1) appData.playJockeyRandomHistory.splice(historyIndex, 1); if (appData.playJockeyCurrentVideo && appData.playJockeyCurrentVideo.id === removedItem.id) { if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); appData.playJockeyCurrentVideo = null; if (appData.playJockeyAutoPlayEnabled && currentPlaylist.videos.length > 0) playNextPjVideo_App(); else if (currentPlaylist.videos.length === 0) DOM_APP.playJockeyPlayer.innerHTML = ''; } renderPlayJockeyPlaylist_App(); saveAppData_PlayJockey(); } window.closeModal_OS(MODAL_IDS_APP.CONFIRM_REMOVE_TRACK); delete DOM_APP.confirmFinalTrackRemoveBtn.dataset.itemId; };
-    openRenamePlaylistModalFromContextMenu_App = function() { const playlistId = DOM_APP.playJockeyTabContextMenu.dataset.playlistId; if (!playlistId) return; const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId); if (playlistToRename) { DOM_APP.playlistNewNameInput.value = decodeHtmlEntities_App(playlistToRename.name); DOM_APP.saveRenamedPlaylistBtn.dataset.playlistId = playlistId; window.openModal_OS(MODAL_IDS_APP.RENAME_PLAYLIST); DOM_APP.playlistNewNameInput.focus(); } hidePjTabContextMenu_App(); };
-    saveRenamedPlaylist_App = function() { const playlistId = DOM_APP.saveRenamedPlaylistBtn.dataset.playlistId; const newName = DOM_APP.playlistNewNameInput.value.trim(); if (!playlistId || !newName) return; const playlistToRename = appData.playJockeyPlaylists.find(pl => pl.id === playlistId); if (playlistToRename) { playlistToRename.name = newName; renderPlayJockeyTabs_App(); saveAppData_PlayJockey(); } window.closeModal_OS(MODAL_IDS_APP.RENAME_PLAYLIST); delete DOM_APP.saveRenamedPlaylistBtn.dataset.playlistId; };
-    openConfirmRemovePlaylistModalFromContextMenu_App = function() { const playlistId = DOM_APP.playJockeyTabContextMenu.dataset.playlistId; if (!playlistId) return; const playlistToRemove = appData.playJockeyPlaylists.find(pl => pl.id === playlistId); if (playlistToRemove) { DOM_APP.confirmRemovePlaylistMessage.textContent = `Remove playlist "${decodeHtmlEntities_App(playlistToRemove.name)}"?`; DOM_APP.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId; window.openModal_OS(MODAL_IDS_APP.CONFIRM_REMOVE_PLAYLIST); } hidePjTabContextMenu_App(); };
-    executePlaylistDeletion_App = function() { const playlistIdToRemove = DOM_APP.confirmFinalPlaylistRemoveBtn.dataset.playlistId; if (!playlistIdToRemove) return; const playlistIndex = appData.playJockeyPlaylists.findIndex(pl => pl.id === playlistIdToRemove); if (playlistIndex > -1) { appData.playJockeyPlaylists.splice(playlistIndex, 1); if (appData.playJockeyCurrentPlaylistId === playlistIdToRemove) { if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); appData.playJockeyCurrentVideo = null; appData.playJockeyRandomHistory = []; if (appData.playJockeyPlaylists.length > 0) appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0].id; else { const defaultPlaylistId = 'playlist_default_0_pj' + Date.now(); appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []}); appData.playJockeyCurrentPlaylistId = defaultPlaylistId; } } } if (appData.playJockeyPlaylists.length === 0) { const defaultPlaylistId = 'playlist_default_0_pj' + Date.now(); appData.playJockeyPlaylists.push({id: defaultPlaylistId, name: "Playlist", videos: []}); appData.playJockeyCurrentPlaylistId = defaultPlaylistId;} renderPlayJockeyTabs_App(); renderPlayJockeyPlaylist_App(); saveAppData_PlayJockey(); window.closeModal_OS(MODAL_IDS_APP.CONFIRM_REMOVE_PLAYLIST); delete DOM_APP.confirmFinalPlaylistRemoveBtn.dataset.playlistId; };
-    handlePjDragStart_App = function(e) { const target = e.target.closest('.playjockey-playlist-item'); if (target) { pjDraggedItem = target; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', target.dataset.playlistItemId); setTimeout(() => { target.classList.add('dragging'); }, 0); hidePjContextMenu_App(); }};
-    handlePjDragEnd_App = function(e) { if (pjDraggedItem) pjDraggedItem.classList.remove('dragging'); DOM_APP.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => item.classList.remove('drag-over-target-before', 'drag-over-target-after')); pjDraggedItem = null; };
-    clearPjDragOverHighlights_App = function() { DOM_APP.playJockeyPlaylist.querySelectorAll('.playjockey-playlist-item').forEach(item => item.classList.remove('drag-over-target-before', 'drag-over-target-after')); };
-    handlePjDragOver_App = function(e) { e.preventDefault(); const targetItem = e.target.closest('.playjockey-playlist-item'); clearPjDragOverHighlights_App(); if (targetItem && pjDraggedItem && targetItem !== pjDraggedItem) { const rect = targetItem.getBoundingClientRect(); const midpointY = rect.top + rect.height / 2; if (e.clientY < midpointY) targetItem.classList.add('drag-over-target-before'); else targetItem.classList.add('drag-over-target-after'); }};
-    handlePjDragLeave_App = function(e) { const relatedTargetIsChildOrSelf = DOM_APP.playJockeyPlaylist.contains(e.relatedTarget); if (!relatedTargetIsChildOrSelf) clearPjDragOverHighlights_App(); else { const targetItem = e.target.closest('.playjockey-playlist-item'); if (targetItem) targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after'); }};
-    handlePjDrop_App = function(e) { e.preventDefault(); clearPjDragOverHighlights_App(); const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (!pjDraggedItem || !currentPlaylist) return; const draggedItemId = e.dataTransfer.getData('text/plain'); const targetItemElement = e.target.closest('.playjockey-playlist-item'); const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId); if (draggedItemIndex === -1) return; const itemToMove = currentPlaylist.videos[draggedItemIndex]; currentPlaylist.videos.splice(draggedItemIndex, 1); let targetIndex = -1; if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) { const targetItemId = targetItemElement.dataset.playlistItemId; targetIndex = currentPlaylist.videos.findIndex(item => item.id === targetItemId); if (targetIndex !== -1) { const rect = targetItemElement.getBoundingClientRect(); const midpointY = rect.top + rect.height / 2; if (e.clientY >= midpointY) targetIndex++; } } if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) currentPlaylist.videos.splice(targetIndex, 0, itemToMove); else currentPlaylist.videos.push(itemToMove); renderPlayJockeyPlaylist_App(); saveAppData_PlayJockey(); pjDraggedItem = null; };
-    togglePlayJockeyAutoPlay_App = function() { appData.playJockeyAutoPlayEnabled = !appData.playJockeyAutoPlayEnabled; updatePlayJockeyAutoPlayButtonState_App(); saveAppData_PlayJockey(); };
-    updatePlayJockeyAutoPlayButtonState_App = function() { DOM_APP.playJockeyAutoPlayBtn.classList.toggle('autoplay-on', appData.playJockeyAutoPlayEnabled); DOM_APP.playJockeyAutoPlayBtn.textContent = `Auto Play: ${appData.playJockeyAutoPlayEnabled ? 'On' : 'Off'}`; };
-    togglePlayJockeyRandom_App = function() { appData.playJockeyRandomEnabled = !appData.playJockeyRandomEnabled; appData.playJockeyRandomHistory = []; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) { if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id); } updatePlayJockeyRandomButtonState_App(); saveAppData_PlayJockey(); };
-    updatePlayJockeyRandomButtonState_App = function() { DOM_APP.playJockeyRandomBtn.classList.toggle('random-on', appData.playJockeyRandomEnabled); DOM_APP.playJockeyRandomBtn.textContent = `Random: ${appData.playJockeyRandomEnabled ? 'On' : 'Off'}`; };
-    cyclePlayJockeyRepeat_App = function() { const states = ["off", "playlist", "song"]; let currentIndex = states.indexOf(appData.playJockeyRepeatState); currentIndex = (currentIndex + 1) % states.length; appData.playJockeyRepeatState = states[currentIndex]; appData.playJockeyRandomHistory = []; const currentPlaylist = getCurrentPlayJockeyPlaylist_App(); if (appData.playJockeyRandomEnabled && appData.playJockeyCurrentVideo && currentPlaylist && currentPlaylist.videos.length > 0) { if (currentPlaylist.videos.length > 1 || appData.playJockeyRepeatState !== "off") appData.playJockeyRandomHistory.push(appData.playJockeyCurrentVideo.id); } updatePlayJockeyRepeatButtonState_App(); saveAppData_PlayJockey(); };
-    updatePlayJockeyRepeatButtonState_App = function() { DOM_APP.playJockeyRepeatBtn.classList.remove('repeat-on'); switch (appData.playJockeyRepeatState) { case "off": DOM_APP.playJockeyRepeatBtn.textContent = 'Repeat: Off'; break; case "playlist": DOM_APP.playJockeyRepeatBtn.textContent = 'Repeat: List'; DOM_APP.playJockeyRepeatBtn.classList.add('repeat-on'); break; case "song": DOM_APP.playJockeyRepeatBtn.textContent = 'Repeat: One'; DOM_APP.playJockeyRepeatBtn.classList.add('repeat-on'); break; }};
-
-
-    function initAppEventListeners_PlayJockey() {
-        DOM_APP.playJockeyAddBtn.addEventListener('click', handlePlayJockeyInput_App);
-        DOM_APP.playJockeyLinkInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handlePlayJockeyInput_App(); });
-        DOM_APP.playJockeyPlaylist.addEventListener('dragstart', handlePjDragStart_App);
-        DOM_APP.playJockeyPlaylist.addEventListener('dragend', handlePjDragEnd_App);
-        DOM_APP.playJockeyPlaylist.addEventListener('dragover', handlePjDragOver_App);
-        DOM_APP.playJockeyPlaylist.addEventListener('dragleave', handlePjDragLeave_App);
-        DOM_APP.playJockeyPlaylist.addEventListener('drop', handlePjDrop_App);
-        DOM_APP.playJockeyPlaylist.addEventListener('contextmenu', showPjContextMenu_App);
-        DOM_APP.playJockeyRandomBtn.addEventListener('click', togglePlayJockeyRandom_App);
-        DOM_APP.playJockeyAutoPlayBtn.addEventListener('click', togglePlayJockeyAutoPlay_App);
-        DOM_APP.playJockeyRepeatBtn.addEventListener('click', cyclePlayJockeyRepeat_App);
-        
-        DOM_APP.playJockeyMinimizeBtn.addEventListener('click', () => window.minimizeAppWindow(APP_ID));
-        DOM_APP.playJockeyMaximizeBtn.addEventListener('click', () => window.maximizeAppWindowGlobal[APP_ID]());
-        DOM_APP.playJockeyCloseBtn.addEventListener('click', () => window.closeAppWindow(APP_ID));
-
-        DOM_APP.appModalCloseButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const modalId = event.target.dataset.modalId || event.target.closest('.modal').id;
-                if (modalId) window.closeModal_OS(modalId);
-            });
-        });
-        DOM_APP.saveRenamedPlaylistBtn.addEventListener('click', saveRenamedPlaylist_App);
-        DOM_APP.playlistNewNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveRenamedPlaylist_App(); });
-        DOM_APP.confirmFinalPlaylistRemoveBtn.addEventListener('click', executePlaylistDeletion_App);
-        DOM_APP.saveRenamedTrackBtn.addEventListener('click', saveRenamedTrack_App);
-        DOM_APP.trackNewNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM_APP.saveRenamedTrackBtn.click();});
-        DOM_APP.trackNewArtistInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') DOM_APP.saveRenamedTrackBtn.click();});
-        DOM_APP.confirmFinalTrackRemoveBtn.addEventListener('click', executeTrackDeletion_App);
-
-        document.addEventListener('click', (e) => { 
-            if (DOM_APP.playJockeyContextMenu.style.display === 'block' && !DOM_APP.playJockeyContextMenu.contains(e.target) && !e.target.closest('.playjockey-playlist-item')) hidePjContextMenu_App();
-            if (DOM_APP.playJockeyTabContextMenu.style.display === 'block' && !DOM_APP.playJockeyTabContextMenu.contains(e.target) && !e.target.closest('.playjockey-tab')) hidePjTabContextMenu_App();
-        });
-    }
-
-    function init_PlayJockey() {
-        const fields = [
-            'playJockeyWindow', 'playJockeyTitleBar', 'playJockeyResizeHandle',
-            'playJockeyMinimizeBtn', 'playJockeyMaximizeBtn', 'playJockeyCloseBtn',
-            'playJockeyLinkInput', 'playJockeyAddBtn', 'playJockeyPlayer', 'playJockeyTabsBar', 'playJockeyPlaylist',
-            'playJockeyContextMenu', 'pjContextRenameBtn', 'pjContextRemoveBtn',
-            'playJockeyTabContextMenu', 'pjTabContextRenameBtn', 'pjTabContextRemoveBtn',
-            'playJockeyRandomBtn', 'playJockeyAutoPlayBtn', 'playJockeyRepeatBtn',
-            'renamePlaylistModal', 'playlistNewNameInput', 'saveRenamedPlaylistBtn',
-            'confirmRemovePlaylistModal', 'confirmRemovePlaylistMessage', 'confirmFinalPlaylistRemoveBtn',
-            'youtubeSearchModalPj', 'youtubeSearchResultsBodyPj', 'youtubeSearchStatusPj',
-            'renameTrackModal', 'trackNewNameInput', 'trackNewArtistInput', 'saveRenamedTrackBtn',
-            'confirmRemoveTrackModal', 'confirmRemoveTrackMessage', 'confirmFinalTrackRemoveBtn'
-        ];
-        fields.forEach(field => DOM_APP[field] = getAppById(field));
-        DOM_APP.appModalCloseButtons = document.querySelectorAll(
-          `#${MODAL_IDS_APP.RENAME_PLAYLIST} .close-button, #${MODAL_IDS_APP.RENAME_PLAYLIST} .xp-button[data-modal-id],`+
-          `#${MODAL_IDS_APP.CONFIRM_REMOVE_PLAYLIST} .close-button, #${MODAL_IDS_APP.CONFIRM_REMOVE_PLAYLIST} .xp-button[data-modal-id],`+
-          `#${MODAL_IDS_APP.Youtube} .close-button, #${MODAL_IDS_APP.Youtube} .xp-button[data-modal-id],`+
-          `#${MODAL_IDS_APP.RENAME_TRACK} .close-button, #${MODAL_IDS_APP.RENAME_TRACK} .xp-button[data-modal-id],`+
-          `#${MODAL_IDS_APP.CONFIRM_REMOVE_TRACK} .close-button, #${MODAL_IDS_APP.CONFIRM_REMOVE_TRACK} .xp-button[data-modal-id]`
-        );
-        
-        window.appInitialConfig[APP_ID] = {
-            id: APP_ID,
-            defaultWidth: DEFAULT_APP_WIDTH, defaultHeight: DEFAULT_APP_HEIGHT,
-            minWidth: MIN_APP_WIDTH, minHeight: MIN_APP_HEIGHT,
-            titleBarId: 'playJockeyTitleBar', resizeHandleId: 'playJockeyResizeHandle'
-        };
-         window.maximizeAppWindowGlobal[APP_ID] = () => window.maximizeAppWindow(APP_ID, MIN_APP_WIDTH, MIN_APP_HEIGHT, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT);
-
-        loadAppData_PlayJockey();
-        window.initWindowInteractions(APP_ID, 'playJockeyTitleBar', 'playJockeyResizeHandle', MIN_APP_WIDTH, MIN_APP_HEIGHT);
-        restoreAppWindowState_PlayJockey();
-        
-        initPlayJockeyContextMenu_App();
-        initPlayJockeyTabContextMenu_App();
-        renderPlayJockeyTabs_App();
-        renderPlayJockeyPlaylist_App();
-        updatePlayJockeyAutoPlayButtonState_App();
-        updatePlayJockeyRandomButtonState_App();
-        updatePlayJockeyRepeatButtonState_App();
-        initAppEventListeners_PlayJockey();
-
-        const ytScript = document.createElement('script');
-        ytScript.src = "https://www.youtube.com/iframe_api";
+    if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
-        if (firstScriptTag && firstScriptTag.parentNode) {
-            firstScriptTag.parentNode.insertBefore(ytScript, firstScriptTag);
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReadyInternal;
+    } else {
+        onYouTubeIframeAPIReadyInternal();
+    }
+
+
+    function extractYouTubeVideoId(url) {
+        if (!url) return null;
+        const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+    }
+    function isValidYouTubeUrl(url) {
+        if (!url) return false;
+        const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})([&?].*)?$/;
+        return regex.test(url);
+    }
+
+    async function handleInput() {
+        const input = DOM.linkInput.value.trim();
+        if (!input) { alert("Please enter a YouTube link or search query."); return; }
+        if (isValidYouTubeUrl(input)) {
+            addYouTubeLinkToPlaylist(input);
         } else {
-            document.head.appendChild(ytScript);
+            if (!YOUTUBE_API_KEY) {
+                alert("YouTube API Key not configured. Search is disabled. Add direct links."); return;
+            }
+            searchYouTubeVideos(input);
         }
     }
-    init_PlayJockey();
-})();
-</script>
+    async function searchYouTubeVideos(query) {
+        DOM.youtubeSearchResultsBody.innerHTML = '';
+        DOM.youtubeSearchStatus.textContent = 'Searching...';
+        DOM.youtubeSearchStatus.style.display = 'block';
+        os.openModal(DOM.youtubeSearchModal);
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}&maxResults=10`;
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                const errorData = await response.json();
+                DOM.youtubeSearchStatus.textContent = `Error: ${errorData.error.message}`; return;
+            }
+            const data = await response.json();
+            if (data.items && data.items.length > 0) {
+                DOM.youtubeSearchStatus.style.display = 'none';
+                renderYouTubeSearchResults(data.items);
+            } else {
+                DOM.youtubeSearchStatus.textContent = 'No videos found.';
+            }
+        } catch (error) {
+            DOM.youtubeSearchStatus.textContent = 'Failed to search videos.';
+        }
+    }
+    function renderYouTubeSearchResults(items) {
+        DOM.youtubeSearchResultsBody.innerHTML = '';
+        items.forEach(item => {
+            const videoId = item.id.videoId;
+            const title = os.decodeHtmlEntities(item.snippet.title);
+            const channelTitle = os.decodeHtmlEntities(item.snippet.channelTitle);
+            const thumbnailUrl = item.snippet.thumbnails.default.url;
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'Youtube-result-item'; // Use a generic class if needed or prefix
+            resultDiv.style.cssText = "display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #ACA899; cursor: pointer; background-color: #FFFFFF;";
+            resultDiv.innerHTML = `<img src="${thumbnailUrl}" alt="${title}" style="width:120px;height:90px;margin-right:10px;border:1px solid #ACA899;object-fit:cover;"><div style="display:flex;flex-direction:column;"><div style="font-weight:bold;color:#0039A9;font-size:12px;margin-bottom:3px;" title="${title}">${title}</div><div style="font-size:10px;color:#555;" title="${channelTitle}">${channelTitle}</div></div>`;
+            resultDiv.addEventListener('click', () => {
+                addVideoFromSearchResult(videoId, title, channelTitle);
+                os.closeModal(DOM.youtubeSearchModal);
+            });
+            DOM.youtubeSearchResultsBody.appendChild(resultDiv);
+        });
+    }
+    function addVideoFromSearchResult(videoId, title, artist) {
+        let currentPlaylist = getCurrentPlaylist();
+        if (!currentPlaylist) { addNewPlaylist(); currentPlaylist = getCurrentPlaylist(); if (!currentPlaylist) return; }
+        if (currentPlaylist.videos.some(v => v.videoId === videoId)) { alert("Video already in playlist."); DOM.linkInput.value = ''; return; }
+        const videoEntry = {
+            id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
+            originalUrl: `https://www.youtube.com/watch?v=${videoId}`, videoId, title,
+            artist: artist.replace(/\s-\sTopic$/, '').trim()
+        };
+        currentPlaylist.videos.push(videoEntry);
+        renderPlaylist(); DOM.linkInput.value = '';
+        if (!ytPlayerInstance || !appData.currentVideo || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true);
+        }
+        os.saveAppData();
+    }
+    function addYouTubeLinkToPlaylist(link) {
+        const videoId = extractYouTubeVideoId(link);
+        if (!videoId) { alert("Invalid YouTube link."); return; }
+        let currentPlaylist = getCurrentPlaylist();
+        if (!currentPlaylist) { addNewPlaylist(); currentPlaylist = getCurrentPlaylist(); if (!currentPlaylist) return; }
+        if (currentPlaylist.videos.some(v => v.videoId === videoId)) { alert("Video already in playlist."); DOM.linkInput.value = ''; return; }
+        const tempId = 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7);
+        const videoEntry = { id: tempId, originalUrl: link, videoId, title: "Loading title...", artist: "" };
+        currentPlaylist.videos.push(videoEntry);
+        renderPlaylist(); DOM.linkInput.value = '';
+        fetchYouTubeTitle(videoEntry, currentPlaylist.id);
+        if (!ytPlayerInstance || !appData.currentVideo || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true);
+        }
+        os.saveAppData();
+    }
+    async function fetchYouTubeTitle(videoEntry, playlistId) {
+        try {
+            let newTitle = "Unknown Title", newArtist = "";
+            if (YOUTUBE_API_KEY) {
+                 const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoEntry.videoId}&key=${YOUTUBE_API_KEY}`);
+                 if (response.ok) {
+                     const data = await response.json();
+                     if (data.items && data.items.length > 0) {
+                         newTitle = os.decodeHtmlEntities(data.items[0].snippet.title);
+                         newArtist = os.decodeHtmlEntities(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim();
+                     } else newTitle = os.decodeHtmlEntities(videoEntry.originalUrl);
+                 } else newTitle = os.decodeHtmlEntities(videoEntry.originalUrl);
+            } else {
+                const oEmbedResponse = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoEntry.videoId}&format=json`);
+                if (oEmbedResponse.ok) {
+                    const data = await oEmbedResponse.json();
+                    newTitle = os.decodeHtmlEntities(data.title);
+                    newArtist = os.decodeHtmlEntities(data.author_name).replace(/\s-\sTopic$/, '').trim();
+                } else newTitle = os.decodeHtmlEntities(videoEntry.originalUrl);
+            }
+            const targetPlaylist = appData.playlists.find(pl => pl.id === playlistId);
+            if (targetPlaylist) {
+                const item = targetPlaylist.videos.find(v => v.id === videoEntry.id);
+                if (item) {
+                    item.title = newTitle; item.artist = newArtist;
+                    if (appData.currentPlaylistId === playlistId) renderPlaylist();
+                    if(appData.currentVideo && appData.currentVideo.id === item.id) {
+                        appData.currentVideo.title = newTitle; appData.currentVideo.artist = newArtist;
+                    }
+                    os.saveAppData();
+                }
+            }
+        } catch (error) { /* Use original URL as fallback already handled */ }
+    }
+
+    function renderTabs() {
+        DOM.tabsBar.innerHTML = '';
+        appData.playlists.forEach(playlist => {
+            const tab = document.createElement('div');
+            tab.className = 'playjockey-tab'; // Use a generic class or prefix
+            tab.style.cssText = "padding: 6px 10px; border: 1px inset #FFFFFF; border-bottom: none; background-color: #D4D0C8; cursor: default; font-size: 10px; white-space: nowrap; border-top-left-radius: 3px; border-top-right-radius: 3px;";
+            const displayName = os.decodeHtmlEntities(playlist.name);
+            tab.textContent = displayName; tab.title = displayName; tab.dataset.playlistId = playlist.id;
+            if (playlist.id === appData.currentPlaylistId) {
+                tab.classList.add('active');
+                tab.style.backgroundColor = "#F0F0F0"; tab.style.borderStyle = "inset"; tab.style.borderBottom = "1px solid #F0F0F0"; tab.style.fontWeight = "bold";
+            }
+            tab.addEventListener('click', () => switchPlaylist(playlist.id));
+            tab.addEventListener('contextmenu', (e) => showTabContextMenu(e, playlist.id));
+            DOM.tabsBar.appendChild(tab);
+        });
+        const addTabBtn = document.createElement('button');
+        addTabBtn.className = 'xp-button xp-button-small';
+        addTabBtn.textContent = '+'; addTabBtn.title = "New Playlist";
+        addTabBtn.style.padding = "3px 6px"; addTabBtn.style.fontSize="10px";
+        addTabBtn.addEventListener('click', addNewPlaylist);
+        DOM.tabsBar.appendChild(addTabBtn);
+    }
+    function addNewPlaylist() {
+        let newName = "Playlist", counter = 1;
+        const existing = appData.playlists.map(p => p.name.toLowerCase());
+        while (existing.includes(newName.toLowerCase() + (counter > 1 ? ` ${counter-1}`: ''))) counter++;
+        if (counter > 1) newName = `${newName} ${counter-1}`;
+        const newId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
+        appData.playlists.push({ id: newId, name: newName, videos: [] });
+        switchPlaylist(newId);
+    }
+    function switchPlaylist(playlistId) {
+        if (appData.currentPlaylistId === playlistId) return;
+        appData.currentPlaylistId = playlistId;
+        appData.currentVideo = null; appData.randomHistory = [];
+        if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo();
+        renderTabs(); renderPlaylist(); os.saveAppData();
+    }
+    function renderPlaylist() {
+        DOM.playlistArea.innerHTML = '';
+        const currentPlaylist = getCurrentPlaylist();
+        if (!currentPlaylist || currentPlaylist.videos.length === 0) {
+            DOM.playlistArea.innerHTML = `<div style="padding:10px;text-align:center;color:#555;">Playlist empty.</div>`;
+            updatePlayingClass(null); return;
+        }
+        currentPlaylist.videos.forEach(video => {
+            const item = document.createElement('div');
+            item.className = 'playjockey-playlist-item'; // Generic or prefixed
+            item.style.cssText = "padding: 4px 6px; cursor: grab; border-bottom: 1px solid #ECE9D8; font-size: 10px; color: #000080; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: none;";
+            let cleanTitle = os.decodeHtmlEntities(video.title);
+            let cleanArtist = os.decodeHtmlEntities(video.artist);
+            let displayTitle = (cleanTitle === "Loading title..." || cleanTitle === video.originalUrl || !cleanTitle.trim()) ? (os.decodeHtmlEntities(video.originalUrl).substring(0,37) + '...') : (cleanTitle.substring(0,37) + '...');
+            let itemText = displayTitle;
+            let itemTooltip = (cleanTitle !== "Loading title..." && cleanTitle.trim()) ? cleanTitle : os.decodeHtmlEntities(video.originalUrl);
+            if (cleanArtist && cleanArtist.trim() !== "") {
+                itemText = `${displayTitle} - ${(cleanArtist.substring(0,17) + '...')}`;
+                itemTooltip = `${itemTooltip} by ${cleanArtist}`;
+            }
+            item.textContent = itemText; item.title = itemTooltip;
+            item.dataset.videoId = video.videoId; item.dataset.playlistItemId = video.id;
+            item.draggable = true;
+            if (appData.currentVideo && appData.currentVideo.id === video.id) item.classList.add('playing'); // Style with .playing
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.context-modal') || item.classList.contains('dragging')) return;
+                if (e.currentTarget.dataset.videoId) playYouTubeVideoById(e.currentTarget.dataset.videoId, true, true);
+            });
+            DOM.playlistArea.appendChild(item);
+        });
+    }
+    function playYouTubeVideoById(videoId, autoplay = true, manualPlay = false) {
+        if (!videoId) return;
+        const currentPlaylist = getCurrentPlaylist();
+        if (!currentPlaylist) return;
+        const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId);
+        if (!videoToPlay) { appData.currentVideo = null; updatePlayingClass(null); if(ytPlayerInstance) ytPlayerInstance.stopVideo(); return; }
+        if (manualPlay && videoToPlay && appData.randomEnabled && appData.autoPlayEnabled && appData.repeatState === "off" && currentPlaylist.videos.length > 0) {
+            const uniqueIds = new Set(currentPlaylist.videos.map(v => v.id));
+            if (new Set(appData.randomHistory).size >= uniqueIds.size) appData.randomHistory = [videoToPlay.id];
+            else if (!appData.randomHistory.includes(videoToPlay.id)) appData.randomHistory.push(videoToPlay.id);
+        }
+        appData.currentVideo = { ...videoToPlay };
+        updatePlayingClass(videoToPlay.id); os.saveAppData();
+        if (!isYouTubeApiReady) { pendingVideoToLoad = { videoId, autoplayIntent: autoplay }; return; }
+        if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
+            ytPlayerInstance.loadVideoById({ videoId });
+            if (autoplay) ytPlayerInstance.playVideo();
+        } else {
+            if (DOM.playerContainer.firstChild && DOM.playerContainer.firstChild.tagName === 'IFRAME') DOM.playerContainer.innerHTML = '';
+            ytPlayerInstance = new YT.Player(DOM.playerContainer.id, {
+                height: '100%', width: '100%', videoId,
+                playerVars: { autoplay: autoplay ? 1:0, controls:1, enablejsapi:1, origin:window.location.origin, modestbranding:1, rel:0 },
+                events: { 'onReady': (e) => { if (autoplay) e.target.playVideo(); }, 'onStateChange': onPlayerStateChange }
+            });
+        }
+    }
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED && appData.autoPlayEnabled) playNextVideo();
+    }
+    function playNextVideo() {
+        const currentPlaylist = getCurrentPlaylist();
+        if (!ytPlayerInstance || !appData.currentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) return;
+        let nextVideo = null;
+        const currentId = appData.currentVideo.id;
+        const videos = currentPlaylist.videos;
+        if (appData.repeatState === "song") nextVideo = videos.find(v => v.id === currentId);
+        else if (appData.randomEnabled) {
+            if (videos.length === 0) return;
+            if (videos.length === 1) {
+                if (appData.repeatState === "off" && appData.randomHistory.includes(currentId)) return;
+                nextVideo = videos[0];
+            } else {
+                let eligible = videos.filter(v => !appData.randomHistory.includes(v.id) || v.id === currentId);
+                if (eligible.length === 1 && eligible[0].id === currentId && appData.repeatState !== "song") {
+                     eligible = videos.filter(v => v.id !== currentId);
+                     if (eligible.length === 0 && appData.repeatState === "playlist") {
+                        appData.randomHistory = [currentId]; eligible = videos.filter(v => v.id !== currentId);
+                     }
+                } else if (eligible.length === 0 && appData.repeatState === "playlist") {
+                    appData.randomHistory = [currentId]; eligible = videos.filter(v => v.id !== currentId);
+                }
+                if (eligible.length === 0) {
+                    if (appData.repeatState === "playlist") { appData.randomHistory = []; eligible = [...videos]; if(videos.length === 1) nextVideo = videos[0];}
+                    else { appData.randomHistory = []; return; }
+                }
+                if (eligible.length > 0 && !nextVideo) nextVideo = eligible[Math.floor(Math.random() * eligible.length)];
+            }
+            if (nextVideo && !appData.randomHistory.includes(nextVideo.id)) appData.randomHistory.push(nextVideo.id);
+            if (appData.repeatState === "playlist") {
+                const maxHist = Math.max(0, videos.length -1);
+                while (appData.randomHistory.length > maxHist && maxHist > 0 && appData.randomHistory.length >= videos.length) appData.randomHistory.shift();
+            }
+        } else {
+            const currentIndex = videos.findIndex(v => v.id === currentId);
+            if (currentIndex === -1) return;
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= videos.length) {
+                if (appData.repeatState === "playlist") nextIndex = 0; else return;
+            }
+            if (videos[nextIndex]) nextVideo = videos[nextIndex];
+        }
+        if (nextVideo && nextVideo.videoId) playYouTubeVideoById(nextVideo.videoId, true, false);
+    }
+    function updatePlayingClass(playingItemId) {
+        DOM.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(item => {
+            item.classList.toggle('playing', item.dataset.playlistItemId === playingItemId);
+            if (item.dataset.playlistItemId === playingItemId) item.style.backgroundColor = "#005CFE"; else item.style.backgroundColor = "";
+        });
+    }
+
+    function showContextMenu(e, menuElement, targetSelector, idDatasetName) {
+        e.preventDefault();
+        hideAllContextMenus();
+        const target = e.target.closest(targetSelector);
+        if (target) {
+            menuElement.style.display = 'block';
+            let x = e.clientX, y = e.clientY;
+            const menuWidth = menuElement.offsetWidth, menuHeight = menuElement.offsetHeight;
+            const vpWidth = window.innerWidth, vpHeight = window.innerHeight;
+            if (x + menuWidth > vpWidth) x = vpWidth - menuWidth - 5;
+            if (y + menuHeight > vpHeight) y = vpHeight - menuHeight - 5;
+            menuElement.style.left = `${Math.max(0,x)}px`; menuElement.style.top = `${Math.max(0,y)}px`;
+            menuElement.dataset[idDatasetName] = target.dataset[idDatasetName] || target.dataset.playlistId;
+        }
+    }
+    function hideAllContextMenus() {
+        DOM.contextMenu.style.display = 'none'; delete DOM.contextMenu.dataset.currentItemId;
+        DOM.tabContextMenu.style.display = 'none'; delete DOM.tabContextMenu.dataset.playlistId;
+    }
+    DOM.playlistArea.addEventListener('contextmenu', (e) => showContextMenu(e, DOM.contextMenu, '.playjockey-playlist-item', 'playlistItemId'));
+    function showTabContextMenu(e, playlistId) { // Special handling for tabs as they are dynamically generated
+        e.preventDefault();
+        hideAllContextMenus();
+        DOM.tabContextMenu.style.display = 'block';
+        let x = e.clientX, y = e.clientY;
+        const menuWidth = DOM.tabContextMenu.offsetWidth, menuHeight = DOM.tabContextMenu.offsetHeight;
+        const vpWidth = window.innerWidth, vpHeight = window.innerHeight;
+        if (x + menuWidth > vpWidth) x = vpWidth - menuWidth - 5;
+        if (y + menuHeight > vpHeight) y = vpHeight - menuHeight - 5;
+        DOM.tabContextMenu.style.left = `${Math.max(0,x)}px`; DOM.tabContextMenu.style.top = `${Math.max(0,y)}px`;
+        DOM.tabContextMenu.dataset.playlistId = playlistId;
+    }
+
+    DOM.contextRenameBtn.addEventListener('click', () => {
+        const itemId = DOM.contextMenu.dataset.currentItemId;
+        const currentPlaylist = getCurrentPlaylist();
+        if (!itemId || !currentPlaylist) { hideAllContextMenus(); return; }
+        const item = currentPlaylist.videos.find(v => v.id === itemId);
+        if (item) {
+            DOM.trackNewNameInput.value = os.decodeHtmlEntities(item.title) || '';
+            DOM.trackNewArtistInput.value = os.decodeHtmlEntities(item.artist) || '';
+            DOM.saveRenamedTrackBtn.dataset.itemId = itemId;
+            os.openModal(DOM.renameTrackModal); DOM.trackNewNameInput.focus();
+        }
+        hideAllContextMenus();
+    });
+    DOM.contextRemoveBtn.addEventListener('click', () => {
+        const itemId = DOM.contextMenu.dataset.currentItemId;
+        const currentPlaylist = getCurrentPlaylist();
+        if (!itemId || !currentPlaylist) { hideAllContextMenus(); return; }
+        const item = currentPlaylist.videos.find(v => v.id === itemId);
+        if (item) {
+            DOM.confirmRemoveTrackMessage.textContent = `Remove track "${os.decodeHtmlEntities(item.title)}"?`;
+            DOM.confirmFinalTrackRemoveBtn.dataset.itemId = itemId;
+            os.openModal(DOM.confirmRemoveTrackModal);
+        }
+        hideAllContextMenus();
+    });
+    DOM.saveRenamedTrackBtn.addEventListener('click', () => {
+        const itemId = DOM.saveRenamedTrackBtn.dataset.itemId;
+        const newName = DOM.trackNewNameInput.value.trim();
+        const newArtist = DOM.trackNewArtistInput.value.trim();
+        const currentPlaylist = getCurrentPlaylist();
+        if (!itemId || !currentPlaylist || !newName) { alert("Error or empty name."); os.closeModal(DOM.renameTrackModal); return; }
+        const item = currentPlaylist.videos.find(v => v.id === itemId);
+        if (item) {
+            item.title = newName; item.artist = newArtist;
+            if(appData.currentVideo && appData.currentVideo.id === itemId) { appData.currentVideo.title = newName; appData.currentVideo.artist = newArtist; }
+            renderPlaylist(); os.saveAppData();
+        }
+        os.closeModal(DOM.renameTrackModal); delete DOM.saveRenamedTrackBtn.dataset.itemId;
+    });
+    DOM.confirmFinalTrackRemoveBtn.addEventListener('click', () => {
+        const itemId = DOM.confirmFinalTrackRemoveBtn.dataset.itemId;
+        const currentPlaylist = getCurrentPlaylist();
+        if (!itemId || !currentPlaylist) { os.closeModal(DOM.confirmRemoveTrackModal); return; }
+        const itemIndex = currentPlaylist.videos.findIndex(v => v.id === itemId);
+        if (itemIndex > -1) {
+            const removed = currentPlaylist.videos.splice(itemIndex, 1)[0];
+            const histIndex = appData.randomHistory.indexOf(removed.id);
+            if (histIndex > -1) appData.randomHistory.splice(histIndex, 1);
+            if (appData.currentVideo && appData.currentVideo.id === removed.id) {
+                if (ytPlayerInstance) ytPlayerInstance.stopVideo();
+                appData.currentVideo = null;
+                if (appData.autoPlayEnabled && currentPlaylist.videos.length > 0) playNextVideo();
+                else if (currentPlaylist.videos.length === 0) DOM.playerContainer.innerHTML = '';
+            }
+            renderPlaylist(); os.saveAppData();
+        }
+        os.closeModal(DOM.confirmRemoveTrackModal); delete DOM.confirmFinalTrackRemoveBtn.dataset.itemId;
+    });
+
+    DOM.tabContextRenameBtn.addEventListener('click', () => {
+        const playlistId = DOM.tabContextMenu.dataset.playlistId;
+        if (!playlistId) return;
+        const playlist = appData.playlists.find(pl => pl.id === playlistId);
+        if (playlist) {
+            DOM.playlistNewNameInput.value = os.decodeHtmlEntities(playlist.name);
+            DOM.saveRenamedPlaylistBtn.dataset.playlistId = playlistId;
+            os.openModal(DOM.renamePlaylistModal); DOM.playlistNewNameInput.focus();
+        }
+        hideAllContextMenus();
+    });
+    DOM.saveRenamedPlaylistBtn.addEventListener('click', () => {
+        const playlistId = DOM.saveRenamedPlaylistBtn.dataset.playlistId;
+        const newName = DOM.playlistNewNameInput.value.trim();
+        if (!playlistId || !newName) { alert("Error or empty name."); os.closeModal(DOM.renamePlaylistModal); return; }
+        const playlist = appData.playlists.find(pl => pl.id === playlistId);
+        if (playlist) { playlist.name = newName; renderTabs(); os.saveAppData(); }
+        os.closeModal(DOM.renamePlaylistModal); delete DOM.saveRenamedPlaylistBtn.dataset.playlistId;
+    });
+    DOM.tabContextRemoveBtn.addEventListener('click', () => {
+        const playlistId = DOM.tabContextMenu.dataset.playlistId;
+        if (!playlistId) return;
+        const playlist = appData.playlists.find(pl => pl.id === playlistId);
+        if (playlist) {
+            DOM.confirmRemovePlaylistMessage.textContent = `Remove playlist "${os.decodeHtmlEntities(playlist.name)}"?`;
+            DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId;
+            os.openModal(DOM.confirmRemovePlaylistModal);
+        }
+        hideAllContextMenus();
+    });
+    DOM.confirmFinalPlaylistRemoveBtn.addEventListener('click', () => {
+        const playlistId = DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId;
+        if (!playlistId) { os.closeModal(DOM.confirmRemovePlaylistModal); return; }
+        const index = appData.playlists.findIndex(pl => pl.id === playlistId);
+        if (index > -1) {
+            appData.playlists.splice(index, 1);
+            if (appData.currentPlaylistId === playlistId) {
+                if (ytPlayerInstance) ytPlayerInstance.stopVideo();
+                appData.currentVideo = null; appData.randomHistory = [];
+                if (appData.playlists.length > 0) appData.currentPlaylistId = appData.playlists[0].id;
+                else { const newDefId = 'playlist_default_0'; appData.playlists.push({id:newDefId, name:"Playlist", videos:[]}); appData.currentPlaylistId = newDefId; }
+            }
+        }
+        if (appData.playlists.length === 0) { const newDefId = 'playlist_default_0'; appData.playlists.push({id:newDefId, name:"Playlist", videos:[]}); appData.currentPlaylistId = newDefId; }
+        renderTabs(); renderPlaylist(); os.saveAppData();
+        os.closeModal(DOM.confirmRemovePlaylistModal); delete DOM.confirmFinalPlaylistRemoveBtn.dataset.playlistId;
+    });
+    
+    DOM.playlistArea.addEventListener('dragstart', (e) => {
+        const target = e.target.closest('.playjockey-playlist-item');
+        if (target) {
+            pjDraggedItem = target; e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId);
+            setTimeout(() => target.classList.add('dragging'), 0); // Style with .dragging
+            hideAllContextMenus();
+        }
+    });
+    DOM.playlistArea.addEventListener('dragend', () => {
+        if (pjDraggedItem) pjDraggedItem.classList.remove('dragging');
+        DOM.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(i => i.classList.remove('drag-over-target-before', 'drag-over-target-after'));
+        pjDraggedItem = null;
+    });
+    DOM.playlistArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const target = e.target.closest('.playjockey-playlist-item');
+        DOM.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(i => i.classList.remove('drag-over-target-before', 'drag-over-target-after'));
+        if (target && pjDraggedItem && target !== pjDraggedItem) {
+            const rect = target.getBoundingClientRect();
+            target.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-target-before' : 'drag-over-target-after');
+        }
+    });
+    DOM.playlistArea.addEventListener('dragleave', (e) => {
+        if (!DOM.playlistArea.contains(e.relatedTarget)) {
+             DOM.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(i => i.classList.remove('drag-over-target-before', 'drag-over-target-after'));
+        } else {
+            const target = e.target.closest('.playjockey-playlist-item');
+            if(target) target.classList.remove('drag-over-target-before', 'drag-over-target-after');
+        }
+    });
+    DOM.playlistArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        DOM.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(i => i.classList.remove('drag-over-target-before', 'drag-over-target-after'));
+        const currentPlaylist = getCurrentPlaylist();
+        if (!pjDraggedItem || !currentPlaylist) return;
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const targetEl = e.target.closest('.playjockey-playlist-item');
+        const draggedIndex = currentPlaylist.videos.findIndex(v => v.id === draggedId);
+        if (draggedIndex === -1) return;
+        const itemToMove = currentPlaylist.videos.splice(draggedIndex, 1)[0];
+        let targetIndex = -1;
+        if (targetEl && targetEl.dataset.playlistItemId !== draggedId) {
+            targetIndex = currentPlaylist.videos.findIndex(v => v.id === targetEl.dataset.playlistItemId);
+            if (targetIndex !== -1) {
+                const rect = targetEl.getBoundingClientRect();
+                if (e.clientY >= rect.top + rect.height / 2) targetIndex++;
+            }
+        }
+        if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
+        else currentPlaylist.videos.push(itemToMove);
+        renderPlaylist(); os.saveAppData(); pjDraggedItem = null;
+    });
+
+    DOM.addBtn.addEventListener('click', handleInput);
+    DOM.linkInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleInput(); });
+    DOM.randomBtn.addEventListener('click', () => { appData.randomEnabled = !appData.randomEnabled; appData.randomHistory = []; if(appData.randomEnabled && appData.currentVideo && getCurrentPlaylist()?.videos.length > 0) appData.randomHistory.push(appData.currentVideo.id); updateControlButtons(); os.saveAppData(); });
+    DOM.autoPlayBtn.addEventListener('click', () => { appData.autoPlayEnabled = !appData.autoPlayEnabled; updateControlButtons(); os.saveAppData(); });
+    DOM.repeatBtn.addEventListener('click', () => { const states = ["off", "playlist", "song"]; appData.repeatState = states[(states.indexOf(appData.repeatState) + 1) % states.length]; appData.randomHistory = []; if(appData.randomEnabled && appData.currentVideo && getCurrentPlaylist()?.videos.length > 0) appData.randomHistory.push(appData.currentVideo.id); updateControlButtons(); os.saveAppData(); });
+    
+    appWindow.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const modalId = event.target.dataset.modalId || event.target.closest('.modal').id;
+            if (modalId) os.closeModal(appWindow.querySelector('#'+modalId));
+        });
+    });
+    document.addEventListener('click', (e) => { // Global click to hide context menus
+        if (DOM.contextMenu.style.display === 'block' && !DOM.contextMenu.contains(e.target) && !e.target.closest('.playjockey-playlist-item')) hideAllContextMenus();
+        if (DOM.tabContextMenu.style.display === 'block' && !DOM.tabContextMenu.contains(e.target) && !e.target.closest('.playjockey-tab')) hideAllContextMenus();
+    });
+
+
+    function updateControlButtons() {
+        DOM.randomBtn.classList.toggle('random-on', appData.randomEnabled); // Style with .random-on
+        DOM.randomBtn.textContent = `Random: ${appData.randomEnabled ? 'On' : 'Off'}`;
+        DOM.autoPlayBtn.classList.toggle('autoplay-on', appData.autoPlayEnabled); // Style with .autoplay-on
+        DOM.autoPlayBtn.textContent = `Auto Play: ${appData.autoPlayEnabled ? 'On' : 'Off'}`;
+        DOM.repeatBtn.classList.remove('repeat-on'); // Style with .repeat-on
+        switch (appData.repeatState) {
+            case "off": DOM.repeatBtn.textContent = 'Repeat: Off'; break;
+            case "playlist": DOM.repeatBtn.textContent = 'Repeat: List'; DOM.repeatBtn.classList.add('repeat-on'); break;
+            case "song": DOM.repeatBtn.textContent = 'Repeat: One'; DOM.repeatBtn.classList.add('repeat-on'); break;
+        }
+    }
+    
+    this.onOpen = (win) => {
+        YOUTUBE_API_KEY = os.getGlobalConfig('YOUTUBE_API_KEY'); // Refresh API key on open
+        renderTabs();
+        renderPlaylist();
+        updateControlButtons();
+        if (appData.currentVideo && !ytPlayerInstance && isYouTubeApiReady) {
+             const currentPlaylist = getCurrentPlaylist();
+             const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === appData.currentVideo.id);
+             if (currentVideoInPlaylist) playYouTubeVideoById(appData.currentVideo.videoId, false); // Don't autoplay on reopen unless intended
+        } else if (pendingVideoToLoad && isYouTubeApiReady) {
+            playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
+            pendingVideoToLoad = null;
+        }
+    };
+    this.onClose = (win) => {
+        if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
+            ytPlayerInstance.stopVideo();
+        }
+    };
+    this.onMinimize = (win) => {
+         if (ytPlayerInstance && typeof ytPlayerInstance.pauseVideo === 'function') {
+            ytPlayerInstance.pauseVideo();
+        }
+    };
+     this.onRestore = (win) => {
+        if (ytPlayerInstance && typeof ytPlayerInstance.playVideo === 'function' && appData.currentVideo && appData.autoPlayEnabled) {
+            // Only play if it was likely playing before minimize. This might need more state.
+            // For now, let's not auto-play on restore unless specifically desired.
+        }
+    };
+
+    renderTabs();
+    renderPlaylist();
+    updateControlButtons();
+
+    </script>
+</body>
