@@ -1,0 +1,407 @@
+<div class="desktop-icon" id="captureIcon" data-window-id="captureWindow">
+    <div class="icon-image">📹</div>
+    <div class="icon-label">Capture</div>
+</div>
+
+<div class="xp-window" id="captureWindow">
+    <div class="title-bar" id="captureWindowTitleBar">
+        <span class="title-bar-text">Capture</span>
+        <div class="title-bar-controls">
+            <button id="captureMinimizeBtn" title="Minimize">0</button>
+            <button id="captureMaximizeBtn" title="Maximize">1</button>
+            <button title="Close" id="captureCloseBtn">r</button>
+        </div>
+    </div>
+    <div class="xp-menu-bar" id="captureMenuBar">
+        <div class="xp-menu-item" id="videoMenu">
+            <span>Video</span>
+            <div class="xp-dropdown-menu" id="videoDropdown">
+                <div class="xp-dropdown-item" id="videoDeviceItem">
+                    Device
+                    <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="videoDeviceList">
+                    </div>
+                </div>
+                <div class="xp-dropdown-item" id="videoResolutionItem">
+                    Resolution
+                    <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="videoResolutionList">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="xp-menu-item" id="audioMenu">
+            <span>Audio</span>
+            <div class="xp-dropdown-menu" id="audioDropdown">
+                <div class="xp-dropdown-item" id="audioDeviceItem">
+                    Device
+                    <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="audioDeviceList">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="window-body" id="captureWindowBody">
+        <video id="captureVideo" autoplay playsinline></video>
+        <button id="captureActionBtn" class="xp-button">Take Photo</button>
+        <button id="captureToggleModeBtn" class="xp-button">📹</button>
+    </div>
+    <div class="resize-handle" id="captureResizeHandle"></div>
+</div>
+
+<style>
+    /* Capture App Specific Styles */
+    #captureWindow .window-body { padding: 0; display: flex; background-color: #000000; justify-content: center; align-items: center; position: relative; }
+    #captureVideo { width: 100%; height: 100%; -webkit-transform: scaleX(-1); transform: scaleX(-1); object-fit: contain; }
+    #captureActionBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10; padding: 8px 15px; font-size: 14px; }
+    #captureToggleModeBtn { position: absolute; bottom: 20px; right: 20px; z-index: 10; padding: 4px 15px; font-size: 18px; min-width: auto; }
+    #captureActionBtn.recording { background-color: #FF6347; border-color: #CD5C5C; color: white; }
+    #captureActionBtn.recording:hover { background-color: #E55337; border-color: #B24331; }
+    .xp-menu-bar { background-color: #ECE9D8; border-bottom: 1px solid #000; display: flex; padding: 1px 2px; height: 21px; flex-shrink: 0; user-select: none; position: relative; z-index: 50; }
+    .xp-menu-item { padding: 2px 7px; cursor: default; position: relative; font-size: 11px; line-height: 16px; }
+    .xp-menu-item:hover, .xp-menu-item.active { background-color: #316AC5; color: white; }
+    .xp-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 160px; z-index: 150; padding: 2px; }
+    .xp-menu-item.active .xp-dropdown-menu { display: block; }
+    .xp-dropdown-item { padding: 4px 12px; cursor: default; display: flex; justify-content: space-between; align-items: center; position: relative; font-size: 11px; white-space: nowrap; color: #000000; }
+    .xp-dropdown-item:hover, .xp-dropdown-item.submenu-active { background-color: #316AC5; color: white; }
+    .xp-dropdown-item.submenu-active .xp-submenu-arrow{ color: white; }
+    .xp-submenu-arrow { font-size: 10px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: #333; }
+    .xp-dropdown-item:hover .xp-submenu-arrow { color: white; }
+    .xp-submenu { display: none; position: absolute; left: calc(100% - 4px); top: -3px; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 180px; max-width: 250px; z-index: 151; padding: 2px; color: #000000; }
+    .xp-dropdown-item.submenu-active .xp-submenu { display: block; }
+    .xp-submenu-item { padding: 4px 12px 4px 20px; cursor: default; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+    .xp-submenu-item:hover:not(.disabled-resolution) { background-color: #316AC5; color: white; }
+    .xp-submenu-item.selected::before { content: "•"; position: absolute; left: 7px; font-size: 14px; line-height: 1; top: 50%; transform: translateY(-50%); }
+    .xp-submenu-item.selected:hover:not(.disabled-resolution)::before { color: white; }
+    .xp-submenu-item.disabled-resolution { color: #999 !important; cursor: not-allowed !important; }
+    .xp-submenu-item.disabled-resolution:hover { background-color: #ECE9D8 !important; color: #999 !important; }
+    .xp-submenu-item.disabled-resolution.selected::before { color: #999 !important; }
+    .xp-submenu-item.disabled-resolution:hover.selected::before { color: #999 !important; }
+</style>
+
+<script>
+(function() {
+    const APP_ID = 'captureWindow';
+    const STORAGE_KEY_APP = `app_${APP_ID}_data_v1.0`;
+    const MIN_APP_WIDTH = 320;
+    const MIN_APP_HEIGHT = 240;
+    const DEFAULT_APP_WIDTH = 400;
+    const DEFAULT_APP_HEIGHT = 300;
+    const COMMON_RESOLUTIONS_APP = [
+        { label: "320x240 (QVGA)", width: 320, height: 240 }, { label: "640x480 (VGA)", width: 640, height: 480 },
+        { label: "800x600 (SVGA)", width: 800, height: 600 }, { label: "1280x720 (HD)", width: 1280, height: 720 },
+        { label: "1920x1080 (FHD)", width: 1920, height: 1080 }
+    ];
+
+    const DOM_APP = {};
+    let appData = {}; 
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isResolutionDelayActive = false;
+    let captureResolutionTimerId = null;
+
+    function getAppById(id) { return document.getElementById(id); }
+
+    function saveAppData_Capture() {
+        const win = DOM_APP.captureWindow;
+        if (!win) return;
+        let currentOsData = window.osData.windowStates[APP_ID] || {};
+        const stateToSave = {
+            appSpecific: {
+                captureMode: appData.captureMode,
+                selectedVideoDevice: appData.selectedVideoDevice,
+                selectedAudioDevice: appData.selectedAudioDevice,
+                selectedResolution: appData.selectedResolution
+            },
+            windowGeneric: {
+                x: win.offsetLeft, y: win.offsetTop, width: win.offsetWidth, height: win.offsetHeight,
+                minimized: win.classList.contains('minimized'), maximized: win.classList.contains('true-maximized'),
+                zIndex: parseInt(win.style.zIndex) || currentOsData.zIndex || window.highestZIndex,
+                hiddenByUser: win.style.display === 'none', userManuallySet: currentOsData.userManuallySet || false,
+                wasMaximizedBeforeMinimize: currentOsData.wasMaximizedBeforeMinimize || false
+            }
+        };
+         if(stateToSave.windowGeneric.minimized || stateToSave.windowGeneric.maximized){
+            if(window.osData.lastNormalStates[APP_ID]){
+                stateToSave.windowGeneric.x = parseInt(window.osData.lastNormalStates[APP_ID].left);
+                stateToSave.windowGeneric.y = parseInt(window.osData.lastNormalStates[APP_ID].top);
+                stateToSave.windowGeneric.width = parseInt(window.osData.lastNormalStates[APP_ID].width);
+                stateToSave.windowGeneric.height = parseInt(window.osData.lastNormalStates[APP_ID].height);
+            } else if (currentOsData.x != null) {
+                 stateToSave.windowGeneric.x = currentOsData.x;
+                 stateToSave.windowGeneric.y = currentOsData.y;
+                 stateToSave.windowGeneric.width = currentOsData.width;
+                 stateToSave.windowGeneric.height = currentOsData.height;
+            }
+        }
+        localStorage.setItem(STORAGE_KEY_APP, JSON.stringify(stateToSave));
+        window.osData.windowStates[APP_ID] = stateToSave.windowGeneric;
+    }
+    window.saveAppData[APP_ID] = saveAppData_Capture;
+    
+    function loadAppData_Capture() {
+        const storedData = localStorage.getItem(STORAGE_KEY_APP);
+        const defaultAppData = {
+            captureStream: null, captureMode: 'photo', isRecording: false,
+            selectedVideoDevice: null, selectedAudioDevice: null, selectedResolution: null
+        };
+        const defaultWindowState = {
+             x: null, y: null, width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
+             maximized: false, minimized: false, zIndex: window.highestZIndex + 1, 
+             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
+        };
+        if (storedData) {
+            try {
+                const loaded = JSON.parse(storedData);
+                appData = { ...defaultAppData, ...(loaded.appSpecific || {}) };
+                window.osData.windowStates[APP_ID] = { ...defaultWindowState, ...(loaded.windowGeneric || {}) };
+            } catch (e) {
+                appData = { ...defaultAppData };
+                window.osData.windowStates[APP_ID] = { ...defaultWindowState };
+            }
+        } else {
+            appData = { ...defaultAppData };
+            window.osData.windowStates[APP_ID] = { ...defaultWindowState };
+        }
+    }
+
+    function restoreAppWindowState_Capture(forceVisible = false) {
+        const win = DOM_APP.captureWindow;
+        if (!win) return;
+        let state = window.osData.windowStates[APP_ID] || {};
+        const defaultState = {
+             x: (window.innerWidth - DEFAULT_APP_WIDTH)/2, y: (window.innerHeight - DEFAULT_APP_HEIGHT)/2, 
+             width: DEFAULT_APP_WIDTH, height: DEFAULT_APP_HEIGHT, 
+             maximized: false, minimized: false, zIndex: window.highestZIndex +1, 
+             userManuallySet: false, hiddenByUser: true, wasMaximizedBeforeMinimize: false
+        };
+        state = {...defaultState, ...state};
+
+        if (forceVisible) {
+            state.hiddenByUser = false;
+            state.minimized = false;
+        }
+
+        if (state.hiddenByUser && !forceVisible) {
+            win.style.display = 'none';
+            stopCaptureApp_App();
+        } else {
+            win.style.display = 'flex';
+            if (!state.minimized) {
+                startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution);
+            }
+        }
+        win.style.zIndex = state.zIndex || (window.highestZIndex + 1);
+        window.highestZIndex = Math.max(window.highestZIndex, parseInt(win.style.zIndex));
+
+        if (state.minimized && !forceVisible) {
+            win.classList.add('minimized'); win.classList.remove('true-maximized');
+            stopCaptureApp_App();
+        } else if (state.maximized) {
+            win.classList.add('true-maximized'); win.classList.remove('minimized');
+            win.style.width = '100vw'; win.style.height = '100vh';
+            win.style.top = '0px'; win.style.left = '0px';
+            window.osData.lastNormalStates[APP_ID] = {
+                width: (state.width ? Math.max(MIN_APP_WIDTH, state.width) : DEFAULT_APP_WIDTH) + 'px',
+                height: (state.height ? Math.max(MIN_APP_HEIGHT, state.height) : DEFAULT_APP_HEIGHT) + 'px',
+                top: (state.y != null ? state.y : defaultState.y) + 'px',
+                left: (state.x != null ? state.x : defaultState.x) + 'px'
+            };
+        } else {
+            win.classList.remove('minimized'); win.classList.remove('true-maximized');
+            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
+                win.style.left = state.x + 'px'; win.style.top = state.y + 'px';
+                win.style.width = Math.max(MIN_APP_WIDTH, state.width) + 'px';
+                win.style.height = Math.max(MIN_APP_HEIGHT, state.height) + 'px';
+            } else {
+                 window.setWindowDefaults(APP_ID, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT, MIN_APP_WIDTH, MIN_APP_HEIGHT, false);
+            }
+        }
+         window.updateMinMaxButtonStates_OS(APP_ID);
+    }
+    window.restoreAppWindowState[APP_ID] = restoreAppWindowState_Capture;
+    window.onAppMinimize[APP_ID] = () => { if (appData.isRecording) stopVideoRecording_App(); stopCaptureApp_App(); };
+    window.onAppRestore[APP_ID] = () => { if (!appData.captureStream) startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); else updateCaptureAppUI_App(); };
+    window.onAppOpen[APP_ID] = () => { if (!DOM_APP.captureWindow.classList.contains('minimized')) startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); };
+    window.onAppClose[APP_ID] = () => { if (appData.isRecording) stopVideoRecording_App(); stopCaptureApp_App(); if (captureResolutionTimerId) { clearTimeout(captureResolutionTimerId); captureResolutionTimerId = null; }};
+    window.closeAllAppMenus[APP_ID] = () => closeAllCaptureMenus_App();
+
+    async function startCaptureApp_App(videoDeviceId = null, audioDeviceId = null, resolution = null) {
+        if (appData.captureStream && DOM_APP.captureVideo.srcObject === appData.captureStream) {}
+        DOM_APP.captureWindowBody.innerHTML = '';
+        DOM_APP.captureWindowBody.appendChild(DOM_APP.captureVideo);
+        DOM_APP.captureWindowBody.appendChild(DOM_APP.captureActionBtn);
+        DOM_APP.captureWindowBody.appendChild(DOM_APP.captureToggleModeBtn);
+        const finalVideoDeviceId = videoDeviceId || appData.selectedVideoDevice;
+        const finalAudioDeviceId = audioDeviceId || appData.selectedAudioDevice;
+        const finalResolution = resolution || appData.selectedResolution;
+        let videoConstraintsConfig = {}, audioConstraintsConfig = {};
+        if (finalVideoDeviceId) videoConstraintsConfig.deviceId = { exact: finalVideoDeviceId };
+        if (finalAudioDeviceId) audioConstraintsConfig.deviceId = { exact: finalAudioDeviceId };
+        if (finalResolution && typeof finalResolution.width === 'number' && typeof finalResolution.height === 'number') {
+            videoConstraintsConfig.width = { exact: finalResolution.width }; videoConstraintsConfig.height = { exact: finalResolution.height };
+        }
+        const finalConstraints = { video: Object.keys(videoConstraintsConfig).length > 0 ? videoConstraintsConfig : true, audio: Object.keys(audioConstraintsConfig).length > 0 ? audioConstraintsConfig : true };
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                DOM_APP.captureWindowBody.innerHTML = '<p style="color:white; padding:10px; text-align:center;">Webcam access not supported.</p>'; updateCaptureAppUI_App(); return;
+            }
+            const stream = await navigator.mediaDevices.getUserMedia(finalConstraints);
+            if (stream) {
+                appData.captureStream = stream; DOM_APP.captureVideo.srcObject = stream;
+                DOM_APP.captureVideo.muted = true; DOM_APP.captureVideo.play();
+                let changedSelection = false;
+                const videoTracks = stream.getVideoTracks();
+                if (videoTracks.length > 0) { const actualId = videoTracks[0].getSettings().deviceId || videoTracks[0].id; if (!videoDeviceId && actualId && appData.selectedVideoDevice !== actualId) { appData.selectedVideoDevice = actualId; changedSelection = true; } }
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length > 0) { const actualId = audioTracks[0].getSettings().deviceId || audioTracks[0].id; if (!audioDeviceId && actualId && appData.selectedAudioDevice !== actualId) { appData.selectedAudioDevice = actualId; changedSelection = true; } }
+                if (changedSelection) saveAppData_Capture();
+                 if (sessionStorage.getItem('captureFirstOpen') === null) {
+                    sessionStorage.setItem('captureFirstOpen', 'true');
+                    isResolutionDelayActive = true; updateResolutionItemsState_App(true); 
+                    captureResolutionTimerId = setTimeout(() => { isResolutionDelayActive = false; updateResolutionItemsState_App(false); captureResolutionTimerId = null; }, 25000); 
+                } else { isResolutionDelayActive = false; updateResolutionItemsState_App(false); }
+            }
+        } catch (err) {
+            let msg = `Error: ${err.name} - ${err.message}.`;
+            if (err.name === "OverconstrainedError" && (finalResolution || appData.selectedResolution) ){ appData.selectedResolution = null; saveAppData_Capture(); msg += " Resetting resolution."; }
+            const errorP = document.createElement('p'); errorP.style.color = 'white'; errorP.style.padding = '10px'; errorP.style.textAlign = 'center'; errorP.textContent = msg;
+            DOM_APP.captureWindowBody.innerHTML = ''; DOM_APP.captureWindowBody.appendChild(errorP); appData.captureStream = null; 
+        }
+        updateCaptureAppUI_App(); updateSelectedInMenu_App(); 
+    }
+    async function stopCaptureApp_App() {
+        if (appData.isRecording) await stopVideoRecording_App(); 
+        if (appData.captureStream) { appData.captureStream.getTracks().forEach(track => track.stop()); appData.captureStream = null; if(DOM_APP.captureVideo) DOM_APP.captureVideo.srcObject = null; }
+        updateCaptureAppUI_App(); 
+    }
+    function takeAndDownloadPhoto_App() {
+        if (!appData.captureStream || !DOM_APP.captureVideo.srcObject) return;
+        const video = DOM_APP.captureVideo; const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d'); context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/png'); const link = document.createElement('a');
+        link.href = dataURL; const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `capture-${timestamp}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    function toggleCaptureMode_App() {
+        if (appData.isRecording) return;
+        appData.captureMode = (appData.captureMode === 'photo') ? 'video' : 'photo';
+        updateCaptureAppUI_App(); saveAppData_Capture(); 
+    }
+    function handleMainCaptureAction_App() {
+        if (!appData.captureStream) { startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); return; }
+        if (appData.captureMode === 'photo') takeAndDownloadPhoto_App();
+        else { if (appData.isRecording) stopVideoRecording_App(); else startVideoRecording_App(); }
+    }
+    function startVideoRecording_App() {
+        if (!appData.captureStream) return;
+        if (!appData.captureStream.getAudioTracks().length > 0 && appData.selectedAudioDevice) {
+             stopCaptureApp_App().then(() => { 
+                 startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution).then(() => {
+                     if (appData.captureStream?.getAudioTracks().length > 0) startVideoRecordingInternal_App(); 
+                 });
+             }); return;
+        } else if (!appData.captureStream.getAudioTracks().length > 0) return;
+        startVideoRecordingInternal_App();
+    }
+    function startVideoRecordingInternal_App() {
+        recordedChunks = [];
+        const mimeTypes = [ 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/mp4;codecs=h264,aac', 'video/webm' ];
+        let supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
+        if (!supportedMimeType) return;
+        try { mediaRecorder = new MediaRecorder(appData.captureStream, { mimeType: supportedMimeType }); } catch (e) { return; }
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            document.body.appendChild(a); a.style.display = 'none'; a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const extension = (mediaRecorder.mimeType || 'video/webm').split('/')[1].split(';')[0]; 
+            a.download = `recording-${timestamp}.${extension}`; a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
+            recordedChunks = []; 
+        };
+        mediaRecorder.start(); appData.isRecording = true; updateCaptureAppUI_App();
+    }
+    async function stopVideoRecording_App() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop(); 
+        appData.isRecording = false; updateCaptureAppUI_App();
+    }
+    function updateCaptureAppUI_App() {
+        if (!DOM_APP.captureActionBtn || !DOM_APP.captureToggleModeBtn) return;
+        const streamActive = !!appData.captureStream;
+        DOM_APP.captureActionBtn.disabled = !streamActive; DOM_APP.captureToggleModeBtn.disabled = appData.isRecording; 
+        if (appData.captureMode === 'photo') {
+            DOM_APP.captureActionBtn.textContent = 'Take Photo'; DOM_APP.captureActionBtn.classList.remove('recording');
+            DOM_APP.captureToggleModeBtn.textContent = '📹'; DOM_APP.captureToggleModeBtn.title = "Switch to Video Mode";
+        } else { 
+            DOM_APP.captureToggleModeBtn.textContent = '📷'; DOM_APP.captureToggleModeBtn.title = "Switch to Photo Mode";
+            if (appData.isRecording) { DOM_APP.captureActionBtn.textContent = 'Stop Recording'; DOM_APP.captureActionBtn.classList.add('recording'); }
+            else { DOM_APP.captureActionBtn.textContent = 'Start Recording'; DOM_APP.captureActionBtn.classList.remove('recording'); }
+        }
+        if (!streamActive) { DOM_APP.captureActionBtn.textContent = (appData.captureMode === 'photo') ? 'Take Photo' : 'Start Recording'; DOM_APP.captureActionBtn.classList.remove('recording'); }
+    }
+    function setupCaptureMenus_App() {
+        DOM_APP.videoMenu.addEventListener('click', (e) => { e.stopPropagation(); const isActive = DOM_APP.videoMenu.classList.toggle('active'); DOM_APP.videoDropdown.style.display = isActive ? 'block' : 'none'; if (isActive) { DOM_APP.audioMenu.classList.remove('active'); if(DOM_APP.audioDropdown) DOM_APP.audioDropdown.style.display = 'none'; closeAllSubMenus_App(DOM_APP.audioDropdown); populateVideoDevices_App(); populateResolutions_App(); updateSelectedInMenu_App(); } else closeAllSubMenus_App(DOM_APP.videoDropdown); });
+        DOM_APP.videoDeviceItem.addEventListener('click', (e) => { e.stopPropagation(); const isActive = DOM_APP.videoDeviceItem.classList.toggle('submenu-active'); DOM_APP.videoDeviceList.style.display = isActive ? 'block' : 'none'; if (isActive) { DOM_APP.videoResolutionItem.classList.remove('submenu-active'); DOM_APP.videoResolutionList.style.display = 'none'; }});
+        DOM_APP.videoResolutionItem.addEventListener('click', (e) => { e.stopPropagation(); const isActive = DOM_APP.videoResolutionItem.classList.toggle('submenu-active'); DOM_APP.videoResolutionList.style.display = isActive ? 'block' : 'none'; if (isActive) { DOM_APP.videoDeviceItem.classList.remove('submenu-active'); DOM_APP.videoDeviceList.style.display = 'none'; }});
+        DOM_APP.audioMenu.addEventListener('click', (e) => { e.stopPropagation(); const isActive = DOM_APP.audioMenu.classList.toggle('active'); DOM_APP.audioDropdown.style.display = isActive ? 'block' : 'none'; if (isActive) { DOM_APP.videoMenu.classList.remove('active'); if(DOM_APP.videoDropdown) DOM_APP.videoDropdown.style.display = 'none'; closeAllSubMenus_App(DOM_APP.videoDropdown); populateAudioDevices_App(); updateSelectedInMenu_App(); } else closeAllSubMenus_App(DOM_APP.audioDropdown); });
+        DOM_APP.audioDeviceItem.addEventListener('click', (e) => { e.stopPropagation(); const isActive = DOM_APP.audioDeviceItem.classList.toggle('submenu-active'); DOM_APP.audioDeviceList.style.display = isActive ? 'block' : 'none'; });
+    }
+    function closeAllCaptureMenus_App() { if (DOM_APP.videoMenu) DOM_APP.videoMenu.classList.remove('active'); if (DOM_APP.videoDropdown) { DOM_APP.videoDropdown.style.display = 'none'; closeAllSubMenus_App(DOM_APP.videoDropdown); } if (DOM_APP.audioMenu) DOM_APP.audioMenu.classList.remove('active'); if (DOM_APP.audioDropdown) { DOM_APP.audioDropdown.style.display = 'none'; closeAllSubMenus_App(DOM_APP.audioDropdown); }}
+    function closeAllSubMenus_App(dropdownElement) { if (!dropdownElement) return; dropdownElement.querySelectorAll('.xp-dropdown-item').forEach(item => item.classList.remove('submenu-active')); dropdownElement.querySelectorAll('.xp-submenu').forEach(submenu => submenu.style.display = 'none');}
+    async function populateVideoDevices_App() { /* ... */ } // Placeholder for brevity
+    async function populateAudioDevices_App() { /* ... */ } // Placeholder for brevity
+    function updateResolutionItemsState_App(disabled) { if (!DOM_APP.videoResolutionList) return; DOM_APP.videoResolutionList.querySelectorAll('.xp-submenu-item').forEach(item => { if (disabled) { item.classList.add('disabled-resolution'); item.style.pointerEvents = 'none'; } else { item.classList.remove('disabled-resolution'); item.style.pointerEvents = 'auto'; }});}
+    function populateResolutions_App() { /* ... */ } // Placeholder for brevity
+    function updateSelectedInMenu_App() { /* ... */ } // Placeholder for brevity
+
+    populateVideoDevices_App = async function() { if (!DOM_APP.videoDeviceList) return; DOM_APP.videoDeviceList.innerHTML = ''; try { const devices = await navigator.mediaDevices.enumerateDevices(); const videoDevices = devices.filter(device => device.kind === 'videoinput'); if (videoDevices.length === 0) { const noDevice = document.createElement('div'); noDevice.classList.add('xp-submenu-item'); noDevice.textContent = 'No video devices'; DOM_APP.videoDeviceList.appendChild(noDevice); return; } videoDevices.forEach(device => { const item = document.createElement('div'); item.classList.add('xp-submenu-item'); item.textContent = device.label || `Camera ${DOM_APP.videoDeviceList.children.length + 1}`; item.dataset.deviceId = device.deviceId; item.addEventListener('click', async () => { if (appData.selectedVideoDevice !== device.deviceId) { appData.selectedVideoDevice = device.deviceId; await stopCaptureApp_App(); await startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); saveAppData_Capture(); } closeAllCaptureMenus_App(); updateSelectedInMenu_App(); }); DOM_APP.videoDeviceList.appendChild(item); }); } catch (err) { const errorItem = document.createElement('div'); errorItem.classList.add('xp-submenu-item'); errorItem.textContent = 'Error listing devices'; DOM_APP.videoDeviceList.appendChild(errorItem); } updateSelectedInMenu_App(); };
+    populateAudioDevices_App = async function() { if (!DOM_APP.audioDeviceList) return; DOM_APP.audioDeviceList.innerHTML = ''; try { const devices = await navigator.mediaDevices.enumerateDevices(); const audioDevices = devices.filter(device => device.kind === 'audioinput').filter(device => device.deviceId !== 'default'); if (audioDevices.length === 0) { const noDevice = document.createElement('div'); noDevice.classList.add('xp-submenu-item'); noDevice.textContent = 'No audio devices'; DOM_APP.audioDeviceList.appendChild(noDevice); return; } audioDevices.forEach(device => { const item = document.createElement('div'); item.classList.add('xp-submenu-item'); item.textContent = device.label || `Microphone ${DOM_APP.audioDeviceList.children.length + 1}`; item.dataset.deviceId = device.deviceId; item.addEventListener('click', async () => { if (appData.selectedAudioDevice !== device.deviceId) { appData.selectedAudioDevice = device.deviceId; await stopCaptureApp_App(); await startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); saveAppData_Capture(); } closeAllCaptureMenus_App(); updateSelectedInMenu_App(); }); DOM_APP.audioDeviceList.appendChild(item); }); } catch (err) { const errorItem = document.createElement('div'); errorItem.classList.add('xp-submenu-item'); errorItem.textContent = 'Error listing devices'; DOM_APP.audioDeviceList.appendChild(errorItem); } updateSelectedInMenu_App(); };
+    populateResolutions_App = function() { if (!DOM_APP.videoResolutionList) return; DOM_APP.videoResolutionList.innerHTML = ''; COMMON_RESOLUTIONS_APP.forEach(res => { const item = document.createElement('div'); item.classList.add('xp-submenu-item'); item.textContent = res.label; item.addEventListener('click', async () => { if (isResolutionDelayActive) return; const newRes = (res.width && res.height) ? { width: res.width, height: res.height } : null; if (JSON.stringify(appData.selectedResolution) !== JSON.stringify(newRes)) { appData.selectedResolution = newRes; await stopCaptureApp_App(); await startCaptureApp_App(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); saveAppData_Capture(); } closeAllCaptureMenus_App(); updateSelectedInMenu_App(); }); DOM_APP.videoResolutionList.appendChild(item); }); updateResolutionItemsState_App(isResolutionDelayActive); updateSelectedInMenu_App(); };
+    updateSelectedInMenu_App = function() { if (DOM_APP.videoDeviceList) Array.from(DOM_APP.videoDeviceList.children).forEach(item => { item.classList.remove('selected'); if (item.dataset.deviceId && item.dataset.deviceId === appData.selectedVideoDevice) item.classList.add('selected'); }); if (DOM_APP.audioDeviceList) Array.from(DOM_APP.audioDeviceList.children).forEach(item => { item.classList.remove('selected'); if (item.dataset.deviceId && item.dataset.deviceId === appData.selectedAudioDevice) item.classList.add('selected'); }); if (DOM_APP.videoResolutionList) Array.from(DOM_APP.videoResolutionList.children).forEach((item, index) => { item.classList.remove('selected'); const resOpt = COMMON_RESOLUTIONS_APP[index]; if (resOpt && appData.selectedResolution && appData.selectedResolution.width === resOpt.width && appData.selectedResolution.height === resOpt.height) item.classList.add('selected'); });};
+
+
+    function initAppEventListeners_Capture() {
+        DOM_APP.captureActionBtn.addEventListener('click', handleMainCaptureAction_App);
+        DOM_APP.captureToggleModeBtn.addEventListener('click', toggleCaptureMode_App);
+        setupCaptureMenus_App();
+        
+        DOM_APP.captureMinimizeBtn.addEventListener('click', () => window.minimizeAppWindow(APP_ID));
+        DOM_APP.captureMaximizeBtn.addEventListener('click', () => window.maximizeAppWindowGlobal[APP_ID]());
+        DOM_APP.captureCloseBtn.addEventListener('click', () => window.closeAppWindow(APP_ID));
+        
+        document.addEventListener('click', (e) => { 
+            if (!e.target.closest(`#${APP_ID} .xp-menu-bar`)) closeAllCaptureMenus_App();
+        });
+    }
+
+    function init_Capture() {
+        const fields = [
+            'captureWindow', 'captureWindowTitleBar', 'captureResizeHandle', 'captureWindowBody',
+            'captureMinimizeBtn', 'captureMaximizeBtn', 'captureCloseBtn',
+            'captureMenuBar', 'videoMenu', 'videoDropdown', 'videoDeviceItem', 'videoDeviceList',
+            'videoResolutionItem', 'videoResolutionList', 'audioMenu', 'audioDropdown',
+            'audioDeviceItem', 'audioDeviceList', 'captureVideo', 'captureActionBtn', 'captureToggleModeBtn'
+        ];
+        fields.forEach(field => DOM_APP[field] = getAppById(field));
+        
+        window.appData[APP_ID] = appData;
+        window.appInitialConfig[APP_ID] = {
+            id: APP_ID,
+            defaultWidth: DEFAULT_APP_WIDTH, defaultHeight: DEFAULT_APP_HEIGHT,
+            minWidth: MIN_APP_WIDTH, minHeight: MIN_APP_HEIGHT,
+            titleBarId: 'captureWindowTitleBar', resizeHandleId: 'captureResizeHandle'
+        };
+        window.maximizeAppWindowGlobal[APP_ID] = () => window.maximizeAppWindow(APP_ID, MIN_APP_WIDTH, MIN_APP_HEIGHT, DEFAULT_APP_WIDTH, DEFAULT_APP_HEIGHT);
+
+        loadAppData_Capture();
+        window.initWindowInteractions(APP_ID, 'captureWindowTitleBar', 'captureResizeHandle', MIN_APP_WIDTH, MIN_APP_HEIGHT);
+        restoreAppWindowState_Capture();
+        updateCaptureAppUI_App();
+        initAppEventListeners_Capture();
+    }
+    init_Capture();
+})();
+</script>
