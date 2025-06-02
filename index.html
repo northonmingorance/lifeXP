@@ -606,11 +606,53 @@
             line-height: 1;
             margin-bottom: 8px;
         }
+        .desktop-icon .icon-image-pJ {
+            font-size: 48px;
+            line-height: 1;
+            margin-bottom: 8px;
+            filter: hue-rotate(140deg) saturate(1000%) brightness(70%);
+        }
+        .icon-image-pJ2 {
+            position: absolute;
+            width: 90px;
+            height: 100px;
+            text-align: center;
+            color: white;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 10px;
+            box-sizing: border-box;
+            z-index: 5;
+            font-size: 48px;
+            line-height: 1;
+            text-shadow: none;
+            margin-bottom: 8px;
+            position: relative;
+            top: -66px;
+            filter: hue-rotate(140deg) saturate(1000%);
+            mix-blend-mode: luminosity;
+        }
+        .icon-image-pJ2:active {
+            cursor: grabbing;
+        }
         .desktop-icon .icon-label {
             font-size: 12px;
             font-weight: normal;
             word-wrap: break-word;
             max-width: 100%;
+        }
+        .desktop-icon .icon-label-pJ {
+            font-size: 12px;
+            font-weight: normal;
+            word-wrap: break-word;
+            max-width: 100%;
+            position: relative;
+            top: -66px;
         }
 
         .playjockey-body-container {
@@ -1114,8 +1156,9 @@
         <div class="icon-label">XP Tracker</div>
     </div>
     <div class="desktop-icon" id="playJockeyIcon" data-window-id="playJockeyWindow">
-        <div class="icon-image">⏯️</div>
-        <div class="icon-label">Play Jockey</div>
+        <div class="icon-image-pJ">⏯️</div>
+        <div class="icon-image-pJ2">⏯️</div>
+        <div class="icon-label-pJ">Play Jockey</div>
     </div>
     <div class="desktop-icon" id="geminiChatIcon" data-window-id="geminiChatWindow">
         <div class="icon-image">✨</div>
@@ -6057,4 +6100,3 @@
 </script>
 </body>
 </html>
-    
