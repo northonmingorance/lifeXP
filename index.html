@@ -1883,7 +1883,6 @@
         { name: 'Coral', value: '#FF7F50' }, { name: 'Sky Blue', value: '#87CEEB' }
     ];
     const COMMON_RESOLUTIONS = [
-        { label: "Default", width: null, height: null },
         { label: "320x240 (QVGA)", width: 320, height: 240 },
         { label: "640x480 (VGA)", width: 640, height: 480 },
         { label: "800x600 (SVGA)", width: 800, height: 600 },
@@ -2593,7 +2592,7 @@
                  startCaptureApp(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution);
             }
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId); // This will call restoreWindowState internally if needed, or startCaptureApp
+            maximizeWindow(windowId); 
         }
 
         bringToFront(windowElement);
@@ -3695,11 +3694,11 @@
                 canvasHeight: 400
             },
             captureStream: null, 
-            captureMode: 'photo',
             isRecording: false, 
-            selectedVideoDevice: null,
-            selectedAudioDevice: null,
-            selectedResolution: null
+            captureMode: loadedData.captureMode === 'video' ? 'video' : 'photo',
+            selectedVideoDevice: loadedData.selectedVideoDevice || null,
+            selectedAudioDevice: loadedData.selectedAudioDevice || null,
+            selectedResolution: loadedData.selectedResolution || null
         };
 
         if (storedData) {
@@ -4746,7 +4745,7 @@
 
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -4835,7 +4834,7 @@
                  }
             } else {
                 try {
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$${videoEntryToUpdate.videoId}&format=json`;
+                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=$$$$$$$$${videoEntryToUpdate.videoId}&format=json`;
                     const oEmbedResponse = await fetch(oEmbedUrl);
                     if (oEmbedResponse.ok) {
                         const oEmbedData = await oEmbedResponse.json();
@@ -5925,12 +5924,13 @@
         pixelIsDrawing = false;
     }
 
-    function pixelDraw(e) {
+function pixelDraw(e) {
         if (!pixelIsDrawing || appData.pixelAppData.currentTool === 'bucket') return;
 
         const scaleX = DOM.pixelCanvas.width / DOM.pixelCanvas.offsetWidth;
         const scaleY = DOM.pixelCanvas.height / DOM.pixelCanvas.offsetHeight;
 
+        
         const x1 = e.offsetX * scaleX;
         const y1 = e.offsetY * scaleY;
         const x0 = pixelLastX * scaleX;
@@ -6105,9 +6105,10 @@
 
     async function startCaptureApp(videoDeviceId = null, audioDeviceId = null, resolution = null) {
         if (appData.captureStream && DOM.captureVideo.srcObject === appData.captureStream) {
+            // Stream is already running with the same object, potentially re-evaluate if settings changed
         }
         
-        DOM.captureWindowBody.innerHTML = ''; 
+        DOM.captureWindowBody.innerHTML = ''; // Clear previous error messages or video
         DOM.captureWindowBody.appendChild(DOM.captureVideo);
         DOM.captureWindowBody.appendChild(DOM.captureActionBtn);
         DOM.captureWindowBody.appendChild(DOM.captureToggleModeBtn);
@@ -6138,12 +6139,12 @@
         if (Object.keys(videoConstraintsConfig).length > 0) {
             finalConstraintsForGetUserMedia.video = videoConstraintsConfig;
         } else {
-            finalConstraintsForGetUserMedia.video = true; 
+            finalConstraintsForGetUserMedia.video = true; // Request default video if no specific device/res
         }
         if (Object.keys(audioConstraintsConfig).length > 0) {
             finalConstraintsForGetUserMedia.audio = audioConstraintsConfig;
         } else {
-            finalConstraintsForGetUserMedia.audio = true; 
+            finalConstraintsForGetUserMedia.audio = true; // Request default audio if no specific device
         }
 
         try {
@@ -6572,6 +6573,7 @@
         if (!DOM.videoResolutionList) return;
         DOM.videoResolutionList.innerHTML = '';
         COMMON_RESOLUTIONS.forEach(res => {
+            // if (res.label === "Default") return; // This line was already here, ensuring "Default" is skipped.
             const item = document.createElement('div');
             item.classList.add('xp-submenu-item');
             item.textContent = res.label;
@@ -6616,11 +6618,15 @@
         if (DOM.videoResolutionList) {
             Array.from(DOM.videoResolutionList.children).forEach((item, index) => {
                 item.classList.remove('selected');
-                const resOpt = COMMON_RESOLUTIONS[index];
-                if (appData.selectedResolution && appData.selectedResolution.width === resOpt.width && appData.selectedResolution.height === resOpt.height) {
-                    item.classList.add('selected');
-                } else if (!appData.selectedResolution && !resOpt.width && !resOpt.height) { 
-                    item.classList.add('selected');
+                const resOpt = COMMON_RESOLUTIONS[index]; 
+                if (resOpt) { 
+                    if (appData.selectedResolution && appData.selectedResolution.width === resOpt.width && appData.selectedResolution.height === resOpt.height) {
+                        item.classList.add('selected');
+                    } else if (!appData.selectedResolution && resOpt.label === "Default") { 
+                        // This case is now moot as "Default" is not added to the list.
+                        // If no resolution is selected, and there's no "Default" in the list, nothing will be marked as selected.
+                        // This is fine if the first item in COMMON_RESOLUTIONS (excluding Default) becomes the implicit default.
+                    }
                 }
             });
         }
@@ -6643,6 +6649,144 @@
             console.error(`Modal with ID "${modalId}" not found for closing.`);
         }
     }
+
+    function loadData() {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        const defaultPlaylistId = 'playlist_default_0';
+    
+        // Initialize defaultAppData with its own complete set of default values
+        defaultAppData = {
+            viewMode: 'week',
+            selectedDayIndex: 0,
+            windowStates: {
+                xpMainWindow: { x: null, y: null, width: 905, height: 705, maximized: false, minimized: false, zIndex: 11, userManuallySet: false, hiddenByUser: true },
+                textEditorWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 10, userManuallySet: false, hiddenByUser: true },
+                playJockeyWindow: { x: null, y: null, width: 480, height: 705, maximized: false, minimized: false, zIndex: 9, userManuallySet: false, hiddenByUser: true },
+                geminiChatWindow: { x: null, y: null, width: 450, height: 705, maximized: false, minimized: false, zIndex: 8, userManuallySet: false, hiddenByUser: true },
+                pixelWindow: { x: null, y: null, width: 650, height: 500, maximized: false, minimized: false, zIndex: 7, userManuallySet: false, hiddenByUser: true },
+                captureWindow: { x: null, y: null, width: 400, height: 300, maximized: false, minimized: false, zIndex: 6, userManuallySet: false, hiddenByUser: true }
+            },
+            iconPositions: {
+                trackerIcon: { x: 0, y: 0 },
+                textEditorIcon: { x: 0, y: 100 },
+                playJockeyIcon: { x: 0, y: 200 },
+                geminiChatIcon: { x: 0, y: 300 },
+                pixelIcon: { x: 0, y: 400 },
+                captureIcon: { x: 0, y: 500 }
+            },
+            areas: [],
+            achievements: {},
+            quests: {},
+            currentWeekStartDate: null,
+            customBgImage: null,
+            customBgColor: null,
+            playJockeyPlaylists: [{id: defaultPlaylistId, name: "Playlist", videos: []}],
+            playJockeyCurrentPlaylistId: defaultPlaylistId,
+            playJockeyCurrentVideo: null,
+            playJockeyAutoPlayEnabled: true,
+            playJockeyRandomEnabled: false,
+            playJockeyRepeatState: "off",
+            playJockeyRandomHistory: [],
+            geminiChatHistory: [],
+            pixelAppData: {
+                currentColor: '#000000',
+                currentTool: 'pencil',
+                pencilSize: 2,
+                canvasWidth: 600,
+                canvasHeight: 400
+            },
+            captureStream: null,
+            isRecording: false,
+            captureMode: 'photo', // Default value
+            selectedVideoDevice: null, // Default value
+            selectedAudioDevice: null, // Default value
+            selectedResolution: null // Default value
+        };
+    
+        if (storedData) {
+            try {
+                const parsedStoredData = JSON.parse(storedData); // Parse stored data
+    
+                // Merge parsedStoredData with defaultAppData
+                appData = {
+                    ...defaultAppData,
+                    ...parsedStoredData,
+                    windowStates: {
+                        xpMainWindow: { ...defaultAppData.windowStates.xpMainWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.xpMainWindow : {}) },
+                        textEditorWindow: { ...defaultAppData.windowStates.textEditorWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.textEditorWindow : {}) },
+                        playJockeyWindow: { ...defaultAppData.windowStates.playJockeyWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.playJockeyWindow : {}) },
+                        geminiChatWindow: { ...defaultAppData.windowStates.geminiChatWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.geminiChatWindow : {}) },
+                        pixelWindow: { ...defaultAppData.windowStates.pixelWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.pixelWindow : {}) },
+                        captureWindow: { ...defaultAppData.windowStates.captureWindow, ...(parsedStoredData.windowStates ? parsedStoredData.windowStates.captureWindow : {}) }
+                    },
+                    iconPositions: { ...defaultAppData.iconPositions, ...(parsedStoredData.iconPositions || {}), captureIcon: (parsedStoredData.iconPositions && parsedStoredData.iconPositions.captureIcon) ? parsedStoredData.iconPositions.captureIcon : defaultAppData.iconPositions.captureIcon },
+                    playJockeyPlaylists: (parsedStoredData.playJockeyPlaylists && parsedStoredData.playJockeyPlaylists.length > 0)
+                        ? parsedStoredData.playJockeyPlaylists.map(pl => ({
+                            ...pl,
+                            videos: (pl.videos || []).map(video => ({
+                                ...video,
+                                title: video.title ? decodeHtmlEntities(video.title) : (video.originalUrl ? decodeHtmlEntities(video.originalUrl) : "Unknown Title"),
+                                artist: video.artist ? decodeHtmlEntities(video.artist) : ""
+                            }))
+                          }))
+                        : defaultAppData.playJockeyPlaylists,
+                    playJockeyCurrentPlaylistId: parsedStoredData.playJockeyCurrentPlaylistId || defaultAppData.playJockeyCurrentPlaylistId,
+                    playJockeyCurrentVideo: parsedStoredData.playJockeyCurrentVideo ? {
+                        ...(parsedStoredData.playJockeyCurrentVideo),
+                        title: parsedStoredData.playJockeyCurrentVideo.title ? decodeHtmlEntities(parsedStoredData.playJockeyCurrentVideo.title) : "Unknown Title",
+                        artist: parsedStoredData.playJockeyCurrentVideo.artist ? decodeHtmlEntities(parsedStoredData.playJockeyCurrentVideo.artist) : ""
+                    } : null,
+                    playJockeyAutoPlayEnabled: typeof parsedStoredData.playJockeyAutoPlayEnabled === 'boolean' ? parsedStoredData.playJockeyAutoPlayEnabled : defaultAppData.playJockeyAutoPlayEnabled,
+                    playJockeyRandomEnabled: typeof parsedStoredData.playJockeyRandomEnabled === 'boolean' ? parsedStoredData.playJockeyRandomEnabled : defaultAppData.playJockeyRandomEnabled,
+                    playJockeyRepeatState: ["off", "playlist", "song"].includes(parsedStoredData.playJockeyRepeatState) ? parsedStoredData.playJockeyRepeatState : defaultAppData.playJockeyRepeatState,
+                    playJockeyRandomHistory: Array.isArray(parsedStoredData.playJockeyRandomHistory) ? parsedStoredData.playJockeyRandomHistory : defaultAppData.playJockeyRandomHistory,
+                    geminiChatHistory: Array.isArray(parsedStoredData.geminiChatHistory) ? parsedStoredData.geminiChatHistory : defaultAppData.geminiChatHistory,
+                    pixelAppData: { ...defaultAppData.pixelAppData, ...(parsedStoredData.pixelAppData || {}), pencilSize: (parsedStoredData.pixelAppData && typeof parsedStoredData.pixelAppData.pencilSize === 'number') ? parsedStoredData.pixelAppData.pencilSize : defaultAppData.pixelAppData.pencilSize },
+                    
+                    // Correctly use parsedStoredData for these, falling back to defaultAppData's values if not present in stored data
+                    captureMode: parsedStoredData.captureMode === 'video' ? 'video' : defaultAppData.captureMode,
+                    selectedVideoDevice: parsedStoredData.selectedVideoDevice || defaultAppData.selectedVideoDevice,
+                    selectedAudioDevice: parsedStoredData.selectedAudioDevice || defaultAppData.selectedAudioDevice,
+                    selectedResolution: parsedStoredData.selectedResolution || defaultAppData.selectedResolution,
+                    
+                    captureStream: null, // Always reset on load
+                    isRecording: false   // Always reset on load
+                };
+    
+                // Post-load checks and adjustments
+                if (!appData.playJockeyPlaylists.find(pl => pl.id === appData.playJockeyCurrentPlaylistId)) {
+                    appData.playJockeyCurrentPlaylistId = appData.playJockeyPlaylists[0]?.id || defaultPlaylistId;
+                     if (appData.playJockeyPlaylists.length === 0) {
+                        appData.playJockeyPlaylists = [{id: defaultPlaylistId, name: "Playlist", videos: []}];
+                        appData.playJockeyCurrentPlaylistId = defaultPlaylistId;
+                    }
+                }
+                appData.areas = appData.areas || [];
+                appData.achievements = appData.achievements || {};
+                for (const key in appData.achievements) {
+                    if (appData.achievements.hasOwnProperty(key)) {
+                        appData.achievements[key].forEach(ach => {
+                            if (ach.xpAwarded === undefined) ach.xpAwarded = false;
+                        });
+                    }
+                }
+                appData.quests = appData.quests || {};
+                if (typeof appData.selectedDayIndex !== 'number' || appData.selectedDayIndex < 0 || appData.selectedDayIndex > 6) {
+                    appData.selectedDayIndex = defaultAppData.selectedDayIndex;
+                }
+                 if (appData.viewMode !== 'week' && appData.viewMode !== 'day') {
+                    appData.viewMode = defaultAppData.viewMode;
+                }
+    
+            } catch (error) {
+                console.error("Error parsing stored data. Reverting to defaults.", error);
+                appData = JSON.parse(JSON.stringify(defaultAppData));
+            }
+        } else {
+             appData = JSON.parse(JSON.stringify(defaultAppData));
+        }
+    }
+
 
     async function fetchFirebaseConfigAndInit() {
         console.log("Attempting to fetch Firebase Remote Config...");
