@@ -1,0 +1,274 @@
+<style>
+    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button:active { border-style: inset; }
+    .xp-button:hover { border-color: #005CFE; }
+    .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
+
+    .gemini-chat-body-container { display: flex; flex-direction: column; width: 100%; height: 100%; background-color: #ECE9D8; padding: 0; box-sizing: border-box; }
+    .gemini-chat-controls-bar { display: flex; justify-content: flex-end; padding: 3px 5px 0px 5px; background-color: #ECE9D8; flex-shrink: 0; }
+    #geminiChatClearHistoryBtn { min-width: auto; padding: 2px 8px; margin-bottom: 3px; }
+    .gemini-chat-display-area { flex-grow: 1; border: 1px inset #7F7F7F; background-color: #FFFFFF; padding: 8px; margin: 5px; margin-top: 0; overflow-y: auto; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; line-height: 1.4; }
+    .gemini-chat-message { margin-bottom: 8px; padding: 6px 8px; border-radius: 3px; word-wrap: break-word; white-space: pre-wrap; max-width: 80%; box-sizing: border-box; }
+    .gemini-chat-message .message-sender { font-weight: bold; display: block; margin-bottom: 3px; font-size: 10px; }
+    .gemini-chat-message .message-content {}
+    .gemini-chat-message .message-timestamp { font-size: 9px; color: #555; display: block; margin-top: 4px; text-align: inherit; }
+    .gemini-chat-message.user-message { background-color: #E1EBF7; text-align: left; margin-left: auto; border: 1px solid #B4C9E2; }
+    .gemini-chat-message.user-message .message-sender { color: #0039A9; }
+    .gemini-chat-message.gemini-message { background-color: #F0F0F0; text-align: left; margin-right: auto; border: 1px solid #DCDCDC; }
+    .gemini-chat-message.gemini-message .message-sender { color: #006400; }
+    .gemini-chat-message.gemini-message.error-message { background-color: #FFDDDD; color: #D8000C; border: 1px solid #FFB8B8; }
+    .gemini-chat-message.gemini-message.error-message .message-sender { color: #990000; }
+    @keyframes thinking { 0% { content: 'Thinking.'; } 25% { content: 'Thinking..'; } 50% { content: 'Thinking...'; } 75% { content: 'Thinking..'; } 100% { content: 'Thinking.'; } }
+    .gemini-thinking-animation::after { content: '...';  animation: thinking 1.5s infinite; display: inline-block;  }
+    .gemini-chat-input-area { display: flex; flex-shrink: 0; padding: 8px 5px 5px 5px; border-top: 1px solid #ACA899; background-color: #ECE9D8; }
+    #geminiChatPromptInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 6px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; resize: none; height: 44px; box-sizing: border-box; }
+    #geminiChatSendBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; height: 44px; box-sizing: border-box; }
+</style>
+
+<div class="gemini-chat-body-container">
+    <div class="gemini-chat-controls-bar">
+        <button id="geminiChatClearHistoryBtn" class="xp-button xp-button-small">Clear History</button>
+    </div>
+    <div class="gemini-chat-display-area" id="geminiChatDisplayArea">
+        </div>
+    <div class="gemini-chat-input-area">
+        <textarea id="geminiChatPromptInput" placeholder="Type your message to Gemini..." rows="2"></textarea>
+        <button id="geminiChatSendBtn" class="xp-button">Send</button>
+    </div>
+</div>
+
+<script>
+    const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.0';
+    let GEMINI_API_KEY = ""; // This should be provided by the parent OS
+    const MAX_GEMINI_HISTORY_MESSAGES = 20;
+
+    let geminiChatData = {
+        history: []
+    };
+
+    const DOM_GC = {
+        clearHistoryBtn: document.getElementById('geminiChatClearHistoryBtn'),
+        displayArea: document.getElementById('geminiChatDisplayArea'),
+        promptInput: document.getElementById('geminiChatPromptInput'),
+        sendBtn: document.getElementById('geminiChatSendBtn')
+    };
+
+    function loadGeminiChatData() {
+        const stored = localStorage.getItem(GEMINI_CHAT_STORAGE_KEY);
+        if (stored) {
+            try {
+                geminiChatData = JSON.parse(stored);
+                geminiChatData.history = geminiChatData.history || [];
+            } catch (e) {
+                console.error("Error loading Gemini Chat data, resetting.", e);
+                geminiChatData.history = [];
+            }
+        }
+    }
+
+    function saveGeminiChatData() {
+        localStorage.setItem(GEMINI_CHAT_STORAGE_KEY, JSON.stringify(geminiChatData));
+    }
+
+    function renderGeminiChatHistory() {
+        if (!DOM_GC.displayArea) return;
+        DOM_GC.displayArea.innerHTML = '';
+        const historyToRender = geminiChatData.history || [];
+        historyToRender.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('gemini-chat-message');
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.classList.add('message-sender');
+            
+            const contentSpan = document.createElement('span');
+            contentSpan.classList.add('message-content');
+
+            if (msg.id && msg.id.startsWith('gemini-thinking-')) { 
+                contentSpan.classList.add('gemini-thinking-animation'); 
+                contentSpan.textContent = ''; 
+            } else {
+                contentSpan.textContent = msg.content;
+            }
+
+            const timestampSpan = document.createElement('span');
+            timestampSpan.classList.add('message-timestamp');
+            timestampSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+            if (msg.type === 'user') {
+                messageDiv.classList.add('user-message');
+                senderSpan.textContent = 'You';
+            } else if (msg.type === 'gemini') {
+                messageDiv.classList.add('gemini-message');
+                senderSpan.textContent = 'Gemini';
+                if (msg.isError) {
+                    messageDiv.classList.add('error-message');
+                }
+            }
+            if (msg.id) { // Add ID to the div if it exists (for updating thinking message)
+                messageDiv.id = msg.id;
+            }
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(contentSpan);
+            messageDiv.appendChild(timestampSpan);
+            DOM_GC.displayArea.appendChild(messageDiv);
+        });
+        DOM_GC.displayArea.scrollTop = DOM_GC.displayArea.scrollHeight;
+    }
+
+    function addMessageToGeminiChat(type, content, isError = false, messageId = null) {
+        if (!geminiChatData.history) {
+            geminiChatData.history = [];
+        }
+        const newMessage = {
+            type: type,
+            content: content,
+            isError: isError,
+            timestamp: new Date().toISOString()
+        };
+        if (messageId) { // If an ID is provided (e.g., for a thinking message)
+            newMessage.id = messageId;
+        }
+        geminiChatData.history.push(newMessage);
+        renderGeminiChatHistory();
+        saveGeminiChatData();
+    }
+    
+    function updateGeminiChatMessage(messageId, newContent, isError = false) {
+        if (!geminiChatData.history) return;
+        const messageIndex = geminiChatData.history.findIndex(msg => msg.id === messageId);
+        if (messageIndex !== -1) {
+            geminiChatData.history[messageIndex].content = newContent;
+            geminiChatData.history[messageIndex].isError = isError;
+            // If it was a thinking message, remove the temporary ID so it's treated as a normal message
+            if (messageId.startsWith('gemini-thinking-')) {
+                 delete geminiChatData.history[messageIndex].id; 
+            }
+            renderGeminiChatHistory();
+            saveGeminiChatData();
+        }
+    }
+
+
+    function handleClearGeminiChatHistory() {
+        if (confirm("Are you sure you want to clear the entire chat history? This action cannot be undone.")) {
+            geminiChatData.history = [];
+            renderGeminiChatHistory();
+            saveGeminiChatData();
+        }
+    }
+
+    async function handleSendGeminiPrompt() {
+        const promptText = DOM_GC.promptInput.value.trim();
+        if (!promptText) return;
+
+        addMessageToGeminiChat('user', promptText);
+        DOM_GC.promptInput.value = '';
+        DOM_GC.promptInput.disabled = true;
+        DOM_GC.sendBtn.disabled = true;
+
+        if (!GEMINI_API_KEY) {
+            addMessageToGeminiChat('gemini', "Error: Gemini API Key is not configured. Please ask the OS to provide it.", true);
+            DOM_GC.promptInput.disabled = false;
+            DOM_GC.sendBtn.disabled = false;
+            DOM_GC.promptInput.focus();
+            return;
+        }
+        
+        const thinkingMsgId = `gemini-thinking-${Date.now()}`;
+        addMessageToGeminiChat('gemini', '', false, thinkingMsgId); 
+
+        const messagesToSend = [];
+        // Prepare history for Gemini API (user/model roles)
+        const recentHistory = geminiChatData.history.slice(-MAX_GEMINI_HISTORY_MESSAGES); // Take last N messages
+        recentHistory.forEach(msg => {
+            // Don't send error messages or the current thinking message to the API history
+            if (!msg.isError && msg.id !== thinkingMsgId) { 
+                messagesToSend.push({
+                    role: msg.type === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.content }]
+                });
+            }
+        });
+        
+        // Ensure the last message sent is the current user prompt if it wasn't already added
+        // (e.g. if history was empty or last was a model response)
+        if (messagesToSend.length === 0 || messagesToSend[messagesToSend.length -1].role !== 'user' || messagesToSend[messagesToSend.length -1].parts[0].text !== promptText) {
+             // This check might be redundant if addMessageToGeminiChat('user', promptText) was called right before
+             // and recentHistory includes it. However, it's a safeguard.
+             // The current logic ensures the promptText is the last user message.
+        }
+
+
+        try {
+            const requestBody = {
+                contents: messagesToSend // messagesToSend already includes the latest user prompt
+            };
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error:", errorData);
+                const errorMessage = errorData?.error?.message || `API request failed with status ${response.status}`;
+                updateGeminiChatMessage(thinkingMsgId, `Error: ${errorMessage}`, true);
+            } else {
+                const data = await response.json();
+                if (data.candidates && data.candidates.length > 0 &&
+                    data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                    const geminiResponse = data.candidates[0].content.parts[0].text;
+                    updateGeminiChatMessage(thinkingMsgId, geminiResponse, false);
+                } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                     updateGeminiChatMessage(thinkingMsgId, `Blocked: ${data.promptFeedback.blockReason}. ${data.promptFeedback.blockReasonMessage || ''}`, true);
+                } else {
+                    updateGeminiChatMessage(thinkingMsgId, "Received an empty or unexpected response from Gemini.", true);
+                }
+            }
+        } catch (error) {
+            console.error("Error calling Gemini API:", error);
+            updateGeminiChatMessage(thinkingMsgId, `Error: Could not connect to Gemini. ${error.message}`, true);
+        } finally {
+            DOM_GC.promptInput.disabled = false;
+            DOM_GC.sendBtn.disabled = false;
+            DOM_GC.promptInput.focus();
+        }
+    }
+
+    function addGeminiChatEventListeners() {
+        DOM_GC.sendBtn.addEventListener('click', handleSendGeminiPrompt);
+        DOM_GC.promptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendGeminiPrompt();
+            }
+        });
+        DOM_GC.clearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
+    }
+    
+    // Listen for API key from parent OS
+    window.addEventListener('message', (event) => {
+        // IMPORTANT: Add origin check for security in a real application
+        // if (event.origin !== 'expected-os-origin') return; 
+        if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'gemini') {
+            GEMINI_API_KEY = event.data.key;
+            console.log("Gemini API Key received from OS.");
+            // Optionally, re-check if a prompt was pending due to missing key
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadGeminiChatData();
+        renderGeminiChatHistory();
+        addGeminiChatEventListeners();
+        
+        // Request API key from parent OS when app loads
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'requestApiKey', service: 'gemini', appId: 'geminiChat' }, '*');
+             // In a real app, replace '*' with the actual parent origin for security
+        }
+    });
+</script>

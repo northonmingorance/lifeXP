@@ -1,0 +1,618 @@
+<style>
+    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button:active { border-style: inset; }
+    .xp-button:hover { border-color: #005CFE; }
+    .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
+    
+    #captureAppBody { display: flex; flex-direction: column; height: 100%; }
+    .xp-menu-bar { background-color: #ECE9D8; border-bottom: 1px solid #000; display: flex; padding: 1px 2px; height: 21px; flex-shrink: 0; user-select: none; position: relative; z-index: 50; }
+    .xp-menu-item { padding: 2px 7px; cursor: default; position: relative; font-size: 11px; line-height: 16px; }
+    .xp-menu-item:hover, .xp-menu-item.active { background-color: #316AC5; color: white; }
+    .xp-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 160px; z-index: 150; padding: 2px; }
+    .xp-menu-item.active .xp-dropdown-menu { display: block; }
+    .xp-dropdown-item { padding: 4px 12px 4px 12px; cursor: default; display: flex; justify-content: space-between; align-items: center; position: relative; font-size: 11px; white-space: nowrap; color: #000000; }
+    .xp-dropdown-item:hover, .xp-dropdown-item.submenu-active { background-color: #316AC5; color: white; }
+    .xp-dropdown-item.submenu-active .xp-submenu-arrow{ color: white; }
+    .xp-submenu-arrow { font-size: 10px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: #333; }
+    .xp-dropdown-item:hover .xp-submenu-arrow { color: white; }
+    .xp-submenu { display: none; position: absolute; left: calc(100% - 4px); top: -3px; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 180px; max-width: 250px; z-index: 151; padding: 2px; color: #000000; }
+    .xp-dropdown-item.submenu-active .xp-submenu { display: block; }
+    .xp-submenu-item { padding: 4px 12px 4px 20px; cursor: default; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+    .xp-submenu-item:hover:not(.disabled-resolution) { background-color: #316AC5; color: white; }
+    .xp-submenu-item.selected::before { content: "•"; position: absolute; left: 7px; font-size: 14px; line-height: 1; top: 50%; transform: translateY(-50%); }
+    .xp-submenu-item.selected:hover:not(.disabled-resolution)::before { color: white; }
+    .xp-submenu-item.disabled-resolution { color: #999 !important; cursor: not-allowed !important; }
+    .xp-submenu-item.disabled-resolution:hover { background-color: #ECE9D8 !important; color: #999 !important; }
+    .xp-submenu-item.disabled-resolution.selected::before { color: #999 !important; }
+    .xp-submenu-item.disabled-resolution:hover.selected::before { color: #999 !important; }
+
+    .capture-window-body-content { flex-grow: 1; padding: 0; display: flex; background-color: #000000; justify-content: center; align-items: center; position: relative; overflow: hidden;}
+    #captureVideo { width: 100%; height: 100%; -webkit-transform: scaleX(-1); transform: scaleX(-1); object-fit: contain; }
+    #captureActionBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10; padding: 8px 15px; font-size: 14px; }
+    #captureToggleModeBtn { position: absolute; bottom: 20px; right: 20px; z-index: 10; padding: 4px 15px; font-size: 18px; min-width: auto; }
+    #captureActionBtn.recording { background-color: #FF6347; border-color: #CD5C5C; color: white; }
+    #captureActionBtn.recording:hover { background-color: #E55337; border-color: #B24331; }
+    #captureStatusMessage { color: white; padding: 10px; text-align: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0,0,0,0.5); border-radius: 5px; display: none; }
+
+</style>
+
+<div id="captureAppBody">
+    <div class="xp-menu-bar" id="captureMenuBar">
+        <div class="xp-menu-item" id="videoMenu">
+            <span>Video</span>
+            <div class="xp-dropdown-menu" id="videoDropdown">
+                <div class="xp-dropdown-item" id="videoDeviceItem">
+                    Device <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="videoDeviceList"></div>
+                </div>
+                <div class="xp-dropdown-item" id="videoResolutionItem">
+                    Resolution <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="videoResolutionList"></div>
+                </div>
+            </div>
+        </div>
+        <div class="xp-menu-item" id="audioMenu">
+            <span>Audio</span>
+            <div class="xp-dropdown-menu" id="audioDropdown">
+                <div class="xp-dropdown-item" id="audioDeviceItem">
+                    Device <span class="xp-submenu-arrow">►</span>
+                    <div class="xp-submenu" id="audioDeviceList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="capture-window-body-content" id="captureWindowBodyContent">
+        <video id="captureVideo" autoplay playsinline></video>
+        <button id="captureActionBtn" class="xp-button">Take Photo</button>
+        <button id="captureToggleModeBtn" class="xp-button">📹</button>
+        <div id="captureStatusMessage"></div>
+    </div>
+</div>
+
+<script>
+    const CAPTURE_APP_STORAGE_KEY = 'captureAppData_v1.0.0';
+    const COMMON_RESOLUTIONS_CAPTURE = [
+        { label: "Default", width: null, height: null }, // Added default option
+        { label: "320x240 (QVGA)", width: 320, height: 240 },
+        { label: "640x480 (VGA)", width: 640, height: 480 },
+        { label: "800x600 (SVGA)", width: 800, height: 600 },
+        { label: "1280x720 (HD)", width: 1280, height: 720 },
+        { label: "1920x1080 (FHD)", width: 1920, height: 1080 }
+    ];
+
+    let captureAppData = {
+        captureStream: null,
+        captureMode: 'photo', // 'photo' or 'video'
+        isRecording: false,
+        selectedVideoDevice: null,
+        selectedAudioDevice: null,
+        selectedResolution: null // { width, height } or null for default
+    };
+
+    const DOM_CAP = {
+        menuBar: document.getElementById('captureMenuBar'),
+        videoMenu: document.getElementById('videoMenu'),
+        videoDropdown: document.getElementById('videoDropdown'),
+        videoDeviceItem: document.getElementById('videoDeviceItem'),
+        videoDeviceList: document.getElementById('videoDeviceList'),
+        videoResolutionItem: document.getElementById('videoResolutionItem'),
+        videoResolutionList: document.getElementById('videoResolutionList'),
+        audioMenu: document.getElementById('audioMenu'),
+        audioDropdown: document.getElementById('audioDropdown'),
+        audioDeviceItem: document.getElementById('audioDeviceItem'),
+        audioDeviceList: document.getElementById('audioDeviceList'),
+        captureWindowBodyContent: document.getElementById('captureWindowBodyContent'),
+        videoElement: document.getElementById('captureVideo'),
+        actionBtn: document.getElementById('captureActionBtn'),
+        toggleModeBtn: document.getElementById('captureToggleModeBtn'),
+        statusMessage: document.getElementById('captureStatusMessage')
+    };
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isResolutionDelayActive = false;
+    let captureResolutionTimerId = null;
+
+    function loadCaptureAppData() {
+        const stored = localStorage.getItem(CAPTURE_APP_STORAGE_KEY);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                captureAppData = { ...captureAppData, ...parsed };
+                // Reset transient states
+                captureAppData.captureStream = null;
+                captureAppData.isRecording = false;
+            } catch (e) {
+                console.error("Error loading Capture App data, resetting.", e);
+            }
+        }
+    }
+
+    function saveCaptureAppData() {
+        // Don't save the stream object itself
+        const dataToSave = { ...captureAppData, captureStream: undefined };
+        localStorage.setItem(CAPTURE_APP_STORAGE_KEY, JSON.stringify(dataToSave));
+    }
+    
+    function showStatusMessage(message, isError = false) {
+        DOM_CAP.statusMessage.textContent = message;
+        DOM_CAP.statusMessage.style.color = isError ? '#FF6347' : 'white';
+        DOM_CAP.statusMessage.style.display = 'block';
+    }
+
+    function hideStatusMessage() {
+        DOM_CAP.statusMessage.style.display = 'none';
+    }
+
+
+    async function startCaptureApp(videoDeviceId = null, audioDeviceId = null, resolution = null) {
+        if (captureAppData.captureStream && DOM_CAP.videoElement.srcObject === captureAppData.captureStream) {
+            // Stream already running, possibly just updating UI
+            updateCaptureAppUI();
+            return;
+        }
+        hideStatusMessage();
+        DOM_CAP.videoElement.style.display = 'block'; // Ensure video element is visible
+
+        const finalVideoDeviceId = videoDeviceId || captureAppData.selectedVideoDevice;
+        const finalAudioDeviceId = audioDeviceId || captureAppData.selectedAudioDevice;
+        const finalResolution = resolution || captureAppData.selectedResolution;
+
+        let videoConstraints = {};
+        let audioConstraints = true; // Default to true to request audio
+
+        if (finalVideoDeviceId) videoConstraints.deviceId = { exact: finalVideoDeviceId };
+        if (finalAudioDeviceId) audioConstraints = { deviceId: { exact: finalAudioDeviceId } };
+        
+        if (finalResolution && typeof finalResolution.width === 'number' && typeof finalResolution.height === 'number') {
+            videoConstraints.width = { exact: finalResolution.width };
+            videoConstraints.height = { exact: finalResolution.height };
+        }
+        // If no specific video device is selected, request default video
+        if (Object.keys(videoConstraints).length === 0) videoConstraints = true;
+
+
+        const finalConstraints = { video: videoConstraints, audio: audioConstraints };
+
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showStatusMessage("Webcam access is not supported or is disabled.", true);
+                updateCaptureAppUI(); return;
+            }
+            console.log("Capture App: Requesting media with constraints:", JSON.stringify(finalConstraints));
+            const stream = await navigator.mediaDevices.getUserMedia(finalConstraints);
+            
+            if (stream) {
+                captureAppData.captureStream = stream; 
+                DOM_CAP.videoElement.srcObject = stream;
+                DOM_CAP.videoElement.muted = true; 
+                await DOM_CAP.videoElement.play(); // Wait for play to start
+
+                const videoTracks = stream.getVideoTracks();
+                if (videoTracks.length > 0 && !finalVideoDeviceId) {
+                    captureAppData.selectedVideoDevice = videoTracks[0].getSettings().deviceId || videoTracks[0].id;
+                }
+                const audioTracks = stream.getAudioTracks();
+                 if (audioTracks.length > 0 && !finalAudioDeviceId && audioTracks[0].getSettings().deviceId) {
+                    captureAppData.selectedAudioDevice = audioTracks[0].getSettings().deviceId || audioTracks[0].id;
+                }
+                saveCaptureAppData(); // Save selected devices if auto-detected
+                
+                // Resolution delay logic (simplified)
+                if (sessionStorage.getItem('captureFirstOpenApp') === null) {
+                    sessionStorage.setItem('captureFirstOpenApp', 'true');
+                    isResolutionDelayActive = true;
+                    updateResolutionItemsState(true); 
+                    if(captureResolutionTimerId) clearTimeout(captureResolutionTimerId);
+                    captureResolutionTimerId = setTimeout(() => {
+                        isResolutionDelayActive = false;
+                        updateResolutionItemsState(false);
+                        captureResolutionTimerId = null;
+                    }, 15000); // Shorter delay for app-specific context
+                } else {
+                    isResolutionDelayActive = false;
+                    updateResolutionItemsState(false);
+                }
+            }
+        } catch (err) {
+            console.error("Error starting capture app:", err.name, err.message, err.constraint);
+            let message = `Error: ${err.name}. Check permissions and device settings.`;
+            if (err.name === "OverconstrainedError" && finalResolution) {
+                 message = `Selected resolution not supported. Try 'Default' or another option. Error: ${err.message}`;
+                 captureAppData.selectedResolution = null; // Reset to default
+                 saveCaptureAppData();
+            } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                message = "No camera/microphone found for selected settings.";
+            } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                message = "Camera/microphone access denied. Please allow permissions.";
+            }
+            showStatusMessage(message, true);
+            DOM_CAP.videoElement.style.display = 'none';
+            captureAppData.captureStream = null; 
+        }
+        updateCaptureAppUI();
+        updateSelectedInMenu(); 
+    }
+
+    async function stopCaptureApp() {
+        if (captureAppData.isRecording) await stopVideoRecording(); 
+        if (captureAppData.captureStream) {
+            captureAppData.captureStream.getTracks().forEach(track => track.stop());
+            captureAppData.captureStream = null;
+            if(DOM_CAP.videoElement) DOM_CAP.videoElement.srcObject = null; 
+        }
+        updateCaptureAppUI(); 
+    }
+
+    function takeAndDownloadPhoto() {
+        if (!captureAppData.captureStream || !DOM_CAP.videoElement.srcObject || DOM_CAP.videoElement.videoWidth === 0) {
+            showStatusMessage("Webcam stream not active or ready. Cannot take photo.", true);
+            return;
+        }
+        hideStatusMessage();
+        const video = DOM_CAP.videoElement;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.scale(-1, 1); // Flip horizontally like the video preview
+        context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height); // Draw flipped
+        
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `photo-${timestamp}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function toggleCaptureMode() {
+        if (captureAppData.isRecording) {
+            alert("Please stop recording before switching modes.");
+            return;
+        }
+        captureAppData.captureMode = (captureAppData.captureMode === 'photo') ? 'video' : 'photo';
+        updateCaptureAppUI();
+        saveCaptureAppData(); 
+    }
+
+    function handleMainCaptureAction() {
+        if (!captureAppData.captureStream) {
+            showStatusMessage("Webcam not active. Trying to start...", false);
+            startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution);
+            return;
+        }
+        hideStatusMessage();
+        if (captureAppData.captureMode === 'photo') {
+            takeAndDownloadPhoto();
+        } else { 
+            if (captureAppData.isRecording) stopVideoRecording();
+            else startVideoRecording();
+        }
+    }
+
+    function startVideoRecording() {
+        if (!captureAppData.captureStream) {
+            showStatusMessage("Webcam stream not active. Cannot start recording.", true);
+            return;
+        }
+        if (!captureAppData.captureStream.getAudioTracks().find(t=> t.enabled && t.readyState === 'live')) {
+             showStatusMessage("No active audio track. Recording video without audio. Please select an audio device.", false);
+             // Allow recording without audio, or attempt to re-init with audio:
+             // For simplicity, we'll proceed without audio if none is explicitly active.
+        }
+        recordedChunks = [];
+        const mimeTypes = [ 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/mp4;codecs=h264,aac', 'video/webm' ];
+        let supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
+        if (!supportedMimeType && MediaRecorder.isTypeSupported('video/webm')) supportedMimeType = 'video/webm'; // Fallback
+
+        if (!supportedMimeType) {
+            showStatusMessage("Video recording format not supported in this browser.", true);
+            return;
+        }
+        try {
+            mediaRecorder = new MediaRecorder(captureAppData.captureStream, { mimeType: supportedMimeType });
+        } catch (e) {
+            showStatusMessage(`Failed to create MediaRecorder: ${e.message}`, true);
+            return;
+        }
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.style.display = 'none';
+            a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const extension = (mediaRecorder.mimeType || 'video/webm').split('/')[1].split(';')[0]; 
+            a.download = `recording-${timestamp}.${extension}`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            recordedChunks = []; 
+        };
+        mediaRecorder.start();
+        captureAppData.isRecording = true;
+        updateCaptureAppUI();
+    }
+    async function stopVideoRecording() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop(); 
+        }
+        captureAppData.isRecording = false;
+        updateCaptureAppUI();
+    }
+    
+    function updateCaptureAppUI() {
+        if (!DOM_CAP.actionBtn || !DOM_CAP.toggleModeBtn) return;
+        const streamActive = !!captureAppData.captureStream && DOM_CAP.videoElement.srcObject === captureAppData.captureStream;
+        
+        DOM_CAP.actionBtn.disabled = !streamActive; 
+        DOM_CAP.toggleModeBtn.disabled = captureAppData.isRecording; 
+
+        if (captureAppData.captureMode === 'photo') {
+            DOM_CAP.actionBtn.textContent = 'Take Photo';
+            DOM_CAP.actionBtn.classList.remove('recording');
+            DOM_CAP.toggleModeBtn.textContent = '📹'; 
+            DOM_CAP.toggleModeBtn.title = "Switch to Video Mode";
+        } else { 
+            DOM_CAP.toggleModeBtn.textContent = '📷'; 
+            DOM_CAP.toggleModeBtn.title = "Switch to Photo Mode";
+            if (captureAppData.isRecording) {
+                DOM_CAP.actionBtn.textContent = 'Stop Recording';
+                DOM_CAP.actionBtn.classList.add('recording');
+            } else {
+                DOM_CAP.actionBtn.textContent = 'Start Recording';
+                DOM_CAP.actionBtn.classList.remove('recording');
+            }
+        }
+         if (!streamActive) {
+            DOM_CAP.actionBtn.textContent = (captureAppData.captureMode === 'photo') ? 'Take Photo' : 'Start Recording';
+            DOM_CAP.actionBtn.classList.remove('recording');
+         }
+    }
+
+    function setupCaptureMenus() {
+        DOM_CAP.videoMenu.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            const isActive = DOM_CAP.videoMenu.classList.toggle('active');
+            DOM_CAP.videoDropdown.style.display = isActive ? 'block' : 'none';
+            if (isActive) {
+                DOM_CAP.audioMenu.classList.remove('active');
+                if(DOM_CAP.audioDropdown) DOM_CAP.audioDropdown.style.display = 'none';
+                closeAllCaptureSubMenus(DOM_CAP.audioDropdown); 
+                populateVideoDevices(); 
+                populateResolutions();
+                updateSelectedInMenu();
+            } else {
+                closeAllCaptureSubMenus(DOM_CAP.videoDropdown); 
+            }
+        });
+        DOM_CAP.videoDeviceItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = DOM_CAP.videoDeviceItem.classList.toggle('submenu-active');
+            DOM_CAP.videoDeviceList.style.display = isActive ? 'block' : 'none';
+            if (isActive) { 
+                DOM_CAP.videoResolutionItem.classList.remove('submenu-active');
+                DOM_CAP.videoResolutionList.style.display = 'none';
+            }
+        });
+        DOM_CAP.videoResolutionItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = DOM_CAP.videoResolutionItem.classList.toggle('submenu-active');
+            DOM_CAP.videoResolutionList.style.display = isActive ? 'block' : 'none';
+            if (isActive) { 
+                DOM_CAP.videoDeviceItem.classList.remove('submenu-active');
+                DOM_CAP.videoDeviceList.style.display = 'none';
+            }
+        });
+        DOM_CAP.audioMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = DOM_CAP.audioMenu.classList.toggle('active');
+            DOM_CAP.audioDropdown.style.display = isActive ? 'block' : 'none';
+            if (isActive) {
+                DOM_CAP.videoMenu.classList.remove('active');
+                if(DOM_CAP.videoDropdown) DOM_CAP.videoDropdown.style.display = 'none';
+                closeAllCaptureSubMenus(DOM_CAP.videoDropdown);
+                populateAudioDevices();
+                updateSelectedInMenu();
+            } else {
+                 closeAllCaptureSubMenus(DOM_CAP.audioDropdown);
+            }
+        });
+        DOM_CAP.audioDeviceItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = DOM_CAP.audioDeviceItem.classList.toggle('submenu-active');
+            DOM_CAP.audioDeviceList.style.display = isActive ? 'block' : 'none';
+        });
+         // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!DOM_CAP.menuBar.contains(e.target)) {
+                closeAllCaptureAppMenus();
+            }
+        });
+    }
+    function closeAllCaptureAppMenus() {
+        if (DOM_CAP.videoMenu) DOM_CAP.videoMenu.classList.remove('active');
+        if (DOM_CAP.videoDropdown) {
+             DOM_CAP.videoDropdown.style.display = 'none';
+             closeAllCaptureSubMenus(DOM_CAP.videoDropdown);
+        }
+        if (DOM_CAP.audioMenu) DOM_CAP.audioMenu.classList.remove('active');
+        if (DOM_CAP.audioDropdown) {
+            DOM_CAP.audioDropdown.style.display = 'none';
+            closeAllCaptureSubMenus(DOM_CAP.audioDropdown);
+        }
+    }
+    function closeAllCaptureSubMenus(dropdownElement) {
+        if (!dropdownElement) return;
+        dropdownElement.querySelectorAll('.xp-dropdown-item').forEach(item => item.classList.remove('submenu-active'));
+        dropdownElement.querySelectorAll('.xp-submenu').forEach(submenu => submenu.style.display = 'none');
+    }
+
+    async function populateVideoDevices() {
+        if (!DOM_CAP.videoDeviceList) return;
+        DOM_CAP.videoDeviceList.innerHTML = ''; 
+        try {
+            await navigator.mediaDevices.getUserMedia({video: true, audio: true}); // Request permission first
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            if (videoDevices.length === 0) {
+                const noDevice = document.createElement('div'); noDevice.classList.add('xp-submenu-item');
+                noDevice.textContent = 'No video devices'; DOM_CAP.videoDeviceList.appendChild(noDevice); return;
+            }
+            videoDevices.forEach(device => {
+                const item = document.createElement('div'); item.classList.add('xp-submenu-item');
+                item.textContent = device.label || `Camera ${DOM_CAP.videoDeviceList.children.length + 1}`;
+                item.dataset.deviceId = device.deviceId;
+                item.addEventListener('click', async () => {
+                    if (captureAppData.selectedVideoDevice !== device.deviceId) {
+                        captureAppData.selectedVideoDevice = device.deviceId;
+                        await stopCaptureApp(); 
+                        await startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution);
+                        saveCaptureAppData(); 
+                    }
+                    closeAllCaptureAppMenus(); updateSelectedInMenu();
+                });
+                DOM_CAP.videoDeviceList.appendChild(item);
+            });
+        } catch (err) {
+            console.error("Error populating video devices:", err);
+            const errorItem = document.createElement('div'); errorItem.classList.add('xp-submenu-item'); errorItem.textContent = 'Error listing devices';
+            DOM_CAP.videoDeviceList.appendChild(errorItem);
+        }
+        updateSelectedInMenu(); 
+    }
+    async function populateAudioDevices() {
+        if (!DOM_CAP.audioDeviceList) return;
+        DOM_CAP.audioDeviceList.innerHTML = '';
+        try {
+            await navigator.mediaDevices.getUserMedia({audio: true}); // Request permission
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioDevices = devices.filter(device => device.kind === 'audioinput');
+            // Filter out 'default' device as it's often redundant or causes issues with exact matching
+            const uniqueAudioDevices = audioDevices.filter(device => device.deviceId !== 'default' && device.deviceId !== '');
+
+            if (uniqueAudioDevices.length === 0) {
+                const noDevice = document.createElement('div'); noDevice.classList.add('xp-submenu-item');
+                noDevice.textContent = 'No audio devices'; DOM_CAP.audioDeviceList.appendChild(noDevice); return;
+            }
+            uniqueAudioDevices.forEach(device => {
+                const item = document.createElement('div'); item.classList.add('xp-submenu-item');
+                item.textContent = device.label || `Microphone ${DOM_CAP.audioDeviceList.children.length + 1}`;
+                item.dataset.deviceId = device.deviceId;
+                item.addEventListener('click', async () => {
+                     if (captureAppData.selectedAudioDevice !== device.deviceId) {
+                        captureAppData.selectedAudioDevice = device.deviceId;
+                        await stopCaptureApp();
+                        await startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution);
+                        saveCaptureAppData();
+                     }
+                    closeAllCaptureAppMenus(); updateSelectedInMenu();
+                });
+                DOM_CAP.audioDeviceList.appendChild(item);
+            });
+        } catch (err) {
+             console.error("Error populating audio devices:", err);
+             const errorItem = document.createElement('div'); errorItem.classList.add('xp-submenu-item'); errorItem.textContent = 'Error listing devices';
+             DOM_CAP.audioDeviceList.appendChild(errorItem);
+        }
+        updateSelectedInMenu();
+    }
+    function updateResolutionItemsState(disabled) {
+        if (!DOM_CAP.videoResolutionList) return;
+        DOM_CAP.videoResolutionList.querySelectorAll('.xp-submenu-item').forEach(item => {
+            if (disabled) {
+                item.classList.add('disabled-resolution'); item.style.pointerEvents = 'none'; 
+            } else {
+                item.classList.remove('disabled-resolution'); item.style.pointerEvents = 'auto'; 
+            }
+        });
+    }
+    function populateResolutions() {
+        if (!DOM_CAP.videoResolutionList) return;
+        DOM_CAP.videoResolutionList.innerHTML = '';
+        COMMON_RESOLUTIONS_CAPTURE.forEach(res => {
+            const item = document.createElement('div'); item.classList.add('xp-submenu-item');
+            item.textContent = res.label;
+            item.addEventListener('click', async () => {
+                if (isResolutionDelayActive) { console.log("Resolution change is currently delayed."); return; }
+                const newRes = (res.width && res.height) ? { width: res.width, height: res.height } : null;
+                if (JSON.stringify(captureAppData.selectedResolution) !== JSON.stringify(newRes)) {
+                    captureAppData.selectedResolution = newRes;
+                    await stopCaptureApp();
+                    await startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution);
+                    saveCaptureAppData();
+                }
+                closeAllCaptureAppMenus(); updateSelectedInMenu();
+            });
+            DOM_CAP.videoResolutionList.appendChild(item);
+        });
+        updateResolutionItemsState(isResolutionDelayActive);
+        updateSelectedInMenu();
+    }
+    function updateSelectedInMenu() {
+        if (DOM_CAP.videoDeviceList) {
+            Array.from(DOM_CAP.videoDeviceList.children).forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.deviceId && item.dataset.deviceId === captureAppData.selectedVideoDevice) item.classList.add('selected');
+            });
+        }
+        if (DOM_CAP.audioDeviceList) {
+            Array.from(DOM_CAP.audioDeviceList.children).forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.deviceId && item.dataset.deviceId === captureAppData.selectedAudioDevice) item.classList.add('selected');
+            });
+        }
+        if (DOM_CAP.videoResolutionList) {
+            Array.from(DOM_CAP.videoResolutionList.children).forEach((item, index) => {
+                item.classList.remove('selected');
+                const resOpt = COMMON_RESOLUTIONS_CAPTURE[index]; 
+                if (resOpt) { 
+                    if (captureAppData.selectedResolution && captureAppData.selectedResolution.width === resOpt.width && captureAppData.selectedResolution.height === resOpt.height) {
+                        item.classList.add('selected');
+                    } else if (!captureAppData.selectedResolution && resOpt.label === "Default") { // Select "Default" if no resolution is set
+                         item.classList.add('selected');
+                    }
+                }
+            });
+        }
+    }
+    
+    function addCaptureEventListeners() {
+        DOM_CAP.actionBtn.addEventListener('click', handleMainCaptureAction);
+        DOM_CAP.toggleModeBtn.addEventListener('click', toggleCaptureMode);
+        setupCaptureMenus();
+
+        // Attempt to start capture when the app becomes visible (e.g., window opened/unminimized)
+        // This is tricky from an iframe. A message from parent or IntersectionObserver could work.
+        // For simplicity, we'll try to start it on load if not explicitly hidden by saved state.
+        if (window.parent && window.parent.osData) {
+            const appState = window.parent.osData.windowStates['capture'];
+            if (!appState || (appState && !appState.hiddenByUser && !appState.minimized)) {
+                 setTimeout(() => startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution), 100);
+            }
+        } else { // Fallback if no parent context
+            setTimeout(() => startCaptureApp(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, captureAppData.selectedResolution), 100);
+        }
+         // Clean up stream when the window/iframe is about to be unloaded
+        window.addEventListener('beforeunload', async () => {
+            await stopCaptureApp();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCaptureAppData();
+        updateCaptureAppUI(); // Initial UI based on mode
+        addCaptureEventListeners();
+        // Initial population of menus if needed, or on first menu click
+        populateVideoDevices();
+        populateAudioDevices();
+        populateResolutions();
+        updateSelectedInMenu();
+    });
+</script>
