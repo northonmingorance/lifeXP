@@ -587,32 +587,22 @@
                 const script = document.createElement('script');
                 script.textContent = scriptTag.textContent;
                 document.body.appendChild(script); 
-                
-                // Call the app's setup function (e.g., window.setupXPTrackerApp)
-                const appSetupFunctionName = `setup${appWindowId.replace('Window', '')}App`; // e.g. setupXpMainWindowApp -> setupXpTrackerApp
-                // A more generic way would be for the app script to register its setup function
-                // For now, derive it, but this is brittle.
-                // A better pattern: app script does `window.currentAppSetup = function() { ... }` then OS calls `window.currentAppSetup()`.
-                // Or, app script directly calls a global OS registration function.
-                // For simplicity, we'll assume a naming convention for now or that the app calls its own setup.
-                // The current app files already call their setup function from within their IIFE after defining it globally.
-                // The app script itself should call its setup function.
-                // The main OS should ensure the app's setup function (e.g., window.setupXPTrackerApp) is called.
-                // The app's script now exposes its setup function globally.
-                const setupFnName = `setup${appDoc.title.replace(/\s+/g, '')}App`; // e.g. setupPixelCraftApp from <title>Pixel Craft</title>
-                // This is still brittle. Let's assume the app's IIFE makes its setup function available, e.g. window.setupAppName.
-                // The app files are already structured to expose `window.setupAppName`.
-                // The app's script will call its own setup. The OS `loadApp` just needs to ensure the script runs.
-                // The app's `setup<AppName>App` function will handle DOM population and registration.
             }
             
             if (appWindowId && window.appRegistry[appWindowId]) {
-                // The app's own setup function (called when its script runs) should handle its internal init.
-                // The OS needs to ensure the window state and interactions are set up AFTER the app has put its content in.
                 initWindowInteractions(appWindowId);
-                restoreWindowState(appWindowId); // This will also apply styles based on state
+                restoreWindowState(appWindowId); 
+                updateMinMaxButtonStates(appWindowId);
+            } else if (appWindowId && !window.appRegistry[appWindowId]) {
+                // This case might happen if app script hasn't registered yet,
+                // but restoreWindowState called from initDesktopIconBehavior should have created a basic state.
+                // The app's own setup (called by its script) will later populate appRegistry.
+                // We still want to ensure basic window interactions and state restoration are attempted.
+                initWindowInteractions(appWindowId);
+                restoreWindowState(appWindowId); 
                 updateMinMaxButtonStates(appWindowId);
             }
+
 
         } catch (error) {
             console.error(`Error loading app ${appFilename}:`, error);
@@ -652,13 +642,13 @@
 
         addEventListenersOS();
         
-        let maxLoadedWindowZ = highestZIndex; // Start with current highestZIndex
+        let maxLoadedWindowZ = highestZIndex; 
         Object.values(appData.windowStates).forEach(state => {
             if (state && state.zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(state.zIndex));
             }
         });
-        highestZIndex = maxLoadedWindowZ; // Update global highestZIndex
+        highestZIndex = maxLoadedWindowZ; 
     }
 
     function initDesktopIconBehavior(iconElement) { 
@@ -680,12 +670,13 @@
         iconElement.addEventListener('mousedown', handleIconMouseDown);
         iconElement.addEventListener('dblclick', handleIconDoubleClick);
 
-        // Preemptively ensure a basic window state exists for the associated window
-        if (windowId && !appData.windowStates[windowId]) {
-            // This call to restoreWindowState will create a default state if none exists.
-            // It might use generic min dimensions if the app hasn't registered its specific ones yet,
-            // but the state object itself will be created.
-            restoreWindowState(windowId);
+        if (windowId) { // Ensure windowId is valid
+            // Preemptively ensure a basic window state exists.
+            // This will use generic defaults if appRegistry isn't populated yet for this windowId.
+            if (!window.appData.windowStates[windowId]) {
+                // console.log(`initDesktopIconBehavior: Preemptively calling restoreWindowState for ${windowId}`);
+                restoreWindowState(windowId);
+            }
         }
     }
 
@@ -832,10 +823,13 @@
 
         let state = window.appData.windowStates[windowId];
         if (!state) { 
+            // This warning is expected if the state wasn't loaded or previously created.
+            // The restoreWindowState below should handle creating it.
             console.warn(`No state for window ${windowId} on double click. Attempting to restore.`);
             restoreWindowState(windowId); 
-            state = window.appData.windowStates[windowId]; // Re-fetch state after restore attempt
-            if(!state) { // If still no state, something is wrong with restoreWindowState or appRegistry for this ID
+            state = window.appData.windowStates[windowId]; 
+            if(!state) { 
+                // If it's still not there, then restoreWindowState has a fundamental issue or windowId is bad.
                 console.error(`Still no state for window ${windowId} after attempt to restore. Check appRegistry and restoreWindowState logic.`);
                 return;
             }
@@ -846,6 +840,7 @@
             state.minimized = false; 
             windowElement.style.display = 'flex';
             windowElement.classList.remove('minimized');
+            // Call restoreWindowState again to ensure dimensions/positions are correctly applied based on the now-existing state
             restoreWindowState(windowId); 
             const appOpenEvent = new CustomEvent('appopen', { detail: { windowId: windowId, fromHidden: true } });
             windowElement.dispatchEvent(appOpenEvent);
@@ -854,7 +849,7 @@
             maximizeWindow(windowId); 
         }
         bringToFront(windowElement);
-        saveWindowState(windowId); // Save state after any changes
+        saveWindowState(windowId); 
     }
 
     function populateColorSwatches() {
@@ -988,7 +983,6 @@
                 height: window.appRegistry[windowId].minHeight || 150
             };
         }
-        // console.warn(`getMinWindowDimensions: No appRegistry entry for ${windowId}. Using generic fallback.`);
         return { width: 200, height: 150 }; 
     }
 
@@ -1037,20 +1031,12 @@
             return;
         }
 
-        const state = appData.windowStates[windowId];
+        let state = appData.windowStates[windowId]; // Use 'let' as it might be reassigned
         if (!state) {
-            // This case should ideally be handled by restoreWindowState creating a default state.
-            // If we reach here and state is still null, it's an issue.
-            // console.warn(`setWindowDefaults: No state found for ${windowId}. Attempting to restore first.`);
-            restoreWindowState(windowId); // Try to create/restore state
-            const newState = appData.windowStates[windowId];
-            if (!newState) {
-                // console.error(`setWindowDefaults: Failed to restore state for ${windowId}. Cannot set defaults.`);
-                return;
-            }
-             // Fallthrough to use the newly created/restored state
+            restoreWindowState(windowId); 
+            state = appData.windowStates[windowId]; // Re-fetch after potential creation
+            if (!state) return; // If still no state, exit
         }
-
 
         const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
         const hasValidSavedPosition = state.x != null && state.y != null;
@@ -1061,10 +1047,8 @@
         defaultWidth = Math.max(minDim.width, defaultWidth);
         defaultHeight = Math.max(minDim.height, defaultHeight);
 
-        // Simple default placement, can be improved (e.g., cascade, center available space)
         let defaultOffsetX = (Object.keys(appData.windowStates).length % 5) * 30 + 50;
         let defaultOffsetY = (Object.keys(appData.windowStates).length % 5) * 30 + 50;
-
 
         if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize || !hasValidSavedPosition) {
             let newWidth = state.userManuallySet && hasValidSavedSize ? state.width : defaultWidth;
@@ -1072,14 +1056,12 @@
             let newLeft = state.userManuallySet && hasValidSavedPosition ? state.x : defaultOffsetX;
             let newTop = state.userManuallySet && hasValidSavedPosition ? state.y : defaultOffsetY;
 
-            // Ensure it fits viewport, adjust if necessary
             if (newLeft + newWidth > window.innerWidth) newLeft = Math.max(10, window.innerWidth - newWidth - 10);
             if (newTop + newHeight > window.innerHeight) newTop = Math.max(10, window.innerHeight - newHeight - 10);
             if (newWidth > window.innerWidth - 20) newWidth = Math.max(minDim.width, window.innerWidth - 20);
             if (newHeight > window.innerHeight - 20) newHeight = Math.max(minDim.height, window.innerHeight - 20);
-            newLeft = Math.max(10, newLeft); // Ensure it's not off-screen left
-            newTop = Math.max(10, newTop);   // Ensure it's not off-screen top
-
+            newLeft = Math.max(10, newLeft); 
+            newTop = Math.max(10, newTop);   
 
             appWindow.style.width = newWidth + 'px';
             appWindow.style.height = newHeight + 'px';
@@ -1090,7 +1072,7 @@
             state.height = newHeight;
             state.x = newLeft;
             state.y = newTop;
-            if (!isBrowserResize) { // Only mark as not user-set if OS is setting defaults initially
+            if (!isBrowserResize) { 
                 state.userManuallySet = false;
             }
         }
@@ -1194,7 +1176,6 @@
         state.minimized = true;
         if (appWindow.classList.contains('true-maximized')) {
             state.wasMaximizedBeforeMinimize = true;
-            // Preserve last normal state if it exists, otherwise state already has dimensions
             if (lastNormalStates[windowId]) {
                 state.width = parseInt(lastNormalStates[windowId].width);
                 state.height = parseInt(lastNormalStates[windowId].height);
@@ -1222,17 +1203,15 @@
         const appWindow = getById(windowId);
         if (!appWindow) return;
         let state = appData.windowStates[windowId];
-        if (!state) { // Should not happen if restoreWindowState was called
+        if (!state) { 
             restoreWindowState(windowId);
             state = appData.windowStates[windowId];
             if (!state) return;
         }
 
-
         const isMinimized = appWindow.classList.contains('minimized');
         let currentLastNormal = lastNormalStates[windowId] || {};
         const minDim = getMinWindowDimensions(windowId);
-
 
         if (isMinimized) {
             appWindow.classList.remove('minimized');
@@ -1248,7 +1227,6 @@
                 appWindow.classList.add('true-maximized');
                 state.maximized = true;
             } else {
-                // Use dimensions from state (which were set before minimize) or lastNormalState
                 appWindow.style.width = Math.max(minDim.width, state.width || parseInt(currentLastNormal.width) || minDim.width * 1.5) + 'px';
                 appWindow.style.height = Math.max(minDim.height, state.height || parseInt(currentLastNormal.height) || minDim.height * 1.5) + 'px';
                 appWindow.style.left = (state.x != null ? state.x : (parseInt(currentLastNormal.left) || 50)) + 'px';
@@ -1257,7 +1235,6 @@
             }
              const appRestoreEvent = new CustomEvent('apprestore', { detail: { windowId: windowId, fromMinimized: true } });
              appWindow.dispatchEvent(appRestoreEvent);
-
 
         } else if (appWindow.classList.contains('true-maximized')) { 
             if (currentLastNormal.width && currentLastNormal.height) {
@@ -1270,7 +1247,6 @@
                 state.x = parseInt(currentLastNormal.left);
                 state.y = parseInt(currentLastNormal.top);
             } else {
-                // Fallback to defaults if no lastNormalState, ensuring min dimensions
                 const defaultWidth = Math.max(minDim.width, state.width || minDim.width * 1.5);
                 const defaultHeight = Math.max(minDim.height, state.height || minDim.height * 1.5);
                 appWindow.style.width = defaultWidth + 'px';
@@ -1336,7 +1312,7 @@
         if (!win) return;
         let state = appData.windowStates[windowId];
         if (!state) {
-            appData.windowStates[windowId] = {}; // Ensure state object exists
+            appData.windowStates[windowId] = {}; 
             state = appData.windowStates[windowId];
         }
         state.hiddenByUser = (win.style.display === 'none'); 
@@ -1355,23 +1331,26 @@
 
     window.restoreWindowState = function(windowId) {
         const win = getById(windowId);
-        if (!win) return;
+        // if (!win) return; // Allow state creation even if window element isn't there yet
 
-        let state = window.appData.windowStates[windowId];
+        // Ensure appData.windowStates itself is an object
+        if (typeof window.appData.windowStates !== 'object' || window.appData.windowStates === null) {
+            window.appData.windowStates = {};
+        }
+        let existingState = window.appData.windowStates[windowId];
 
-        let minDimWidth = 200; let minDimHeight = 150; // Generic defaults
+        let minDimWidth = 200; let minDimHeight = 150;
         if (window.appRegistry && window.appRegistry[windowId]) {
             minDimWidth = window.appRegistry[windowId].minWidth || minDimWidth;
             minDimHeight = window.appRegistry[windowId].minHeight || minDimHeight;
-        } else {
-            // console.warn(`restoreWindowState: No appRegistry for ${windowId} during default state creation. Using generic min dimensions.`);
         }
         
         const defaultAppWidth = (window.appRegistry[windowId]?.defaultWidth) || minDimWidth * 1.5;
         const defaultAppHeight = (window.appRegistry[windowId]?.defaultHeight) || minDimHeight * 1.5;
-        const defaultX = (Object.keys(window.appData.windowStates).length % 5) * 30 + 50; // Basic cascade
-        const defaultY = (Object.keys(window.appData.windowStates).length % 5) * 30 + 50;
-
+        // More robust default positioning: try to avoid overlap if possible, or cascade
+        const numWindows = Object.keys(window.appData.windowStates).length;
+        const defaultX = (numWindows % 10) * 30 + 50; // Cascade offset
+        const defaultY = (numWindows % 10) * 30 + 50;
 
         const defaultStateTemplate = {
             x: defaultX, y: defaultY, 
@@ -1379,86 +1358,77 @@
             maximized: false, minimized: false, 
             zIndex: highestZIndex + 1, 
             userManuallySet: false,
-            hiddenByUser: true 
+            hiddenByUser: true // Default to hidden, app opening will make it visible
         };
 
-        if (!state) {
+        if (!existingState) {
             window.appData.windowStates[windowId] = { ...defaultStateTemplate };
-            state = window.appData.windowStates[windowId];
         } else {
-            state = {
-                ...defaultStateTemplate, 
-                ...state,                
-                width: state.width || defaultStateTemplate.width,
-                height: state.height || defaultStateTemplate.height,
-                x: state.x != null ? state.x : defaultStateTemplate.x,
-                y: state.y != null ? state.y : defaultStateTemplate.y,
-                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex,
-                hiddenByUser: typeof state.hiddenByUser === 'boolean' ? state.hiddenByUser : defaultStateTemplate.hiddenByUser,
-                minimized: typeof state.minimized === 'boolean' ? state.minimized : defaultStateTemplate.minimized,
-                maximized: typeof state.maximized === 'boolean' ? state.maximized : defaultStateTemplate.maximized,
-                userManuallySet: typeof state.userManuallySet === 'boolean' ? state.userManuallySet : defaultStateTemplate.userManuallySet
+            // Merge existing state with defaults to ensure all properties are present
+            window.appData.windowStates[windowId] = {
+                ...defaultStateTemplate, // Base defaults
+                ...existingState,        // Loaded/current state overrides defaults
+                // Ensure specific properties from loaded state are correctly typed or fall back
+                zIndex: parseInt(existingState.zIndex) || defaultStateTemplate.zIndex,
+                hiddenByUser: typeof existingState.hiddenByUser === 'boolean' ? existingState.hiddenByUser : defaultStateTemplate.hiddenByUser,
+                minimized: typeof existingState.minimized === 'boolean' ? existingState.minimized : defaultStateTemplate.minimized,
+                maximized: typeof existingState.maximized === 'boolean' ? existingState.maximized : defaultStateTemplate.maximized,
+                userManuallySet: typeof existingState.userManuallySet === 'boolean' ? existingState.userManuallySet : defaultStateTemplate.userManuallySet,
+                width: existingState.width > 0 ? existingState.width : defaultStateTemplate.width,
+                height: existingState.height > 0 ? existingState.height : defaultStateTemplate.height,
+                x: existingState.x != null ? existingState.x : defaultStateTemplate.x,
+                y: existingState.y != null ? existingState.y : defaultStateTemplate.y,
             };
-            window.appData.windowStates[windowId] = state;
         }
         
-        if (state.hiddenByUser) { // Apply hidden state first
-             win.style.display = 'none';
-        } else {
-            win.style.display = 'flex';
-        }
+        const finalState = window.appData.windowStates[windowId]; // This is now guaranteed to be a complete object.
 
-        let loadedZ = parseInt(state.zIndex);
-        if (isNaN(loadedZ) || loadedZ <= 5) loadedZ = highestZIndex + 1; 
-        win.style.zIndex = loadedZ;
-        // state.zIndex is already part of the state object, no need to reassign here
-        highestZIndex = Math.max(highestZIndex, loadedZ);
-
-
-        if (state.minimized) {
-            win.classList.add('minimized');
-            win.classList.remove('true-maximized');
-        } else if (state.maximized) {
-            win.classList.add('true-maximized');
-            win.classList.remove('minimized');
-            win.style.width = '100vw';
-            win.style.height = '100vh';
-            win.style.top = '0px';
-            win.style.left = '0px';
-            if (!lastNormalStates[windowId] || !lastNormalStates[windowId].width) { // Ensure lastNormal is reasonable
-                 lastNormalStates[windowId] = {
-                    width: (state.width && state.width !== window.innerWidth ? state.width : defaultAppWidth) + 'px',
-                    height: (state.height && state.height !== window.innerHeight ? state.height : defaultAppHeight) + 'px',
-                    top: (state.y != null ? state.y : defaultY) + 'px',
-                    left: (state.x != null ? state.x : defaultX) + 'px'
-                };
-            }
-        } else { 
-            win.classList.remove('minimized');
-            win.classList.remove('true-maximized');
-            if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
-                win.style.left = state.x + 'px';
-                win.style.top = state.y + 'px';
-                win.style.width = Math.max(minDimWidth, state.width) + 'px';
-                win.style.height = Math.max(minDimHeight, state.height) + 'px';
+        if (win) { // Apply to DOM element if it exists
+            if (finalState.hiddenByUser) {
+                 win.style.display = 'none';
             } else {
-                if (!state.hiddenByUser) { 
-                    win.style.left = state.x + 'px';
-                    win.style.top = state.y + 'px';
-                    win.style.width = Math.max(minDimWidth, state.width) + 'px';
-                    win.style.height = Math.max(minDimHeight, state.height) + 'px';
-                    // state.userManuallySet remains as loaded or default (false if new)
-                }
+                win.style.display = 'flex';
             }
-        }
-        updateMinMaxButtonStates(windowId); 
-        
-        if (!state.hiddenByUser) {
-            const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
-            win.dispatchEvent(appResizeEvent);
+
+            let loadedZ = parseInt(finalState.zIndex);
+            if (isNaN(loadedZ) || loadedZ <= 5) loadedZ = highestZIndex + 1; 
+            win.style.zIndex = loadedZ;
+            highestZIndex = Math.max(highestZIndex, loadedZ);
+
+            if (finalState.minimized) {
+                win.classList.add('minimized');
+                win.classList.remove('true-maximized');
+            } else if (finalState.maximized) {
+                win.classList.add('true-maximized');
+                win.classList.remove('minimized');
+                win.style.width = '100vw';
+                win.style.height = '100vh';
+                win.style.top = '0px';
+                win.style.left = '0px';
+                if (!lastNormalStates[windowId] || !lastNormalStates[windowId].width) {
+                     lastNormalStates[windowId] = {
+                        width: (finalState.width && finalState.width !== window.innerWidth ? finalState.width : defaultAppWidth) + 'px',
+                        height: (finalState.height && finalState.height !== window.innerHeight ? finalState.height : defaultAppHeight) + 'px',
+                        top: (finalState.y != null ? finalState.y : defaultY) + 'px',
+                        left: (finalState.x != null ? finalState.x : defaultX) + 'px'
+                    };
+                }
+            } else { 
+                win.classList.remove('minimized');
+                win.classList.remove('true-maximized');
+                win.style.left = finalState.x + 'px';
+                win.style.top = finalState.y + 'px';
+                win.style.width = Math.max(minDimWidth, finalState.width) + 'px';
+                win.style.height = Math.max(minDimHeight, finalState.height) + 'px';
+            }
+            updateMinMaxButtonStates(windowId); 
+            
+            if (!finalState.hiddenByUser) { 
+                const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
+                win.dispatchEvent(appResizeEvent);
+            }
         }
     };
-
 
     window.saveData = function() { 
         try {
@@ -1479,47 +1449,36 @@
             customBgColor: null,
         };
 
-        // Initialize global appData with OS defaults first
         window.appData = { 
             ...defaultOSData,
-            // App-specific data will be merged or initialized by apps themselves
-            ...(window.appData || {}) // Preserve any pre-existing appData from other scripts (though unlikely here)
+            ...(window.appData || {}) 
         };
-
 
         if (storedData) {
             try {
                 const parsedStoredData = JSON.parse(storedData);
-                // Merge OS-level data carefully
                 window.appData.windowStates = { ...defaultOSData.windowStates, ...(parsedStoredData.windowStates || {}) };
                 window.appData.iconPositions = { ...defaultOSData.iconPositions, ...(parsedStoredData.iconPositions || {}) };
                 window.appData.customBgImage = parsedStoredData.customBgImage || defaultOSData.customBgImage;
                 window.appData.customBgColor = parsedStoredData.customBgColor || defaultOSData.customBgColor;
                 
-                // For app-specific data, merge it if it exists in parsedStoredData
                 for (const key in parsedStoredData) {
                     if (parsedStoredData.hasOwnProperty(key) && !(key in defaultOSData)) {
-                        // If appData already has this key (e.g., from an app's default init), merge, otherwise assign
-                        if (window.appData[key] && typeof window.appData[key] === 'object' && typeof parsedStoredData[key] === 'object') {
-                            window.appData[key] = { ...window.appData[key], ...parsedStoredData[key] };
+                        if (window.appData[key] && typeof window.appData[key] === 'object' && typeof parsedStoredData[key] === 'object' && !Array.isArray(window.appData[key]) && !Array.isArray(parsedStoredData[key])) {
+                           window.appData[key] = { ...window.appData[key], ...parsedStoredData[key] }; 
                         } else {
-                            window.appData[key] = parsedStoredData[key];
+                            window.appData[key] = parsedStoredData[key]; 
                         }
                     }
                 }
-
             } catch (error) {
                 console.error("Error parsing stored OS data. Reverting OS parts to defaults.", error);
-                // Re-apply defaults for OS parts, apps will initialize their own sections
                 window.appData.windowStates = { ...defaultOSData.windowStates };
                 window.appData.iconPositions = { ...defaultOSData.iconPositions };
                 window.appData.customBgImage = defaultOSData.customBgImage;
                 window.appData.customBgColor = defaultOSData.customBgColor;
             }
         } 
-        // If no storedData, window.appData already holds defaultOSData.
-        // App-specific data sections (like window.appData.xpTracker) will be created by
-        // each app's get<AppName>Data() function if they don't exist.
     }
     
     window.openModal = function(modalId) { 
