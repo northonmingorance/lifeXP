@@ -71,6 +71,7 @@
 <script>
     const CAPTURE_APP_STORAGE_KEY = 'captureAppData_v1.0.1'; 
     const COMMON_RESOLUTIONS_CAPTURE = [
+        { label: "Default", width: null, height: null }, 
         { label: "320x240 (QVGA)", width: 320, height: 240 },
         { label: "640x480 (VGA)", width: 640, height: 480 },
         { label: "800x600 (SVGA)", width: 800, height: 600 },
@@ -194,7 +195,7 @@
                 if (sessionStorage.getItem('captureAppFirstStream') === null) {
                     sessionStorage.setItem('captureAppFirstStream', 'true');
                     isResolutionMenuInteractionDelayed = true;
-                    console.log("Capture App: Resolution interaction delay started (25s)."); // Added log
+                    console.log("Capture App: Resolution interaction delay started (5s)."); // Added log
                     updateResolutionItemsStateUI(true); 
                     if(resolutionMenuDelayTimerId) clearTimeout(resolutionMenuDelayTimerId);
                     resolutionMenuDelayTimerId = setTimeout(() => {
@@ -202,7 +203,7 @@
                         updateResolutionItemsStateUI(false);
                         resolutionMenuDelayTimerId = null;
                         console.log("Capture App: Resolution interaction delay ended."); // Added log
-                    }, 25000); 
+                    }, 5000); 
                 } else {
                     isResolutionMenuInteractionDelayed = false;
                     updateResolutionItemsStateUI(false);
