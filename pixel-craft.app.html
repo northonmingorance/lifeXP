@@ -46,8 +46,8 @@
             File
             <div class="pixel-dropdown-content">
                 <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
-                <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear Canvas</div>
-                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas Size</div>
+                <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear canvas</div>
+                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas size</div>
             </div>
         </div>
     </div>
@@ -101,13 +101,13 @@
 
 
 <script>
-    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.3'; 
+    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.4'; 
     let pixelCraftData = {
         currentColor: '#000000',
         currentTool: 'pencil',
         pixelSize: 1, 
-        canvasWidth: 600, // Updated default
-        canvasHeight: 400, // Updated default
+        canvasWidth: 600, 
+        canvasHeight: 400, 
         canvasContent: null 
     };
 
@@ -143,10 +143,10 @@
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                pixelCraftData = { ...pixelCraftData, ...parsed }; // Spread defaults first
+                pixelCraftData = { ...pixelCraftData, ...parsed }; 
                 pixelCraftData.pixelSize = parseInt(pixelCraftData.pixelSize) || 1;
-                pixelCraftData.canvasWidth = parseInt(pixelCraftData.canvasWidth) || 600; // Use updated default
-                pixelCraftData.canvasHeight = parseInt(pixelCraftData.canvasHeight) || 400; // Use updated default
+                pixelCraftData.canvasWidth = parseInt(pixelCraftData.canvasWidth) || 600; 
+                pixelCraftData.canvasHeight = parseInt(pixelCraftData.canvasHeight) || 400; 
             } catch (e) {
                 console.error("Error loading Pixel Craft data, using defaults.", e);
             }
@@ -236,10 +236,9 @@
         const canvasEl = DOM_PC.canvas;
         const body = DOM_PC.pixelWindowBody;
         const menu = DOM_PC.menuBar;
-        const toolbarEl = DOM_PC.pixelWindowBody.querySelector('.pixel-toolbar'); // Renamed to avoid conflict
+        const toolbarEl = DOM_PC.pixelWindowBody.querySelector('.pixel-toolbar'); 
 
         if (!container || !canvasEl || !body || !menu || !toolbarEl) {
-            // console.warn("Pixel Craft: One or more layout elements missing for resize.");
             return;
         }
         
@@ -337,16 +336,15 @@
             if (x0 === x1 && y0 === y1) break;
             let e2 = 2 * err;
             if (e2 >= dy) { 
-                if (x0 === x1 && sx !==0) break; // Avoid infinite loop if stuck on x-axis and not moving
+                if (x0 === x1 && sx !==0 && dx !== 0) break; // Avoid infinite loop if stuck on x-axis and not moving
                 err += dy;
                 x0 += sx;
             }
             if (e2 <= dx) { 
-                if (y0 === y1 && sy !==0) break; // Avoid infinite loop if stuck on y-axis and not moving
+                if (y0 === y1 && sy !==0 && dy !== 0) break; // Avoid infinite loop if stuck on y-axis and not moving
                 err += dx;
                 y0 += sy;
             }
-             // Safety break for unforeseen conditions, though Bresenham should terminate.
             if (Math.abs(x0 - x1) > dx + 1 || Math.abs(y0 - y1) > Math.abs(dy) + 1) {
                 console.warn("DrawLine safety break triggered");
                 break;
@@ -447,7 +445,7 @@
         closePixelMenus();
     }
     
-    function openPixelCanvasSizePrompt() { // Renamed from openPixelCanvasSizeModal
+    function openPixelCanvasSizePrompt() { 
         DOM_PC.pixelNewCanvasWidthInput.value = pixelCraftData.canvasWidth;
         DOM_PC.pixelNewCanvasHeightInput.value = pixelCraftData.canvasHeight;
         DOM_PC.pixelCanvasSizeModal.style.display = 'flex';
@@ -458,8 +456,8 @@
         const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value);
         const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
 
-        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 8 || newWidth > 512 || newHeight < 8 || newHeight > 512) {
-            alert("Invalid canvas dimensions. Width and height must be numbers between 8 and 512.");
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
+            alert("Invalid canvas dimensions. Width and height must be numbers between 50 and 2000.");
             return;
         }
         DOM_PC.pixelCanvasSizeModal.style.display = 'none';
@@ -467,12 +465,11 @@
     }
 
     function executePixelCanvasResize() {
-        const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value); // Get values again
+        const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value); 
         const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
 
-        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 8 || newWidth > 512 || newHeight < 8 || newHeight > 512) {
-            // This check is redundant if handleSavePixelCanvasSize already validated, but good for safety
-            alert("Invalid canvas dimensions. Width and height must be numbers between 8 and 512.");
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
+            alert("Invalid canvas dimensions. Width and height must be numbers between 50 and 2000.");
             DOM_PC.confirmPixelResizeModal.style.display = 'none';
             return;
         }
