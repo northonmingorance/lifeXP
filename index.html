@@ -463,9 +463,9 @@
 
 <script>
     "use strict";
-    window.YOUTUBE_API_KEY = ""; // Made global for app access
-    window.GEMINI_API_KEY = "";  // Made global for app access
-    const STORAGE_KEY = 'lifeXpOS_v1.1.0'; // Updated version
+    window.YOUTUBE_API_KEY = ""; 
+    window.GEMINI_API_KEY = "";  
+    const STORAGE_KEY = 'lifeXpOS_v1.1.0'; 
     const ICON_GRID_SIZE = 25;
     const STANDARD_COLORS = [
         { name: 'Black', value: '#000000' }, { name: 'Silver', value: '#C0C0C0' },
@@ -482,7 +482,7 @@
         { name: 'Indigo', value: '#4B0082' }, { name: 'Violet', value: '#EE82EE' },
         { name: 'Coral', value: '#FF7F50' }, { name: 'Sky Blue', value: '#87CEEB' }
     ];
-    const MODAL_IDS_OS = { // Renamed to avoid conflict with app modals
+    const MODAL_IDS_OS = { 
         CHANGE_BG_IMAGE: 'changeBgImageModal'
     };
     const firebaseConfig = {
@@ -501,7 +501,7 @@
     };
     remoteConfig.settings.minimumFetchIntervalMillis = 3600000;
 
-    window.getById = (id) => document.getElementById(id); // Global helper
+    window.getById = (id) => document.getElementById(id); 
 
     const DOM = {
         desktopIconsContainer: getById('desktopIconsContainer'),
@@ -512,17 +512,16 @@
         bgImageUrlInput: getById('bgImageUrlInput'),
         applyBgImageUrlBtn: getById('applyBgImageUrlBtn'),
         bgColorSwatchesContainer: getById('bgColorSwatchesContainer'),
-        modalCloseButtons: null // Will be populated after apps load their modals
+        modalCloseButtons: null 
     };
     
-    window.appData = { // Global app data container
+    window.appData = { 
         windowStates: {},
         iconPositions: {},
         customBgImage: null,
         customBgColor: null,
-        // App-specific data will be added here, e.g., appData.xpTracker = {...}
     };
-    window.appRegistry = {}; // Global app registry
+    window.appRegistry = {}; 
 
     let lastNormalStates = {};
     let highestZIndex = 10;
@@ -533,15 +532,13 @@
     let activeDragIcon = null;
     let iconDragOffsetX, iconDragOffsetY;
 
-    // --- App Loading ---
     const APPS_TO_LOAD = [
         'xp-tracker.app.html',
         'jotter.app.html',
         'play-jockey.app.html',
         'gemini-chat.app.html',
         'pixel-craft.app.html',
-        'capture.app.html',
-        // Add other app file names here: 'another-app.app.html'
+        'capture.app.html'
     ];
 
     async function loadApp(appFilename) {
@@ -555,20 +552,17 @@
             const parser = new DOMParser();
             const appDoc = parser.parseFromString(appHtmlContent, 'text/html');
 
-            // Inject Styles
             appDoc.querySelectorAll('style').forEach(styleTag => {
                 document.head.appendChild(styleTag.cloneNode(true));
             });
 
-            // Inject Icon Template
             const iconTemplate = appDoc.querySelector('template[id$="IconTemplate"]');
             if (iconTemplate) {
                 const iconNode = iconTemplate.content.firstElementChild.cloneNode(true);
                 DOM.desktopIconsContainer.appendChild(iconNode);
-                initDesktopIconBehavior(iconNode); // Initialize behavior for this specific icon
+                initDesktopIconBehavior(iconNode); 
             }
 
-            // Inject Window Template
             const windowTemplate = appDoc.querySelector('template[id$="WindowTemplate"]');
             let appWindowId = null;
             if (windowTemplate) {
@@ -577,43 +571,48 @@
                 appWindowId = windowNode.id;
             }
             
-            // Inject Modal Templates (if any)
             appDoc.querySelectorAll('template[id$="ModalsTemplate"]').forEach(modalsTemplate => {
                  const modalsFragment = modalsTemplate.content.cloneNode(true);
                  document.body.appendChild(modalsFragment);
             });
-             // Re-query all modal close buttons after new modals might have been added
+            
             DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
             DOM.modalCloseButtons.forEach(button => {
-                // Remove existing listeners to prevent duplicates if an app re-adds its modals
-                // This is a bit broad; ideally, manage listeners more granularly or ensure apps don't re-add.
-                // For now, let's assume apps add their modals once via their setup.
-                // If an app *re-runs* its setup that adds modals, this could be an issue.
-                // A better approach: app script itself attaches listeners to its own modals.
-                // The OS modal closing logic should primarily handle OS-level modals like background changer.
-                // For now, let's re-attach to all.
-                button.removeEventListener('click', handleModalCloseClick); // Named function for removal
+                button.removeEventListener('click', handleModalCloseClick); 
                 button.addEventListener('click', handleModalCloseClick);
             });
 
-
-            // Execute Script
             const scriptTag = appDoc.querySelector('script');
             if (scriptTag) {
                 const script = document.createElement('script');
                 script.textContent = scriptTag.textContent;
-                document.body.appendChild(script); // This will execute the app's IIFE
-                // The app's script should call its setup function which registers itself
+                document.body.appendChild(script); 
+                
+                // Call the app's setup function (e.g., window.setupXPTrackerApp)
+                const appSetupFunctionName = `setup${appWindowId.replace('Window', '')}App`; // e.g. setupXpMainWindowApp -> setupXpTrackerApp
+                // A more generic way would be for the app script to register its setup function
+                // For now, derive it, but this is brittle.
+                // A better pattern: app script does `window.currentAppSetup = function() { ... }` then OS calls `window.currentAppSetup()`.
+                // Or, app script directly calls a global OS registration function.
+                // For simplicity, we'll assume a naming convention for now or that the app calls its own setup.
+                // The current app files already call their setup function from within their IIFE after defining it globally.
+                // The app script itself should call its setup function.
+                // The main OS should ensure the app's setup function (e.g., window.setupXPTrackerApp) is called.
+                // The app's script now exposes its setup function globally.
+                const setupFnName = `setup${appDoc.title.replace(/\s+/g, '')}App`; // e.g. setupPixelCraftApp from <title>Pixel Craft</title>
+                // This is still brittle. Let's assume the app's IIFE makes its setup function available, e.g. window.setupAppName.
+                // The app files are already structured to expose `window.setupAppName`.
+                // The app's script will call its own setup. The OS `loadApp` just needs to ensure the script runs.
+                // The app's `setup<AppName>App` function will handle DOM population and registration.
             }
             
-            // After script execution, the app should have registered itself.
-            // Now, initialize its window interactions.
             if (appWindowId && window.appRegistry[appWindowId]) {
+                // The app's own setup function (called when its script runs) should handle its internal init.
+                // The OS needs to ensure the window state and interactions are set up AFTER the app has put its content in.
                 initWindowInteractions(appWindowId);
-                restoreWindowState(appWindowId);
+                restoreWindowState(appWindowId); // This will also apply styles based on state
                 updateMinMaxButtonStates(appWindowId);
             }
-
 
         } catch (error) {
             console.error(`Error loading app ${appFilename}:`, error);
@@ -625,25 +624,11 @@
         if (modalId) closeModal(modalId);
     }
 
-
     async function loadAllApps() {
         for (const appFilename of APPS_TO_LOAD) {
             await loadApp(appFilename);
         }
-        // After all apps are potentially loaded and their icons/windows added
-        // Re-initialize all desktop icons in case some were added dynamically
-        // initDesktopIcons(); // This was too broad, initDesktopIconBehavior is per icon.
-        // Re-initialize window interactions for all windows
-        // Object.keys(window.appData.windowStates).forEach(windowId => {
-        //     const winEl = getById(windowId);
-        //     if (winEl) { // Check if element exists
-        //         initWindowInteractions(windowId);
-        //         restoreWindowState(windowId);
-        //         updateMinMaxButtonStates(windowId);
-        //     }
-        // });
     }
-
 
     function applyCurrentBackgroundStyle() {
         if (appData.customBgColor) {
@@ -659,34 +644,31 @@
     }
 
     async function initOS() {
-        loadData(); // Load OS state first
+        loadData(); 
         applyCurrentBackgroundStyle();
         populateColorSwatches();
         
-        await loadAllApps(); // Load all apps defined in APPS_TO_LOAD
+        await loadAllApps(); 
 
-        // Initialize OS-level event listeners
         addEventListenersOS();
         
-        let maxLoadedWindowZ = highestZIndex;
+        let maxLoadedWindowZ = highestZIndex; // Start with current highestZIndex
         Object.values(appData.windowStates).forEach(state => {
             if (state && state.zIndex) {
                 maxLoadedWindowZ = Math.max(maxLoadedWindowZ, parseInt(state.zIndex));
             }
         });
-        highestZIndex = maxLoadedWindowZ;
+        highestZIndex = maxLoadedWindowZ; // Update global highestZIndex
     }
 
-
-    function initDesktopIconBehavior(iconElement) { // Renamed and focused
+    function initDesktopIconBehavior(iconElement) { 
         const iconId = iconElement.id;
+        const windowId = iconElement.dataset.windowId; 
+
         if (appData.iconPositions && appData.iconPositions[iconId]) {
             iconElement.style.left = appData.iconPositions[iconId].x + 'px';
             iconElement.style.top = appData.iconPositions[iconId].y + 'px';
         } else {
-            // Default positioning logic if not found in loaded data
-            // This might be complex if icons are dynamically added and need to avoid overlap
-            // For now, let's assume apps provide a default in their template or it's 0,0
             const defaultX = parseInt(iconElement.style.left || "0");
             const defaultY = parseInt(iconElement.style.top || "0");
             const { x: finalX, y: finalY } = findNonCollidingPosition(iconElement, defaultX, defaultY);
@@ -697,8 +679,15 @@
         }
         iconElement.addEventListener('mousedown', handleIconMouseDown);
         iconElement.addEventListener('dblclick', handleIconDoubleClick);
-    }
 
+        // Preemptively ensure a basic window state exists for the associated window
+        if (windowId && !appData.windowStates[windowId]) {
+            // This call to restoreWindowState will create a default state if none exists.
+            // It might use generic min dimensions if the app hasn't registered its specific ones yet,
+            // but the state object itself will be created.
+            restoreWindowState(windowId);
+        }
+    }
 
     function handleIconMouseDown(e) {
         if (e.button !== 0 || activeDragWindow || activeResizeWindow) return;
@@ -711,7 +700,7 @@
         iconDragOffsetX = e.clientX - activeDragIcon.offsetLeft;
         iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
         activeDragIcon.style.cursor = 'grabbing';
-        activeDragIcon.style.zIndex = (highestZIndex + 1).toString(); // Ensure icon is on top while dragging
+        activeDragIcon.style.zIndex = (highestZIndex + 1).toString(); 
         document.addEventListener('mousemove', handleIconMouseMove);
         document.addEventListener('mouseup', handleIconMouseUp);
         e.preventDefault();
@@ -803,7 +792,7 @@
 
     function handleIconMouseUp() {
         if (!activeDragIcon) return;
-        activeDragIcon.style.zIndex = '5'; // Reset z-index
+        activeDragIcon.style.zIndex = '5'; 
         let finalX = activeDragIcon.offsetLeft;
         let finalY = activeDragIcon.offsetTop;
 
@@ -836,34 +825,36 @@
         const iconElement = e.currentTarget;
         const windowId = iconElement.dataset.windowId;
         const windowElement = getById(windowId);
-        if (!windowElement) return;
+        if (!windowElement) {
+            console.error(`Window element ${windowId} not found on double click.`);
+            return;
+        }
 
-        let state = appData.windowStates[windowId];
-        if (!state) { // Should have been created by restoreWindowState if app loaded correctly
+        let state = window.appData.windowStates[windowId];
+        if (!state) { 
             console.warn(`No state for window ${windowId} on double click. Attempting to restore.`);
-            restoreWindowState(windowId);
-            state = appData.windowStates[windowId];
-            if(!state) {
-                console.error(`Still no state for window ${windowId} after attempt to restore.`);
+            restoreWindowState(windowId); 
+            state = window.appData.windowStates[windowId]; // Re-fetch state after restore attempt
+            if(!state) { // If still no state, something is wrong with restoreWindowState or appRegistry for this ID
+                console.error(`Still no state for window ${windowId} after attempt to restore. Check appRegistry and restoreWindowState logic.`);
                 return;
             }
         }
 
         if (state.hiddenByUser || windowElement.style.display === 'none') {
             state.hiddenByUser = false;
-            state.minimized = false; // Ensure not minimized if was hidden
+            state.minimized = false; 
             windowElement.style.display = 'flex';
             windowElement.classList.remove('minimized');
-            restoreWindowState(windowId); // Apply stored/default size and pos
-            // Dispatch an event that the app might listen to for "first open" or "restore from hidden"
+            restoreWindowState(windowId); 
             const appOpenEvent = new CustomEvent('appopen', { detail: { windowId: windowId, fromHidden: true } });
             windowElement.dispatchEvent(appOpenEvent);
 
         } else if (state.minimized || windowElement.classList.contains('minimized')) {
-            maximizeWindow(windowId); // This handles restore from minimized
+            maximizeWindow(windowId); 
         }
         bringToFront(windowElement);
-        saveWindowState(windowId);
+        saveWindowState(windowId); // Save state after any changes
     }
 
     function populateColorSwatches() {
@@ -881,7 +872,7 @@
         });
     }
 
-    window.bringToFront = function(windowElement) { // Global
+    window.bringToFront = function(windowElement) { 
         if (!windowElement) return;
         highestZIndex++;
         windowElement.style.zIndex = highestZIndex;
@@ -890,7 +881,7 @@
         appData.windowStates[windowId].zIndex = highestZIndex;
     }
 
-    window.initWindowInteractions = function(windowId) { // Global
+    window.initWindowInteractions = function(windowId) { 
         const windowElement = getById(windowId);
         if (!windowElement) return;
         const titleBarElement = windowElement.querySelector('.title-bar');
@@ -902,7 +893,7 @@
              if (e.target.closest('.desktop-icon') || e.target.closest('.context-modal') || e.target.closest('.xp-menu-bar')) return;
             if (e.target === windowElement ||
                 (titleBarElement.contains(e.target) && !e.target.closest('button')) ||
-                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, iframe, canvas'))) { // Added canvas
+                (windowElement.querySelector('.window-body')?.contains(e.target) && !e.target.closest('button, input, select, textarea, .resize-handle, iframe, canvas'))) { 
                  bringToFront(windowElement);
             }
         }, true);
@@ -915,15 +906,13 @@
             activeDragWindow.classList.add('disable-selection');
             const iframe = activeDragWindow.querySelector('iframe');
             if (iframe) iframe.style.pointerEvents = 'none';
-            const canvasEl = activeDragWindow.querySelector('canvas'); // For apps like Pixel Craft
+            const canvasEl = activeDragWindow.querySelector('canvas'); 
             if (canvasEl) canvasEl.style.pointerEvents = 'none';
-
 
             document.addEventListener('mousemove', doDrag);
             document.addEventListener('mouseup', stopDragOrResize);
             bringToFront(windowElement);
             
-            // Close app-specific menus if any (app should handle this on its own mousedown)
             const closeAppMenusEvent = new CustomEvent('osdragstart', { detail: { windowId: windowId }});
             windowElement.dispatchEvent(closeAppMenusEvent);
         });
@@ -941,7 +930,6 @@
                 if (iframe) iframe.style.pointerEvents = 'none';
                 const canvasEl = activeResizeWindow.querySelector('canvas');
                 if (canvasEl) canvasEl.style.pointerEvents = 'none';
-
 
                 document.addEventListener('mousemove', doResize);
                 document.addEventListener('mouseup', stopDragOrResize);
@@ -989,21 +977,20 @@
             appData.windowStates[windowId].userManuallySet = true;
         }
         
-        // Dispatch a custom event that apps can listen to for their internal resizing logic
         const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
         activeResizeWindow.dispatchEvent(appResizeEvent);
     }
     
-    window.getMinWindowDimensions = function(windowId) { // Global
+    window.getMinWindowDimensions = function(windowId) { 
         if (window.appRegistry && window.appRegistry[windowId]) {
             return {
                 width: window.appRegistry[windowId].minWidth || 200,
                 height: window.appRegistry[windowId].minHeight || 150
             };
         }
-        return { width: 200, height: 150 }; // Generic fallback
+        // console.warn(`getMinWindowDimensions: No appRegistry entry for ${windowId}. Using generic fallback.`);
+        return { width: 200, height: 150 }; 
     }
-
 
     function stopDragOrResize() {
         let windowToSaveState = null;
@@ -1038,7 +1025,7 @@
         document.removeEventListener('mouseup', stopDragOrResize);
     }
 
-    window.setWindowDefaults = function(windowId, isBrowserResize = false) { // Global
+    window.setWindowDefaults = function(windowId, isBrowserResize = false) { 
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
 
@@ -1051,36 +1038,47 @@
         }
 
         const state = appData.windowStates[windowId];
-        if (!state) return;
+        if (!state) {
+            // This case should ideally be handled by restoreWindowState creating a default state.
+            // If we reach here and state is still null, it's an issue.
+            // console.warn(`setWindowDefaults: No state found for ${windowId}. Attempting to restore first.`);
+            restoreWindowState(windowId); // Try to create/restore state
+            const newState = appData.windowStates[windowId];
+            if (!newState) {
+                // console.error(`setWindowDefaults: Failed to restore state for ${windowId}. Cannot set defaults.`);
+                return;
+            }
+             // Fallthrough to use the newly created/restored state
+        }
+
 
         const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
         const hasValidSavedPosition = state.x != null && state.y != null;
 
         const minDim = getMinWindowDimensions(windowId);
-        // Default placement logic (can be improved for cascading or centering)
-        let defaultWidth = minDim.width * 1.5 > window.innerWidth ? minDim.width : minDim.width * 1.5;
-        let defaultHeight = minDim.height * 1.5 > window.innerHeight ? minDim.height : minDim.height * 1.5;
+        let defaultWidth = (window.appRegistry[windowId]?.defaultWidth) || minDim.width * 1.5;
+        let defaultHeight = (window.appRegistry[windowId]?.defaultHeight) || minDim.height * 1.5;
         defaultWidth = Math.max(minDim.width, defaultWidth);
         defaultHeight = Math.max(minDim.height, defaultHeight);
 
-        let defaultOffsetX = Math.floor(Math.random() * (window.innerWidth - defaultWidth) / 2) + 20;
-        let defaultOffsetY = Math.floor(Math.random() * (window.innerHeight - defaultHeight) / 2) + 20;
-        defaultOffsetX = Math.max(10, defaultOffsetX);
-        defaultOffsetY = Math.max(10, defaultOffsetY);
+        // Simple default placement, can be improved (e.g., cascade, center available space)
+        let defaultOffsetX = (Object.keys(appData.windowStates).length % 5) * 30 + 50;
+        let defaultOffsetY = (Object.keys(appData.windowStates).length % 5) * 30 + 50;
 
 
         if (isBrowserResize || !state.userManuallySet || !hasValidSavedSize || !hasValidSavedPosition) {
-            let newWidth = defaultWidth;
-            let newHeight = defaultHeight;
-
-            let newLeft = defaultOffsetX;
-            let newTop = defaultOffsetY;
+            let newWidth = state.userManuallySet && hasValidSavedSize ? state.width : defaultWidth;
+            let newHeight = state.userManuallySet && hasValidSavedSize ? state.height : defaultHeight;
+            let newLeft = state.userManuallySet && hasValidSavedPosition ? state.x : defaultOffsetX;
+            let newTop = state.userManuallySet && hasValidSavedPosition ? state.y : defaultOffsetY;
 
             // Ensure it fits viewport, adjust if necessary
             if (newLeft + newWidth > window.innerWidth) newLeft = Math.max(10, window.innerWidth - newWidth - 10);
             if (newTop + newHeight > window.innerHeight) newTop = Math.max(10, window.innerHeight - newHeight - 10);
-            if (newWidth > window.innerWidth - 20) newWidth = window.innerWidth - 20;
-            if (newHeight > window.innerHeight - 20) newHeight = window.innerHeight - 20;
+            if (newWidth > window.innerWidth - 20) newWidth = Math.max(minDim.width, window.innerWidth - 20);
+            if (newHeight > window.innerHeight - 20) newHeight = Math.max(minDim.height, window.innerHeight - 20);
+            newLeft = Math.max(10, newLeft); // Ensure it's not off-screen left
+            newTop = Math.max(10, newTop);   // Ensure it's not off-screen top
 
 
             appWindow.style.width = newWidth + 'px';
@@ -1092,13 +1090,15 @@
             state.height = newHeight;
             state.x = newLeft;
             state.y = newTop;
-            state.userManuallySet = false;
+            if (!isBrowserResize) { // Only mark as not user-set if OS is setting defaults initially
+                state.userManuallySet = false;
+            }
         }
         const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
         appWindow.dispatchEvent(appResizeEvent);
     }
 
-    function addEventListenersOS() { // Renamed to avoid conflict
+    function addEventListenersOS() { 
         document.body.addEventListener('contextmenu', function(event) {
             if (event.target === document.body || event.target === DOM.desktopIconsContainer) {
                 event.preventDefault();
@@ -1111,7 +1111,7 @@
         DOM.uploadBgImageBtn.addEventListener('click', function() {
             const file = DOM.newBgImageInput.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) { // 5MB
+                if (file.size > 5 * 1024 * 1024) { 
                     alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
                 }
                 const reader = new FileReader();
@@ -1136,7 +1136,7 @@
             const imageUrl = DOM.bgImageUrlInput.value.trim();
             if (imageUrl) {
                 try {
-                    new URL(imageUrl); // Basic validation
+                    new URL(imageUrl); 
                     document.body.style.backgroundColor = '';
                     document.body.style.backgroundImage = `url('${imageUrl}')`;
                     appData.customBgImage = imageUrl;
@@ -1165,17 +1165,15 @@
             }
         });
         
-        // Initial attachment for OS modals
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .xp-button[data-modal-id]');
         DOM.modalCloseButtons.forEach(button => {
              button.addEventListener('click', handleModalCloseClick);
         });
 
-
         window.addEventListener('resize', () => {
             Object.keys(appData.windowStates).forEach(windowId => {
                  const windowEl = getById(windowId);
-                 if (windowEl && windowEl.style.display !== 'none') { // Only adjust visible windows
+                 if (windowEl && windowEl.style.display !== 'none') { 
                     setWindowDefaults(windowId, true);
                  }
             });
@@ -1183,12 +1181,11 @@
         });
 
         document.addEventListener('click', (e) => {
-            // Close context menus or dropdowns if click is outside
-            // This might be handled by individual apps or a more generic OS menu manager later
+            // Generic click outside to close OS-level menus if any are added later
         });
     }
 
-    window.minimizeWindow = function(windowId) { // Global
+    window.minimizeWindow = function(windowId) { 
         const appWindow = getById(windowId);
         if (!appWindow || appWindow.classList.contains('minimized')) return;
         const state = appData.windowStates[windowId];
@@ -1197,6 +1194,7 @@
         state.minimized = true;
         if (appWindow.classList.contains('true-maximized')) {
             state.wasMaximizedBeforeMinimize = true;
+            // Preserve last normal state if it exists, otherwise state already has dimensions
             if (lastNormalStates[windowId]) {
                 state.width = parseInt(lastNormalStates[windowId].width);
                 state.height = parseInt(lastNormalStates[windowId].height);
@@ -1213,7 +1211,6 @@
         appWindow.classList.remove('true-maximized');
         appWindow.classList.add('minimized');
         
-        // Dispatch an event that the app might listen to
         const appMinimizeEvent = new CustomEvent('appminimize', { detail: { windowId: windowId }});
         appWindow.dispatchEvent(appMinimizeEvent);
 
@@ -1221,11 +1218,16 @@
         saveWindowState(windowId);
     }
 
-    window.maximizeWindow = function(windowId) { // Global
+    window.maximizeWindow = function(windowId) { 
         const appWindow = getById(windowId);
         if (!appWindow) return;
-        const state = appData.windowStates[windowId];
-        if (!state) return;
+        let state = appData.windowStates[windowId];
+        if (!state) { // Should not happen if restoreWindowState was called
+            restoreWindowState(windowId);
+            state = appData.windowStates[windowId];
+            if (!state) return;
+        }
+
 
         const isMinimized = appWindow.classList.contains('minimized');
         let currentLastNormal = lastNormalStates[windowId] || {};
@@ -1246,18 +1248,18 @@
                 appWindow.classList.add('true-maximized');
                 state.maximized = true;
             } else {
+                // Use dimensions from state (which were set before minimize) or lastNormalState
                 appWindow.style.width = Math.max(minDim.width, state.width || parseInt(currentLastNormal.width) || minDim.width * 1.5) + 'px';
                 appWindow.style.height = Math.max(minDim.height, state.height || parseInt(currentLastNormal.height) || minDim.height * 1.5) + 'px';
                 appWindow.style.left = (state.x != null ? state.x : (parseInt(currentLastNormal.left) || 50)) + 'px';
                 appWindow.style.top = (state.y != null ? state.y : (parseInt(currentLastNormal.top) || 50)) + 'px';
                 state.maximized = false;
             }
-             // Dispatch an event that the app might listen to for "restore"
              const appRestoreEvent = new CustomEvent('apprestore', { detail: { windowId: windowId, fromMinimized: true } });
              appWindow.dispatchEvent(appRestoreEvent);
 
 
-        } else if (appWindow.classList.contains('true-maximized')) { // Restore down
+        } else if (appWindow.classList.contains('true-maximized')) { 
             if (currentLastNormal.width && currentLastNormal.height) {
                 appWindow.style.width = currentLastNormal.width;
                 appWindow.style.height = currentLastNormal.height;
@@ -1269,21 +1271,19 @@
                 state.y = parseInt(currentLastNormal.top);
             } else {
                 // Fallback to defaults if no lastNormalState, ensuring min dimensions
-                const defaultWidth = Math.max(minDim.width, minDim.width * 1.5);
-                const defaultHeight = Math.max(minDim.height, minDim.height * 1.5);
+                const defaultWidth = Math.max(minDim.width, state.width || minDim.width * 1.5);
+                const defaultHeight = Math.max(minDim.height, state.height || minDim.height * 1.5);
                 appWindow.style.width = defaultWidth + 'px';
                 appWindow.style.height = defaultHeight + 'px';
-                appWindow.style.left = '50px';
-                appWindow.style.top = '50px';
-                state.width = defaultWidth;
-                state.height = defaultHeight;
-                state.x = 50;
-                state.y = 50;
+                appWindow.style.left = (state.x != null ? state.x : 50) + 'px';
+                appWindow.style.top = (state.y != null ? state.y : 50) + 'px';
+                state.width = defaultWidth; state.height = defaultHeight;
+                state.x = (state.x != null ? state.x : 50); state.y = (state.y != null ? state.y : 50);
             }
             appWindow.classList.remove('true-maximized');
             state.maximized = false;
             state.userManuallySet = true;
-        } else { // Maximize
+        } else { 
             lastNormalStates[windowId] = {
                 width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                 height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
@@ -1296,21 +1296,20 @@
             appWindow.style.left = '0px';
             appWindow.classList.add('true-maximized');
             state.maximized = true;
-            state.userManuallySet = false; // Maximized is not a user-set size/pos
+            state.userManuallySet = false; 
         }
         updateMinMaxButtonStates(windowId);
         saveWindowState(windowId);
         
-        // Dispatch resize for app content adjustments
         const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
         appWindow.dispatchEvent(appResizeEvent);
     }
 
-    window.updateMinMaxButtonStates = function(windowId) { // Global
+    window.updateMinMaxButtonStates = function(windowId) { 
         const win = getById(windowId);
         if (!win) return;
         const minimizeBtn = win.querySelector('.title-bar-controls button[title="Minimize"]');
-        const maximizeBtn = win.querySelector('.title-bar-controls button[title*="Maximize"], .title-bar-controls button[title*="Restore"]'); // More flexible selector
+        const maximizeBtn = win.querySelector('.title-bar-controls button[title*="Maximize"], .title-bar-controls button[title*="Restore"]'); 
         
         if (!minimizeBtn || !maximizeBtn) return;
 
@@ -1321,26 +1320,26 @@
         maximizeBtn.disabled = false; 
 
         if (isMinimized) {
-            maximizeBtn.innerHTML = '1'; // Restore symbol
+            maximizeBtn.innerHTML = '1'; 
             maximizeBtn.title = "Restore";
         } else if (isTrueMaximized) {
-            maximizeBtn.innerHTML = '2'; // Restore Down symbol
+            maximizeBtn.innerHTML = '2'; 
             maximizeBtn.title = "Restore Down";
         } else {
-            maximizeBtn.innerHTML = '1'; // Maximize symbol
+            maximizeBtn.innerHTML = '1'; 
             maximizeBtn.title = "Maximize";
         }
     }
 
-    window.saveWindowState = function(windowId) { // Global
+    window.saveWindowState = function(windowId) { 
         const win = getById(windowId);
         if (!win) return;
         let state = appData.windowStates[windowId];
         if (!state) {
-            appData.windowStates[windowId] = {};
+            appData.windowStates[windowId] = {}; // Ensure state object exists
             state = appData.windowStates[windowId];
         }
-        state.hiddenByUser = (win.style.display === 'none'); // Check actual display style
+        state.hiddenByUser = (win.style.display === 'none'); 
         state.minimized = win.classList.contains('minimized');
         state.maximized = win.classList.contains('true-maximized');
         state.zIndex = parseInt(win.style.zIndex) || highestZIndex;
@@ -1354,46 +1353,65 @@
         saveData();
     }
 
-    window.restoreWindowState = function(windowId) { // Global
+    window.restoreWindowState = function(windowId) {
         const win = getById(windowId);
         if (!win) return;
 
-        let state = appData.windowStates[windowId];
-        const minDim = getMinWindowDimensions(windowId);
+        let state = window.appData.windowStates[windowId];
+
+        let minDimWidth = 200; let minDimHeight = 150; // Generic defaults
+        if (window.appRegistry && window.appRegistry[windowId]) {
+            minDimWidth = window.appRegistry[windowId].minWidth || minDimWidth;
+            minDimHeight = window.appRegistry[windowId].minHeight || minDimHeight;
+        } else {
+            // console.warn(`restoreWindowState: No appRegistry for ${windowId} during default state creation. Using generic min dimensions.`);
+        }
+        
+        const defaultAppWidth = (window.appRegistry[windowId]?.defaultWidth) || minDimWidth * 1.5;
+        const defaultAppHeight = (window.appRegistry[windowId]?.defaultHeight) || minDimHeight * 1.5;
+        const defaultX = (Object.keys(window.appData.windowStates).length % 5) * 30 + 50; // Basic cascade
+        const defaultY = (Object.keys(window.appData.windowStates).length % 5) * 30 + 50;
+
+
         const defaultStateTemplate = {
-            x: 50, y: 50, width: minDim.width * 1.5, height: minDim.height * 1.5,
-            maximized: false, minimized: false, zIndex: highestZIndex + 1, userManuallySet: false,
+            x: defaultX, y: defaultY, 
+            width: defaultAppWidth, height: defaultAppHeight,
+            maximized: false, minimized: false, 
+            zIndex: highestZIndex + 1, 
+            userManuallySet: false,
             hiddenByUser: true 
         };
 
         if (!state) {
-            appData.windowStates[windowId] = { ...defaultStateTemplate };
-            state = appData.windowStates[windowId];
+            window.appData.windowStates[windowId] = { ...defaultStateTemplate };
+            state = window.appData.windowStates[windowId];
         } else {
-             state = { // Ensure all properties from template exist if missing in loaded state
-                ...defaultStateTemplate,
-                ...state,
+            state = {
+                ...defaultStateTemplate, 
+                ...state,                
                 width: state.width || defaultStateTemplate.width,
                 height: state.height || defaultStateTemplate.height,
                 x: state.x != null ? state.x : defaultStateTemplate.x,
                 y: state.y != null ? state.y : defaultStateTemplate.y,
-                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex
+                zIndex: parseInt(state.zIndex) || defaultStateTemplate.zIndex,
+                hiddenByUser: typeof state.hiddenByUser === 'boolean' ? state.hiddenByUser : defaultStateTemplate.hiddenByUser,
+                minimized: typeof state.minimized === 'boolean' ? state.minimized : defaultStateTemplate.minimized,
+                maximized: typeof state.maximized === 'boolean' ? state.maximized : defaultStateTemplate.maximized,
+                userManuallySet: typeof state.userManuallySet === 'boolean' ? state.userManuallySet : defaultStateTemplate.userManuallySet
             };
-            appData.windowStates[windowId] = state;
+            window.appData.windowStates[windowId] = state;
         }
-
-
-        if (state.hiddenByUser && win.style.display !== 'none') { // If state says hidden but it's visible, hide it
+        
+        if (state.hiddenByUser) { // Apply hidden state first
              win.style.display = 'none';
-        } else if (!state.hiddenByUser && win.style.display === 'none') { // If state says visible but it's hidden, show it
+        } else {
             win.style.display = 'flex';
         }
 
-
-        let loadedZ = state.zIndex;
-        if (loadedZ <= 5) loadedZ = highestZIndex + 1; 
+        let loadedZ = parseInt(state.zIndex);
+        if (isNaN(loadedZ) || loadedZ <= 5) loadedZ = highestZIndex + 1; 
         win.style.zIndex = loadedZ;
-        state.zIndex = loadedZ;
+        // state.zIndex is already part of the state object, no need to reassign here
         highestZIndex = Math.max(highestZIndex, loadedZ);
 
 
@@ -1407,33 +1425,42 @@
             win.style.height = '100vh';
             win.style.top = '0px';
             win.style.left = '0px';
-            lastNormalStates[windowId] = { // Ensure lastNormalStates is populated
-                width: (state.width ? Math.max(minDim.width, state.width) : minDim.width * 1.5) + 'px',
-                height: (state.height ? Math.max(minDim.height, state.height) : minDim.height * 1.5) + 'px',
-                top: (state.y != null ? state.y : 50) + 'px',
-                left: (state.x != null ? state.x : 50) + 'px'
-            };
-        } else { // Normal state
+            if (!lastNormalStates[windowId] || !lastNormalStates[windowId].width) { // Ensure lastNormal is reasonable
+                 lastNormalStates[windowId] = {
+                    width: (state.width && state.width !== window.innerWidth ? state.width : defaultAppWidth) + 'px',
+                    height: (state.height && state.height !== window.innerHeight ? state.height : defaultAppHeight) + 'px',
+                    top: (state.y != null ? state.y : defaultY) + 'px',
+                    left: (state.x != null ? state.x : defaultX) + 'px'
+                };
+            }
+        } else { 
             win.classList.remove('minimized');
             win.classList.remove('true-maximized');
             if (state.userManuallySet && state.width != null && state.height != null && state.x != null && state.y != null) {
                 win.style.left = state.x + 'px';
                 win.style.top = state.y + 'px';
-                win.style.width = Math.max(minDim.width, state.width) + 'px';
-                win.style.height = Math.max(minDim.height, state.height) + 'px';
+                win.style.width = Math.max(minDimWidth, state.width) + 'px';
+                win.style.height = Math.max(minDimHeight, state.height) + 'px';
             } else {
                 if (!state.hiddenByUser) { 
-                    setWindowDefaults(windowId, false);
+                    win.style.left = state.x + 'px';
+                    win.style.top = state.y + 'px';
+                    win.style.width = Math.max(minDimWidth, state.width) + 'px';
+                    win.style.height = Math.max(minDimHeight, state.height) + 'px';
+                    // state.userManuallySet remains as loaded or default (false if new)
                 }
             }
         }
-        updateMinMaxButtonStates(windowId);
-        // Dispatch resize for app content adjustments after restoring
-        const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
-        win.dispatchEvent(appResizeEvent);
-    }
+        updateMinMaxButtonStates(windowId); 
+        
+        if (!state.hiddenByUser) {
+            const appResizeEvent = new CustomEvent('appresize', { detail: { windowId: windowId }});
+            win.dispatchEvent(appResizeEvent);
+        }
+    };
 
-    window.saveData = function() { // Global
+
+    window.saveData = function() { 
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (error) {
@@ -1443,54 +1470,64 @@
         }
     }
 
-    function loadData() { // OS specific data
+    function loadData() { 
         const storedData = localStorage.getItem(STORAGE_KEY);
-        const defaultOSData = { // Only OS-level defaults here
+        const defaultOSData = { 
             windowStates: {},
             iconPositions: {},
             customBgImage: null,
             customBgColor: null,
         };
 
+        // Initialize global appData with OS defaults first
+        window.appData = { 
+            ...defaultOSData,
+            // App-specific data will be merged or initialized by apps themselves
+            ...(window.appData || {}) // Preserve any pre-existing appData from other scripts (though unlikely here)
+        };
+
+
         if (storedData) {
             try {
                 const parsedStoredData = JSON.parse(storedData);
-                // Merge OS-level data
-                appData.windowStates = { ...defaultOSData.windowStates, ...(parsedStoredData.windowStates || {}) };
-                appData.iconPositions = { ...defaultOSData.iconPositions, ...(parsedStoredData.iconPositions || {}) };
-                appData.customBgImage = parsedStoredData.customBgImage || defaultOSData.customBgImage;
-                appData.customBgColor = parsedStoredData.customBgColor || defaultOSData.customBgColor;
-                // App-specific data (like appData.xpTracker) will be initialized by the app scripts themselves
-                // if not found in parsedStoredData.
-                // We need to ensure appData properties for apps are preserved if they exist.
+                // Merge OS-level data carefully
+                window.appData.windowStates = { ...defaultOSData.windowStates, ...(parsedStoredData.windowStates || {}) };
+                window.appData.iconPositions = { ...defaultOSData.iconPositions, ...(parsedStoredData.iconPositions || {}) };
+                window.appData.customBgImage = parsedStoredData.customBgImage || defaultOSData.customBgImage;
+                window.appData.customBgColor = parsedStoredData.customBgColor || defaultOSData.customBgColor;
+                
+                // For app-specific data, merge it if it exists in parsedStoredData
                 for (const key in parsedStoredData) {
-                    if (parsedStoredData.hasOwnProperty(key) && !(key in defaultOSData) && !(key in appData)) {
-                        appData[key] = parsedStoredData[key];
+                    if (parsedStoredData.hasOwnProperty(key) && !(key in defaultOSData)) {
+                        // If appData already has this key (e.g., from an app's default init), merge, otherwise assign
+                        if (window.appData[key] && typeof window.appData[key] === 'object' && typeof parsedStoredData[key] === 'object') {
+                            window.appData[key] = { ...window.appData[key], ...parsedStoredData[key] };
+                        } else {
+                            window.appData[key] = parsedStoredData[key];
+                        }
                     }
                 }
 
             } catch (error) {
                 console.error("Error parsing stored OS data. Reverting OS parts to defaults.", error);
-                appData.windowStates = { ...defaultOSData.windowStates };
-                appData.iconPositions = { ...defaultOSData.iconPositions };
-                appData.customBgImage = defaultOSData.customBgImage;
-                appData.customBgColor = defaultOSData.customBgColor;
+                // Re-apply defaults for OS parts, apps will initialize their own sections
+                window.appData.windowStates = { ...defaultOSData.windowStates };
+                window.appData.iconPositions = { ...defaultOSData.iconPositions };
+                window.appData.customBgImage = defaultOSData.customBgImage;
+                window.appData.customBgColor = defaultOSData.customBgColor;
             }
-        } else {
-             // If no stored data, initialize OS parts
-            appData.windowStates = { ...defaultOSData.windowStates };
-            appData.iconPositions = { ...defaultOSData.iconPositions };
-            appData.customBgImage = defaultOSData.customBgImage;
-            appData.customBgColor = defaultOSData.customBgColor;
-        }
+        } 
+        // If no storedData, window.appData already holds defaultOSData.
+        // App-specific data sections (like window.appData.xpTracker) will be created by
+        // each app's get<AppName>Data() function if they don't exist.
     }
     
-    window.openModal = function(modalId) { // Global
+    window.openModal = function(modalId) { 
         const modal = getById(modalId);
         if (modal) modal.style.display = 'flex';
     }
 
-    window.closeModal = function(modalId) { // Global
+    window.closeModal = function(modalId) { 
         const modal = getById(modalId);
          if (modal) modal.style.display = 'none';
     }
