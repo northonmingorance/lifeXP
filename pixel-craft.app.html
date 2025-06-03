@@ -45,9 +45,9 @@
         <div class="pixel-menu-item" tabindex="0">
             File
             <div class="pixel-dropdown-content">
-                <div class="pixel-dropdown-item" id="pixelFileSave">Save to File</div>
+                <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
                 <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear Canvas</div>
-                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas Size...</div>
+                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas Size</div>
             </div>
         </div>
     </div>
@@ -71,10 +71,10 @@
         </div>
         <div class="pixel-modal-body">
             <label for="pixelNewCanvasWidth">New Width (pixels):</label>
-            <input type="number" id="pixelNewCanvasWidth" min="8" max="512" value="600">
+            <input type="number" id="pixelNewCanvasWidth" min="50" max="2000" value="600">
             <label for="pixelNewCanvasHeight">New Height (pixels):</label>
-            <input type="number" id="pixelNewCanvasHeight" min="8" max="512" value="400">
-            <p><small>Min: 8px, Max: 512px per dimension.</small></p>
+            <input type="number" id="pixelNewCanvasHeight" min="50" max="2000" value="400">
+            <p><small>Min: 50px, Max: 2000px per dimension.</small></p>
         </div>
         <div class="pixel-modal-footer">
             <button id="savePixelCanvasSizeBtn" class="xp-button">Apply Size</button>
