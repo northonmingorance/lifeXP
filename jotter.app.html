@@ -1,0 +1,117 @@
+<style>
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; }
+    body { background-color: #ECE9D8; color: #000000; display: flex; flex-direction: column; }
+    [contenteditable]:focus { outline: none; }
+    .jotter-menu-bar { background-color: #ECE9D8; padding: 2px 3px; border-bottom: 1px solid #ACA899; display: flex; flex-shrink: 0; user-select: none; color: #000000; }
+    .jotter-menu-item { padding: 3px 8px; cursor: default; position: relative; color: inherit; }
+    .jotter-menu-item:hover { background-color: #005CFE; color: white; }
+    .jotter-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); z-index: 100; padding: 2px 0; color: #000000; min-width: 120px;}
+    .jotter-dropdown-item { padding: 4px 12px 4px 12px; cursor: default; white-space: nowrap; position: relative; color: inherit; display: flex; align-items: center; min-height: 22px; box-sizing: border-box; }
+    .jotter-dropdown-item:not(.font-size-control-container):hover:not(.disabled) { background-color: #005CFE; color: white; }
+    .jotter-dropdown-item.disabled { color: #7F7F7F !important; background-color: #ECE9D8 !important; cursor: default; }
+    .jotter-menu-item:focus-within .jotter-dropdown-content, .jotter-menu-item.open .jotter-dropdown-content { display: block; }
+    #editorArea { border: 1px solid #7F7F7F; padding: 5px; background-color: white; overflow-y: auto; font-family: 'Lucida Console', Monaco, monospace; font-size: 14px; line-height: 1.4; color: #000000; white-space: pre-wrap; word-wrap: break-word; box-sizing: border-box; margin: 5px; flex-grow: 1; }
+    .font-size-control-container { display: flex; align-items: center; padding: 0px 5px 0px 15px !important; }
+    .font-size-control-container span { margin-right: 8px; }
+    .font-size-btn { font-family: "Tahoma", "Geneva", sans-serif; font-size: 10px; border: 1px outset #7F7F7F; background-color: #ECE9D8; width: 20px; height: 20px; line-height: 18px; text-align: center; padding: 0; cursor: default; color: black; }
+    .font-size-btn:active { border-style: inset; }
+    .font-size-btn:hover { background-color: #005CFE; color: white; }
+    .font-size-input { width: 30px; height: 18px; border: 1px solid #7F7F7F; text-align: center; margin: 0 3px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; padding: 1px; box-sizing: border-box; }
+</style>
+
+<div class="jotter-menu-bar" id="jotterMenuBarInFrame">
+    <div class="jotter-menu-item" tabindex="0"> File <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div> </div> </div>
+    <div class="jotter-menu-item" tabindex="0"> View <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame"> <span>Font Size:</span> <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button> <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72"> <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button> </div> </div> </div>
+</div>
+<div id="editorArea" contenteditable="true"></div>
+
+<script>
+    const editorArea = document.getElementById('editorArea');
+    const jotterMenuBar = document.getElementById('jotterMenuBarInFrame');
+    let activeMenu = null;
+    const fontDecrementBtn = document.getElementById('fontDecrementBtnInFrame');
+    const fontIncrementBtn = document.getElementById('fontIncrementBtnInFrame');
+    const fontSizeInput = document.getElementById('fontSizeInputInFrame');
+    let jotterContent = ''; // In-memory storage for this session
+
+    function loadJotterContent() {
+        const savedContent = localStorage.getItem('jotterAppContent_v1');
+        if (savedContent) {
+            editorArea.innerHTML = savedContent;
+            jotterContent = savedContent;
+        }
+        const savedFontSize = localStorage.getItem('jotterAppFontSize_v1');
+        if (savedFontSize) {
+            applyFontSize(savedFontSize);
+        }
+    }
+
+    function saveJotterContent() {
+        jotterContent = editorArea.innerHTML;
+        localStorage.setItem('jotterAppContent_v1', jotterContent);
+        localStorage.setItem('jotterAppFontSize_v1', editorArea.style.fontSize || '14px');
+    }
+    
+    editorArea.addEventListener('input', saveJotterContent);
+
+
+    jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
+        menuItem.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (event.target.closest('.font-size-control-container')) {
+                if(!menuItem.classList.contains('open')) { if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open'); menuItem.classList.add('open'); activeMenu = menuItem; } return;
+            }
+            if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
+            menuItem.classList.toggle('open'); activeMenu = menuItem.classList.contains('open') ? menuItem : null;
+        });
+    });
+
+    window.addEventListener('click', (event) => { 
+        if (activeMenu && !activeMenu.contains(event.target) && !event.target.closest('.font-size-control-container')) { 
+            activeMenu.classList.remove('open'); activeMenu = null; 
+        } 
+    });
+    
+    document.getElementById('fileSaveInFrame').addEventListener('click', (event) => { 
+        event.stopPropagation(); 
+        performSave(); 
+    });
+
+    function performSave() {
+        let filename = prompt("Filename:", "jotter_content.html");
+        if (filename) {
+            if (!filename.toLowerCase().endsWith('.html')) filename += '.html';
+            let htmlContent = `<!DOCTYPE html><html><head><title>Saved Content</title><meta charset="UTF-8"><style>body { font-family: 'Lucida Console', Monaco, monospace; font-size: ${editorArea.style.fontSize || '14px'}; margin: 20px; white-space: pre-wrap; word-wrap: break-word; }</style></head><body>${editorArea.innerHTML}</body></html>`;
+            let blob = new Blob([htmlContent], { type: "text/html" }); 
+            let url = URL.createObjectURL(blob); 
+            let downloadLink = document.createElement("a"); 
+            downloadLink.setAttribute("href", url); 
+            downloadLink.setAttribute("download", filename); 
+            downloadLink.click(); 
+            URL.revokeObjectURL(url);
+        }
+        if (activeMenu) { activeMenu.classList.remove('open'); activeMenu = null; }
+    }
+
+    editorArea.addEventListener('keydown', function(e) { if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); performSave(); } });
+    
+    function applyFontSize(size) { 
+        const newSize = Math.max(8, Math.min(72, parseInt(size))); 
+        if (!isNaN(newSize)) { 
+            editorArea.style.fontSize = newSize + 'px'; 
+            fontSizeInput.value = newSize; 
+            saveJotterContent();
+        } 
+    }
+    fontDecrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize - 1); });
+    fontIncrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize + 1); });
+    fontSizeInput.addEventListener('change', () => { applyFontSize(fontSizeInput.value); });
+    fontSizeInput.addEventListener('click', (event) => { event.stopPropagation(); });
+    fontSizeInput.addEventListener('input', () => { let val = parseInt(fontSizeInput.value); if(!isNaN(val) && val >=8 && val <=72){ editorArea.style.fontSize = val + 'px'; saveJotterContent(); } });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        loadJotterContent();
+        applyFontSize(fontSizeInput.value); 
+        editorArea.focus();
+    });
+</script>

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "jotter",
+    "name": "Jotter",
+    "icon": "🗒️",
+    "file": "jotter.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 450,
+    "defaultHeight": 705
+  },
+  {
+    "id": "xpTracker",
+    "name": "XP Tracker",
+    "icon": "✅",
+    "file": "xp-tracker.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 905,
+    "defaultHeight": 705
+  },
+  {
+    "id": "playJockey",
+    "name": "Play Jockey",
+    "icon": "⏯️",
+    "file": "play-jockey.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 480,
+    "defaultHeight": 705,
+    "customIconClass": "playJockeyIconStyle"
+  },
+  {
+    "id": "geminiChat",
+    "name": "Gemini Chat",
+    "icon": "✨",
+    "file": "gemini-chat.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 450,
+    "defaultHeight": 705
+  },
+  {
+    "id": "pixelCraft",
+    "name": "Pixel Craft",
+    "icon": "🎨",
+    "file": "pixel-craft.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 650,
+    "defaultHeight": 500
+  },
+  {
+    "id": "capture",
+    "name": "Capture",
+    "icon": "📹",
+    "file": "capture.app.html",
+    "minWidth": 320,
+    "minHeight": 240,
+    "defaultWidth": 400,
+    "defaultHeight": 300
+  }
+]
