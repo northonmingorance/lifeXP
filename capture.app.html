@@ -1,384 +1,709 @@
-<body data-app-id="capture">
-
-    <template id="capture-icon-template">
+<template id="captureIconTemplate">
+    <div id="captureIcon" class="desktop-icon" data-window-id="captureWindow" style="left: 10px; top: 510px;">
         <div class="icon-image">📹</div>
         <div class="icon-label">Capture</div>
-    </template>
+    </div>
+</template>
 
-    <template id="capture-window-template">
-        <div class="xp-window" id="captureWindow" style="display:none;">
-            <div class="title-bar">
-                <span class="title-bar-text">Capture</span>
-                <div class="title-bar-controls">
-                    <button data-app-action="minimize" title="Minimize">0</button>
-                    <button data-app-action="maximize" title="Maximize">1</button>
-                    <button data-app-action="close" title="Close">r</button>
-                </div>
+<template id="captureWindowTemplate">
+    <div class="xp-window" id="captureWindow" style="display: none;">
+        <div class="title-bar" id="captureWindowTitleBar">
+            <span class="title-bar-text">Capture</span>
+            <div class="title-bar-controls">
+                <button id="captureMinimizeBtn" title="Minimize">0</button>
+                <button id="captureMaximizeBtn" title="Maximize">1</button>
+                <button title="Close" id="captureCloseBtn">r</button>
             </div>
-            <div class="xp-menu-bar" id="captureMenuBar" style="background-color: #ECE9D8; border-bottom: 1px solid #000; display: flex; padding: 1px 2px; height: 21px; flex-shrink: 0; user-select: none; position: relative; z-index: 50;">
-                <div class="xp-menu-item" id="captureVideoMenu" style="padding: 2px 7px; cursor: default; position: relative; font-size: 11px; line-height: 16px;">
-                    <span>Video</span>
-                    <div class="xp-dropdown-menu" id="captureVideoDropdown" style="display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 160px; z-index: 150; padding: 2px;">
-                        <div class="xp-dropdown-item" id="captureVideoDeviceItem" style="padding: 4px 12px; cursor: default; display: flex; justify-content: space-between; align-items: center; position: relative; font-size: 11px; white-space: nowrap; color: #000000;">
-                            Device <span class="xp-submenu-arrow" style="font-size: 10px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: #333;">►</span>
-                            <div class="xp-submenu" id="captureVideoDeviceList" style="display: none; position: absolute; left: calc(100% - 4px); top: -3px; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 180px; max-width: 250px; z-index: 151; padding: 2px; color: #000000;"></div>
-                        </div>
-                        <div class="xp-dropdown-item" id="captureVideoResolutionItem" style="padding: 4px 12px; cursor: default; display: flex; justify-content: space-between; align-items: center; position: relative; font-size: 11px; white-space: nowrap; color: #000000;">
-                            Resolution <span class="xp-submenu-arrow" style="font-size: 10px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: #333;">►</span>
-                            <div class="xp-submenu" id="captureVideoResolutionList" style="display: none; position: absolute; left: calc(100% - 4px); top: -3px; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 180px; max-width: 250px; z-index: 151; padding: 2px; color: #000000;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="xp-menu-item" id="captureAudioMenu" style="padding: 2px 7px; cursor: default; position: relative; font-size: 11px; line-height: 16px;">
-                    <span>Audio</span>
-                    <div class="xp-dropdown-menu" id="captureAudioDropdown" style="display: none; position: absolute; top: 100%; left: 0; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 160px; z-index: 150; padding: 2px;">
-                        <div class="xp-dropdown-item" id="captureAudioDeviceItem" style="padding: 4px 12px; cursor: default; display: flex; justify-content: space-between; align-items: center; position: relative; font-size: 11px; white-space: nowrap; color: #000000;">
-                            Device <span class="xp-submenu-arrow" style="font-size: 10px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: #333;">►</span>
-                            <div class="xp-submenu" id="captureAudioDeviceList" style="display: none; position: absolute; left: calc(100% - 4px); top: -3px; background-color: #ECE9D8; border: 1px solid #7F7F7F; box-shadow: 1px 1px 2px rgba(0,0,0,0.1), -1px -1px 2px rgba(0,0,0,0.1); min-width: 180px; max-width: 250px; z-index: 151; padding: 2px; color: #000000;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="window-body" id="captureWindowBody" style="padding:0; display:flex; background-color:#000; justify-content:center; align-items:center; position:relative;">
-                <video id="captureVideoElement" autoplay playsinline style="width:100%; height:100%; transform:scaleX(-1); object-fit:contain;"></video>
-                <button id="captureActionBtn" class="xp-button" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); z-index:10; padding:8px 15px; font-size:14px;">Take Photo</button>
-                <button id="captureToggleModeBtn" class="xp-button" style="position:absolute; bottom:20px; right:20px; z-index:10; padding:4px 15px; font-size:18px; min-width:auto;">📹</button>
-            </div>
-            <div class="resize-handle"></div>
         </div>
-    </template>
+        <div class="xp-menu-bar" id="captureMenuBar">
+            <div class="xp-menu-item" id="videoMenu" tabindex="0">
+                <span>Video</span>
+                <div class="xp-dropdown-menu" id="videoDropdown">
+                    <div class="xp-dropdown-item" id="videoDeviceItem" tabindex="0">
+                        Device
+                        <span class="xp-submenu-arrow">►</span>
+                        <div class="xp-submenu" id="videoDeviceList">
+                            </div>
+                    </div>
+                    <div class="xp-dropdown-item" id="videoResolutionItem" tabindex="0">
+                        Resolution
+                        <span class="xp-submenu-arrow">►</span>
+                        <div class="xp-submenu" id="videoResolutionList">
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <div class="xp-menu-item" id="audioMenu" tabindex="0">
+                <span>Audio</span>
+                <div class="xp-dropdown-menu" id="audioDropdown">
+                    <div class="xp-dropdown-item" id="audioDeviceItem" tabindex="0">
+                        Device
+                        <span class="xp-submenu-arrow">►</span>
+                        <div class="xp-submenu" id="audioDeviceList">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="window-body" id="captureWindowBody">
+            </div>
+        <div class="resize-handle" id="captureResizeHandle"></div>
+    </div>
+</template>
 
-    <script type="application/json" id="capture-config">
-    {
-        "minWidth": 320,
-        "minHeight": 280,
-        "defaultWidth": 400,
-        "defaultHeight": 350,
-        "defaultOffsetX": 270,
-        "defaultOffsetY": 270
+<template id="captureBodyContentTemplate">
+    <video id="captureVideo" autoplay playsinline></video>
+    <button id="captureActionBtn" class="xp-button">Take Photo</button>
+    <button id="captureToggleModeBtn" class="xp-button">📹</button>
+</template>
+
+<style>
+    /* Capture App Specific Styles */
+    #captureWindow .window-body {
+        padding: 0;
+        display: flex; /* Use flex to center video and position buttons */
+        background-color: #000000; /* Black background for video area */
+        justify-content: center;
+        align-items: center;
+        position: relative; /* For absolute positioning of buttons */
+        overflow: hidden; /* Ensure video doesn't overflow */
     }
-    </script>
+    #captureVideo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Or 'cover', depending on desired behavior */
+         transform: scaleX(-1); /* Mirror image for webcam feel */
+        -webkit-transform: scaleX(-1);
+    }
+    #captureActionBtn {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10; /* Above video */
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    #captureActionBtn.recording { /* Style for when recording */
+        background-color: #FF6347; /* Tomato red */
+        border-color: #CD5C5C;
+        color: white;
+    }
+    #captureActionBtn.recording:hover {
+        background-color: #E55337;
+        border-color: #B24331;
+    }
+    #captureToggleModeBtn {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10;
+        padding: 4px 10px; /* Slightly smaller padding */
+        font-size: 18px; /* Emoji size */
+        min-width: auto; /* Allow button to be smaller */
+    }
+    /* Menu styles are inherited from OS, but ensure submenus position correctly if needed */
+    #captureMenuBar .xp-dropdown-menu,
+    #captureMenuBar .xp-submenu {
+        background-color: #ECE9D8; /* Ensure consistent background */
+        border: 1px solid #7F7F7F;
+        color: #000;
+    }
+    #captureMenuBar .xp-dropdown-item:hover,
+    #captureMenuBar .xp-submenu-item:hover:not(.disabled-resolution) {
+        background-color: #316AC5;
+        color: white;
+    }
+     #captureMenuBar .xp-submenu-item.selected::before {
+        color: #000; /* Default color for selected mark */
+    }
+    #captureMenuBar .xp-submenu-item.selected:hover:not(.disabled-resolution)::before {
+        color: white; /* Change with hover if item is not disabled */
+    }
+</style>
 
-    <script id="capture-script">
-    const appWindow = this.appWindow;
-    const appData = this.appData; // Managed by OS
-    const os = this.os;
+<script>
+(function() {
+    const APP_ID = 'captureWindow';
+    const MIN_WIDTH = 320;
+    const MIN_HEIGHT = 280; // Increased slightly for menu bar
+    const DEFAULT_WIDTH = 400;
+    const DEFAULT_HEIGHT = 350;
 
-    const COMMON_RESOLUTIONS = [
-        { label: "Default", width: null, height: null }, // Added Default
+    const COMMON_RESOLUTIONS = [ // Specific to Capture app
+        { label: "Default", width: null, height: null }, // Option to use browser default
         { label: "320x240 (QVGA)", width: 320, height: 240 },
         { label: "640x480 (VGA)", width: 640, height: 480 },
         { label: "800x600 (SVGA)", width: 800, height: 600 },
         { label: "1280x720 (HD)", width: 1280, height: 720 },
         { label: "1920x1080 (FHD)", width: 1920, height: 1080 }
     ];
-    let currentStream = null;
+
+    let captureDOM = {};
     let mediaRecorder = null;
     let recordedChunks = [];
-    let resolutionChangeDelayTimer = null;
-    let isResolutionChangeDelayed = false;
+    let isResolutionDelayActive = false; // For initial resolution selection delay
+    let captureResolutionTimerId = null;
 
+    const getById = window.getById;
 
-    const DOM = {
-        videoElement: appWindow.querySelector('#captureVideoElement'),
-        actionBtn: appWindow.querySelector('#captureActionBtn'),
-        toggleModeBtn: appWindow.querySelector('#captureToggleModeBtn'),
-        menuBar: appWindow.querySelector('#captureMenuBar'),
-        videoMenu: appWindow.querySelector('#captureVideoMenu'),
-        videoDropdown: appWindow.querySelector('#captureVideoDropdown'),
-        videoDeviceItem: appWindow.querySelector('#captureVideoDeviceItem'),
-        videoDeviceList: appWindow.querySelector('#captureVideoDeviceList'),
-        videoResolutionItem: appWindow.querySelector('#captureVideoResolutionItem'),
-        videoResolutionList: appWindow.querySelector('#captureVideoResolutionList'),
-        audioMenu: appWindow.querySelector('#captureAudioMenu'),
-        audioDropdown: appWindow.querySelector('#captureAudioDropdown'),
-        audioDeviceItem: appWindow.querySelector('#captureAudioDeviceItem'),
-        audioDeviceList: appWindow.querySelector('#captureAudioDeviceList'),
-        windowBody: appWindow.querySelector('#captureWindowBody')
-    };
-    
-    function initializeDefaultAppData() {
-        if (appData.mode === undefined) appData.mode = 'photo'; // 'photo' or 'video'
-        if (appData.isRecording === undefined) appData.isRecording = false;
-        if (appData.selectedVideoDevice === undefined) appData.selectedVideoDevice = null;
-        if (appData.selectedAudioDevice === undefined) appData.selectedAudioDevice = null;
-        if (appData.selectedResolution === undefined) appData.selectedResolution = null; // Store as {width, height} or null for default
+    function populateCaptureDOM() {
+        captureDOM = {
+            captureWindow: getById('captureWindow'),
+            captureMenuBar: getById('captureMenuBar'),
+            videoMenu: getById('videoMenu'),
+            videoDropdown: getById('videoDropdown'),
+            videoDeviceItem: getById('videoDeviceItem'),
+            videoDeviceList: getById('videoDeviceList'),
+            videoResolutionItem: getById('videoResolutionItem'),
+            videoResolutionList: getById('videoResolutionList'),
+            audioMenu: getById('audioMenu'),
+            audioDropdown: getById('audioDropdown'),
+            audioDeviceItem: getById('audioDeviceItem'),
+            audioDeviceList: getById('audioDeviceList'),
+            captureWindowBody: getById('captureWindowBody'),
+            captureVideo: getById('captureVideo'), // Will be populated after body content injection
+            captureActionBtn: getById('captureActionBtn'), // Same here
+            captureToggleModeBtn: getById('captureToggleModeBtn'), // Same here
+        };
     }
-    initializeDefaultAppData();
 
-    async function startCapture(videoDeviceId = appData.selectedVideoDevice, audioDeviceId = appData.selectedAudioDevice, resolution = appData.selectedResolution) {
-        await stopCapture(); // Ensure previous stream is stopped
-        DOM.windowBody.innerHTML = ''; // Clear previous error messages
-        DOM.windowBody.appendChild(DOM.videoElement);
-        DOM.windowBody.appendChild(DOM.actionBtn);
-        DOM.windowBody.appendChild(DOM.toggleModeBtn);
-
-        const constraints = { video: {}, audio: {} };
-        if (videoDeviceId) constraints.video.deviceId = { exact: videoDeviceId }; else constraints.video = true;
-        if (audioDeviceId) constraints.audio.deviceId = { exact: audioDeviceId }; else constraints.audio = true;
-        
-        if (resolution && resolution.width && resolution.height) {
-            constraints.video.width = { exact: resolution.width };
-            constraints.video.height = { exact: resolution.height };
+    function getCaptureData() {
+        if (!window.appData.capture) {
+            window.appData.capture = {
+                stream: null,
+                captureMode: 'photo', // 'photo' or 'video'
+                isRecording: false,
+                selectedVideoDevice: null,
+                selectedAudioDevice: null,
+                selectedResolution: null, // Store as {label, width, height} or null for default
+            };
         }
+        return window.appData.capture;
+    }
+
+    function initCaptureApp() {
+        const capData = getCaptureData();
+        populateCaptureDOM();
+
+        addCaptureEventListeners();
+        setupCaptureMenus(); // Setup menu interactions
+        updateCaptureAppUI(); // Initial UI state
+
+        const appWindow = getById(APP_ID);
+        if (appWindow) {
+            appWindow.addEventListener('appresize', handleCaptureWindowResize);
+            appWindow.addEventListener('appopen', (event) => {
+                if (event.detail && event.detail.windowId === APP_ID) {
+                    if (!capData.stream) { // If stream isn't active, try to start it
+                        startCaptureApp(capData.selectedVideoDevice, capData.selectedAudioDevice, capData.selectedResolution);
+                    }
+                    updateSelectedInMenu(); // Refresh menu selections
+                }
+            });
+            appWindow.addEventListener('appminimize', () => {
+                if (capData.isRecording) stopVideoRecording(); // Stop recording on minimize
+                stopCaptureApp(); // Stop stream on minimize
+            });
+            // OS drag start/resize start events are listened to by menus themselves to close
+        }
+    }
+    
+    function handleCaptureWindowResize() {
+        // Video element uses object-fit: contain, so it resizes naturally within its container.
+        // No specific JS needed here for resizing the video element itself.
+    }
+
+    function addCaptureEventListeners() {
+        captureDOM.captureActionBtn.addEventListener('click', handleMainCaptureAction);
+        captureDOM.captureToggleModeBtn.addEventListener('click', toggleCaptureMode);
+
+        // Menu item event listeners are set up in setupCaptureMenus
+        
+        const appWindow = getById(APP_ID);
+        if (appWindow) {
+            const closeButton = appWindow.querySelector('#captureCloseBtn');
+            if (closeButton) closeButton.addEventListener('click', () => {
+                const capData = getCaptureData();
+                if (capData.isRecording) stopVideoRecording();
+                stopCaptureApp();
+                let state = window.appData.windowStates[APP_ID];
+                if (state) state.hiddenByUser = true;
+                window.saveWindowState(APP_ID);
+                appWindow.style.display = 'none';
+                closeAllCaptureMenus();
+                if (captureResolutionTimerId) clearTimeout(captureResolutionTimerId);
+            });
+            const minimizeButton = appWindow.querySelector('#captureMinimizeBtn');
+            if(minimizeButton) minimizeButton.addEventListener('click', () => window.minimizeWindow(APP_ID));
+
+            const maximizeButton = appWindow.querySelector('#captureMaximizeBtn');
+            if(maximizeButton) maximizeButton.addEventListener('click', () => window.maximizeWindow(APP_ID));
+        }
+    }
+
+    async function startCaptureApp(videoDeviceId = null, audioDeviceId = null, resolution = null) {
+        const capData = getCaptureData();
+        if (capData.stream && captureDOM.captureVideo.srcObject === capData.stream) {
+             // Stream already running with the same object, maybe just update UI
+            updateCaptureAppUI();
+            return;
+        }
+        await stopCaptureApp(); // Ensure any existing stream is stopped first
+
+        // Ensure video element is present (it's in a template)
+        if (!getById('captureVideo')) { // Check if it was removed
+            const bodyContentTemplate = document.getElementById('captureBodyContentTemplate');
+            if (captureDOM.captureWindowBody && bodyContentTemplate) {
+                 captureDOM.captureWindowBody.innerHTML = ''; // Clear first
+                 captureDOM.captureWindowBody.appendChild(bodyContentTemplate.content.cloneNode(true));
+                 // Re-populate DOM elements for video and buttons
+                 captureDOM.captureVideo = getById('captureVideo');
+                 captureDOM.captureActionBtn = getById('captureActionBtn');
+                 captureDOM.captureToggleModeBtn = getById('captureToggleModeBtn');
+                 // Re-add listeners if they were on the old elements
+                 if(captureDOM.captureActionBtn) captureDOM.captureActionBtn.addEventListener('click', handleMainCaptureAction);
+                 if(captureDOM.captureToggleModeBtn) captureDOM.captureToggleModeBtn.addEventListener('click', toggleCaptureMode);
+            } else {
+                console.error("Capture body or template missing for video injection.");
+                return;
+            }
+        }
+
+
+        const finalVideoDeviceId = videoDeviceId || capData.selectedVideoDevice;
+        const finalAudioDeviceId = audioDeviceId || capData.selectedAudioDevice;
+        const finalResolution = resolution || capData.selectedResolution;
+
+        let videoConstraints = {};
+        if (finalVideoDeviceId) videoConstraints.deviceId = { exact: finalVideoDeviceId };
+        if (finalResolution && finalResolution.width && finalResolution.height) {
+            videoConstraints.width = { exact: finalResolution.width };
+            videoConstraints.height = { exact: finalResolution.height };
+        }
+        if (Object.keys(videoConstraints).length === 0) videoConstraints = true; // Default to any video
+
+        let audioConstraints = {};
+        if (finalAudioDeviceId) audioConstraints.deviceId = { exact: finalAudioDeviceId };
+        if (Object.keys(audioConstraints).length === 0) audioConstraints = true; // Default to any audio
 
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                 DOM.windowBody.innerHTML = '<p style="color:white; padding:10px; text-align:center;">Webcam/mic access not supported.</p>'; return;
+                captureDOM.captureWindowBody.innerHTML = '<p style="color:white; padding:10px; text-align:center;">Webcam/mic access not supported.</p>';
+                updateCaptureAppUI(); return;
             }
-            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-            DOM.videoElement.srcObject = currentStream;
-            DOM.videoElement.muted = true; // Important for preventing feedback loop if mic is on
+            const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: audioConstraints });
             
-            // Update selected devices if they were auto-selected by browser
-            const videoTracks = currentStream.getVideoTracks();
-            if (videoTracks.length > 0 && !videoDeviceId) appData.selectedVideoDevice = videoTracks[0].getSettings().deviceId;
-            const audioTracks = currentStream.getAudioTracks();
-            if (audioTracks.length > 0 && !audioDeviceId) appData.selectedAudioDevice = audioTracks[0].getSettings().deviceId;
+            capData.stream = stream;
+            captureDOM.captureVideo.srcObject = stream;
+            captureDOM.captureVideo.muted = true; // Mute playback to avoid echo
+            await captureDOM.captureVideo.play();
 
-            os.saveAppData();
-            updateMenuSelections();
+            // Update selected devices if defaults were chosen by browser
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0 && !videoDeviceId) {
+                capData.selectedVideoDevice = videoTracks[0].getSettings().deviceId || videoTracks[0].id;
+            }
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length > 0 && !audioDeviceId) {
+                capData.selectedAudioDevice = audioTracks[0].getSettings().deviceId || audioTracks[0].id;
+            }
+            
+            // Handle initial resolution delay
+            if (sessionStorage.getItem(`captureFirstOpen_${APP_ID}`) === null) {
+                sessionStorage.setItem(`captureFirstOpen_${APP_ID}`, 'true');
+                isResolutionDelayActive = true;
+                updateResolutionItemsState(true);
+                if (captureResolutionTimerId) clearTimeout(captureResolutionTimerId);
+                captureResolutionTimerId = setTimeout(() => {
+                    isResolutionDelayActive = false;
+                    updateResolutionItemsState(false);
+                    captureResolutionTimerId = null;
+                }, 20000); // 20 seconds delay
+            } else {
+                isResolutionDelayActive = false;
+                updateResolutionItemsState(false);
+            }
 
         } catch (err) {
-            let msg = `Error: ${err.name}. ${err.message}. Try other settings.`;
-            if (err.name === "OverconstrainedError") msg = `Selected resolution likely not supported. Try default. Error: ${err.message}`;
-            DOM.windowBody.innerHTML = `<p style="color:white; padding:10px; text-align:center;">${msg}</p>`;
-            currentStream = null;
+            let message = `Error: ${err.name} - ${err.message}. Try other device/resolution.`;
+            if (err.name === "OverconstrainedError" && finalResolution) {
+                message = `Resolution ${finalResolution.label || (finalResolution.width + 'x' + finalResolution.height)} not supported. Try default.`;
+                capData.selectedResolution = null; // Reset to default on overconstrained
+            }
+            captureDOM.captureWindowBody.innerHTML = `<p style="color:white; padding:10px; text-align:center;">${message}</p>`;
+            capData.stream = null;
         }
-        updateUI();
+        updateCaptureAppUI();
+        updateSelectedInMenu();
+        window.saveData();
     }
 
-    async function stopCapture() {
-        if (appData.isRecording) await stopRecording();
-        if (currentStream) {
-            currentStream.getTracks().forEach(track => track.stop());
-            currentStream = null;
-            DOM.videoElement.srcObject = null;
+    async function stopCaptureApp() {
+        const capData = getCaptureData();
+        if (capData.isRecording) await stopVideoRecording();
+        
+        if (capData.stream) {
+            capData.stream.getTracks().forEach(track => track.stop());
+            capData.stream = null;
         }
+        if (captureDOM.captureVideo) captureDOM.captureVideo.srcObject = null;
+        updateCaptureAppUI();
     }
 
-    function takePhoto() {
-        if (!currentStream) return;
+    function takeAndDownloadPhoto() {
+        const capData = getCaptureData();
+        if (!capData.stream || !captureDOM.captureVideo.srcObject) return;
+        const video = captureDOM.captureVideo;
         const canvas = document.createElement('canvas');
-        canvas.width = DOM.videoElement.videoWidth;
-        canvas.height = DOM.videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(DOM.videoElement, 0, 0, canvas.width, canvas.height);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (video.style.transform === 'scaleX(-1)') { // If mirrored, flip canvas draw
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+        }
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
         const dataURL = canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.href = dataURL; link.download = `capture-${Date.now()}.png`;
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        link.href = dataURL;
+        link.download = `photo-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-    function toggleMode() {
-        if (appData.isRecording) return;
-        appData.mode = (appData.mode === 'photo') ? 'video' : 'photo';
-        updateUI(); os.saveAppData();
+
+    function toggleCaptureMode() {
+        const capData = getCaptureData();
+        if (capData.isRecording) return; // Don't switch mode while recording
+        capData.captureMode = (capData.captureMode === 'photo') ? 'video' : 'photo';
+        updateCaptureAppUI();
+        window.saveData();
     }
-    function handleAction() {
-        if (!currentStream && appData.mode === 'photo') { startCapture(); return; } // Try to start if no stream
-        if (!currentStream && appData.mode === 'video' && !appData.isRecording) { startCapture().then(() => { if(currentStream) startRecording()}); return; }
 
-
-        if (appData.mode === 'photo') takePhoto();
-        else {
-            if (appData.isRecording) stopRecording();
-            else startRecording();
+    function handleMainCaptureAction() {
+        const capData = getCaptureData();
+        if (!capData.stream) {
+            startCaptureApp(capData.selectedVideoDevice, capData.selectedAudioDevice, capData.selectedResolution);
+            return; // Let it start, then user can click again
+        }
+        if (capData.captureMode === 'photo') {
+            takeAndDownloadPhoto();
+        } else {
+            if (capData.isRecording) stopVideoRecording();
+            else startVideoRecording();
         }
     }
-    function startRecording() {
-        if (!currentStream || !currentStream.active || currentStream.getAudioTracks().length === 0) {
-             alert("Audio track missing or stream inactive. Cannot record. Ensure microphone is permitted and selected.");
-             startCapture(appData.selectedVideoDevice, appData.selectedAudioDevice, appData.selectedResolution); // Try to re-init with audio
-             return;
+
+    function startVideoRecording() {
+        const capData = getCaptureData();
+        if (!capData.stream) return;
+        if (!capData.stream.getAudioTracks().length > 0) {
+             alert("No audio track available. Please select an audio device in the menu. Recording video without audio.");
+             // Allow recording without audio, or prompt to select one
         }
         recordedChunks = [];
-        const options = { mimeType: 'video/webm; codecs=vp9,opus' };
+        const mimeTypes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/mp4', 'video/webm'];
+        let supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || "";
+        
         try {
-            mediaRecorder = new MediaRecorder(currentStream, options);
-        } catch (e1) {
-            try { options.mimeType = 'video/webm; codecs=vp8,opus'; mediaRecorder = new MediaRecorder(currentStream, options); }
-            catch (e2) { try {options.mimeType = 'video/webm'; mediaRecorder = new MediaRecorder(currentStream, options); }
-                         catch (e3) { alert("Recording not supported by browser."); return; }
-            }
+            mediaRecorder = new MediaRecorder(capData.stream, { mimeType: supportedMimeType });
+        } catch (e) {
+            console.error("Failed to create MediaRecorder:", e.message, "Supported:", MediaRecorder.isTypeSupported('video/webm'));
+            alert("Video recording setup failed. Your browser might not support the required codecs.");
+            return;
         }
-        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
         mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `recording-${Date.now()}.webm`;
+            const a = document.createElement('a');
+            a.style.display = 'none'; a.href = url;
+            const extension = (mediaRecorder.mimeType || 'video/webm').split('/')[1].split(';')[0];
+            a.download = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.${extension}`;
             document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
             recordedChunks = [];
         };
         mediaRecorder.start();
-        appData.isRecording = true; updateUI(); os.saveAppData();
+        capData.isRecording = true;
+        updateCaptureAppUI();
     }
-    async function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
-        appData.isRecording = false; updateUI(); os.saveAppData();
+    async function stopVideoRecording() {
+        const capData = getCaptureData();
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop(); // This will trigger onstop
+        }
+        capData.isRecording = false;
+        updateCaptureAppUI();
     }
-    function updateUI() {
-        DOM.actionBtn.disabled = !currentStream && !appData.isRecording;
-        DOM.toggleModeBtn.disabled = appData.isRecording;
-        if (appData.mode === 'photo') {
-            DOM.actionBtn.textContent = 'Take Photo'; DOM.actionBtn.classList.remove('recording'); // Style with .recording
-            DOM.toggleModeBtn.textContent = '📹'; DOM.toggleModeBtn.title = "Switch to Video";
-        } else {
-            DOM.toggleModeBtn.textContent = '📷'; DOM.toggleModeBtn.title = "Switch to Photo";
-            if (appData.isRecording) {
-                DOM.actionBtn.textContent = 'Stop Recording'; DOM.actionBtn.classList.add('recording');
+    
+    function updateCaptureAppUI() {
+        const capData = getCaptureData();
+        if (!captureDOM.captureActionBtn || !captureDOM.captureToggleModeBtn) return;
+
+        const streamActive = !!capData.stream;
+        captureDOM.captureActionBtn.disabled = !streamActive;
+        captureDOM.captureToggleModeBtn.disabled = capData.isRecording;
+
+        if (capData.captureMode === 'photo') {
+            captureDOM.captureActionBtn.textContent = 'Take Photo';
+            captureDOM.captureActionBtn.classList.remove('recording');
+            captureDOM.captureToggleModeBtn.textContent = '📹'; 
+            captureDOM.captureToggleModeBtn.title = "Switch to Video Mode";
+        } else { 
+            captureDOM.captureToggleModeBtn.textContent = '�'; 
+            captureDOM.captureToggleModeBtn.title = "Switch to Photo Mode";
+            if (capData.isRecording) {
+                captureDOM.captureActionBtn.textContent = 'Stop Recording';
+                captureDOM.captureActionBtn.classList.add('recording');
             } else {
-                DOM.actionBtn.textContent = 'Start Recording'; DOM.actionBtn.classList.remove('recording');
+                captureDOM.captureActionBtn.textContent = 'Start Recording';
+                captureDOM.captureActionBtn.classList.remove('recording');
             }
         }
-         if (!currentStream && !appData.isRecording) DOM.actionBtn.textContent = (appData.mode === 'photo') ? 'Take Photo' : 'Start Recording';
+         if (!streamActive) { // If stream died or couldn't start
+            captureDOM.captureActionBtn.textContent = (capData.captureMode === 'photo') ? 'Take Photo' : 'Start Recording';
+            captureDOM.captureActionBtn.classList.remove('recording'); 
+         }
     }
 
-    function setupMenus() {
-        const menus = [
-            { menuEl: DOM.videoMenu, dropdownEl: DOM.videoDropdown, subItems: [
-                { itemEl: DOM.videoDeviceItem, listEl: DOM.videoDeviceList, populateFn: populateVideoDevices },
-                { itemEl: DOM.videoResolutionItem, listEl: DOM.videoResolutionList, populateFn: populateResolutions }
-            ]},
-            { menuEl: DOM.audioMenu, dropdownEl: DOM.audioDropdown, subItems: [
-                { itemEl: DOM.audioDeviceItem, listEl: DOM.audioDeviceList, populateFn: populateAudioDevices }
-            ]}
-        ];
-        menus.forEach(menu => {
-            menu.menuEl.addEventListener('click', (e) => {
+    function setupCaptureMenus() {
+        const handleMenuClick = (menuElement, dropdownElement, populateFn1, populateFn2) => {
+            menuElement.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isActive = menu.menuEl.classList.toggle('active'); // Style with .active
-                menu.dropdownEl.style.display = isActive ? 'block' : 'none';
-                menus.filter(m => m !== menu).forEach(other => { // Close other main menus
-                    other.menuEl.classList.remove('active'); other.dropdownEl.style.display = 'none';
-                    closeAllSubMenus(other.dropdownEl);
+                const parentWindow = menuElement.closest('.xp-window');
+                if (parentWindow && (parentWindow.classList.contains('disable-selection') || parentWindow.querySelector('.title-bar').style.cursor === 'grabbing')) {
+                    return; // Don't open menu during window drag/resize
+                }
+
+                const isActive = menuElement.classList.toggle('active');
+                dropdownElement.style.display = isActive ? 'block' : 'none';
+                
+                // Close other main menus
+                [captureDOM.videoMenu, captureDOM.audioMenu].forEach(otherMenu => {
+                    if (otherMenu && otherMenu !== menuElement) {
+                        otherMenu.classList.remove('active');
+                        const otherDropdown = otherMenu.querySelector('.xp-dropdown-menu');
+                        if (otherDropdown) {
+                            otherDropdown.style.display = 'none';
+                            closeAllSubMenus(otherDropdown);
+                        }
+                    }
                 });
-                if (isActive) menu.subItems.forEach(si => si.populateFn()); else closeAllSubMenus(menu.dropdownEl);
+
+                if (isActive) {
+                    if (populateFn1) populateFn1();
+                    if (populateFn2) populateFn2(); // For video menu that populates devices and resolutions
+                    updateSelectedInMenu();
+                } else {
+                    closeAllSubMenus(dropdownElement);
+                }
             });
-            menu.subItems.forEach(sub => {
-                sub.itemEl.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const isActive = sub.itemEl.classList.toggle('submenu-active'); // Style with .submenu-active
-                    sub.listEl.style.display = isActive ? 'block' : 'none';
-                    menu.subItems.filter(s => s !== sub).forEach(otherSub => { // Close other submenus in same dropdown
-                        otherSub.itemEl.classList.remove('submenu-active'); otherSub.listEl.style.display = 'none';
-                    });
+        };
+
+        const handleSubMenuItemClick = (parentItem, subMenu) => {
+            parentItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isActive = parentItem.classList.toggle('submenu-active');
+                subMenu.style.display = isActive ? 'block' : 'none';
+                // Close other submenus in the same dropdown
+                const allSubItems = parentItem.closest('.xp-dropdown-menu').querySelectorAll('.xp-dropdown-item');
+                allSubItems.forEach(item => {
+                    if (item !== parentItem && item.classList.contains('submenu-active')) {
+                        item.classList.remove('submenu-active');
+                        const otherSubMenu = item.querySelector('.xp-submenu');
+                        if (otherSubMenu) otherSubMenu.style.display = 'none';
+                    }
                 });
             });
+        };
+
+        handleMenuClick(captureDOM.videoMenu, captureDOM.videoDropdown, populateVideoDevices, populateResolutions);
+        handleSubMenuItemClick(captureDOM.videoDeviceItem, captureDOM.videoDeviceList);
+        handleSubMenuItemClick(captureDOM.videoResolutionItem, captureDOM.videoResolutionList);
+        
+        handleMenuClick(captureDOM.audioMenu, captureDOM.audioDropdown, populateAudioDevices);
+        handleSubMenuItemClick(captureDOM.audioDeviceItem, captureDOM.audioDeviceList);
+
+        // Close menus if clicked outside
+        document.addEventListener('click', (e) => {
+            if (!captureDOM.captureMenuBar.contains(e.target)) {
+                closeAllCaptureMenus();
+            }
         });
-        appWindow.addEventListener('click', () => menus.forEach(m => { // Close all on window click
-            m.menuEl.classList.remove('active'); m.dropdownEl.style.display = 'none'; closeAllSubMenus(m.dropdownEl);
-        }));
+        // Also close on window drag/resize start (event dispatched by OS)
+        const appWindow = getById(APP_ID);
+        if(appWindow){
+            appWindow.addEventListener('osdragstart', closeAllCaptureMenus);
+            appWindow.addEventListener('osresizestart', closeAllCaptureMenus);
+        }
     }
-    function closeAllSubMenus(dropdownEl) {
-        if (!dropdownEl) return;
-        dropdownEl.querySelectorAll('.xp-dropdown-item').forEach(i => i.classList.remove('submenu-active'));
-        dropdownEl.querySelectorAll('.xp-submenu').forEach(s => s.style.display = 'none');
+
+    function closeAllCaptureMenus() {
+        [captureDOM.videoMenu, captureDOM.audioMenu].forEach(menu => {
+            if (menu) menu.classList.remove('active');
+        });
+        [captureDOM.videoDropdown, captureDOM.audioDropdown].forEach(dropdown => {
+            if (dropdown) {
+                dropdown.style.display = 'none';
+                closeAllSubMenus(dropdown);
+            }
+        });
     }
-    async function populateDevices(listEl, kind, selectedDevice, onSelect) {
-        listEl.innerHTML = '';
+    function closeAllSubMenus(dropdownElement) {
+        if (!dropdownElement) return;
+        dropdownElement.querySelectorAll('.xp-dropdown-item.submenu-active').forEach(item => item.classList.remove('submenu-active'));
+        dropdownElement.querySelectorAll('.xp-submenu').forEach(submenu => submenu.style.display = 'none');
+    }
+
+    async function populateVideoDevices() {
+        if (!captureDOM.videoDeviceList) return;
+        captureDOM.videoDeviceList.innerHTML = ''; 
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
-            const filtered = devices.filter(d => d.kind === kind && d.deviceId !== 'default'); // Exclude 'default'
-            if (filtered.length === 0) { listEl.innerHTML = `<div class="xp-submenu-item" style="padding:4px 12px;">No devices</div>`; return; }
-            filtered.forEach(d => {
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            if (videoDevices.length === 0) {
+                captureDOM.videoDeviceList.innerHTML = '<div class="xp-submenu-item">No video devices</div>'; return;
+            }
+            videoDevices.forEach(device => {
                 const item = document.createElement('div');
-                item.className = 'xp-submenu-item'; item.style.padding = "4px 12px";
-                item.textContent = d.label || `${kind.replace('input','')} ${listEl.children.length + 1}`;
-                item.dataset.deviceId = d.deviceId;
-                if (d.deviceId === selectedDevice) item.classList.add('selected'); // Style with .selected
+                item.classList.add('xp-submenu-item');
+                item.textContent = device.label || `Camera ${captureDOM.videoDeviceList.children.length + 1}`;
+                item.dataset.deviceId = device.deviceId;
                 item.addEventListener('click', async () => {
-                    if (selectedDevice !== d.deviceId) await onSelect(d.deviceId);
-                    closeAllSubMenus(listEl.closest('.xp-dropdown-menu'));
-                    listEl.closest('.xp-dropdown-menu').style.display = 'none';
-                    listEl.closest('.xp-dropdown-menu').parentElement.classList.remove('active');
+                    const capData = getCaptureData();
+                    if (capData.selectedVideoDevice !== device.deviceId) {
+                        capData.selectedVideoDevice = device.deviceId;
+                        await startCaptureApp(capData.selectedVideoDevice, capData.selectedAudioDevice, capData.selectedResolution);
+                    }
+                    closeAllCaptureMenus();
                 });
-                listEl.appendChild(item);
+                captureDOM.videoDeviceList.appendChild(item);
             });
-        } catch (err) { listEl.innerHTML = `<div class="xp-submenu-item" style="padding:4px 12px;">Error listing</div>`; }
+        } catch (err) {
+            captureDOM.videoDeviceList.innerHTML = '<div class="xp-submenu-item">Error listing devices</div>';
+        }
+        updateSelectedInMenu(); 
     }
-    function populateVideoDevices() { populateDevices(DOM.videoDeviceList, 'videoinput', appData.selectedVideoDevice, async (id) => { appData.selectedVideoDevice = id; await startCapture(); }); }
-    function populateAudioDevices() { populateDevices(DOM.audioDeviceList, 'audioinput', appData.selectedAudioDevice, async (id) => { appData.selectedAudioDevice = id; await startCapture(); }); }
-    
-    function updateResolutionMenuState(disabled) {
-        isResolutionChangeDelayed = disabled;
-        DOM.videoResolutionList.querySelectorAll('.xp-submenu-item').forEach(item => {
-            item.classList.toggle('disabled-resolution', disabled); // Style with .disabled-resolution
-            item.style.pointerEvents = disabled ? 'none' : 'auto';
+    async function populateAudioDevices() {
+        if (!captureDOM.audioDeviceList) return;
+        captureDOM.audioDeviceList.innerHTML = '';
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioDevices = devices.filter(device => device.kind === 'audioinput' && device.deviceId !== 'default');
+            if (audioDevices.length === 0) {
+                captureDOM.audioDeviceList.innerHTML = '<div class="xp-submenu-item">No audio devices</div>'; return;
+            }
+            audioDevices.forEach(device => {
+                const item = document.createElement('div');
+                item.classList.add('xp-submenu-item');
+                item.textContent = device.label || `Microphone ${captureDOM.audioDeviceList.children.length + 1}`;
+                item.dataset.deviceId = device.deviceId;
+                item.addEventListener('click', async () => {
+                    const capData = getCaptureData();
+                     if (capData.selectedAudioDevice !== device.deviceId) {
+                        capData.selectedAudioDevice = device.deviceId;
+                        await startCaptureApp(capData.selectedVideoDevice, capData.selectedAudioDevice, capData.selectedResolution);
+                     }
+                    closeAllCaptureMenus();
+                });
+                captureDOM.audioDeviceList.appendChild(item);
+            });
+        } catch (err) {
+             captureDOM.audioDeviceList.innerHTML = '<div class="xp-submenu-item">Error listing devices</div>';
+        }
+        updateSelectedInMenu();
+    }
+    function updateResolutionItemsState(disabled) {
+        if (!captureDOM.videoResolutionList) return;
+        captureDOM.videoResolutionList.querySelectorAll('.xp-submenu-item').forEach(item => {
+            if (disabled) {
+                item.classList.add('disabled-resolution');
+                item.style.pointerEvents = 'none'; 
+            } else {
+                item.classList.remove('disabled-resolution');
+                item.style.pointerEvents = 'auto'; 
+            }
         });
     }
-
     function populateResolutions() {
-        DOM.videoResolutionList.innerHTML = '';
+        if (!captureDOM.videoResolutionList) return;
+        captureDOM.videoResolutionList.innerHTML = '';
         COMMON_RESOLUTIONS.forEach(res => {
             const item = document.createElement('div');
-            item.className = 'xp-submenu-item'; item.style.padding = "4px 12px";
+            item.classList.add('xp-submenu-item');
             item.textContent = res.label;
-            if (isResolutionChangeDelayed && res.label !== "Default") { // Disable non-default during delay
-                item.classList.add('disabled-resolution'); item.style.pointerEvents = 'none';
-            }
-            if (appData.selectedResolution && res.width === appData.selectedResolution.width && res.height === appData.selectedResolution.height) item.classList.add('selected');
-            else if (!appData.selectedResolution && res.label === "Default") item.classList.add('selected');
-            
             item.addEventListener('click', async () => {
-                if (isResolutionChangeDelayed && res.label !== "Default") return;
-                const newRes = (res.width && res.height) ? { width: res.width, height: res.height } : null;
-                if (JSON.stringify(appData.selectedResolution) !== JSON.stringify(newRes)) {
-                    appData.selectedResolution = newRes;
-                    await startCapture();
+                if (isResolutionDelayActive) return;
+                const capData = getCaptureData();
+                const newRes = (res.width && res.height) ? { width: res.width, height: res.height, label: res.label } : null;
+                if (JSON.stringify(capData.selectedResolution) !== JSON.stringify(newRes)) {
+                    capData.selectedResolution = newRes;
+                    await startCaptureApp(capData.selectedVideoDevice, capData.selectedAudioDevice, capData.selectedResolution);
                 }
-                closeAllSubMenus(DOM.videoResolutionList.closest('.xp-dropdown-menu'));
-                DOM.videoResolutionList.closest('.xp-dropdown-menu').style.display = 'none';
-                DOM.videoResolutionList.closest('.xp-dropdown-menu').parentElement.classList.remove('active');
+                closeAllCaptureMenus();
             });
-            DOM.videoResolutionList.appendChild(item);
+            captureDOM.videoResolutionList.appendChild(item);
         });
+        updateResolutionItemsState(isResolutionDelayActive);
+        updateSelectedInMenu();
     }
-    function updateMenuSelections() {
-        [DOM.videoDeviceList, DOM.audioDeviceList].forEach(listEl => {
-            if (!listEl) return;
-            const selectedId = listEl === DOM.videoDeviceList ? appData.selectedVideoDevice : appData.selectedAudioDevice;
-            Array.from(listEl.children).forEach(item => item.classList.toggle('selected', item.dataset.deviceId === selectedId));
-        });
-        if (DOM.videoResolutionList) {
-            Array.from(DOM.videoResolutionList.children).forEach((item, i) => {
-                const resOpt = COMMON_RESOLUTIONS[i];
-                const isSelected = (appData.selectedResolution && resOpt.width === appData.selectedResolution.width && resOpt.height === appData.selectedResolution.height) || (!appData.selectedResolution && resOpt.label === "Default");
-                item.classList.toggle('selected', isSelected);
+    function updateSelectedInMenu() {
+        const capData = getCaptureData();
+        const updateList = (listElement, selectedValue) => {
+            if (listElement) {
+                Array.from(listElement.children).forEach(item => {
+                    item.classList.remove('selected');
+                    if (item.dataset.deviceId && item.dataset.deviceId === selectedValue) {
+                        item.classList.add('selected');
+                    }
+                });
+            }
+        };
+        updateList(captureDOM.videoDeviceList, capData.selectedVideoDevice);
+        updateList(captureDOM.audioDeviceList, capData.selectedAudioDevice);
+
+        if (captureDOM.videoResolutionList) {
+            Array.from(captureDOM.videoResolutionList.children).forEach(item => {
+                item.classList.remove('selected');
+                const resOpt = COMMON_RESOLUTIONS.find(r => r.label === item.textContent);
+                if (resOpt) { 
+                    if (capData.selectedResolution && capData.selectedResolution.width === resOpt.width && capData.selectedResolution.height === resOpt.height) {
+                        item.classList.add('selected');
+                    } else if (!capData.selectedResolution && resOpt.label === "Default") {
+                        item.classList.add('selected'); // Select "Default" if no specific resolution is set
+                    }
+                }
             });
         }
     }
-    
-    this.onOpen = async (win) => {
-        setupMenus();
-        await startCapture();
-        updateUI();
-        updateMenuSelections();
 
-        if (sessionStorage.getItem('captureFirstOpenDelay') === null) {
-            sessionStorage.setItem('captureFirstOpenDelay', 'done');
-            updateResolutionMenuState(true); 
-            resolutionChangeDelayTimer = setTimeout(() => {
-                updateResolutionMenuState(false);
-                resolutionChangeDelayTimer = null;
-            }, 15000); // 15 second delay
+    function setupCaptureApp() {
+        const windowBody = getById('captureWindowBody');
+        const bodyContentTemplate = document.getElementById('captureBodyContentTemplate');
+
+        if (windowBody && bodyContentTemplate) {
+            windowBody.innerHTML = ''; // Clear placeholder
+            windowBody.appendChild(bodyContentTemplate.content.cloneNode(true));
         } else {
-            updateResolutionMenuState(false);
+            console.error("Capture App window body or content template not found.");
+            return;
         }
-    };
-    this.onClose = async (win) => { 
-        await stopCapture();
-        if (resolutionChangeDelayTimer) clearTimeout(resolutionChangeDelayTimer);
-    };
-    this.onMinimize = async (win) => { await stopCapture(); };
-    this.onRestore = async (win) => { await startCapture(); updateUI(); updateMenuSelections();};
-
-    DOM.actionBtn.addEventListener('click', handleAction);
-    DOM.toggleModeBtn.addEventListener('click', toggleMode);
-    
-    // Initial setup if window is already visible (e.g. on page load with saved state)
-    if (appWindow.style.display !== 'none' && !appWindow.classList.contains('minimized')) {
-        this.onOpen(appWindow);
+        
+        if (!window.appRegistry) window.appRegistry = {};
+        window.appRegistry[APP_ID] = {
+            minWidth: MIN_WIDTH,
+            minHeight: MIN_HEIGHT,
+            defaultWidth: DEFAULT_WIDTH,
+            defaultHeight: DEFAULT_HEIGHT,
+            appName: "Capture"
+        };
+        
+        initCaptureApp();
     }
 
-    </script>
-</body>
+    window.setupCaptureApp = setupCaptureApp;
+
+})();
+</script>
