@@ -22,8 +22,22 @@
     .pixel-size-input::-webkit-outer-spin-button,
     .pixel-size-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .pixel-size-input[type=number] { -moz-appearance: textfield; }
-    .pixel-canvas-container { flex-grow: 1; background-color: #808080; padding: 5px; display: flex; justify-content: center; align-items: center; overflow: auto; }
-    #pixelCanvas { background-color: white; border: 1px solid #000; cursor: default; max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; /* Ensures crisp pixels */ }
+    .pixel-canvas-container { flex-grow: 1; background-color: #808080; padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; }
+    #pixelCanvas { background-color: white; border: 1px solid #000; cursor: default; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; }
+
+    /* Modal Styles (similar to index.html for consistency) */
+    .pixel-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .pixel-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: pixelFadeIn 0.3s; display: flex; flex-direction: column; }
+    .pixel-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .pixel-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .pixel-modal-close-button:hover, .pixel-modal-close-button:focus { background: #FF6363; }
+    .pixel-modal-close-button:active { border-style: inset; }
+    .pixel-modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
+    .pixel-modal-body p { margin-top: 0; margin-bottom: 10px; }
+    .pixel-modal-body label { display: block; margin-bottom: 5px; margin-top: 12px; }
+    .pixel-modal-body input[type="number"] { width: calc(100% - 12px); padding: 5px; margin-bottom: 10px; border: 1px solid #ACA899; box-sizing: border-box; }
+    .pixel-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes pixelFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
 </style>
 
 <div id="pixelWindowBody">
@@ -31,14 +45,14 @@
         <div class="pixel-menu-item" tabindex="0">
             File
             <div class="pixel-dropdown-content">
-                <div class="pixel-dropdown-item" id="pixelFileSave">Save</div>
-                <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear canvas</div>
-                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas size</div>
+                <div class="pixel-dropdown-item" id="pixelFileSave">Save to File</div>
+                <div class="pixel-dropdown-item" id="pixelFileClearCanvas">Clear Canvas</div>
+                <div class="pixel-dropdown-item" id="pixelFileCanvasSize">Canvas Size...</div>
             </div>
         </div>
     </div>
     <div class="pixel-toolbar">
-        <input type="number" class="pixel-size-input" id="pixelSizeInput" value="2" min="1" max="50" title="Pencil/Eraser Size">
+        <input type="number" class="pixel-size-input" id="pixelSizeInput" value="1" min="1" max="50" title="Brush Size">
         <button class="pixel-tool-button active" id="pixelPencilTool" title="Pencil">✏️</button>
         <button class="pixel-tool-button" id="pixelEraserTool" title="Eraser">🧼</button>
         <button class="pixel-tool-button" id="pixelBucketTool" title="Paint Bucket">🫗</button>
@@ -49,15 +63,52 @@
     </div>
 </div>
 
+<div id="pixelCanvasSizeModal" class="pixel-modal">
+    <div class="pixel-modal-content">
+        <div class="pixel-modal-title-bar">
+            <span>Set Canvas Size</span>
+            <span class="pixel-modal-close-button" data-modal-id="pixelCanvasSizeModal">r</span>
+        </div>
+        <div class="pixel-modal-body">
+            <label for="pixelNewCanvasWidth">New Width (pixels):</label>
+            <input type="number" id="pixelNewCanvasWidth" min="8" max="512" value="600">
+            <label for="pixelNewCanvasHeight">New Height (pixels):</label>
+            <input type="number" id="pixelNewCanvasHeight" min="8" max="512" value="400">
+            <p><small>Min: 8px, Max: 512px per dimension.</small></p>
+        </div>
+        <div class="pixel-modal-footer">
+            <button id="savePixelCanvasSizeBtn" class="xp-button">Apply Size</button>
+            <button class="xp-button pixel-modal-cancel-btn" data-modal-id="pixelCanvasSizeModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirmPixelResizeModal" class="pixel-modal">
+    <div class="pixel-modal-content">
+        <div class="pixel-modal-title-bar">
+            <span>Confirm Canvas Resize</span>
+            <span class="pixel-modal-close-button" data-modal-id="confirmPixelResizeModal">r</span>
+        </div>
+        <div class="pixel-modal-body">
+            <p>Changing the canvas size will clear the current drawing. Are you sure you want to proceed?</p>
+        </div>
+        <div class="pixel-modal-footer">
+            <button id="confirmPixelResizeExecuteBtn" class="xp-button">Proceed & Clear</button>
+            <button class="xp-button pixel-modal-cancel-btn" data-modal-id="confirmPixelResizeModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
-    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.0';
+    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.3'; 
     let pixelCraftData = {
         currentColor: '#000000',
         currentTool: 'pencil',
-        pencilSize: 2,
-        canvasWidth: 64, // Default canvas size (actual pixels, not display size)
-        canvasHeight: 64,
-        // canvasContent: null // Could store canvas dataURL here for persistence
+        pixelSize: 1, 
+        canvasWidth: 600, // Updated default
+        canvasHeight: 400, // Updated default
+        canvasContent: null 
     };
 
     const DOM_PC = {
@@ -72,61 +123,91 @@
         sizeInput: document.getElementById('pixelSizeInput'),
         canvas: document.getElementById('pixelCanvas'),
         canvasContainer: document.getElementById('pixelCanvasContainer'),
-        pixelWindowBody: document.getElementById('pixelWindowBody')
+        pixelWindowBody: document.getElementById('pixelWindowBody'),
+        // Modals
+        pixelCanvasSizeModal: document.getElementById('pixelCanvasSizeModal'),
+        pixelNewCanvasWidthInput: document.getElementById('pixelNewCanvasWidth'),
+        pixelNewCanvasHeightInput: document.getElementById('pixelNewCanvasHeight'),
+        savePixelCanvasSizeBtn: document.getElementById('savePixelCanvasSizeBtn'),
+        confirmPixelResizeModal: document.getElementById('confirmPixelResizeModal'),
+        confirmPixelResizeExecuteBtn: document.getElementById('confirmPixelResizeExecuteBtn'),
     };
 
     let pixelCtx = null;
     let pixelIsDrawing = false;
-    let pixelLastX, pixelLastY;
+    let pixelLastX = 0;
+    let pixelLastY = 0;
 
     function loadPixelCraftData() {
         const stored = localStorage.getItem(PIXEL_CRAFT_STORAGE_KEY);
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                pixelCraftData = { ...pixelCraftData, ...parsed };
-                // Ensure numeric values are numbers
-                pixelCraftData.pencilSize = parseInt(pixelCraftData.pencilSize) || 2;
-                pixelCraftData.canvasWidth = parseInt(pixelCraftData.canvasWidth) || 64;
-                pixelCraftData.canvasHeight = parseInt(pixelCraftData.canvasHeight) || 64;
-
+                pixelCraftData = { ...pixelCraftData, ...parsed }; // Spread defaults first
+                pixelCraftData.pixelSize = parseInt(pixelCraftData.pixelSize) || 1;
+                pixelCraftData.canvasWidth = parseInt(pixelCraftData.canvasWidth) || 600; // Use updated default
+                pixelCraftData.canvasHeight = parseInt(pixelCraftData.canvasHeight) || 400; // Use updated default
             } catch (e) {
-                console.error("Error loading Pixel Craft data, resetting.", e);
+                console.error("Error loading Pixel Craft data, using defaults.", e);
             }
         }
     }
 
-    function savePixelCraftData() {
-        // pixelCraftData.canvasContent = DOM_PC.canvas.toDataURL(); // Save canvas state
-        localStorage.setItem(PIXEL_CRAFT_STORAGE_KEY, JSON.stringify(pixelCraftData));
+    function savePixelCraftData(saveCanvasContent = true) {
+        if (saveCanvasContent && DOM_PC.canvas && DOM_PC.canvas.width > 0 && DOM_PC.canvas.height > 0) {
+            try {
+                pixelCraftData.canvasContent = DOM_PC.canvas.toDataURL('image/png');
+            } catch (e) {
+                console.warn("Could not save canvas content to localStorage (possibly too large or canvas tainted):", e.message);
+                pixelCraftData.canvasContent = null; 
+            }
+        }
+        const dataToSave = { ...pixelCraftData };
+        if (!saveCanvasContent) {
+            delete dataToSave.canvasContent; 
+        }
+        localStorage.setItem(PIXEL_CRAFT_STORAGE_KEY, JSON.stringify(dataToSave));
     }
     
     function initPixelApp() {
+        if (!DOM_PC.canvas) {
+            console.error("Pixel Craft: Canvas element not found on init.");
+            return;
+        }
         pixelCtx = DOM_PC.canvas.getContext('2d');
-        pixelCtx.imageSmoothingEnabled = false; // Crucial for pixel art
+        if (!pixelCtx) {
+            console.error("Pixel Craft: Could not get 2D context from canvas.");
+            return;
+        }
+        pixelCtx.imageSmoothingEnabled = false; 
 
         DOM_PC.canvas.width = pixelCraftData.canvasWidth;
         DOM_PC.canvas.height = pixelCraftData.canvasHeight;
         
-        // if (pixelCraftData.canvasContent) {
-        //     const img = new Image();
-        //     img.onload = () => {
-        //         pixelCtx.drawImage(img, 0, 0);
-        //         handlePixelWindowResize(); // Adjust display size after loading
-        //     };
-        //     img.src = pixelCraftData.canvasContent;
-        // } else {
-            clearPixelCanvasInternal(false); // Clear without save on initial load if no content
-            handlePixelWindowResize();
-        // }
+        if (pixelCraftData.canvasContent) {
+            const img = new Image();
+            img.onload = () => {
+                pixelCtx.clearRect(0, 0, DOM_PC.canvas.width, DOM_PC.canvas.height); 
+                pixelCtx.drawImage(img, 0, 0, DOM_PC.canvas.width, DOM_PC.canvas.height);
+                requestAnimationFrame(handlePixelWindowResize); 
+            };
+            img.onerror = () => { 
+                console.warn("Could not load saved canvas content. Clearing canvas.");
+                clearPixelCanvasInternal(false); 
+                requestAnimationFrame(handlePixelWindowResize);
+            }
+            img.src = pixelCraftData.canvasContent;
+        } else {
+            clearPixelCanvasInternal(false); 
+            requestAnimationFrame(handlePixelWindowResize);
+        }
 
-
-        pixelCraftData.pencilSize = parseInt(pixelCraftData.pencilSize);
-        if (isNaN(pixelCraftData.pencilSize) || pixelCraftData.pencilSize < 1) pixelCraftData.pencilSize = 1;
-        if (pixelCraftData.pencilSize > 50) pixelCraftData.pencilSize = 50;
+        pixelCraftData.pixelSize = parseInt(pixelCraftData.pixelSize);
+        if (isNaN(pixelCraftData.pixelSize) || pixelCraftData.pixelSize < 1) pixelCraftData.pixelSize = 1;
+        if (pixelCraftData.pixelSize > 50) pixelCraftData.pixelSize = 50;
         
         DOM_PC.colorPicker.value = pixelCraftData.currentColor;
-        DOM_PC.sizeInput.value = pixelCraftData.pencilSize;
+        DOM_PC.sizeInput.value = pixelCraftData.pixelSize;
 
         setPixelTool(pixelCraftData.currentTool);
         addPixelCraftEventListeners();
@@ -145,136 +226,151 @@
             DOM_PC.canvas.style.cursor = 'crosshair';
         } else if (tool === 'bucket') {
             DOM_PC.bucketTool.classList.add('active');
-            DOM_PC.canvas.style.cursor = 'copy'; // Or a custom bucket cursor
+            DOM_PC.canvas.style.cursor = 'copy'; 
         }
-        savePixelCraftData();
+        savePixelCraftData(false); 
     }
     
     function handlePixelWindowResize() {
         const container = DOM_PC.canvasContainer;
         const canvasEl = DOM_PC.canvas;
-        
-        const padding = 10; // Padding within the container
-        const menuBarHeight = DOM_PC.menuBar.offsetHeight;
-        const toolbarHeight = DOM_PC.pixelWindowBody.querySelector('.pixel-toolbar').offsetHeight;
-        
-        // Calculate available height for the canvas container
-        const availableHeightForContainer = DOM_PC.pixelWindowBody.clientHeight - menuBarHeight - toolbarHeight - padding;
-        const availableWidthForContainer = container.clientWidth - padding;
+        const body = DOM_PC.pixelWindowBody;
+        const menu = DOM_PC.menuBar;
+        const toolbarEl = DOM_PC.pixelWindowBody.querySelector('.pixel-toolbar'); // Renamed to avoid conflict
 
-        if (availableWidthForContainer <= 0 || availableHeightForContainer <= 0) return;
-
-        const aspectRatio = pixelCraftData.canvasWidth / pixelCraftData.canvasHeight;
-
-        let displayWidth = availableWidthForContainer;
-        let displayHeight = displayWidth / aspectRatio;
-
-        if (displayHeight > availableHeightForContainer) {
-            displayHeight = availableHeightForContainer;
-            displayWidth = displayHeight * aspectRatio;
+        if (!container || !canvasEl || !body || !menu || !toolbarEl) {
+            // console.warn("Pixel Craft: One or more layout elements missing for resize.");
+            return;
         }
         
-        // Ensure display size is not smaller than actual canvas if it fits, or some minimum
-        displayWidth = Math.max(pixelCraftData.canvasWidth, Math.min(displayWidth, availableWidthForContainer));
-        displayHeight = Math.max(pixelCraftData.canvasHeight, Math.min(displayHeight, availableHeightForContainer));
+        const containerPadding = 20; 
+        const menuBarHeight = menu.offsetHeight;
+        const toolbarHeight = toolbarEl.offsetHeight;
+        
+        const containerClientWidth = container.clientWidth;
+        const bodyClientHeight = body.clientHeight;
 
+        if (containerClientWidth <= 0 || bodyClientHeight <= 0) {
+            return;
+        }
 
-        canvasEl.style.width = Math.floor(displayWidth) + 'px';
-        canvasEl.style.height = Math.floor(displayHeight) + 'px';
+        const availableWidthForCanvas = containerClientWidth - containerPadding;
+        const availableHeightForCanvas = bodyClientHeight - menuBarHeight - toolbarHeight - containerPadding;
+
+        if (availableWidthForCanvas <= 0 || availableHeightForCanvas <= 0) {
+            return;
+        }
+        
+        const canvasAspectRatio = pixelCraftData.canvasWidth / pixelCraftData.canvasHeight;
+        if (isNaN(canvasAspectRatio) || canvasAspectRatio <= 0) {
+            console.error("Pixel Craft: Invalid canvas aspect ratio.", pixelCraftData.canvasWidth, pixelCraftData.canvasHeight);
+            return;
+        }
+
+        let displayWidth = availableWidthForCanvas;
+        let displayHeight = displayWidth / canvasAspectRatio;
+
+        if (displayHeight > availableHeightForCanvas) {
+            displayHeight = availableHeightForCanvas;
+            displayWidth = displayHeight * canvasAspectRatio;
+        }
+        
+        displayWidth = Math.max(1, Math.floor(displayWidth)); 
+        displayHeight = Math.max(1, Math.floor(displayHeight));
+
+        canvasEl.style.width = displayWidth + 'px';
+        canvasEl.style.height = displayHeight + 'px';
     }
 
+    function getCanvasCoordinates(e) {
+        const rect = DOM_PC.canvas.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) { 
+            return { x: 0, y: 0};
+        }
+        const scaleX = DOM_PC.canvas.width / rect.width;
+        const scaleY = DOM_PC.canvas.height / rect.height;
+        
+        const canvasX = (e.clientX - rect.left) * scaleX;
+        const canvasY = (e.clientY - rect.top) * scaleY;
+        
+        return { x: Math.floor(canvasX), y: Math.floor(canvasY) };
+    }
+    
+    function drawPixelBlock(x, y) {
+        const brushSize = parseInt(pixelCraftData.pixelSize);
+        const startX = Math.floor(x / brushSize) * brushSize;
+        const startY = Math.floor(y / brushSize) * brushSize;
+
+        if (pixelCraftData.currentTool === 'pencil') {
+            pixelCtx.fillStyle = pixelCraftData.currentColor;
+            pixelCtx.fillRect(startX, startY, brushSize, brushSize);
+        } else if (pixelCraftData.currentTool === 'eraser') {
+            pixelCtx.clearRect(startX, startY, brushSize, brushSize);
+        }
+    }
 
     function startPixelDrawing(e) {
         if (pixelCraftData.currentTool === 'bucket') return;
         pixelIsDrawing = true;
-        
-        const rect = DOM_PC.canvas.getBoundingClientRect();
-        const scaleX = DOM_PC.canvas.width / rect.width;
-        const scaleY = DOM_PC.canvas.height / rect.height;
-
-        const canvasX = (e.clientX - rect.left) * scaleX;
-        const canvasY = (e.clientY - rect.top) * scaleY;
-        
-        pixelLastX = canvasX;
-        pixelLastY = canvasY;
-        
-        drawPixelated(canvasX, canvasY); // Draw first point
+        const coords = getCanvasCoordinates(e);
+        pixelLastX = coords.x;
+        pixelLastY = coords.y;
+        drawPixelBlock(coords.x, coords.y); 
     }
 
     function stopPixelDrawing() {
         if (pixelIsDrawing) {
             pixelIsDrawing = false;
-            savePixelCraftData(); // Save after drawing stroke is complete
+            savePixelCraftData(true); 
         }
     }
     
-    function drawPixelated(canvasX, canvasY) {
-        const size = parseInt(pixelCraftData.pencilSize);
-        // Adjust to draw centered on the pixel grid if size is 1
-        const drawX = Math.floor(canvasX / size) * size;
-        const drawY = Math.floor(canvasY / size) * size;
-
-        if (pixelCraftData.currentTool === 'pencil') {
-            pixelCtx.fillStyle = pixelCraftData.currentColor;
-            pixelCtx.fillRect(drawX, drawY, size, size);
-        } else if (pixelCraftData.currentTool === 'eraser') {
-            pixelCtx.clearRect(drawX, drawY, size, size);
-        }
-    }
-
-
-    function pixelDraw(e) {
-        if (!pixelIsDrawing || pixelCraftData.currentTool === 'bucket') return;
-
-        const rect = DOM_PC.canvas.getBoundingClientRect();
-        const scaleX = DOM_PC.canvas.width / rect.width;
-        const scaleY = DOM_PC.canvas.height / rect.height;
-
-        const currentX = (e.clientX - rect.left) * scaleX;
-        const currentY = (e.clientY - rect.top) * scaleY;
-
-        // Bresenham's line algorithm for pixelated lines
-        let x0 = Math.floor(pixelLastX);
-        let y0 = Math.floor(pixelLastY);
-        let x1 = Math.floor(currentX);
-        let y1 = Math.floor(currentY);
-
+    function drawLine(x0, y0, x1, y1) {
         const dx = Math.abs(x1 - x0);
-        const dy = -Math.abs(y1 - y0);
+        const dy = -Math.abs(y1 - y0); 
         const sx = x0 < x1 ? 1 : -1;
         const sy = y0 < y1 ? 1 : -1;
         let err = dx + dy;
 
         while (true) {
-            drawPixelated(x0, y0);
+            drawPixelBlock(x0, y0);
             if (x0 === x1 && y0 === y1) break;
             let e2 = 2 * err;
-            if (e2 >= dy) {
+            if (e2 >= dy) { 
+                if (x0 === x1 && sx !==0) break; // Avoid infinite loop if stuck on x-axis and not moving
                 err += dy;
                 x0 += sx;
             }
-            if (e2 <= dx) {
+            if (e2 <= dx) { 
+                if (y0 === y1 && sy !==0) break; // Avoid infinite loop if stuck on y-axis and not moving
                 err += dx;
                 y0 += sy;
             }
+             // Safety break for unforeseen conditions, though Bresenham should terminate.
+            if (Math.abs(x0 - x1) > dx + 1 || Math.abs(y0 - y1) > Math.abs(dy) + 1) {
+                console.warn("DrawLine safety break triggered");
+                break;
+            }
         }
-        pixelLastX = currentX;
-        pixelLastY = currentY;
     }
 
+    function pixelDraw(e) {
+        if (!pixelIsDrawing || pixelCraftData.currentTool === 'bucket') return;
+        const coords = getCanvasCoordinates(e);
+        drawLine(pixelLastX, pixelLastY, coords.x, coords.y);
+        pixelLastX = coords.x;
+        pixelLastY = coords.y;
+    }
 
     function pixelBucketFill(e) {
         if (pixelCraftData.currentTool !== 'bucket') return;
         
-        const rect = DOM_PC.canvas.getBoundingClientRect();
-        const scaleX = DOM_PC.canvas.width / rect.width;
-        const scaleY = DOM_PC.canvas.height / rect.height;
-        
-        const startX = Math.floor((e.clientX - rect.left) * scaleX);
-        const startY = Math.floor((e.clientY - rect.top) * scaleY);
+        const { x: startX, y: startY } = getCanvasCoordinates(e);
 
         const canvasWidth = DOM_PC.canvas.width;
         const canvasHeight = DOM_PC.canvas.height;
+        if (startX < 0 || startX >= canvasWidth || startY < 0 || startY >= canvasHeight) return;
+
         const imageData = pixelCtx.getImageData(0, 0, canvasWidth, canvasHeight);
         const data = imageData.data;
 
@@ -288,20 +384,25 @@
         const rFill = parseInt(fillColorHex.slice(1, 3), 16);
         const gFill = parseInt(fillColorHex.slice(3, 5), 16);
         const bFill = parseInt(fillColorHex.slice(5, 7), 16);
-        const aFill = 255; // Assuming opaque fill
+        const aFill = 255; 
 
         if (targetColorR === rFill && targetColorG === gFill && targetColorB === bFill && targetColorA === aFill) {
-            return; // Clicked on already filled area
+            return; 
         }
 
         const stack = [[startX, startY]];
         
         while (stack.length) {
             const [x, y] = stack.pop();
+            
+            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) continue;
+            
             const currentIndex = (y * canvasWidth + x) * 4;
 
-            if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) continue;
-            if (data[currentIndex] === rFill && data[currentIndex+1] === gFill && data[currentIndex+2] === bFill && data[currentIndex+3] === aFill) continue; // Already filled
+            if (data[currentIndex] === rFill && 
+                data[currentIndex+1] === gFill && 
+                data[currentIndex+2] === bFill && 
+                data[currentIndex+3] === aFill) continue; 
 
             if (data[currentIndex] === targetColorR &&
                 data[currentIndex + 1] === targetColorG &&
@@ -320,14 +421,14 @@
             }
         }
         pixelCtx.putImageData(imageData, 0, 0);
-        savePixelCraftData();
+        savePixelCraftData(true);
     }
     
-    function clearPixelCanvasInternal(save = true) {
+    function clearPixelCanvasInternal(saveAfterClear = true) {
         if (pixelCtx && DOM_PC.canvas) {
-            pixelCtx.fillStyle = 'white'; // Or transparent: pixelCtx.clearRect(0,0,cw,ch)
+            pixelCtx.fillStyle = 'white'; 
             pixelCtx.fillRect(0, 0, DOM_PC.canvas.width, DOM_PC.canvas.height);
-            if (save) savePixelCraftData();
+            if (saveAfterClear) savePixelCraftData(true);
         }
     }
 
@@ -346,55 +447,70 @@
         closePixelMenus();
     }
     
-    function openPixelCanvasSizeModal() {
-        const newWidth = prompt("New Canvas Width (px, 8-512):", pixelCraftData.canvasWidth);
-        const newHeight = prompt("New Canvas Height (px, 8-512):", pixelCraftData.canvasHeight);
-
-        if (newWidth !== null && newHeight !== null) {
-            const w = parseInt(newWidth);
-            const h = parseInt(newHeight);
-            if (!isNaN(w) && !isNaN(h) && w >= 8 && w <= 512 && h >= 8 && h <= 512) {
-                if (confirm("Changing canvas size will clear the current drawing. Proceed?")) {
-                    pixelCraftData.canvasWidth = w;
-                    pixelCraftData.canvasHeight = h;
-                    DOM_PC.canvas.width = w;
-                    DOM_PC.canvas.height = h;
-                    clearPixelCanvasInternal(true);
-                    handlePixelWindowResize(); // Adjust display size
-                    savePixelCraftData();
-                }
-            } else {
-                alert("Invalid dimensions. Width and height must be between 8 and 512 pixels.");
-            }
-        }
+    function openPixelCanvasSizePrompt() { // Renamed from openPixelCanvasSizeModal
+        DOM_PC.pixelNewCanvasWidthInput.value = pixelCraftData.canvasWidth;
+        DOM_PC.pixelNewCanvasHeightInput.value = pixelCraftData.canvasHeight;
+        DOM_PC.pixelCanvasSizeModal.style.display = 'flex';
         closePixelMenus();
+    }
+
+    function handleSavePixelCanvasSize() {
+        const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value);
+        const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
+
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 8 || newWidth > 512 || newHeight < 8 || newHeight > 512) {
+            alert("Invalid canvas dimensions. Width and height must be numbers between 8 and 512.");
+            return;
+        }
+        DOM_PC.pixelCanvasSizeModal.style.display = 'none';
+        DOM_PC.confirmPixelResizeModal.style.display = 'flex';
+    }
+
+    function executePixelCanvasResize() {
+        const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value); // Get values again
+        const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
+
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 8 || newWidth > 512 || newHeight < 8 || newHeight > 512) {
+            // This check is redundant if handleSavePixelCanvasSize already validated, but good for safety
+            alert("Invalid canvas dimensions. Width and height must be numbers between 8 and 512.");
+            DOM_PC.confirmPixelResizeModal.style.display = 'none';
+            return;
+        }
+        
+        pixelCraftData.canvasWidth = newWidth;
+        pixelCraftData.canvasHeight = newHeight;
+        DOM_PC.canvas.width = newWidth;
+        DOM_PC.canvas.height = newHeight;
+        clearPixelCanvasInternal(false); 
+        handlePixelWindowResize(); 
+        savePixelCraftData(true); 
+        DOM_PC.confirmPixelResizeModal.style.display = 'none';
     }
     
     function closePixelMenus() {
         DOM_PC.menuBar.querySelectorAll('.pixel-menu-item.open').forEach(menu => menu.classList.remove('open'));
     }
 
-
     function addPixelCraftEventListeners() {
         DOM_PC.colorPicker.addEventListener('input', (e) => {
             pixelCraftData.currentColor = e.target.value;
-            savePixelCraftData();
+            savePixelCraftData(false);
         });
         DOM_PC.sizeInput.addEventListener('input', (e) => {
             let newSize = parseInt(e.target.value);
             if (isNaN(newSize) || newSize < 1) newSize = 1;
             if (newSize > 50) newSize = 50;
-            e.target.value = newSize; // Correct input if out of bounds
-            pixelCraftData.pencilSize = newSize;
-            savePixelCraftData();
+            e.target.value = newSize; 
+            pixelCraftData.pixelSize = newSize;
+            savePixelCraftData(false);
         });
-         DOM_PC.sizeInput.addEventListener('change', (e) => { // Ensure value is saved on blur too
+         DOM_PC.sizeInput.addEventListener('change', (e) => { 
             let newSize = parseInt(e.target.value);
             if (isNaN(newSize) || newSize < 1) newSize = 1;
             if (newSize > 50) newSize = 50;
             e.target.value = newSize;
-            pixelCraftData.pencilSize = newSize;
-            savePixelCraftData();
+            pixelCraftData.pixelSize = newSize;
+            savePixelCraftData(false);
         });
 
         DOM_PC.pencilTool.addEventListener('click', () => setPixelTool('pencil'));
@@ -403,19 +519,32 @@
 
         DOM_PC.canvas.addEventListener('mousedown', startPixelDrawing);
         DOM_PC.canvas.addEventListener('mouseup', stopPixelDrawing);
-        DOM_PC.canvas.addEventListener('mouseout', stopPixelDrawing); // Stop if mouse leaves canvas
+        DOM_PC.canvas.addEventListener('mouseleave', stopPixelDrawing); 
         DOM_PC.canvas.addEventListener('mousemove', pixelDraw);
-        DOM_PC.canvas.addEventListener('click', pixelBucketFill); // Bucket tool uses click
+        DOM_PC.canvas.addEventListener('click', pixelBucketFill); 
 
         DOM_PC.fileSave.addEventListener('click', savePixelCanvasImage);
         DOM_PC.fileClearCanvas.addEventListener('click', () => {
-            if(confirm("Are you sure you want to clear the canvas?")) {
+            if(confirm("Are you sure you want to clear the canvas? This cannot be undone.")) {
                 clearPixelCanvasInternal(true);
             }
             closePixelMenus();
         });
-        DOM_PC.fileCanvasSize.addEventListener('click', openPixelCanvasSizeModal);
+        DOM_PC.fileCanvasSize.addEventListener('click', openPixelCanvasSizePrompt);
         
+        // Modal Event Listeners
+        DOM_PC.savePixelCanvasSizeBtn.addEventListener('click', handleSavePixelCanvasSize);
+        DOM_PC.confirmPixelResizeExecuteBtn.addEventListener('click', executePixelCanvasResize);
+        
+        document.querySelectorAll('.pixel-modal-close-button, .pixel-modal-cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                const modalId = event.target.dataset.modalId;
+                if (modalId && document.getElementById(modalId)) {
+                    document.getElementById(modalId).style.display = 'none';
+                }
+            });
+        });
+
         let pixelActiveMenu = null;
         DOM_PC.menuBar.querySelectorAll('.pixel-menu-bar > .pixel-menu-item').forEach(menuItem => {
             menuItem.addEventListener('click', (event) => {
@@ -427,7 +556,6 @@
                 pixelActiveMenu = menuItem.classList.contains('open') ? menuItem : null;
             });
         });
-        // Close menu if clicking outside
         document.addEventListener('click', (event) => {
             if (pixelActiveMenu && !DOM_PC.menuBar.contains(event.target)) {
                 closePixelMenus();
@@ -435,15 +563,15 @@
             }
         });
         
-        new ResizeObserver(handlePixelWindowResize).observe(DOM_PC.canvasContainer);
-        // Also observe the main body of the app for overall resizes
-        new ResizeObserver(handlePixelWindowResize).observe(DOM_PC.pixelWindowBody);
-
+        const resizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(handlePixelWindowResize);
+        });
+        if (DOM_PC.canvasContainer) resizeObserver.observe(DOM_PC.canvasContainer);
+        if (DOM_PC.pixelWindowBody) resizeObserver.observe(DOM_PC.pixelWindowBody);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadPixelCraftData();
         initPixelApp();
-        handlePixelWindowResize(); // Initial resize
     });
 </script>
