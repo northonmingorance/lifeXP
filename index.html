@@ -98,7 +98,7 @@
             display: block;
         }
         .xp-window.minimized .window-body,
-        .xp-window.minimized .xp-menu-bar {
+        .xp-window.minimized .xp-menu-bar { /* Assuming xp-menu-bar might exist in some windows */
             max-height: 0 !important;
             padding-top: 0 !important;
             padding-bottom: 0 !important;
@@ -157,6 +157,12 @@
             font-size: 48px;
             line-height: 1;
             margin-bottom: 8px;
+            display: flex; /* For Play Jockey icon alignment */
+            align-items: center; /* For Play Jockey icon alignment */
+            justify-content: center; /* For Play Jockey icon alignment */
+            position: relative; /* For Play Jockey icon alignment */
+            width: 100%;
+            height: 50px; /* Give a defined height for alignment */
         }
         .desktop-icon .icon-label {
             font-size: 12px;
@@ -164,13 +170,8 @@
             word-wrap: break-word;
             max-width: 100%;
         }
-        .desktop-icon.playJockeyIconStyle .icon-image {
-            position: relative;
-        }
+        /* Play Jockey Icon Specific Style */
         .desktop-icon.playJockeyIconStyle .icon-image-base {
-            font-size: 48px;
-            line-height: 1;
-            margin-bottom: 8px;
             filter: hue-rotate(140deg) saturate(1000%) brightness(70%);
         }
         .desktop-icon.playJockeyIconStyle .icon-image-overlay {
@@ -179,15 +180,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            font-size: 48px;
-            line-height: 1;
-            position: relative;
-            top: -66px;
-            filter: hue-rotate(140deg) saturate(1000%);
-            mix-blend-mode: luminosity;
             display: flex;
             align-items: center;
             justify-content: center;
+            filter: hue-rotate(140deg) saturate(1000%);
+            mix-blend-mode: luminosity;
         }
         .modal {
             display: none;
@@ -269,7 +266,7 @@
             from {opacity: 0; transform: scale(0.9);}
             to {opacity: 1; transform: scale(1);}
         }
-        .xp-button { /* General button style from original, can be used in modals */
+        .xp-button { 
             background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px;
             min-width: 75px; text-align: center; cursor: pointer; margin: 2px;
         }
@@ -285,6 +282,8 @@
             transform: scale(1.1);
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-remote-config.js"></script>
 </head>
 <body>
     <div id="desktop"></div>
@@ -326,7 +325,7 @@
 
     <script>
         "use strict";
-        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.0';
+        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.1'; // Incremented version
         const ICON_GRID_SIZE = 25;
         const STANDARD_COLORS = [
             { name: 'Black', value: '#000000' }, { name: 'Silver', value: '#C0C0C0' },
@@ -340,13 +339,24 @@
             { name: 'Orange', value: '#FFA500' }, { name: 'Brown', value: '#A52A2A' },
             { name: 'Pink', value: '#FFC0CB' }, { name: 'Gold', value: '#FFD700' }
         ];
+        const FIREBASE_CONFIG = { // Copied from original monolithic file
+          apiKey: "AIzaSyCVWUnnXiOvKRqbvngafdZC7DedEY-7vpg",
+          authDomain: "lifexpapp-f5578.firebaseapp.com",
+          projectId: "lifexpapp-f5578",
+          storageBucket: "lifexpapp-f5578.appspot.com",
+          messagingSenderId: "194098013746",
+          appId: "1:194098013746:web:720ba296ee9e40dee37e2b"
+        };
 
         let osData = {
             windowStates: {},
             iconPositions: {},
             customBgImage: null,
             customBgColor: null,
-            appApiKeys: {}
+            appApiKeys: { // Store fetched API keys here
+                youtube: "",
+                gemini: ""
+            }
         };
         let lastNormalStates = {};
         let highestZIndex = 10;
@@ -357,6 +367,8 @@
         let activeDragIcon = null;
         let iconDragOffsetX, iconDragOffsetY;
         let appManifest = [];
+        let firebaseRemoteConfig;
+
 
         const DOM = {
             desktop: document.getElementById('desktop'),
@@ -373,8 +385,34 @@
 
         function getById(id) { return document.getElementById(id); }
 
+        async function initializeFirebaseAndLoadKeys() {
+            try {
+                if (typeof firebase !== 'undefined' && FIREBASE_CONFIG) {
+                    firebase.initializeApp(FIREBASE_CONFIG);
+                    firebaseRemoteConfig = firebase.remoteConfig();
+                    firebaseRemoteConfig.defaultConfig = {
+                        'youtube_api_key': '',
+                        'gemini_api_key': ''
+                    };
+                    firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+                    await firebaseRemoteConfig.fetchAndActivate();
+                    osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
+                    osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
+                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found");
+                    saveOsData(); // Save fetched keys
+                } else {
+                    console.warn("Firebase SDK or config not available. API keys will not be fetched.");
+                }
+            } catch (err) {
+                console.error("Error initializing Firebase Remote Config or fetching keys:", err);
+            }
+        }
+
+
         async function initOS() {
-            loadOsData();
+            loadOsData(); // Load saved OS data first (might include previously fetched keys)
+            await initializeFirebaseAndLoadKeys(); // Then try to fetch/update keys
+            
             applyCurrentBackgroundStyle();
             populateColorSwatches();
             
@@ -396,7 +434,7 @@
         }
 
         function initDesktopIcons() {
-            DOM.desktop.innerHTML = ''; // Clear any existing icons
+            DOM.desktop.innerHTML = ''; 
             appManifest.forEach((app, index) => {
                 const iconElement = document.createElement('div');
                 iconElement.className = 'desktop-icon';
@@ -404,19 +442,18 @@
                 iconElement.dataset.appId = app.id;
                 iconElement.title = `Open ${app.name}`;
 
-                if (app.customIconClass && app.icon === '⏯️') { // Specific handling for Play Jockey icon
+                let iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`; // Default structure
+
+                if (app.customIconClass && app.id === 'playJockey') { // Specific handling for Play Jockey icon
                     iconElement.classList.add(app.customIconClass);
-                    iconElement.innerHTML = `
+                    iconHTML = `
                         <div class="icon-image">
-                            <div class="icon-image-base">${app.icon}</div>
-                            <div class="icon-image-overlay">${app.icon}</div>
-                        </div>
-                        <div class="icon-label">${app.name}</div>`;
-                } else {
-                     iconElement.innerHTML = `
-                        <div class="icon-image">${app.icon}</div>
-                        <div class="icon-label">${app.name}</div>`;
+                            <span class="icon-image-base">${app.icon}</span>
+                            <span class="icon-image-overlay">${app.icon}</span>
+                        </div>`;
                 }
+                
+                iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
                 
                 const defaultX = 0;
                 const defaultY = index * 100;
@@ -589,15 +626,13 @@
             let windowElement = getById(windowId);
             let state = osData.windowStates[appConfig.id];
 
-            if (windowElement) {
+            if (windowElement) { // Window already exists in DOM
                 if (state && state.hiddenByUser) {
                     windowElement.style.display = 'flex';
                     state.hiddenByUser = false;
                     if (state.minimized) {
-                        // If it was closed while minimized, restore it to normal, not minimized.
                         state.minimized = false;
                         windowElement.classList.remove('minimized');
-                        // Apply last known normal size/pos or defaults
                         if (lastNormalStates[appConfig.id]) {
                             windowElement.style.width = lastNormalStates[appConfig.id].width;
                             windowElement.style.height = lastNormalStates[appConfig.id].height;
@@ -609,14 +644,20 @@
                     }
                      updateMinMaxButtonStates(appConfig.id);
                 } else if (state && state.minimized) {
-                    // If minimized, restore/maximize it
-                     maximizeWindow(appConfig.id, appConfig); // This will handle un-minimizing
+                     maximizeWindow(appConfig.id, appConfig); 
                 }
                 bringToFront(windowElement);
                 saveWindowState(appConfig.id);
+
+                // Send API key if window is being re-opened/focused
+                const iframe = windowElement.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    sendApiKeyToApp(appConfig.id, iframe.contentWindow);
+                }
                 return windowElement;
             }
 
+            // Create new window
             highestZIndex++;
             windowElement = document.createElement('div');
             windowElement.className = 'xp-window';
@@ -633,18 +674,25 @@
                     </div>
                 </div>
                 <div class="window-body" id="window-body-${appConfig.id}">
-                    <iframe src="${appConfig.file}" id="iframe-${appConfig.id}"></iframe>
+                    <iframe src="${appConfig.file}" id="iframe-${appConfig.id}" name="iframe-${appConfig.id}"></iframe>
                 </div>
                 <div class="resize-handle" id="resize-handle-${appConfig.id}"></div>
             `;
             DOM.desktop.appendChild(windowElement);
+            
+            const iframe = windowElement.querySelector('iframe');
+            iframe.onload = () => {
+                if (iframe.contentWindow) {
+                    sendApiKeyToApp(appConfig.id, iframe.contentWindow);
+                }
+            };
+
 
             if (!state) {
                 osData.windowStates[appConfig.id] = {};
                 state = osData.windowStates[appConfig.id];
                 setWindowDefaults(appConfig.id, false, appConfig);
             } else {
-                 // Apply saved state or defaults if opening for the first time in session but state exists
                 if (state.maximized) {
                     windowElement.classList.add('true-maximized');
                     windowElement.style.width = '100vw';
@@ -652,8 +700,6 @@
                     windowElement.style.top = '0px';
                     windowElement.style.left = '0px';
                 } else if (state.minimized) {
-                     // This case should ideally be handled by the "if (windowElement)" block above
-                     // but as a fallback:
                     windowElement.classList.add('minimized');
                 } else if (state.width && state.height && state.x != null && state.y != null) {
                     windowElement.style.width = state.width + 'px';
@@ -664,12 +710,20 @@
                     setWindowDefaults(appConfig.id, false, appConfig);
                 }
             }
-            state.hiddenByUser = false; // Mark as visible
+            state.hiddenByUser = false; 
 
             initWindowInteractions(appConfig.id, appConfig);
             updateMinMaxButtonStates(appConfig.id);
             saveWindowState(appConfig.id);
             return windowElement;
+        }
+        
+        function sendApiKeyToApp(appId, iframeContentWindow) {
+            if (appId === 'geminiChat' && osData.appApiKeys.gemini) {
+                iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'gemini', key: osData.appApiKeys.gemini }, '*');
+            } else if (appId === 'playJockey' && osData.appApiKeys.youtube) {
+                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'youtube', key: osData.appApiKeys.youtube }, '*');
+            }
         }
         
         function restoreAllWindowStates() {
@@ -678,7 +732,7 @@
             appManifest.forEach(appConfig => {
                 const state = osData.windowStates[appConfig.id];
                 if (state && !state.hiddenByUser) {
-                    const win = openAppWindow(appConfig); // This will create or show the window
+                    const win = openAppWindow(appConfig); 
                     if (win && state.zIndex) {
                         win.style.zIndex = state.zIndex;
                         maxRestoredZ = Math.max(maxRestoredZ, state.zIndex);
@@ -727,8 +781,14 @@
                     resizeInitialWidth = activeResizeWindow.offsetWidth;
                     resizeInitialHeight = activeResizeWindow.offsetHeight;
                     if (iframeElement) iframeElement.style.pointerEvents = 'none';
-                    document.addEventListener('mousemove', (ev) => doResize(ev, appConfig));
-                    document.addEventListener('mouseup', stopDragOrResize);
+                    
+                    const specificDoResize = (ev) => doResize(ev, appConfig);
+                    document.addEventListener('mousemove', specificDoResize);
+                    document.addEventListener('mouseup', function mouseUpListener() {
+                        stopDragOrResize();
+                        document.removeEventListener('mousemove', specificDoResize);
+                        document.removeEventListener('mouseup', mouseUpListener);
+                    });
                     bringToFront(windowElement);
                 });
             }
@@ -798,9 +858,11 @@
                 if (iframe) iframe.style.pointerEvents = 'auto';
                 saveWindowState(operatedWindow.id.replace('window-', ''));
             }
-            document.removeEventListener('mousemove', doDrag);
-            document.removeEventListener('mousemove', doResize); // This needs to be specific if doResize has params
-            document.removeEventListener('mouseup', stopDragOrResize);
+            // Mousemove listeners are now added with specific handlers in initWindowInteractions
+            // and removed there upon mouseup. This global removeEventListener might not be needed
+            // if the specific ones are correctly managed.
+            // document.removeEventListener('mousemove', doDrag); 
+            // document.removeEventListener('mouseup', stopDragOrResize);
         }
         
         function setWindowDefaults(appId, isBrowserResize = false, appConfig) {
@@ -826,7 +888,6 @@
             const defaultWidth = appConfig.defaultWidth || 500;
             const defaultHeight = appConfig.defaultHeight || 400;
             
-            // Basic cascading logic for positioning new windows
             const openWindows = Object.keys(osData.windowStates).filter(id => {
                 const winEl = getById(`window-${id}`);
                 return winEl && winEl.style.display !== 'none' && !osData.windowStates[id].minimized;
@@ -876,7 +937,6 @@
             state.minimized = true;
             if (appWindow.classList.contains('true-maximized')) {
                 state.wasMaximizedBeforeMinimize = true;
-                // Restore to last normal state for when it's unminimized not to maximized
                 if (lastNormalStates[appId]) {
                     state.width = parseInt(lastNormalStates[appId].width);
                     state.height = parseInt(lastNormalStates[appId].height);
@@ -919,7 +979,6 @@
                     appWindow.classList.add('true-maximized');
                     state.maximized = true;
                 } else {
-                     // Restore to previous normal state or default if no previous
                     if (state.width && state.height && state.x != null && state.y != null) {
                         appWindow.style.width = state.width + 'px';
                         appWindow.style.height = state.height + 'px';
@@ -935,7 +994,7 @@
                     }
                     state.maximized = false;
                 }
-            } else if (appWindow.classList.contains('true-maximized')) { // Restore down
+            } else if (appWindow.classList.contains('true-maximized')) { 
                 if (currentLastNormal.width && currentLastNormal.height) {
                     appWindow.style.width = currentLastNormal.width;
                     appWindow.style.height = currentLastNormal.height;
@@ -946,13 +1005,13 @@
                     state.x = parseInt(currentLastNormal.left);
                     state.y = parseInt(currentLastNormal.top);
                 } else {
-                    setWindowDefaults(appId, false, appConfig); // Fallback to defaults
+                    setWindowDefaults(appId, false, appConfig); 
                 }
                 appWindow.classList.remove('true-maximized');
                 state.maximized = false;
                 state.userManuallySetPosition = true;
                 state.userManuallySetSize = true;
-            } else { // Maximize
+            } else { 
                 lastNormalStates[appId] = {
                     width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                     height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
@@ -978,14 +1037,17 @@
                 appWindow.style.display = 'none';
                 const iframe = appWindow.querySelector('iframe');
                 if (iframe) {
-                    iframe.src = 'about:blank'; // Clear iframe content to stop scripts
+                    // More robust way to clear iframe and stop its scripts
+                    iframe.removeAttribute('src'); // Remove src to stop loading/scripts
+                    // Optionally, replace with a blank iframe to ensure it's fully cleared
+                    // const newIframe = document.createElement('iframe');
+                    // newIframe.id = iframe.id;
+                    // newIframe.name = iframe.name;
+                    // iframe.parentNode.replaceChild(newIframe, iframe);
                 }
             }
             if (osData.windowStates[appId]) {
                 osData.windowStates[appId].hiddenByUser = true;
-                // Optional: Reset minimized/maximized state when closed, so it reopens normally
-                // osData.windowStates[appId].minimized = false;
-                // osData.windowStates[appId].maximized = false;
             }
             saveWindowState(appId);
         }
@@ -1059,13 +1121,12 @@
                 iconPositions: {},
                 customBgImage: null,
                 customBgColor: null,
-                appApiKeys: {}
+                appApiKeys: { youtube: "", gemini: "" }
             };
             if (storedData) {
                 try {
                     const parsedData = JSON.parse(storedData);
                     osData = { ...defaultOsData, ...parsedData };
-                    // Ensure nested objects are also spread or handled
                     osData.windowStates = { ...defaultOsData.windowStates, ...(parsedData.windowStates || {}) };
                     osData.iconPositions = { ...defaultOsData.iconPositions, ...(parsedData.iconPositions || {}) };
                     osData.appApiKeys = { ...defaultOsData.appApiKeys, ...(parsedData.appApiKeys || {}) };
@@ -1077,7 +1138,6 @@
             } else {
                  osData = JSON.parse(JSON.stringify(defaultOsData));
             }
-             // Initialize highestZIndex from loaded states
             let maxZ = 10;
             for (const appId in osData.windowStates) {
                 if (osData.windowStates[appId].zIndex) {
@@ -1092,10 +1152,9 @@
                 document.body.style.backgroundImage = 'none';
                 document.body.style.backgroundColor = osData.customBgColor;
             } else if (osData.customBgImage) {
-                document.body.style.backgroundColor = ''; // Clear solid color
+                document.body.style.backgroundColor = ''; 
                 document.body.style.backgroundImage = `url('${osData.customBgImage}')`;
             } else {
-                // Default background
                 document.body.style.backgroundColor = '#3A6EA5';
                 document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')";
             }
@@ -1140,7 +1199,7 @@
             DOM.uploadBgImageBtn.addEventListener('click', function() {
                 const file = DOM.newBgImageInput.files[0];
                 if (file) {
-                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    if (file.size > 5 * 1024 * 1024) { 
                         alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
                     }
                     const reader = new FileReader();
@@ -1162,7 +1221,7 @@
                 const imageUrl = DOM.bgImageUrlInput.value.trim();
                 if (imageUrl) {
                     try {
-                        new URL(imageUrl); // Validate URL
+                        new URL(imageUrl); 
                         osData.customBgImage = imageUrl;
                         osData.customBgColor = null;
                         applyCurrentBackgroundStyle();
@@ -1199,7 +1258,7 @@
             window.addEventListener('resize', () => {
                 appManifest.forEach(appConfig => {
                     const win = getById(`window-${appConfig.id}`);
-                    if (win && win.style.display !== 'none' && !osData.windowStates[appConfig.id]?.minimized) {
+                    if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
                          setWindowDefaults(appConfig.id, true, appConfig);
                     }
                 });
@@ -1208,15 +1267,23 @@
         }
         
         function handleIframeMessages(event) {
-            // For future use if iframes need to communicate with the OS
-            // For example, to request API keys or save app-specific data
-            // const { type, payload, appId } = event.data;
-            // if (type === 'requestApiKey' && osData.appApiKeys[payload.service]) {
-            //    const iframe = document.getElementById(`iframe-${appId}`);
-            //    if (iframe && iframe.contentWindow) {
-            //        iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: payload.service, key: osData.appApiKeys[payload.service] }, '*');
-            //    }
-            // }
+            // This function is primarily for apps requesting API keys.
+            // Origin check is important for security in a real deployment.
+            // if (event.origin !== window.location.origin) return; 
+
+            const { type, service, appId } = event.data;
+            if (type === 'requestApiKey') {
+                const iframe = document.getElementById(`iframe-${appId}`);
+                if (iframe && iframe.contentWindow) {
+                    if (service === 'gemini' && osData.appApiKeys.gemini) {
+                        iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: 'gemini', key: osData.appApiKeys.gemini }, '*');
+                    } else if (service === 'youtube' && osData.appApiKeys.youtube) {
+                        iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: 'youtube', key: osData.appApiKeys.youtube }, '*');
+                    } else {
+                         console.warn(`OS: API key for ${service} not available or not requested by a known app.`);
+                    }
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initOS);

@@ -39,8 +39,8 @@
 </div>
 
 <script>
-    const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.0';
-    let GEMINI_API_KEY = ""; // This should be provided by the parent OS
+    const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; // Incremented version
+    let GEMINI_API_KEY = ""; 
     const MAX_GEMINI_HISTORY_MESSAGES = 20;
 
     let geminiChatData = {
@@ -106,7 +106,7 @@
                     messageDiv.classList.add('error-message');
                 }
             }
-            if (msg.id) { // Add ID to the div if it exists (for updating thinking message)
+            if (msg.id) { 
                 messageDiv.id = msg.id;
             }
             messageDiv.appendChild(senderSpan);
@@ -127,7 +127,7 @@
             isError: isError,
             timestamp: new Date().toISOString()
         };
-        if (messageId) { // If an ID is provided (e.g., for a thinking message)
+        if (messageId) { 
             newMessage.id = messageId;
         }
         geminiChatData.history.push(newMessage);
@@ -141,7 +141,6 @@
         if (messageIndex !== -1) {
             geminiChatData.history[messageIndex].content = newContent;
             geminiChatData.history[messageIndex].isError = isError;
-            // If it was a thinking message, remove the temporary ID so it's treated as a normal message
             if (messageId.startsWith('gemini-thinking-')) {
                  delete geminiChatData.history[messageIndex].id; 
             }
@@ -169,7 +168,7 @@
         DOM_GC.sendBtn.disabled = true;
 
         if (!GEMINI_API_KEY) {
-            addMessageToGeminiChat('gemini', "Error: Gemini API Key is not configured. Please ask the OS to provide it.", true);
+            addMessageToGeminiChat('gemini', "Error: Gemini API Key not available. Please ensure it's configured in the OS.", true);
             DOM_GC.promptInput.disabled = false;
             DOM_GC.sendBtn.disabled = false;
             DOM_GC.promptInput.focus();
@@ -180,10 +179,8 @@
         addMessageToGeminiChat('gemini', '', false, thinkingMsgId); 
 
         const messagesToSend = [];
-        // Prepare history for Gemini API (user/model roles)
-        const recentHistory = geminiChatData.history.slice(-MAX_GEMINI_HISTORY_MESSAGES); // Take last N messages
+        const recentHistory = geminiChatData.history.slice(-MAX_GEMINI_HISTORY_MESSAGES); 
         recentHistory.forEach(msg => {
-            // Don't send error messages or the current thinking message to the API history
             if (!msg.isError && msg.id !== thinkingMsgId) { 
                 messagesToSend.push({
                     role: msg.type === 'user' ? 'user' : 'model',
@@ -192,18 +189,13 @@
             }
         });
         
-        // Ensure the last message sent is the current user prompt if it wasn't already added
-        // (e.g. if history was empty or last was a model response)
-        if (messagesToSend.length === 0 || messagesToSend[messagesToSend.length -1].role !== 'user' || messagesToSend[messagesToSend.length -1].parts[0].text !== promptText) {
-             // This check might be redundant if addMessageToGeminiChat('user', promptText) was called right before
-             // and recentHistory includes it. However, it's a safeguard.
-             // The current logic ensures the promptText is the last user message.
-        }
-
+        // The current prompt is already added to geminiChatData.history by addMessageToGeminiChat('user', promptText)
+        // and will be included in messagesToSend via the recentHistory processing if it's the last message.
+        // No need to explicitly add it again here if the logic above correctly includes it.
 
         try {
             const requestBody = {
-                contents: messagesToSend // messagesToSend already includes the latest user prompt
+                contents: messagesToSend 
             };
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
@@ -249,14 +241,15 @@
         DOM_GC.clearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
     }
     
-    // Listen for API key from parent OS
     window.addEventListener('message', (event) => {
-        // IMPORTANT: Add origin check for security in a real application
-        // if (event.origin !== 'expected-os-origin') return; 
+        // Add origin check in a real application for security
+        // if (event.origin !== 'YOUR_OS_ORIGIN_HERE') return; 
         if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'gemini') {
             GEMINI_API_KEY = event.data.key;
-            console.log("Gemini API Key received from OS.");
-            // Optionally, re-check if a prompt was pending due to missing key
+            console.log("Gemini Chat App: Gemini API Key received.");
+            if (!GEMINI_API_KEY) {
+                 addMessageToGeminiChat('gemini', "Warning: Gemini API Key received from OS is empty.", true);
+            }
         }
     });
 
@@ -265,10 +258,12 @@
         renderGeminiChatHistory();
         addGeminiChatEventListeners();
         
-        // Request API key from parent OS when app loads
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'requestApiKey', service: 'gemini', appId: 'geminiChat' }, '*');
-             // In a real app, replace '*' with the actual parent origin for security
+            console.log("Gemini Chat App: Requesting API key from parent OS.");
+            window.parent.postMessage({ type: 'requestApiKey', service: 'gemini', appId: 'geminiChat' }, '*'); 
+        } else {
+            console.warn("Gemini Chat App: Not running in an iframe or parent context not detected for API key request.");
+             addMessageToGeminiChat('gemini', "Error: Cannot request API key. App may not be running in the OS shell.", true);
         }
     });
 </script>

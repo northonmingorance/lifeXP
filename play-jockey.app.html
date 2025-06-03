@@ -27,6 +27,7 @@
     .playjockey-playlist-item.dragging { opacity: 0.5; background-color: #AED6F1; }
     .playjockey-playlist-item.drag-over-target-before { border-top: 2px dashed #005CFE; }
     .playjockey-playlist-item.drag-over-target-after { border-bottom: 2px dashed #005CFE; }
+    /* Styles for context menus and modals if they were to be app-specific */
 </style>
 
 <div class="playjockey-body-container">
@@ -45,20 +46,18 @@
         <button id="playJockeyRepeatBtn" class="xp-button">Repeat: Off</button>
     </div>
 </div>
-
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-    // Play Jockey specific JS
-    const PJ_STORAGE_KEY = 'playJockeyAppData_v1.0.0';
-    let YOUTUBE_API_KEY = ""; // This would ideally be passed from the parent or fetched
+    const PJ_STORAGE_KEY = 'playJockeyAppData_v1.0.1'; // Incremented version
+    let YOUTUBE_API_KEY = ""; 
 
     let pjData = {
         playlists: [],
         currentPlaylistId: null,
-        currentVideo: null, // { id, videoId, title, artist, originalUrl }
+        currentVideo: null, 
         autoPlayEnabled: true,
         randomEnabled: false,
-        repeatState: "off", // "off", "playlist", "song"
+        repeatState: "off", 
         randomHistory: []
     };
 
@@ -84,7 +83,6 @@
         textarea.innerHTML = text;
         return textarea.value;
     }
-
 
     function loadPjData() {
         const stored = localStorage.getItem(PJ_STORAGE_KEY);
@@ -141,8 +139,10 @@
         return pjData.playlists.find(p => p.id === pjData.currentPlaylistId);
     }
     
-    window.onYouTubeIframeAPIReady = function() {
+    // This function is called by the YouTube IFrame API script
+    function onYouTubeIframeAPIReady() {
         isYouTubeApiReady = true;
+        console.log("Play Jockey: YouTube API Ready.");
         const currentPlaylist = getCurrentPjPlaylist();
         const currentVideoInPlaylist = currentPlaylist?.videos.find(v => v.id === pjData.currentVideo?.id);
 
@@ -150,18 +150,17 @@
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (pjData.currentVideo && currentVideoInPlaylist && !ytPlayerInstance) {
-            // Check if the window is visible (this is tricky from iframe, assume visible for now)
             playYouTubeVideoById(pjData.currentVideo.videoId, pjData.autoPlayEnabled);
         }
     }
 
-    function extractYouTubeVideoId(url) { /* ... (same as original) ... */ 
+    function extractYouTubeVideoId(url) { 
         if (!url) return null;
         const regex = /(?:youtube\.com\/(?:[^\/\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = url.match(regex);
         return match ? match[1] : null;
     }
-    function isValidYouTubeUrl(url) { /* ... (same as original) ... */ 
+    function isValidYouTubeUrl(url) { 
          if (!url) return false;
         const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})([&?].*)?$/;
         return regex.test(url);
@@ -174,25 +173,77 @@
         if (isValidYouTubeUrl(input)) {
             addYouTubeLinkToPj(input);
         } else {
-            // Search functionality requires API key and more complex UI (modal for results)
-            // For this example, we'll simplify and only allow direct links if no key.
             if (!YOUTUBE_API_KEY) {
-                 alert("YouTube API Key is not configured. Video search is disabled. You can only add direct YouTube video links.");
+                 alert("YouTube API Key is not available for video search. Please add direct YouTube video links.");
                  return;
             }
-            // Simplified: Assume search will eventually call addVideoFromSearchResult
-            alert(`Search for "${input}" would happen here if API key and result modal were implemented.`);
-            // searchYouTubeVideos(input); // This function would need to be implemented with a modal
+            searchYouTubeVideos(input);
         }
     }
     
+    async function searchYouTubeVideos(query) {
+        // This would typically open a modal in the parent OS to show results.
+        // For now, we'll simulate a direct add of the first result if API key is present.
+        // A proper implementation requires inter-iframe communication for the modal.
+        console.log(`Play Jockey: Searching YouTube for "${query}" (requires OS modal for results).`);
+        if (!YOUTUBE_API_KEY) {
+            alert("Search requires a YouTube API key.");
+            return;
+        }
+        const maxResults = 5; // Fetch a few results
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}&maxResults=${maxResults}`;
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`YouTube API Error: ${response.statusText}`);
+            const data = await response.json();
+            if (data.items && data.items.length > 0) {
+                // For simplicity, let's say we'd ask the user to pick via a modal.
+                // Here, we'll just take the first one as an example.
+                const firstResult = data.items[0];
+                addVideoFromSearchResult(firstResult.id.videoId, decodeHtmlEntitiesPJ(firstResult.snippet.title), decodeHtmlEntitiesPJ(firstResult.snippet.channelTitle));
+            } else {
+                alert("No videos found for your search query.");
+            }
+        } catch (error) {
+            console.error('Error searching YouTube videos:', error);
+            alert(`Failed to search videos: ${error.message}`);
+        }
+    }
+
+    function addVideoFromSearchResult(videoId, title, artist) {
+        let currentPlaylist = getCurrentPjPlaylist();
+        if (!currentPlaylist) {
+            addNewPjPlaylist();
+            currentPlaylist = getCurrentPjPlaylist();
+            if (!currentPlaylist) { alert("Error: Could not create playlist."); return; }
+        }
+        if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
+            alert("This video is already in the current playlist.");
+            return;
+        }
+        const videoEntry = {
+            id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
+            originalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+            videoId: videoId,
+            title: title,
+            artist: artist.replace(/\s-\sTopic$/, '').trim()
+        };
+        currentPlaylist.videos.push(videoEntry);
+        renderPjPlaylist();
+        if (!ytPlayerInstance || !pjData.currentVideo || currentPlaylist.videos.length === 1) {
+            playYouTubeVideoById(videoId, true, true);
+        }
+        savePjData();
+    }
+
+
     function addYouTubeLinkToPj(link) {
         const videoId = extractYouTubeVideoId(link);
         if (!videoId) { alert("Invalid YouTube link."); return; }
 
         let currentPlaylist = getCurrentPjPlaylist();
         if (!currentPlaylist) {
-            addNewPjPlaylist(); // Create one if none exists
+            addNewPjPlaylist(); 
             currentPlaylist = getCurrentPjPlaylist();
             if (!currentPlaylist) { alert("Error: Could not create playlist."); return; }
         }
@@ -218,11 +269,10 @@
         savePjData();
     }
 
-    async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) { /* ... (same as original, ensure YOUTUBE_API_KEY is accessible) ... */
+    async function fetchYouTubeTitle(videoEntryToUpdate, playlistId) { 
         try {
             let newTitle = "Unknown Title";
             let newArtist = "";
-            // Prioritize API key if available
             if (YOUTUBE_API_KEY) {
                  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoEntryToUpdate.videoId}&key=${YOUTUBE_API_KEY}`;
                  const response = await fetch(apiUrl);
@@ -232,31 +282,15 @@
                          newTitle = decodeHtmlEntitiesPJ(data.items[0].snippet.title);
                          newArtist = decodeHtmlEntitiesPJ(data.items[0].snippet.channelTitle).replace(/\s-\sTopic$/, '').trim();
                      } else {
-                         console.warn(`No video data found via API for ${videoEntryToUpdate.videoId}`);
-                         newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); // Fallback to URL
+                         newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); 
                      }
                  } else {
-                     console.warn(`Failed to fetch title/author via API for ${videoEntryToUpdate.videoId}. Status: ${response.status}`);
-                     newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); // Fallback to URL
+                     newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); 
                  }
-            } else { // Fallback to oEmbed if no API key (less reliable for all videos)
-                try {
-                    // Note: The oEmbed endpoint might have CORS issues when called directly from client-side JS in some environments.
-                    // A backend proxy would be more robust for oEmbed.
-                    const oEmbedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoEntryToUpdate.videoId}&format=json`;
-                    // This fetch might fail due to CORS if not proxied.
-                    const oEmbedResponse = await fetch(oEmbedUrl);
-                    if (oEmbedResponse.ok) {
-                        const oEmbedData = await oEmbedResponse.json();
-                        newTitle = decodeHtmlEntitiesPJ(oEmbedData.title);
-                        newArtist = decodeHtmlEntitiesPJ(oEmbedData.author_name).replace(/\s-\sTopic$/, '').trim();
-                    } else {
-                         newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); // Fallback
-                    }
-                } catch (oEmbedError) {
-                    console.warn(`oEmbed fetch failed for ${videoEntryToUpdate.videoId}:`, oEmbedError);
-                    newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl); // Final fallback
-                }
+            } else { 
+                // Fallback if no API key - title will remain "Loading title..." or original URL
+                console.warn("Play Jockey: YouTube API Key not available to fetch title for " + videoEntryToUpdate.videoId);
+                newTitle = decodeHtmlEntitiesPJ(videoEntryToUpdate.originalUrl);
             }
 
             const targetPlaylist = pjData.playlists.find(pl => pl.id === playlistId);
@@ -266,9 +300,8 @@
                     itemInPlaylist.title = newTitle;
                     itemInPlaylist.artist = newArtist;
                     if (pjData.currentPlaylistId === playlistId) {
-                        renderPjPlaylist(); // Re-render if it's the active playlist
+                        renderPjPlaylist(); 
                     }
-                    // If this is the currently playing video, update its details in pjData.currentVideo too
                     if(pjData.currentVideo && pjData.currentVideo.id === itemInPlaylist.id) {
                         pjData.currentVideo.title = newTitle;
                         pjData.currentVideo.artist = newArtist;
@@ -278,12 +311,11 @@
             }
         } catch (error) {
             console.error(`Error in fetchYouTubeTitle for ${videoEntryToUpdate.videoId}:`, error);
-             // Fallback if anything unexpected happens
              const targetPlaylist = pjData.playlists.find(pl => pl.id === playlistId);
             if (targetPlaylist) {
                 const itemInPlaylist = targetPlaylist.videos.find(item => item.id === videoEntryToUpdate.id);
                 if (itemInPlaylist && (itemInPlaylist.title === "Loading title..." || !itemInPlaylist.title.trim())) {
-                    itemInPlaylist.title = decodeHtmlEntitiesPJ(itemInPlaylist.originalUrl); // Use original URL as a last resort
+                    itemInPlaylist.title = decodeHtmlEntitiesPJ(itemInPlaylist.originalUrl); 
                     if (pjData.currentPlaylistId === playlistId) renderPjPlaylist();
                     savePjData();
                 }
@@ -292,7 +324,7 @@
     }
 
 
-    function renderPjTabs() { /* ... (same as original) ... */
+    function renderPjTabs() { 
         DOM_PJ.tabsBar.innerHTML = '';
         pjData.playlists.forEach(playlist => {
             const tab = document.createElement('div');
@@ -305,7 +337,6 @@
                 tab.classList.add('active');
             }
             tab.addEventListener('click', () => switchPjPlaylist(playlist.id));
-            // Context menu for tabs would be added here if needed
             DOM_PJ.tabsBar.appendChild(tab);
         });
 
@@ -316,7 +347,7 @@
         addTabBtn.addEventListener('click', addNewPjPlaylist);
         DOM_PJ.tabsBar.appendChild(addTabBtn);
     }
-    function addNewPjPlaylist() { /* ... (same as original) ... */
+    function addNewPjPlaylist() { 
         let newPlaylistName = "Playlist";
         let counter = 1;
         const existingNames = pjData.playlists.map(p => p.name.toLowerCase());
@@ -333,33 +364,36 @@
             name: newPlaylistName,
             videos: []
         });
-        switchPjPlaylist(newPlaylistId); // Also saves data
+        switchPjPlaylist(newPlaylistId); 
     }
-    function switchPjPlaylist(playlistId) { /* ... (same as original) ... */
+    function switchPjPlaylist(playlistId) { 
         if (pjData.currentPlaylistId === playlistId) return;
         pjData.currentPlaylistId = playlistId;
-        pjData.currentVideo = null; // Reset current video when switching playlists
-        pjData.randomHistory = []; // Reset random history
+        pjData.currentVideo = null; 
+        pjData.randomHistory = []; 
         if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') {
             ytPlayerInstance.stopVideo();
+            // Clear player content to ensure it stops
+            if (DOM_PJ.playerContainer) DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';
+            ytPlayerInstance = null; // Force re-creation if needed
         }
         renderPjTabs();
         renderPjPlaylist();
         savePjData();
     }
 
-    function renderPjPlaylist() { /* ... (same as original, ensure decodeHtmlEntitiesPJ is used) ... */
+    function renderPjPlaylist() { 
         DOM_PJ.playlistArea.innerHTML = '';
         const currentPlaylist = getCurrentPjPlaylist();
 
         if (!currentPlaylist || currentPlaylist.videos.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.textContent = "Playlist is empty. Add some YouTube links or search!";
+            emptyMsg.textContent = "Playlist is empty. Add YouTube links or search!";
             emptyMsg.style.padding = "10px";
             emptyMsg.style.textAlign = "center";
             emptyMsg.style.color = "#555";
             DOM_PJ.playlistArea.appendChild(emptyMsg);
-            updatePlayingClassInPjPlaylist(null); // Clear playing class
+            updatePlayingClassInPjPlaylist(null); 
             return;
         }
 
@@ -390,7 +424,7 @@
             item.textContent = itemText;
             item.title = itemTooltip;
             item.dataset.videoId = video.videoId;
-            item.dataset.playlistItemId = video.id; // Use the unique ID for the item
+            item.dataset.playlistItemId = video.id; 
             item.draggable = true;
 
             if (pjData.currentVideo && pjData.currentVideo.id === video.id) {
@@ -398,21 +432,20 @@
             }
 
             item.addEventListener('click', (event) => {
-                if (event.target.closest('.context-modal')) return; // Ignore if click is on a context menu
-                if (item.classList.contains('dragging')) return; // Ignore if dragging
+                if (event.target.closest('.context-modal')) return; 
+                if (item.classList.contains('dragging')) return; 
 
                 const clickedItem = event.currentTarget;
                 if (clickedItem && clickedItem.dataset.videoId) {
                     playYouTubeVideoById(clickedItem.dataset.videoId, true, true);
                 }
             });
-            // Context menu for items would be added here
             DOM_PJ.playlistArea.appendChild(item);
         });
     }
 
 
-    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { /* ... (same as original) ... */
+    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { 
         if (!videoId) { console.warn("playYouTubeVideoById called with no videoId"); return; }
         const currentPlaylist = getCurrentPjPlaylist();
         if (!currentPlaylist) { console.warn("No current playlist to play from"); return; }
@@ -426,45 +459,52 @@
             return;
         }
         
-        // Manage random history if manual play and random is on
         if ( isManualPlay && videoToPlay && pjData.randomEnabled &&
              pjData.autoPlayEnabled && pjData.repeatState === "off" &&
              currentPlaylist.videos.length > 0 ) {
             
             const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id));
             if (new Set(pjData.randomHistory).size >= uniqueVideoIdsInPlaylist.size) {
-                 // All unique videos played, reset history starting with current
                  pjData.randomHistory = [videoToPlay.id];
             } else if (!pjData.randomHistory.includes(videoToPlay.id)) {
-                 // Add to history if not already there
                  pjData.randomHistory.push(videoToPlay.id);
             }
         }
 
-        pjData.currentVideo = { ...videoToPlay }; // Store a copy
+        pjData.currentVideo = { ...videoToPlay }; 
         updatePlayingClassInPjPlaylist(videoToPlay.id);
         savePjData();
 
         if (!isYouTubeApiReady) {
             pendingVideoToLoad = { videoId, autoplayIntent };
-            console.log("YouTube API not ready, video load queued:", videoId);
-            if (typeof YT !== 'undefined' && YT.Player) { // Check if API script has loaded but not ready
-                window.onYouTubeIframeAPIReady(); // Manually trigger if needed
+            console.log("Play Jockey: YouTube API not ready, video load queued:", videoId);
+            if (typeof YT !== 'undefined' && YT.Player && !isYouTubeApiReady) { 
+                // If script is loaded but onYouTubeIframeAPIReady hasn't fired, try to trigger it.
+                // This can happen if the script loads after DOMContentLoaded.
+                console.log("Play Jockey: Manually calling onYouTubeIframeAPIReady as YT object exists.");
+                onYouTubeIframeAPIReady();
             }
             return;
         }
 
-        if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function') {
+        if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function' && ytPlayerInstance.getIframe && ytPlayerInstance.getIframe().parentNode) {
             ytPlayerInstance.loadVideoById({ 'videoId': videoId });
             if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') {
                  ytPlayerInstance.playVideo();
             }
         } else {
-            // Ensure player container is empty before creating a new player
-            if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.tagName === 'IFRAME') {
-                 DOM_PJ.playerContainer.innerHTML = ''; // Clear old player if any
+            if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.id === 'playJockeyPlayerPlaceholder') {
+                 DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; // Replace placeholder
+            } else if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.tagName === 'IFRAME') {
+                 // If an old iframe exists, clear it to ensure clean player creation
+                 DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';
+            } else if (!DOM_PJ.playerContainer.firstChild) {
+                // If container is empty, ensure the target div for player exists
+                DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';
             }
-            ytPlayerInstance = new YT.Player(DOM_PJ.playerContainer.id, { // Use the ID of the div
+
+            console.log("Play Jockey: Creating new YT Player instance for video:", videoId);
+            ytPlayerInstance = new YT.Player('playJockeyPlayer', { 
                 height: '100%',
                 width: '100%',
                 videoId: videoId,
@@ -474,25 +514,39 @@
                     'modestbranding': 1, 'rel': 0
                 },
                 events: {
-                    'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); },
-                    'onStateChange': onPjPlayerStateChange
+                    'onReady': (event) => { 
+                        console.log("Play Jockey: Player ready for video:", videoId);
+                        if (autoplayIntent) event.target.playVideo(); 
+                    },
+                    'onStateChange': onPjPlayerStateChange,
+                    'onError': (event) => {
+                        console.error("Play Jockey: YouTube Player Error:", event.data, "for video:", videoId);
+                        // Handle common errors like video unavailable, playback restricted etc.
+                        if (event.data === 2 || event.data === 5 || event.data === 100 || event.data === 101 || event.data === 150) {
+                            // Video unavailable or restricted, try playing next if autoplay is on
+                            if (pjData.autoPlayEnabled) {
+                                console.log("Play Jockey: Video error, trying next video.");
+                                playNextPjVideo();
+                            }
+                        }
+                    }
                 }
             });
         }
     }
-    function onPjPlayerStateChange(event) { /* ... (same as original, calls playNextPjVideo) ... */
+    function onPjPlayerStateChange(event) { 
         if (event.data === YT.PlayerState.ENDED && pjData.autoPlayEnabled) {
             playNextPjVideo();
         }
     }
-    function playNextPjVideo() { /* ... (same as original) ... */
+    function playNextPjVideo() { 
         const currentPlaylist = getCurrentPjPlaylist();
         if (!ytPlayerInstance || !pjData.currentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) {
             return;
         }
 
         let nextVideoItem = null;
-        const currentVideoUniqueId = pjData.currentVideo.id; // Use the unique ID
+        const currentVideoUniqueId = pjData.currentVideo.id; 
         const activePlaylistVideos = currentPlaylist.videos;
 
         if (pjData.repeatState === "song") {
@@ -500,44 +554,41 @@
         } else if (pjData.randomEnabled) {
             if (activePlaylistVideos.length === 0) return;
 
-            if (activePlaylistVideos.length === 1) { // Only one video in playlist
+            if (activePlaylistVideos.length === 1) { 
                 if (pjData.repeatState === "off") {
-                    // If repeat is off and only one song, stop if it has been played in history (unless history is just this one song)
                     if (pjData.randomHistory.includes(currentVideoUniqueId) && pjData.randomHistory.length >= activePlaylistVideos.length) return;
                     nextVideoItem = activePlaylistVideos[0];
-                } else { // Repeat playlist or song, so play it again
+                } else { 
                     nextVideoItem = activePlaylistVideos[0];
                 }
-            } else { // Multiple videos
+            } else { 
                 let eligibleVideos = activePlaylistVideos.filter(
-                    video => !pjData.randomHistory.includes(video.id) || video.id === currentVideoUniqueId // Allow current to be re-picked if it's the only one left
+                    video => !pjData.randomHistory.includes(video.id) || video.id === currentVideoUniqueId 
                 );
 
-                // If current video is the only one eligible, and we are not repeating the song, try to pick another
                 if (eligibleVideos.length === 1 && eligibleVideos[0].id === currentVideoUniqueId && pjData.repeatState !== "song") {
                      eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
-                     // If after filtering out current, no videos are left, and we are repeating playlist, reset history
                      if (eligibleVideos.length === 0 && pjData.repeatState === "playlist") {
-                        pjData.randomHistory = [currentVideoUniqueId]; // Start new cycle with current
+                        pjData.randomHistory = [currentVideoUniqueId]; 
                         eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                      }
-                } else if (eligibleVideos.length === 0 && pjData.repeatState === "playlist") { // All played, repeat playlist
-                    pjData.randomHistory = [currentVideoUniqueId]; // Start new cycle with current
+                } else if (eligibleVideos.length === 0 && pjData.repeatState === "playlist") { 
+                    pjData.randomHistory = [currentVideoUniqueId]; 
                     eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId);
                 }
                 
-                if (eligibleVideos.length === 0) { // No eligible videos left
-                    if (pjData.repeatState === "playlist") { // Should have been handled above, but as a fallback
-                        pjData.randomHistory = []; // Completely reset history
+                if (eligibleVideos.length === 0) { 
+                    if (pjData.repeatState === "playlist") { 
+                        pjData.randomHistory = []; 
                         eligibleVideos = [...activePlaylistVideos];
-                        if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0]; // if only one song, it's the next
-                    } else { // Repeat is off, and all unique songs played
-                        pjData.randomHistory = []; // Clear history as the "random session" is over
-                        return; // Stop playback
+                        if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0]; 
+                    } else { 
+                        pjData.randomHistory = []; 
+                        return; 
                     }
                 }
 
-                if (eligibleVideos.length > 0 && !nextVideoItem) { // Pick from eligible if not already set
+                if (eligibleVideos.length > 0 && !nextVideoItem) { 
                     const randomIndex = Math.floor(Math.random() * eligibleVideos.length);
                     nextVideoItem = eligibleVideos[randomIndex];
                 }
@@ -547,25 +598,24 @@
                 if (!pjData.randomHistory.includes(nextVideoItem.id)) {
                      pjData.randomHistory.push(nextVideoItem.id);
                 }
-                // Manage history size if repeating playlist
                 if (pjData.repeatState === "playlist") {
-                    const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); // Keep all but one if repeating
+                    const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); 
                     while (pjData.randomHistory.length > maxHistorySize && maxHistorySize > 0 && pjData.randomHistory.length >= activePlaylistVideos.length) {
-                        pjData.randomHistory.shift(); // Remove oldest if history is full for playlist repeat
+                        pjData.randomHistory.shift(); 
                     }
                 }
             }
 
-        } else { // Not random
+        } else { 
             const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId);
-            if (currentIndex === -1) return; // Should not happen
+            if (currentIndex === -1) return; 
 
             let nextIndex = currentIndex + 1;
-            if (nextIndex >= activePlaylistVideos.length) { // Reached end of playlist
+            if (nextIndex >= activePlaylistVideos.length) { 
                 if (pjData.repeatState === "playlist") {
-                    nextIndex = 0; // Loop back to start
+                    nextIndex = 0; 
                 } else {
-                    return; // Stop playback if repeat is off
+                    return; 
                 }
             }
             if (activePlaylistVideos[nextIndex]) {
@@ -574,10 +624,10 @@
         }
 
         if (nextVideoItem && nextVideoItem.videoId) {
-            playYouTubeVideoById(nextVideoItem.videoId, true, false); // isManualPlay is false for auto-next
+            playYouTubeVideoById(nextVideoItem.videoId, true, false); 
         }
     }
-    function updatePlayingClassInPjPlaylist(playingItemId) { /* ... (same as original) ... */
+    function updatePlayingClassInPjPlaylist(playingItemId) { 
         const items = DOM_PJ.playlistArea.querySelectorAll('.playjockey-playlist-item');
         items.forEach(item => {
             if (item.dataset.playlistItemId === playingItemId) {
@@ -588,19 +638,18 @@
         });
     }
 
-    // Drag and Drop for playlist items
-    function handlePjDragStart(e) { /* ... (same as original) ... */
+    function handlePjDragStart(e) { 
         const target = e.target.closest('.playjockey-playlist-item');
         if (target) {
             pjDraggedItem = target;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId); // Use unique ID
+            e.dataTransfer.setData('text/plain', target.dataset.playlistItemId); 
             setTimeout(() => {
                 target.classList.add('dragging');
             }, 0);
         }
     }
-    function handlePjDragEnd(e) { /* ... (same as original) ... */
+    function handlePjDragEnd(e) { 
         if (pjDraggedItem) {
             pjDraggedItem.classList.remove('dragging');
         }
@@ -609,12 +658,12 @@
         });
         pjDraggedItem = null;
     }
-    function clearPjDragOverHighlights() { /* ... (same as original) ... */
+    function clearPjDragOverHighlights() { 
         DOM_PJ.playlistArea.querySelectorAll('.playjockey-playlist-item').forEach(item => {
             item.classList.remove('drag-over-target-before', 'drag-over-target-after');
         });
     }
-    function handlePjDragOver(e) { /* ... (same as original) ... */
+    function handlePjDragOver(e) { 
         e.preventDefault();
         const targetItem = e.target.closest('.playjockey-playlist-item');
         clearPjDragOverHighlights(); 
@@ -628,41 +677,41 @@
             }
         }
     }
-    function handlePjDragLeave(e) { /* ... (same as original) ... */
+    function handlePjDragLeave(e) { 
         const relatedTargetIsChildOrSelf = DOM_PJ.playlistArea.contains(e.relatedTarget);
-        if (!relatedTargetIsChildOrSelf) { // Check if leaving the playlist area entirely
+        if (!relatedTargetIsChildOrSelf) { 
              clearPjDragOverHighlights();
-        } else { // Still within playlist area, but maybe moved off an item
+        } else { 
             const targetItem = e.target.closest('.playjockey-playlist-item');
-            if (targetItem) { // If still over an item, remove its specific highlight if not the current drag over target
+            if (targetItem) { 
                  targetItem.classList.remove('drag-over-target-before', 'drag-over-target-after');
             }
         }
     }
-    function handlePjDrop(e) { /* ... (same as original) ... */
+    function handlePjDrop(e) { 
         e.preventDefault();
         clearPjDragOverHighlights();
         const currentPlaylist = getCurrentPjPlaylist();
         if (!pjDraggedItem || !currentPlaylist) return;
 
-        const draggedItemId = e.dataTransfer.getData('text/plain'); // Unique ID
+        const draggedItemId = e.dataTransfer.getData('text/plain'); 
         const targetItemElement = e.target.closest('.playjockey-playlist-item');
 
         const draggedItemIndex = currentPlaylist.videos.findIndex(item => item.id === draggedItemId);
         if (draggedItemIndex === -1) return;
 
         const itemToMove = currentPlaylist.videos[draggedItemIndex];
-        currentPlaylist.videos.splice(draggedItemIndex, 1); // Remove from old position
+        currentPlaylist.videos.splice(draggedItemIndex, 1); 
 
         let targetIndex = -1;
         if (targetItemElement && targetItemElement.dataset.playlistItemId !== draggedItemId) {
-            const targetItemId = targetItemElement.dataset.playlistItemId; // Unique ID
+            const targetItemId = targetItemElement.dataset.playlistItemId; 
             targetIndex = currentPlaylist.videos.findIndex(item => item.id === targetItemId);
             
             if (targetIndex !== -1) {
                 const rect = targetItemElement.getBoundingClientRect();
                 const midpointY = rect.top + rect.height / 2;
-                if (e.clientY >= midpointY) { // Dropped on lower half or is last item
+                if (e.clientY >= midpointY) { 
                     targetIndex++;
                 }
             }
@@ -670,7 +719,7 @@
 
         if (targetIndex !== -1 && targetIndex <= currentPlaylist.videos.length) {
             currentPlaylist.videos.splice(targetIndex, 0, itemToMove);
-        } else { // Dropped in empty space or at the end
+        } else { 
             currentPlaylist.videos.push(itemToMove);
         }
 
@@ -679,41 +728,38 @@
         pjDraggedItem = null;
     }
 
-
-    // Control button states
-    function togglePjAutoPlay() { /* ... (same as original) ... */
+    function togglePjAutoPlay() { 
         pjData.autoPlayEnabled = !pjData.autoPlayEnabled;
         updatePjAutoPlayButtonState();
         savePjData();
     }
-    function updatePjAutoPlayButtonState() { /* ... (same as original) ... */
+    function updatePjAutoPlayButtonState() { 
         DOM_PJ.autoPlayBtn.classList.toggle('autoplay-on', pjData.autoPlayEnabled);
         DOM_PJ.autoPlayBtn.textContent = `Auto Play: ${pjData.autoPlayEnabled ? 'On' : 'Off'}`;
     }
-    function togglePjRandom() { /* ... (same as original) ... */
+    function togglePjRandom() { 
         pjData.randomEnabled = !pjData.randomEnabled;
-        pjData.randomHistory = []; // Reset history when toggling random
+        pjData.randomHistory = []; 
         const currentPlaylist = getCurrentPjPlaylist();
         if (pjData.randomEnabled && pjData.currentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
-             // If there's more than one video OR repeat is not off (meaning even a single video can be part of a "random" sequence if repeated)
              if (currentPlaylist.videos.length > 1 || pjData.repeatState !== "off") {
-                 pjData.randomHistory.push(pjData.currentVideo.id); // Add current to history to avoid immediate repeat if possible
+                 pjData.randomHistory.push(pjData.currentVideo.id); 
             }
         }
         updatePjRandomButtonState();
         savePjData();
     }
-    function updatePjRandomButtonState() { /* ... (same as original) ... */
+    function updatePjRandomButtonState() { 
         DOM_PJ.randomBtn.classList.toggle('random-on', pjData.randomEnabled);
         DOM_PJ.randomBtn.textContent = `Random: ${pjData.randomEnabled ? 'On' : 'Off'}`;
     }
-    function cyclePjRepeat() { /* ... (same as original) ... */
+    function cyclePjRepeat() { 
         const states = ["off", "playlist", "song"];
         let currentIndex = states.indexOf(pjData.repeatState);
         currentIndex = (currentIndex + 1) % states.length;
         pjData.repeatState = states[currentIndex];
         
-        pjData.randomHistory = []; // Reset history when changing repeat state
+        pjData.randomHistory = []; 
         const currentPlaylist = getCurrentPjPlaylist();
         if (pjData.randomEnabled && pjData.currentVideo && currentPlaylist && currentPlaylist.videos.length > 0) {
              if (currentPlaylist.videos.length > 1 || pjData.repeatState !== "off") {
@@ -723,8 +769,8 @@
         updatePjRepeatButtonState();
         savePjData();
     }
-    function updatePjRepeatButtonState() { /* ... (same as original) ... */
-        DOM_PJ.repeatBtn.classList.remove('repeat-on'); // Clear previous state class
+    function updatePjRepeatButtonState() { 
+        DOM_PJ.repeatBtn.classList.remove('repeat-on'); 
         switch (pjData.repeatState) {
             case "off":
                 DOM_PJ.repeatBtn.textContent = 'Repeat: Off';
@@ -753,15 +799,20 @@
         DOM_PJ.randomBtn.addEventListener('click', togglePjRandom);
         DOM_PJ.repeatBtn.addEventListener('click', cyclePjRepeat);
     }
+    
+    window.addEventListener('message', (event) => {
+        // Add origin check in a real application
+        // if (event.origin !== 'YOUR_OS_ORIGIN_HERE') return; 
+        if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'youtube') {
+            YOUTUBE_API_KEY = event.data.key;
+            console.log("Play Jockey App: YouTube API Key received.");
+             if (!YOUTUBE_API_KEY) {
+                 console.warn("Play Jockey: YouTube API Key from OS is empty. Search will be disabled.");
+            }
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Try to get API key from parent if possible (example)
-        if (window.parent && window.parent.osData && window.parent.osData.appApiKeys && window.parent.osData.appApiKeys.youtube) {
-            YOUTUBE_API_KEY = window.parent.osData.appApiKeys.youtube;
-        } else {
-            console.warn("Play Jockey: YouTube API Key not found from parent OS.");
-        }
-
         loadPjData();
         renderPjTabs();
         renderPjPlaylist();
@@ -770,14 +821,18 @@
         updatePjRepeatButtonState();
         addPjEventListeners();
 
+        if (window.parent && window.parent !== window) {
+            console.log("Play Jockey App: Requesting YouTube API key from parent OS.");
+            window.parent.postMessage({ type: 'requestApiKey', service: 'youtube', appId: 'playJockey' }, '*');
+        } else {
+            console.warn("Play Jockey App: Not running in an iframe or parent context not detected for API key request.");
+        }
+
         // Auto-load current video if API is ready and video exists
-        if (pjData.currentVideo && isYouTubeApiReady) {
-            const currentPlaylist = getCurrentPjPlaylist();
-            if (currentPlaylist && currentPlaylist.videos.some(v => v.id === pjData.currentVideo.id)) {
-                playYouTubeVideoById(pjData.currentVideo.videoId, false); // Don't force autoplay on initial load unless intended
-            }
-        } else if (pjData.currentVideo) {
-            pendingVideoToLoad = { videoId: pjData.currentVideo.videoId, autoplayIntent: false };
+        // The onYouTubeIframeAPIReady function will handle this once the API is loaded.
+        // If YT object is already available (API script loaded before DOMContentLoaded), trigger manually.
+        if (typeof YT !== 'undefined' && YT.Player && !isYouTubeApiReady) {
+            onYouTubeIframeAPIReady();
         }
     });
 </script>

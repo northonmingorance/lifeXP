@@ -40,9 +40,9 @@
 
 <div class="controls-bar" id="controlsBar">
     <div class="week-navigation">
-        <button id="prevWeekBtn" class="xp-button">&lt; Prev Week</button>
+        <button id="prevWeekBtn" class="xp-button">< Prev Week</button>
         <button id="thisWeekBtn" class="xp-button">This Week</button>
-        <button id="nextWeekBtn" class="xp-button">Next Week &gt;</button>
+        <button id="nextWeekBtn" class="xp-button">Next Week ></button>
     </div>
     <div class="controls-group">
         <span id="currentWeekDisplay">Week X</span>
@@ -67,24 +67,19 @@
 </div>
 
 <script>
-    // XP Tracker specific JS will go here.
-    // This will be a simplified version focusing on UI and basic interaction.
-    // Full data persistence and logic from the original monolithic script
-    // would require significant refactoring for iframe communication or a dedicated backend.
-
-    const XP_TRACKER_STORAGE_KEY = 'xpTrackerAppData_v1.0.0';
+    const XP_TRACKER_STORAGE_KEY = 'xpTrackerAppData_v1.0.1'; // Incremented version
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
-    const XP_PER_QUEST_COMPLETED_BASE = 50;
-    const MAX_WEEKLY_QUESTS = 5;
+    // const XP_PER_QUEST_COMPLETED_BASE = 50; // Quest logic simplified for now
+    // const MAX_WEEKLY_QUESTS = 5;
     
     let trackerData = {
         areas: [],
-        achievements: {}, // Key: YYYY-MM-DD_AreaName_DayIndex, Value: array of achievement objects
-        quests: {}, // Key: WeekID (e.g., 2023-W34), Value: array of quest objects
-        currentWeekStartDate: null, // YYYY-MM-DD string for Monday
-        viewMode: 'week', // 'week' or 'day'
-        selectedDayIndex: 0, // 0 for Mon, 6 for Sun (if viewMode is 'day')
+        achievements: {}, 
+        // quests: {}, // Quest logic simplified for now
+        currentWeekStartDate: null, 
+        viewMode: 'week', 
+        selectedDayIndex: 0, 
     };
 
     const DOM_XP = {
@@ -109,12 +104,19 @@
         return textarea.value;
     }
 
-    function getMonday(d) {
-        d = new Date(d);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    function getMondayOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
         return new Date(d.setDate(diff));
     }
+    
+    function getTodayAtMidnight() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+    }
+
 
     function getWeekNumber(d) {
         d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -129,8 +131,9 @@
         if (parts.length !== 3) return null;
         const [year, month, day] = parts.map(Number);
         if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-        return new Date(year, month - 1, day); // Month is 0-indexed
+        return new Date(year, month - 1, day); 
     }
+
     function getDayOfYear(date) {
         const startOfYear = new Date(date.getFullYear(), 0, 0);
         const diff = date - startOfYear;
@@ -141,32 +144,32 @@
 
     function loadTrackerData() {
         const stored = localStorage.getItem(XP_TRACKER_STORAGE_KEY);
+        const today = getTodayAtMidnight();
+        const defaultMonday = getMondayOfWeek(today).toISOString().split('T')[0];
+
         if (stored) {
             try {
                 trackerData = JSON.parse(stored);
-                if (!trackerData.currentWeekStartDate) {
-                     trackerData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
-                }
-                 // Ensure nested objects exist
+                trackerData.currentWeekStartDate = trackerData.currentWeekStartDate || defaultMonday;
                 trackerData.areas = trackerData.areas || [];
                 trackerData.achievements = trackerData.achievements || {};
-                trackerData.quests = trackerData.quests || {};
+                // trackerData.quests = trackerData.quests || {}; // Simplified
                 trackerData.viewMode = trackerData.viewMode || 'week';
                 trackerData.selectedDayIndex = typeof trackerData.selectedDayIndex === 'number' ? trackerData.selectedDayIndex : 0;
 
             } catch (e) {
                 console.error("Error loading XP Tracker data, resetting.", e);
-                resetTrackerData();
+                resetTrackerData(defaultMonday);
             }
         } else {
-            resetTrackerData();
+            resetTrackerData(defaultMonday);
         }
     }
     
-    function resetTrackerData() {
+    function resetTrackerData(defaultMondayStr) {
         trackerData = {
-            areas: [], achievements: {}, quests: {},
-            currentWeekStartDate: getMonday(new Date()).toISOString().split('T')[0],
+            areas: [], achievements: {}, // quests: {},
+            currentWeekStartDate: defaultMondayStr,
             viewMode: 'week', selectedDayIndex: 0,
         };
     }
@@ -177,6 +180,12 @@
 
     function updateDateDisplay() {
         const currentMonday = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+        if (!currentMonday) { // Fallback if date parsing fails
+            DOM_XP.currentWeekDisplay.textContent = "Error: Invalid Date";
+            DOM_XP.weekCountDisplay.textContent = "";
+            return;
+        }
+
         if (trackerData.viewMode === 'week') {
             const weekEndDate = new Date(currentMonday);
             weekEndDate.setDate(currentMonday.getDate() + 6);
@@ -203,7 +212,9 @@
             });
         } else {
             const th = document.createElement('th');
-            const dayDate = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+            const currentMonday = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+            if (!currentMonday) return; // Should not happen if loadTrackerData is correct
+            const dayDate = new Date(currentMonday);
             const currentDayIndex = (typeof trackerData.selectedDayIndex === 'number' && trackerData.selectedDayIndex >= 0 && trackerData.selectedDayIndex <=6) ? trackerData.selectedDayIndex : 0;
             dayDate.setDate(dayDate.getDate() + currentDayIndex);
             th.textContent = `${WEEKDAYS[currentDayIndex]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
@@ -212,12 +223,16 @@
     }
 
     function xpForNextLevel(currentLevel) {
-        if (currentLevel <= 0) return 50; // Base XP for level 1
+        if (currentLevel <= 0) return 50; 
         return Math.floor(50 * Math.pow(currentLevel, 1.5));
     }
     
     function renderGrid() {
         DOM_XP.gridBody.innerHTML = '';
+        if (!trackerData.currentWeekStartDate) {
+            console.error("Cannot render grid: currentWeekStartDate is not set.");
+            return;
+        }
         trackerData.areas.forEach(area => {
             const tr = document.createElement('tr');
             tr.dataset.areaName = area.name;
@@ -259,7 +274,7 @@
                         contentDiv.textContent = decodeHtmlEntities(ach.content);
                     } else if (ach.type === 'image' && ach.content) {
                         const img = document.createElement('img');
-                        img.src = ach.content; // Assuming ach.content is a dataURL or accessible URL
+                        img.src = ach.content; 
                         img.alt = "Achievement Image";
                         contentDiv.appendChild(img);
                     }
@@ -280,9 +295,12 @@
                 addAchBtn.textContent = '+';
                 addAchBtn.dataset.areaName = areaName;
                 addAchBtn.dataset.dayIndex = dayIdx;
-                const dayDate = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
-                dayDate.setDate(dayDate.getDate() + dayIdx);
-                addAchBtn.title = `Add achievement to ${decodeHtmlEntities(areaName)} on ${WEEKDAYS[dayIdx]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
+                const currentMondayForTitle = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+                if(currentMondayForTitle){
+                    const dayDate = new Date(currentMondayForTitle);
+                    dayDate.setDate(dayDate.getDate() + dayIdx);
+                    addAchBtn.title = `Add achievement to ${decodeHtmlEntities(areaName)} on ${WEEKDAYS[dayIdx]}, ${dayDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
+                }
                 td.appendChild(addAchBtn);
             };
 
@@ -294,7 +312,7 @@
                     renderCellContent(td, area.name, dayIndex);
                     tr.appendChild(td);
                 });
-            } else { // Day view
+            } else { 
                 const dayIndex = (typeof trackerData.selectedDayIndex === 'number' && trackerData.selectedDayIndex >= 0 && trackerData.selectedDayIndex <=6) ? trackerData.selectedDayIndex : 0;
                 const td = document.createElement('td');
                 td.dataset.areaName = area.name;
@@ -320,13 +338,13 @@
         if (children.length === 0) return;
 
         const originalClasses = controlsBar.className;
-        controlsBar.className = 'controls-bar layout-single-row'; // Temporarily set to calculate width
+        controlsBar.className = 'controls-bar layout-single-row'; 
         let totalChildrenWidth = 0;
         children.forEach(child => {
             const childStyle = getComputedStyle(child);
             totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
         });
-        controlsBar.className = originalClasses; // Restore original classes
+        controlsBar.className = originalClasses; 
 
         const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
 
@@ -360,12 +378,8 @@
                 const areaName = target.dataset.areaName;
                 if (areaName && confirm(`Are you sure you want to delete area "${decodeHtmlEntities(areaName)}"?`)) {
                     trackerData.areas = trackerData.areas.filter(a => a.name !== areaName);
-                    // Also delete associated achievements and quests
                     Object.keys(trackerData.achievements).forEach(key => {
                         if (key.includes(`_${areaName}_`)) delete trackerData.achievements[key];
-                    });
-                    Object.keys(trackerData.quests).forEach(weekId => {
-                        trackerData.quests[weekId] = trackerData.quests[weekId].filter(q => q.areaName !== areaName);
                     });
                     renderGrid();
                     saveTrackerData();
@@ -378,17 +392,15 @@
                     const achievementsKey = `${trackerData.currentWeekStartDate}_${areaName}_${dayIndex}`;
                     if (!trackerData.achievements[achievementsKey]) trackerData.achievements[achievementsKey] = [];
                     trackerData.achievements[achievementsKey].push({
-                        id: Date.now().toString(),
+                        id: Date.now().toString() + Math.random().toString(16).substring(2),
                         type: 'text',
                         content: achievementText.trim(),
                         xp: XP_PER_REGULAR_ACHIEVEMENT,
                         timestamp: new Date().toISOString()
                     });
-                    // Simplified XP addition for this example
                     const area = trackerData.areas.find(a => a.name === areaName);
                     if (area) {
                         area.xp = (area.xp || 0) + XP_PER_REGULAR_ACHIEVEMENT;
-                        // Basic leveling up
                         let requiredForNext = xpForNextLevel(area.level || 1);
                         while (area.xp >= requiredForNext && requiredForNext > 0) {
                             area.xp -= requiredForNext;
@@ -406,12 +418,11 @@
                     const achievementIndex = trackerData.achievements[achKey].findIndex(a => a.id === achId);
                     if (achievementIndex > -1) {
                         const removedAch = trackerData.achievements[achKey].splice(achievementIndex, 1)[0];
-                        // Simplified XP subtraction
-                        const areaName = achKey.split('_')[1];
+                        const areaNameParts = achKey.split('_');
+                        const areaName = areaNameParts.slice(1, areaNameParts.length -1).join('_');
                         const area = trackerData.areas.find(a => a.name === areaName);
                         if (area && removedAch) {
                             area.xp = Math.max(0, (area.xp || 0) - (removedAch.xp || 0));
-                            // De-leveling is more complex, omitted for brevity here
                         }
                         if (trackerData.achievements[achKey].length === 0) delete trackerData.achievements[achKey];
                         renderGrid();
@@ -419,7 +430,6 @@
                     }
                  }
             }
-            // Edit achievement logic would be more involved, similar to add.
         });
 
         DOM_XP.prevWeekBtn.addEventListener('click', () => navigateDate(-1));
@@ -428,28 +438,29 @@
         DOM_XP.toggleViewBtn.addEventListener('click', toggleViewMode);
         
         DOM_XP.showQuestsBtn.addEventListener('click', () => {
-            // Quest modal logic would be here, simplified for now
-            alert("Quests feature would be displayed in a modal.");
+            alert("Quests feature simplified for this version.");
         });
         
         new ResizeObserver(checkControlsBarLayout).observe(DOM_XP.controlsBar);
     }
     
-    function navigateDate(offset) { // offset is -1 or 1
+    function navigateDate(offset) { 
         const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+        if(!currentMon) return;
+
         if (trackerData.viewMode === 'week') {
             currentMon.setDate(currentMon.getDate() + (offset * 7));
             trackerData.currentWeekStartDate = currentMon.toISOString().split('T')[0];
-        } else { // day view
+        } else { 
             let newDayIndex = trackerData.selectedDayIndex + offset;
             if (newDayIndex < 0) {
-                currentMon.setDate(currentMon.getDate() - 7); // Move to prev week's Monday
-                trackerData.currentWeekStartDate = currentMon.toISOString().split('T')[0];
-                trackerData.selectedDayIndex = 6; // Sunday
+                currentMon.setDate(currentMon.getDate() - 7); 
+                trackerData.currentWeekStartDate = getMondayOfWeek(currentMon).toISOString().split('T')[0];
+                trackerData.selectedDayIndex = 6; 
             } else if (newDayIndex > 6) {
-                currentMon.setDate(currentMon.getDate() + 7); // Move to next week's Monday
-                trackerData.currentWeekStartDate = currentMon.toISOString().split('T')[0];
-                trackerData.selectedDayIndex = 0; // Monday
+                currentMon.setDate(currentMon.getDate() + 7); 
+                trackerData.currentWeekStartDate = getMondayOfWeek(currentMon).toISOString().split('T')[0];
+                trackerData.selectedDayIndex = 0; 
             } else {
                 trackerData.selectedDayIndex = newDayIndex;
             }
@@ -461,10 +472,10 @@
     }
 
     function goToThisWeek() {
-        trackerData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0];
+        const today = getTodayAtMidnight();
+        trackerData.currentWeekStartDate = getMondayOfWeek(today).toISOString().split('T')[0];
         if(trackerData.viewMode === 'day') {
-            const today = new Date();
-            let currentDayOfWeek = today.getDay(); // Sunday is 0, Monday is 1
+            let currentDayOfWeek = today.getDay(); 
             trackerData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1;
         }
         updateDateDisplay();
@@ -480,16 +491,20 @@
             DOM_XP.prevWeekBtn.textContent = '< Prev Day';
             DOM_XP.nextWeekBtn.textContent = 'Next Day >';
             DOM_XP.thisWeekBtn.textContent = 'Today';
-            // When switching to day view, try to select today if it's in the current week
-            const today = new Date();
+            const today = getTodayAtMidnight();
             const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
-            const currentSun = new Date(currentMon);
-            currentSun.setDate(currentMon.getDate() + 6);
-            if (today >= currentMon && today <= currentSun) {
-                trackerData.selectedDayIndex = (today.getDay() === 0) ? 6 : today.getDay() - 1;
+            if(currentMon){
+                const currentSun = new Date(currentMon);
+                currentSun.setDate(currentMon.getDate() + 6);
+                if (today >= currentMon && today <= currentSun) {
+                    trackerData.selectedDayIndex = (today.getDay() === 0) ? 6 : today.getDay() - 1;
+                } else {
+                    trackerData.selectedDayIndex = 0; 
+                }
             } else {
-                trackerData.selectedDayIndex = 0; // Default to Monday of the current week
+                 trackerData.selectedDayIndex = 0;
             }
+
 
         } else {
             trackerData.viewMode = 'week';
@@ -506,26 +521,11 @@
 
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadTrackerData();
+        loadTrackerData(); // This will set currentWeekStartDate correctly
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
         addTrackerEventListeners();
-        checkControlsBarLayout(); // Initial check
-        
-        // Adjust min-width of the app window based on view mode
-        // This would typically be communicated to the parent, but for self-containment:
-        if (window.frameElement) {
-            const parentWindow = window.parent;
-            const appConfig = parentWindow.appManifest.find(app => app.id === 'xpTracker');
-            if (appConfig) {
-                if (trackerData.viewMode === 'week') {
-                    // Potentially set a wider min-width if needed
-                    // parentWindow.updateAppMinSize('xpTracker', 905, appConfig.minHeight);
-                } else {
-                    // parentWindow.updateAppMinSize('xpTracker', 375, appConfig.minHeight);
-                }
-            }
-        }
+        checkControlsBarLayout(); 
     });
 </script>
