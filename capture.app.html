@@ -162,8 +162,8 @@
         else audioConstraints = true; 
         
         if (finalResolution && typeof finalResolution.width === 'number' && typeof finalResolution.height === 'number') {
-            videoConstraints.width = { ideal: finalResolution.width };
-            videoConstraints.height = { ideal: finalResolution.height };
+            videoConstraints.width = { exact: finalResolution.width };
+            videoConstraints.height = { exact: finalResolution.height };
         }
         if (Object.keys(videoConstraints).length === 0) videoConstraints = true; 
 
@@ -182,15 +182,8 @@
                 await DOM_CAP.videoElement.play().catch(e => console.warn("Video play interrupted or failed:", e));
 
                 const videoTracks = liveStream.getVideoTracks();
-                if (videoTracks.length > 0) {
-                    const currentSettings = videoTracks[0].getSettings();
-                    console.log("Capture App: Actual video resolution:", currentSettings.width, "x", currentSettings.height);
-                    if (!finalVideoDeviceId || finalVideoDeviceId === 'default') {
-                        captureAppData.selectedVideoDevice = currentSettings.deviceId || videoTracks[0].id;
-                    }
-                    if (finalResolution && (currentSettings.width !== finalResolution.width || currentSettings.height !== finalResolution.height)) {
-                        console.log(`Capture App: Requested ideal ${finalResolution.width}x${finalResolution.height}, got ${currentSettings.width}x${currentSettings.height}`);\
-                    }
+                if (videoTracks.length > 0 && (!finalVideoDeviceId || finalVideoDeviceId === 'default')) {
+                    captureAppData.selectedVideoDevice = videoTracks[0].getSettings().deviceId || videoTracks[0].id;
                 }
                 const audioTracks = liveStream.getAudioTracks();
                  if (audioTracks.length > 0 && (!finalAudioDeviceId || finalAudioDeviceId === 'default') && audioTracks[0].getSettings().deviceId) {
@@ -221,7 +214,7 @@
             console.error("Error starting capture stream:", err.name, err.message, err.constraint);
             let message = `Error: ${err.name}. Check permissions and device settings.`;
             if (err.name === "OverconstrainedError" && finalResolution) {
-                 message = `Selected resolution (${finalResolution.width}x${finalResolution.height}) not supported. Try another option.`;
+                 message = `Selected resolution (${finalResolution.width}x${finalResolution.height}) not supported. Try 'Default' or another option.`;
                  captureAppData.selectedResolution = null; 
                  saveCaptureAppData();
             } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
