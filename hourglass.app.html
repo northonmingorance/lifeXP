@@ -146,10 +146,18 @@
 
     function updateDynamicFontSize() {
         const windowHeight = window.innerHeight;
-        const availableHeightForDisplay = windowHeight * 0.8	;
-        const fontSizeForOneDisplay = availableHeightForDisplay / 2 * 0.7;
+        const windowWidth = window.innerWidth;
+
+        const availableHeightForDisplay = windowHeight * 0.8;
+        const fontSizeForOneDisplayHeight = availableHeightForDisplay / 2 * 0.7;
         
-        let newSize = Math.max(20, Math.min(fontSizeForOneDisplay, 300));
+        const displayElementWidth = timeRemainingDisplay.offsetWidth || windowWidth * 0.8; 
+        const fontSizeForOneDisplayWidth = displayElementWidth / 5 * 0.9; 
+
+        let newSizeBasedOnHeight = Math.max(20, Math.min(fontSizeForOneDisplayHeight, 300));
+        let newSizeBasedOnWidth = Math.max(20, Math.min(fontSizeForOneDisplayWidth, 300));
+        
+        let newSize = Math.min(newSizeBasedOnHeight, newSizeBasedOnWidth);
 
         timeRemainingDisplay.style.fontSize = `${newSize}px`;
         timePassedDisplay.style.fontSize = `${newSize}px`;
