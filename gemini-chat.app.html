@@ -1,6 +1,6 @@
 <style>
     body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; }
-    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 0px; }
     .xp-button:active { border-style: inset; }
     .xp-button:hover { border-color: #005CFE; }
     .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
@@ -26,13 +26,11 @@
     .gemini-chat-message.gemini-message.error-message .message-sender { color: #990000; }
     @keyframes thinking { 0% { content: 'Thinking.'; } 25% { content: 'Thinking..'; } 50% { content: 'Thinking...'; } 75% { content: 'Thinking..'; } 100% { content: 'Thinking.'; } }
     .gemini-thinking-animation::after { content: '...';  animation: thinking 1.5s infinite; display: inline-block;  }
-    .gemini-chat-input-container { display: flex; flex-direction: column; flex-shrink: 0; border-top: 1px solid #ACA899; background-color: #ECE9D8; padding: 0 5px 5px 5px;}
-    .gemini-chat-attachment-preview-area { padding: 5px 0; display: none; align-items: center; justify-content: space-between; font-size: 10px; background-color: #F7F7F7; border: 1px dashed #ACA899; margin-bottom:5px; border-radius: 2px; min-height: 30px; box-sizing: border-box; }
-    /* Removed geminiChatAttachmentPreviewArea img specific styles as it's now always hidden for preview */
-    .gemini-chat-attachment-preview-area span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; margin-left: 8px; }
-    #geminiChatRemoveAttachmentBtn { font-size: 14px; padding: 0 5px; height: 20px; line-height: 10px; margin-right: 5px; }
+    .gemini-chat-input-container { display: flex; flex-direction: column; flex-shrink: 0; background-color: #ECE9D8; padding: 0 5px 5px 5px;}
+    #geminiChatRemoveAttachmentBtn { font-size: 14px; padding: 0 5px; height: 20px; line-height: 10px; margin-bottom:5px; margin-right: 5px; }
     .gemini-chat-main-input-area { display: flex; }
     #geminiChatAttachFileBtn { height: 44px; }
+    #geminiChatAttachmentPreviewName { margin-top: 3px; }
     #geminiChatPromptInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 6px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; resize: none; height: 44px; box-sizing: border-box; }
     #geminiChatSendBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; height: 44px; box-sizing: border-box; }
     .gemini-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
