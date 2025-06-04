@@ -33,14 +33,27 @@
     
     .table-container { 
         flex-grow: 1; 
-        overflow-y: auto; /* Vertical scroll for table container if needed */
-        overflow-x: visible; /* Allow table to dictate width, body will scroll */
+        overflow-y: auto; 
+        overflow-x: visible; 
         padding: 0 15px 15px 15px;
     }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th, td { border: 1px solid #ACA899; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }
-    th { background-color: #D4D0C8; text-align: center; position: sticky; top: 0; z-index: 1;}
-    td.area-name-cell { font-weight: bold; width: 180px; }
+    th { 
+        background-color: #D4D0C8; 
+        text-align: center; 
+        position: sticky; 
+        top: 0; 
+        z-index: 10; /* Increased z-index */
+    }
+    td.area-name-cell { 
+        font-weight: bold; 
+        width: 180px; 
+        position: sticky; /* Make area name cell sticky to the left */
+        left: 0;
+        background-color: #ECE9D8; /* Match body background or cell background */
+        z-index: 5; /* Lower than th but higher than other td content if needed */
+    }
     .area-stats { font-size: 0.9em; margin-top: 5px; color: #333; }
     .area-stats span { display: flex; align-items: center; } 
     .area-level { margin-left: 4px; } 
