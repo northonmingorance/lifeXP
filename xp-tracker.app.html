@@ -317,22 +317,19 @@
         </div>
     </div>
 </div>
-
-
 <script>
     const XP_TRACKER_STORAGE_KEY = 'xpTrackerAppData_v1.0.2';
     const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const XP_PER_REGULAR_ACHIEVEMENT = 10;
     const XP_PER_QUEST_COMPLETED_BASE = 50;
     const MAX_WEEKLY_QUESTS = 5;
-    // const FIXED_MARGIN_WIDTH_PX = 15; // No longer needed here, CSS variable is used
 
     let trackerData = {
         areas: [],
         achievements: {},
         quests: {},
         currentWeekStartDate: null,
-        viewMode: 'week',
+        viewMode: 'week', // Default view mode
         selectedDayIndex: 0,
     };
 
@@ -431,24 +428,18 @@
 
     function saveTrackerData() { localStorage.setItem(XP_TRACKER_STORAGE_KEY, JSON.stringify(trackerData)); }
     function updateDateDisplay() { const currentMonday = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate); if (!currentMonday) { DOM_XP.currentWeekDisplay.textContent = "Error: Invalid Date"; DOM_XP.weekCountDisplay.textContent = ""; return; } if (trackerData.viewMode === 'week') { const weekEndDate = new Date(currentMonday); weekEndDate.setDate(currentMonday.getDate() + 6); const options = { month: 'short', day: 'numeric' }; DOM_XP.currentWeekDisplay.textContent = `${currentMonday.toLocaleDateString(undefined, options)} - ${weekEndDate.toLocaleDateString(undefined, options)}`; DOM_XP.weekCountDisplay.textContent = `Year Week: ${getWeekNumber(currentMonday)}`; } else { const selectedDate = new Date(currentMonday); const currentDayIndex = (typeof trackerData.selectedDayIndex === 'number' && trackerData.selectedDayIndex >= 0 && trackerData.selectedDayIndex <=6) ? trackerData.selectedDayIndex : 0; selectedDate.setDate(selectedDate.getDate() + currentDayIndex); const dayDisplayOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; DOM_XP.currentWeekDisplay.textContent = selectedDate.toLocaleDateString(undefined, dayDisplayOptions); DOM_XP.weekCountDisplay.textContent = `Year Day: ${getDayOfYear(selectedDate)}`; } }
-    
-    function renderWeekdayHeaders() {
-        DOM_XP.weekdayHeaders.innerHTML = ''; // Clear existing headers
 
-        // Add the new fixed margin header
+    function renderWeekdayHeaders() {
+        DOM_XP.weekdayHeaders.innerHTML = '';
         const marginTh = document.createElement('th');
         marginTh.className = 'fixed-margin-header';
-        // marginTh.innerHTML = '&nbsp;'; // Optional: if you want some content or ensure height
         DOM_XP.weekdayHeaders.appendChild(marginTh);
-
-        // Add the "Area" header
         const areaTh = document.createElement('th');
-        areaTh.className = 'area-header-cell'; // New class for specific styling
+        areaTh.className = 'area-header-cell';
         areaTh.textContent = 'Area';
         DOM_XP.weekdayHeaders.appendChild(areaTh);
-
         if (trackerData.viewMode === 'week') {
-            DOM_XP.gridTable.style.minWidth = "730px"; // Adjust if needed due to new column
+            DOM_XP.gridTable.style.minWidth = "730px";
             WEEKDAYS.forEach(day => {
                 const th = document.createElement('th');
                 th.textContent = day;
@@ -471,7 +462,7 @@
     }
 
     function xpForNextLevel(currentLevel) { if (currentLevel <= 0) return 50; return Math.floor(50 * Math.pow(currentLevel, 1.5)); }
-    
+
     function renderGrid() {
         DOM_XP.gridBody.innerHTML = '';
         if (!trackerData.currentWeekStartDate) {
@@ -481,22 +472,17 @@
         trackerData.areas.forEach(area => {
             const tr = document.createElement('tr');
             tr.dataset.areaName = area.name;
-
-            // Add the new fixed margin cell
             const marginTd = document.createElement('td');
             marginTd.className = 'fixed-margin-cell';
-            // marginTd.innerHTML = '&nbsp;'; // Optional
             tr.appendChild(marginTd);
-
             const nameTd = document.createElement('td');
-            nameTd.className = 'area-name-cell'; // Existing class, CSS adjusted for 'left'
+            nameTd.className = 'area-name-cell';
             const currentXP = area.xp || 0;
             const currentLevel = area.level || 1;
             const xpToNext = xpForNextLevel(currentLevel);
             const percentage = xpToNext > 0 ? Math.min((currentXP / xpToNext) * 100, 100) : (currentXP > 0 ? 100 : 0);
             nameTd.innerHTML = ` <div class="area-name-wrapper"> <span>${decodeHtmlEntities(area.name)}</span> <button class="xp-button delete-area-btn" data-area-name="${area.name}" title="Delete ${decodeHtmlEntities(area.name)}">X</button> </div> <div class="area-stats"> <span>Level: <span class="area-level">${currentLevel}</span></span> <div class="xp-bar-container"> <div class="xp-bar" style="width: ${percentage}%;"></div> <div class="xp-bar-text"><span class="area-xp">${currentXP}</span> / ${xpToNext} XP</div> </div> </div>`;
             tr.appendChild(nameTd);
-
             const renderCellContent = (td, areaName, dayIdx) => {
                 const achievementsKey = `${trackerData.currentWeekStartDate}_${areaName}_${dayIdx}`;
                 const cellAchievements = trackerData.achievements[achievementsKey] || [];
@@ -537,7 +523,6 @@
                 }
                 td.appendChild(addAchBtn);
             };
-
             if (trackerData.viewMode === 'week') {
                 WEEKDAYS.forEach((day, dayIndex) => {
                     const td = document.createElement('td');
@@ -560,191 +545,20 @@
     }
 
     function checkControlsBarLayout() { const controlsBar = DOM_XP.controlsBar; if (!controlsBar || !controlsBar.clientWidth) return; const children = [ controlsBar.querySelector('.week-navigation'), controlsBar.querySelector('.controls-group'), controlsBar.querySelector('.global-actions') ].filter(el => el); if (children.length === 0) return; const originalClasses = controlsBar.className; controlsBar.className = 'controls-bar layout-single-row'; let totalChildrenWidth = 0; children.forEach(child => { const childStyle = getComputedStyle(child); totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight); }); controlsBar.className = originalClasses; const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight)); if (totalChildrenWidth > controlsBarClientWidth && controlsBarClientWidth > 0) { controlsBar.classList.add('layout-multi-row'); controlsBar.classList.remove('layout-single-row'); } else { controlsBar.classList.add('layout-single-row'); controlsBar.classList.remove('layout-multi-row'); } }
-
     function addXpToArea(areaName, xpAmount) { const area = trackerData.areas.find(a => a.name === areaName); if (area) { area.xp = (area.xp || 0) + xpAmount; let leveledUp = false; let requiredForNext = xpForNextLevel(area.level || 1); while (area.xp >= requiredForNext && requiredForNext > 0) { area.xp -= requiredForNext; area.level = (area.level || 1) + 1; leveledUp = true; requiredForNext = xpForNextLevel(area.level); } if (leveledUp) { console.log(`${decodeHtmlEntities(area.name)} leveled up to Level ${area.level}!`); generateQuestsForCurrentWeekIfNeeded(true); } } }
     function subtractXpFromArea(areaName, xpAmount) { const area = trackerData.areas.find(a => a.name === areaName); if (area) { area.xp = (area.xp || 0) - xpAmount; let deLeveled = false; while (area.xp < 0) { if (area.level > 1) { area.level--; deLeveled = true; area.xp += xpForNextLevel(area.level); } else { area.xp = 0; break; } } if (deLeveled) { generateQuestsForCurrentWeekIfNeeded(true); } } }
 
     // Modal Handlers
-    function openNewAreaModal() {
-        DOM_XP.newAreaNameInput.value = '';
-        openXpModal('xpNewAreaModal');
-        DOM_XP.newAreaNameInput.focus();
-    }
-    function saveNewAreaFromModal() {
-        const name = DOM_XP.newAreaNameInput.value.trim();
-        if (!name) { alert("Area name cannot be empty."); return; }
-        if (trackerData.areas.find(a => a.name.toLowerCase() === name.toLowerCase())) { alert("Area with this name already exists."); return; }
-        trackerData.areas.push({ name: name, level: 1, xp: 0 });
-        closeXpModal('xpNewAreaModal');
-        renderGrid();
-        generateQuestsForCurrentWeekIfNeeded(true);
-        saveTrackerData();
-    }
-    function promptRemoveAreaFromModal(areaName) {
-        DOM_XP.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${decodeHtmlEntities(areaName)}"? This action cannot be undone and will delete all associated achievements and quests.`;
-        DOM_XP.confirmRemoveAreaExecuteBtn.dataset.areaNameToRemove = areaName;
-        openXpModal('xpConfirmRemoveAreaModal');
-    }
-    function executeRemoveAreaFromModal() {
-        const areaName = DOM_XP.confirmRemoveAreaExecuteBtn.dataset.areaNameToRemove;
-        if (areaName) {
-            trackerData.areas = trackerData.areas.filter(area => area.name !== areaName);
-            Object.keys(trackerData.achievements).forEach(key => { if (key.includes(`_${areaName}_`)) delete trackerData.achievements[key]; });
-            Object.keys(trackerData.quests).forEach(weekId => { trackerData.quests[weekId] = trackerData.quests[weekId].filter(quest => quest.areaName !== areaName); });
-            generateQuestsForCurrentWeekIfNeeded(true);
-            renderGrid();
-            saveTrackerData();
-        }
-        closeXpModal('xpConfirmRemoveAreaModal');
-    }
-
-    function openAddEditAchievementModalFromGrid(areaName, dayIndex, achievementKeyToEdit = null, achievementIdToEdit = null) {
-        DOM_XP.achievementImageInput.value = null;
-        DOM_XP.achievementTextInput.value = '';
-        DOM_XP.editingAchievementKeyInput.value = '';
-        DOM_XP.editingAchievementIdInput.value = '';
-
-        if (achievementKeyToEdit && achievementIdToEdit) {
-            const achievementsInCell = trackerData.achievements[achievementKeyToEdit];
-            const achievementToEdit = achievementsInCell ? achievementsInCell.find(ach => ach.id === achievementIdToEdit) : null;
-            if (!achievementToEdit) { alert("Error: Could not find achievement to edit."); return; }
-
-            const keyParts = achievementKeyToEdit.split('_');
-            DOM_XP.achievementAreaNameInput.value = keyParts.slice(1, keyParts.length -1).join('_');
-            DOM_XP.achievementDayIndexInput.value = parseInt(keyParts[keyParts.length -1]);
-            DOM_XP.editingAchievementKeyInput.value = achievementKeyToEdit;
-            DOM_XP.editingAchievementIdInput.value = achievementIdToEdit;
-            DOM_XP.addEditAchievementModalTitle.textContent = "Edit Achievement";
-            DOM_XP.saveAchievementBtn.textContent = "Update Achievement";
-            if (achievementToEdit.type === 'text') {
-                DOM_XP.achievementTypeRadios[0].checked = true;
-                DOM_XP.achievementTextInput.value = decodeHtmlEntities(achievementToEdit.content);
-            } else if (achievementToEdit.type === 'image') {
-                DOM_XP.achievementTypeRadios[1].checked = true;
-            }
-        } else {
-            DOM_XP.achievementAreaNameInput.value = areaName;
-            DOM_XP.achievementDayIndexInput.value = dayIndex;
-            DOM_XP.addEditAchievementModalTitle.textContent = "Add Achievement";
-            DOM_XP.saveAchievementBtn.textContent = "Save Achievement";
-            DOM_XP.achievementTypeRadios[0].checked = true;
-        }
-        toggleAchievementInputTypeUI();
-        openXpModal('xpAddEditAchievementModal');
-        if(DOM_XP.achievementTypeRadios[0].checked) DOM_XP.achievementTextInput.focus();
-    }
-
-    function toggleAchievementInputTypeUI() {
-        if (DOM_XP.achievementTypeRadios[0].checked) {
-            DOM_XP.textInputDiv.style.display = 'block';
-            DOM_XP.imageInputDiv.style.display = 'none';
-        } else {
-            DOM_XP.textInputDiv.style.display = 'none';
-            DOM_XP.imageInputDiv.style.display = 'block';
-        }
-    }
-
+    function openNewAreaModal() { DOM_XP.newAreaNameInput.value = ''; openXpModal('xpNewAreaModal'); DOM_XP.newAreaNameInput.focus(); }
+    function saveNewAreaFromModal() { const name = DOM_XP.newAreaNameInput.value.trim(); if (!name) { alert("Area name cannot be empty."); return; } if (trackerData.areas.find(a => a.name.toLowerCase() === name.toLowerCase())) { alert("Area with this name already exists."); return; } trackerData.areas.push({ name: name, level: 1, xp: 0 }); closeXpModal('xpNewAreaModal'); renderGrid(); generateQuestsForCurrentWeekIfNeeded(true); saveTrackerData(); }
+    function promptRemoveAreaFromModal(areaName) { DOM_XP.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${decodeHtmlEntities(areaName)}"? This action cannot be undone and will delete all associated achievements and quests.`; DOM_XP.confirmRemoveAreaExecuteBtn.dataset.areaNameToRemove = areaName; openXpModal('xpConfirmRemoveAreaModal'); }
+    function executeRemoveAreaFromModal() { const areaName = DOM_XP.confirmRemoveAreaExecuteBtn.dataset.areaNameToRemove; if (areaName) { trackerData.areas = trackerData.areas.filter(area => area.name !== areaName); Object.keys(trackerData.achievements).forEach(key => { if (key.includes(`_${areaName}_`)) delete trackerData.achievements[key]; }); Object.keys(trackerData.quests).forEach(weekId => { trackerData.quests[weekId] = trackerData.quests[weekId].filter(quest => quest.areaName !== areaName); }); generateQuestsForCurrentWeekIfNeeded(true); renderGrid(); saveTrackerData(); } closeXpModal('xpConfirmRemoveAreaModal'); }
+    function openAddEditAchievementModalFromGrid(areaName, dayIndex, achievementKeyToEdit = null, achievementIdToEdit = null) { DOM_XP.achievementImageInput.value = null; DOM_XP.achievementTextInput.value = ''; DOM_XP.editingAchievementKeyInput.value = ''; DOM_XP.editingAchievementIdInput.value = ''; if (achievementKeyToEdit && achievementIdToEdit) { const achievementsInCell = trackerData.achievements[achievementKeyToEdit]; const achievementToEdit = achievementsInCell ? achievementsInCell.find(ach => ach.id === achievementIdToEdit) : null; if (!achievementToEdit) { alert("Error: Could not find achievement to edit."); return; } const keyParts = achievementKeyToEdit.split('_'); DOM_XP.achievementAreaNameInput.value = keyParts.slice(1, keyParts.length -1).join('_'); DOM_XP.achievementDayIndexInput.value = parseInt(keyParts[keyParts.length -1]); DOM_XP.editingAchievementKeyInput.value = achievementKeyToEdit; DOM_XP.editingAchievementIdInput.value = achievementIdToEdit; DOM_XP.addEditAchievementModalTitle.textContent = "Edit Achievement"; DOM_XP.saveAchievementBtn.textContent = "Update Achievement"; if (achievementToEdit.type === 'text') { DOM_XP.achievementTypeRadios[0].checked = true; DOM_XP.achievementTextInput.value = decodeHtmlEntities(achievementToEdit.content); } else if (achievementToEdit.type === 'image') { DOM_XP.achievementTypeRadios[1].checked = true; } } else { DOM_XP.achievementAreaNameInput.value = areaName; DOM_XP.achievementDayIndexInput.value = dayIndex; DOM_XP.addEditAchievementModalTitle.textContent = "Add Achievement"; DOM_XP.saveAchievementBtn.textContent = "Save Achievement"; DOM_XP.achievementTypeRadios[0].checked = true; } toggleAchievementInputTypeUI(); openXpModal('xpAddEditAchievementModal'); if(DOM_XP.achievementTypeRadios[0].checked) DOM_XP.achievementTextInput.focus(); }
+    function toggleAchievementInputTypeUI() { if (DOM_XP.achievementTypeRadios[0].checked) { DOM_XP.textInputDiv.style.display = 'block'; DOM_XP.imageInputDiv.style.display = 'none'; } else { DOM_XP.textInputDiv.style.display = 'none'; DOM_XP.imageInputDiv.style.display = 'block'; } }
     function getAchievementDate(weekStartDateStr, dayIdx) { const achievementDate = parseYYYYMMDDToLocalDate(weekStartDateStr); if(achievementDate) achievementDate.setDate(achievementDate.getDate() + dayIdx); return achievementDate; }
-
-    function saveOrUpdateAchievementFromModal() {
-        const areaName = DOM_XP.achievementAreaNameInput.value;
-        const dayIndex = parseInt(DOM_XP.achievementDayIndexInput.value);
-        const type = document.querySelector('input[name="xpAchievementType"]:checked').value;
-        const editingKey = DOM_XP.editingAchievementKeyInput.value;
-        const editingId = DOM_XP.editingAchievementIdInput.value;
-        const isEditing = editingKey && editingId;
-        let achievement;
-        const achievementsKey = isEditing ? editingKey : `${trackerData.currentWeekStartDate}_${areaName}_${dayIndex}`;
-        if (!trackerData.achievements[achievementsKey] && !isEditing) { trackerData.achievements[achievementsKey] = []; }
-        let achievementList = trackerData.achievements[achievementsKey] || [];
-
-        if (isEditing) {
-            achievement = achievementList.find(ach => ach.id === editingId);
-            if (!achievement) { alert("Error: Could not find achievement to update."); return; }
-        } else {
-            const achievementDate = getAchievementDate(trackerData.currentWeekStartDate, dayIndex);
-            achievement = {
-                id: Date.now() + '-' + Math.random().toString(36).substring(2, 9),
-                timestamp: new Date().toISOString(),
-                xp: XP_PER_REGULAR_ACHIEVEMENT,
-                scheduledDate: achievementDate ? achievementDate.toISOString().split('T')[0] : trackerData.currentWeekStartDate,
-                xpAwarded: false
-            };
-        }
-        achievement.type = type;
-
-        const processSave = (contentToSave) => {
-            achievement.content = contentToSave;
-            if (!isEditing) {
-                achievementList.push(achievement);
-                const today = new Date(); today.setHours(0,0,0,0);
-                const achievementScheduledDateObj = parseYYYYMMDDToLocalDate(achievement.scheduledDate);
-                if (achievementScheduledDateObj && achievementScheduledDateObj <= today) {
-                    addXpToArea(areaName, achievement.xp);
-                    updateQuestProgress(areaName, achievement.xp);
-                    achievement.xpAwarded = true;
-                } else {
-                    achievement.xpAwarded = false;
-                }
-            }
-            closeXpModal('xpAddEditAchievementModal');
-            renderGrid();
-            saveTrackerData();
-        };
-
-        if (type === 'text') {
-            const textContent = DOM_XP.achievementTextInput.value.trim();
-            if (!textContent) { alert("Achievement description cannot be empty."); return; }
-            processSave(textContent);
-        } else if (type === 'image') {
-            const file = DOM_XP.achievementImageInput.files[0];
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) { alert("Image file is too large (max 2MB)."); return; }
-                const reader = new FileReader();
-                reader.onloadend = () => processSave(reader.result);
-                reader.onerror = () => alert("Error reading image file.");
-                reader.readAsDataURL(file);
-            } else if (isEditing && achievement.type === 'image' && achievement.content) {
-                processSave(achievement.content);
-            } else if (!isEditing || (isEditing && achievement.type !== 'image')) {
-                alert("Please select an image file for an image type achievement."); return;
-            }
-        }
-    }
-
-    function promptRemoveAchievementFromModal(achievementKey, achievementId) {
-        DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementKey = achievementKey;
-        DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementId = achievementId;
-        openXpModal('xpConfirmDeleteAchievementModal');
-    }
-
-    function executeRemoveAchievementFromModal() {
-        const achievementKey = DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementKey;
-        const achievementId = DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementId;
-        if (!achievementKey || !achievementId || !trackerData.achievements[achievementKey]) return closeXpModal('xpConfirmDeleteAchievementModal');
-
-        const achIndex = trackerData.achievements[achievementKey].findIndex(ach => ach.id === achievementId);
-        if (achIndex === -1) return closeXpModal('xpConfirmDeleteAchievementModal');
-
-        const achievementToRemove = trackerData.achievements[achievementKey][achIndex];
-        const xpToRemove = achievementToRemove.xp;
-        const keyParts = achievementKey.split('_');
-        const areaName = keyParts.slice(1, keyParts.length -1).join('_');
-
-        trackerData.achievements[achievementKey].splice(achIndex, 1);
-        if (trackerData.achievements[achievementKey].length === 0) {
-            delete trackerData.achievements[achievementKey];
-        }
-
-        if (achievementToRemove.xpAwarded) {
-            subtractXpFromArea(areaName, xpToRemove);
-            updateQuestProgress(areaName, -xpToRemove);
-        }
-        closeXpModal('xpConfirmDeleteAchievementModal');
-        renderGrid();
-        saveTrackerData();
-    }
-
+    function saveOrUpdateAchievementFromModal() { const areaName = DOM_XP.achievementAreaNameInput.value; const dayIndex = parseInt(DOM_XP.achievementDayIndexInput.value); const type = document.querySelector('input[name="xpAchievementType"]:checked').value; const editingKey = DOM_XP.editingAchievementKeyInput.value; const editingId = DOM_XP.editingAchievementIdInput.value; const isEditing = editingKey && editingId; let achievement; const achievementsKey = isEditing ? editingKey : `${trackerData.currentWeekStartDate}_${areaName}_${dayIndex}`; if (!trackerData.achievements[achievementsKey] && !isEditing) { trackerData.achievements[achievementsKey] = []; } let achievementList = trackerData.achievements[achievementsKey] || []; if (isEditing) { achievement = achievementList.find(ach => ach.id === editingId); if (!achievement) { alert("Error: Could not find achievement to update."); return; } } else { const achievementDate = getAchievementDate(trackerData.currentWeekStartDate, dayIndex); achievement = { id: Date.now() + '-' + Math.random().toString(36).substring(2, 9), timestamp: new Date().toISOString(), xp: XP_PER_REGULAR_ACHIEVEMENT, scheduledDate: achievementDate ? achievementDate.toISOString().split('T')[0] : trackerData.currentWeekStartDate, xpAwarded: false }; } achievement.type = type; const processSave = (contentToSave) => { achievement.content = contentToSave; if (!isEditing) { achievementList.push(achievement); const today = new Date(); today.setHours(0,0,0,0); const achievementScheduledDateObj = parseYYYYMMDDToLocalDate(achievement.scheduledDate); if (achievementScheduledDateObj && achievementScheduledDateObj <= today) { addXpToArea(areaName, achievement.xp); updateQuestProgress(areaName, achievement.xp); achievement.xpAwarded = true; } else { achievement.xpAwarded = false; } } closeXpModal('xpAddEditAchievementModal'); renderGrid(); saveTrackerData(); }; if (type === 'text') { const textContent = DOM_XP.achievementTextInput.value.trim(); if (!textContent) { alert("Achievement description cannot be empty."); return; } processSave(textContent); } else if (type === 'image') { const file = DOM_XP.achievementImageInput.files[0]; if (file) { if (file.size > 2 * 1024 * 1024) { alert("Image file is too large (max 2MB)."); return; } const reader = new FileReader(); reader.onloadend = () => processSave(reader.result); reader.onerror = () => alert("Error reading image file."); reader.readAsDataURL(file); } else if (isEditing && achievement.type === 'image' && achievement.content) { processSave(achievement.content); } else if (!isEditing || (isEditing && achievement.type !== 'image')) { alert("Please select an image file for an image type achievement."); return; } } }
+    function promptRemoveAchievementFromModal(achievementKey, achievementId) { DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementKey = achievementKey; DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementId = achievementId; openXpModal('xpConfirmDeleteAchievementModal'); }
+    function executeRemoveAchievementFromModal() { const achievementKey = DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementKey; const achievementId = DOM_XP.confirmDeleteAchievementExecuteBtn.dataset.achievementId; if (!achievementKey || !achievementId || !trackerData.achievements[achievementKey]) return closeXpModal('xpConfirmDeleteAchievementModal'); const achIndex = trackerData.achievements[achievementKey].findIndex(ach => ach.id === achievementId); if (achIndex === -1) return closeXpModal('xpConfirmDeleteAchievementModal'); const achievementToRemove = trackerData.achievements[achievementKey][achIndex]; const xpToRemove = achievementToRemove.xp; const keyParts = achievementKey.split('_'); const areaName = keyParts.slice(1, keyParts.length -1).join('_'); trackerData.achievements[achievementKey].splice(achIndex, 1); if (trackerData.achievements[achievementKey].length === 0) { delete trackerData.achievements[achievementKey]; } if (achievementToRemove.xpAwarded) { subtractXpFromArea(areaName, xpToRemove); updateQuestProgress(areaName, -xpToRemove); } closeXpModal('xpConfirmDeleteAchievementModal'); renderGrid(); saveTrackerData(); }
     function getCurrentWeekId() { if (!trackerData.currentWeekStartDate) { trackerData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0]; } const startDate = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate); return startDate ? `${startDate.getFullYear()}-W${String(getWeekNumber(startDate)).padStart(2, '0')}` : null; }
     function generateQuestsForCurrentWeekIfNeeded(forceRegenerate = false) { const weekId = getCurrentWeekId(); if(!weekId) return; if (!trackerData.quests) trackerData.quests = {}; if (!trackerData.quests[weekId] || forceRegenerate) { trackerData.quests[weekId] = []; } if (trackerData.areas.length < 1 && !forceRegenerate) { if(trackerData.quests[weekId].length === 0) return; } if (forceRegenerate || (trackerData.quests[weekId].length === 0 && trackerData.areas.length > 0)) { if (forceRegenerate) trackerData.quests[weekId] = []; const questsToGenerate = Math.min(MAX_WEEKLY_QUESTS, trackerData.areas.length, 3); const availableAreas = [...trackerData.areas].filter(area => !trackerData.quests[weekId].some(q => q.areaName === area.name)); let shuffledAreas = [...(availableAreas.length > 0 ? availableAreas : trackerData.areas)]; for (let i = shuffledAreas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffledAreas[i], shuffledAreas[j]] = [shuffledAreas[j], shuffledAreas[i]]; } for (let i = 0; i < questsToGenerate && trackerData.quests[weekId].length < MAX_WEEKLY_QUESTS; i++) { if (shuffledAreas.length === 0) break; const selectedArea = shuffledAreas.pop(); if (!selectedArea) continue; if(!forceRegenerate && trackerData.quests[weekId].some(q => q.areaName === selectedArea.name)) continue; const targetXPEarned = 20 + (selectedArea.level * 10); const rewardXP = XP_PER_QUEST_COMPLETED_BASE + (selectedArea.level * 5); trackerData.quests[weekId].push({ id: `quest_${weekId}_${selectedArea.name.replace(/\s+/g, '-')}_${Date.now()}_${i}`, areaName: selectedArea.name, description: `Earn ${targetXPEarned} XP in "${decodeHtmlEntities(selectedArea.name)}" this week.`, targetXPEarned: targetXPEarned, currentXPEarned: 0, rewardXP: rewardXP, completed: false }); } } }
     function updateQuestProgress(areaName, xpGained) { const weekId = getCurrentWeekId(); if (!weekId || !trackerData.quests || !trackerData.quests[weekId]) return; let questCompletedThisUpdate = false; trackerData.quests[weekId].forEach(quest => { if (quest.areaName === areaName && !quest.completed) { quest.currentXPEarned += xpGained; if (quest.currentXPEarned < 0) quest.currentXPEarned = 0; if (quest.currentXPEarned >= quest.targetXPEarned) { quest.completed = true; quest.currentXPEarned = quest.targetXPEarned; addXpToArea(quest.areaName, quest.rewardXP); alert(`Quest Completed: ${decodeHtmlEntities(quest.description)}\n+${quest.rewardXP} XP to ${decodeHtmlEntities(quest.areaName)}!`); questCompletedThisUpdate = true; } } }); if (questCompletedThisUpdate) { renderGrid(); saveTrackerData(); } }
@@ -759,56 +573,79 @@
         DOM_XP.addAreaBtn.addEventListener('click', openNewAreaModal);
         DOM_XP.saveNewAreaBtn.addEventListener('click', saveNewAreaFromModal);
         DOM_XP.newAreaNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNewAreaFromModal(); });
-
-        DOM_XP.gridBody.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.classList.contains('delete-area-btn')) {
-                promptRemoveAreaFromModal(target.dataset.areaName);
-            } else if (target.classList.contains('edit-ach-btn')) {
-                openAddEditAchievementModalFromGrid(null, null, target.dataset.achKey, target.dataset.achId);
-            } else if (target.classList.contains('remove-ach-btn')) {
-                promptRemoveAchievementFromModal(target.dataset.achKey, target.dataset.achId);
-            } else if (target.classList.contains('achievement-add-btn-cell')) {
-                openAddEditAchievementModalFromGrid(target.dataset.areaName, parseInt(target.dataset.dayIndex));
-            }
-        });
-
+        DOM_XP.gridBody.addEventListener('click', (event) => { const target = event.target; if (target.classList.contains('delete-area-btn')) { promptRemoveAreaFromModal(target.dataset.areaName); } else if (target.classList.contains('edit-ach-btn')) { openAddEditAchievementModalFromGrid(null, null, target.dataset.achKey, target.dataset.achId); } else if (target.classList.contains('remove-ach-btn')) { promptRemoveAchievementFromModal(target.dataset.achKey, target.dataset.achId); } else if (target.classList.contains('achievement-add-btn-cell')) { openAddEditAchievementModalFromGrid(target.dataset.areaName, parseInt(target.dataset.dayIndex)); } });
         DOM_XP.saveAchievementBtn.addEventListener('click', saveOrUpdateAchievementFromModal);
         DOM_XP.achievementTypeRadios.forEach(radio => { radio.addEventListener('change', toggleAchievementInputTypeUI); });
         DOM_XP.confirmRemoveAreaExecuteBtn.addEventListener('click', executeRemoveAreaFromModal);
         DOM_XP.confirmDeleteAchievementExecuteBtn.addEventListener('click', executeRemoveAchievementFromModal);
-
         DOM_XP.prevWeekBtn.addEventListener('click', () => navigateDate(-1));
         DOM_XP.nextWeekBtn.addEventListener('click', () => navigateDate(1));
         DOM_XP.thisWeekBtn.addEventListener('click', goToThisWeek);
         DOM_XP.toggleViewBtn.addEventListener('click', toggleViewMode);
-
         DOM_XP.showQuestsBtn.addEventListener('click', showQuestsModal);
         DOM_XP.addQuestBtnModal.addEventListener('click', openCreateQuestModalFromQuests);
         DOM_XP.saveNewQuestBtn.addEventListener('click', saveNewQuestFromModal);
-        DOM_XP.questsListBody.addEventListener('click', function(event) {
-            if (event.target.classList.contains('refresh-quest-btn')) {
-                promptRefreshQuestFromModal(event.target.dataset.questId);
-            }
-        });
+        DOM_XP.questsListBody.addEventListener('click', function(event) { if (event.target.classList.contains('refresh-quest-btn')) { promptRefreshQuestFromModal(event.target.dataset.questId); } });
         DOM_XP.confirmRefreshQuestExecuteBtn.addEventListener('click', executeRefreshQuestFromModal);
-
-        document.querySelectorAll('.xp-tracker-modal-close-button, .xp-tracker-modal-cancel-btn').forEach(btn => {
-            btn.addEventListener('click', (event) => {
-                const modalId = event.target.dataset.modalId;
-                if(modalId) closeXpModal(modalId);
-            });
-        });
-
+        document.querySelectorAll('.xp-tracker-modal-close-button, .xp-tracker-modal-cancel-btn').forEach(btn => { btn.addEventListener('click', (event) => { const modalId = event.target.dataset.modalId; if(modalId) closeXpModal(modalId); }); });
         new ResizeObserver(checkControlsBarLayout).observe(DOM_XP.controlsBar);
     }
 
     function navigateDate(offset) { const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate); if (!currentMon) return; if (trackerData.viewMode === 'week') { currentMon.setDate(currentMon.getDate() + (offset * 7)); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; } else { let newDayIndex = trackerData.selectedDayIndex + offset; if (newDayIndex < 0) { currentMon.setDate(currentMon.getDate() - 7); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; trackerData.selectedDayIndex = 6; } else if (newDayIndex > 6) { currentMon.setDate(currentMon.getDate() + 7); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; trackerData.selectedDayIndex = 0; } else { trackerData.selectedDayIndex = newDayIndex; } } updateDateDisplay(); renderWeekdayHeaders(); renderGrid(); generateQuestsForCurrentWeekIfNeeded(); saveTrackerData(); }
     function goToThisWeek() { trackerData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0]; if(trackerData.viewMode === 'day') { const today = new Date(); let currentDayOfWeek = today.getDay(); trackerData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1; } updateDateDisplay(); renderWeekdayHeaders(); renderGrid(); generateQuestsForCurrentWeekIfNeeded(); saveTrackerData(); }
-    function toggleViewMode() { if (trackerData.viewMode === 'week') { trackerData.viewMode = 'day'; DOM_XP.toggleViewBtn.textContent = 'Week View'; DOM_XP.prevWeekBtn.textContent = '< Prev Day'; DOM_XP.nextWeekBtn.textContent = 'Next Day >'; DOM_XP.thisWeekBtn.textContent = 'Today'; const today = new Date(); const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate); if (currentMon) { const currentSun = new Date(currentMon); currentSun.setDate(currentMon.getDate() + 6); if (today >= currentMon && today <= currentSun) { trackerData.selectedDayIndex = (today.getDay() === 0) ? 6 : today.getDay() - 1; } else { trackerData.selectedDayIndex = 0; } } else { trackerData.selectedDayIndex = 0;} } else { trackerData.viewMode = 'week'; DOM_XP.toggleViewBtn.textContent = 'Day View'; DOM_XP.prevWeekBtn.textContent = '< Prev Week'; DOM_XP.nextWeekBtn.textContent = 'Next Week >'; DOM_XP.thisWeekBtn.textContent = 'This Week'; } updateDateDisplay(); renderWeekdayHeaders(); renderGrid(); saveTrackerData(); }
+    
+    // New function to synchronize button texts with the current view mode
+    function syncViewModeButtonTexts() {
+        if (trackerData.viewMode === 'week') {
+            DOM_XP.toggleViewBtn.textContent = 'Day View';
+            DOM_XP.prevWeekBtn.textContent = '< Prev Week';
+            DOM_XP.nextWeekBtn.textContent = 'Next Week >';
+            DOM_XP.thisWeekBtn.textContent = 'This Week';
+        } else { // trackerData.viewMode === 'day'
+            DOM_XP.toggleViewBtn.textContent = 'Week View';
+            DOM_XP.prevWeekBtn.textContent = '< Prev Day';
+            DOM_XP.nextWeekBtn.textContent = 'Next Day >';
+            DOM_XP.thisWeekBtn.textContent = 'Today';
+        }
+    }
+
+    function toggleViewMode() {
+        if (trackerData.viewMode === 'week') {
+            trackerData.viewMode = 'day';
+            // DOM_XP.toggleViewBtn.textContent = 'Week View'; // Handled by syncViewModeButtonTexts if called, or set directly
+            // DOM_XP.prevWeekBtn.textContent = '< Prev Day';
+            // DOM_XP.nextWeekBtn.textContent = 'Next Day >';
+            // DOM_XP.thisWeekBtn.textContent = 'Today';
+            const today = new Date();
+            const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
+            if (currentMon) {
+                const currentSun = new Date(currentMon);
+                currentSun.setDate(currentMon.getDate() + 6);
+                if (today >= currentMon && today <= currentSun) {
+                    trackerData.selectedDayIndex = (today.getDay() === 0) ? 6 : today.getDay() - 1;
+                } else {
+                    trackerData.selectedDayIndex = 0;
+                }
+            } else {
+                trackerData.selectedDayIndex = 0;
+            }
+        } else { // trackerData.viewMode === 'day'
+            trackerData.viewMode = 'week';
+            // DOM_XP.toggleViewBtn.textContent = 'Day View'; // Handled by syncViewModeButtonTexts if called, or set directly
+            // DOM_XP.prevWeekBtn.textContent = '< Prev Week';
+            // DOM_XP.nextWeekBtn.textContent = 'Next Week >';
+            // DOM_XP.thisWeekBtn.textContent = 'This Week';
+        }
+        syncViewModeButtonTexts(); // Update button texts based on the new mode
+        updateDateDisplay();
+        renderWeekdayHeaders();
+        renderGrid();
+        saveTrackerData();
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadTrackerData();
+        syncViewModeButtonTexts(); // Call here to set initial button texts correctly
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
