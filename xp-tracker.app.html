@@ -8,8 +8,8 @@
         display: flex; 
         flex-direction: column; 
         height: 100vh; 
-        overflow-x: auto; /* Allow horizontal scrolling for the iframe body */
-        overflow-y: hidden; /* Prevent vertical scroll on body, table-container will handle it */
+        overflow-x: auto; 
+        overflow-y: hidden; 
     }
     .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
     .xp-button:active { border-style: inset; }
@@ -34,12 +34,13 @@
     .table-container { 
         flex-grow: 1; 
         overflow-y: auto; 
-        overflow-x: auto; /* Changed to auto for internal scroll if table is wider than container */
+        overflow-x: auto; /* Ensure table container itself can scroll horizontally */
         padding: 0 15px 15px 15px;
     }
     table { 
         width: 100%; 
-        border-collapse: collapse; /* Keep collapse for overall look */
+        border-collapse: separate; /* CHANGED */
+        border-spacing: 0;       /* ADDED */
         table-layout: fixed; 
     }
     th, td { 
@@ -48,7 +49,6 @@
         text-align: left; 
         vertical-align: top; 
         word-wrap: break-word; 
-        background-clip: padding-box; /* Helps with sticky borders */
     }
     th { 
         background-color: #D4D0C8; 
@@ -56,15 +56,15 @@
         position: sticky; 
         top: 0; 
         z-index: 10; 
-        /* Ensure borders are part of the sticky element's paint layer */
-        border-bottom: 1px solid #7F7F7F; /* Darker bottom border for emphasis */
+        border-bottom: 1px solid #7F7F7F; /* Keep darker bottom border for emphasis */
     }
-    #weekdayHeaders th:first-child { /* Specifically target the "Area" header */
+    /* Style for the first header cell ("Area") to be sticky on top-left */
+    #weekdayHeaders th:first-child {
         position: sticky;
         left: 0;
         z-index: 11; /* Higher than other th and td.area-name-cell */
-        background-color: #D4D0C8; /* Match other headers */
-        border-right: 1px solid #7F7F7F; /* Ensure right border is distinct */
+        background-color: #D4D0C8; 
+        border-right: 1px solid #7F7F7F; /* Keep darker right border */
     }
     td.area-name-cell { 
         font-weight: bold; 
@@ -73,7 +73,7 @@
         left: 0;
         background-color: #ECE9D8; 
         z-index: 5; 
-        border-right: 1px solid #7F7F7F; /* Darker right border for emphasis */
+        border-right: 1px solid #7F7F7F; /* Keep darker right border for emphasis */
     }
     .area-stats { font-size: 0.9em; margin-top: 5px; color: #333; }
     .area-stats span { display: flex; align-items: center; } 
