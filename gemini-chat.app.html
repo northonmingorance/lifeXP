@@ -24,6 +24,18 @@
     .gemini-chat-input-area { display: flex; flex-shrink: 0; padding: 8px 5px 5px 5px; border-top: 1px solid #ACA899; background-color: #ECE9D8; }
     #geminiChatPromptInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 6px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; resize: none; height: 44px; box-sizing: border-box; }
     #geminiChatSendBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; height: 44px; box-sizing: border-box; }
+
+    /* Gemini App Modal Styles */
+    .gemini-modal { display: none; position: fixed; z-index: 2000; /* Higher z-index within iframe */ left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .gemini-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: geminiFadeIn 0.3s; display: flex; flex-direction: column; }
+    .gemini-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .gemini-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .gemini-modal-close-button:hover, .gemini-modal-close-button:focus { background: #FF6363; }
+    .gemini-modal-close-button:active { border-style: inset; }
+    .gemini-modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; text-align: center;}
+    .gemini-modal-body p { margin-top: 0; margin-bottom: 10px; }
+    .gemini-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes geminiFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
 </style>
 
 <div class="gemini-chat-body-container">
@@ -38,8 +50,25 @@
     </div>
 </div>
 
+<!-- Confirm Clear Chat History Modal -->
+<div id="geminiConfirmClearChatModal" class="gemini-modal">
+    <div class="gemini-modal-content">
+        <div class="gemini-modal-title-bar">
+            <span>Confirm Clear History</span>
+            <span class="gemini-modal-close-button" data-modal-id="geminiConfirmClearChatModal">r</span>
+        </div>
+        <div class="gemini-modal-body">
+            <p>Are you sure you want to clear the entire chat history? This action cannot be undone.</p>
+        </div>
+        <div class="gemini-modal-footer">
+            <button id="geminiExecuteClearChatBtn" class="xp-button">Clear History</button>
+            <button class="xp-button gemini-modal-cancel-btn" data-modal-id="geminiConfirmClearChatModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; // Incremented version
+    const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; 
     let GEMINI_API_KEY = ""; 
     const MAX_GEMINI_HISTORY_MESSAGES = 20;
 
@@ -51,8 +80,22 @@
         clearHistoryBtn: document.getElementById('geminiChatClearHistoryBtn'),
         displayArea: document.getElementById('geminiChatDisplayArea'),
         promptInput: document.getElementById('geminiChatPromptInput'),
-        sendBtn: document.getElementById('geminiChatSendBtn')
+        sendBtn: document.getElementById('geminiChatSendBtn'),
+        // Modal elements
+        confirmClearChatModal: document.getElementById('geminiConfirmClearChatModal'),
+        executeClearChatBtn: document.getElementById('geminiExecuteClearChatBtn'),
     };
+
+    function openGeminiModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeGeminiModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'none';
+    }
+
 
     function loadGeminiChatData() {
         const stored = localStorage.getItem(GEMINI_CHAT_STORAGE_KEY);
@@ -151,11 +194,14 @@
 
 
     function handleClearGeminiChatHistory() {
-        if (confirm("Are you sure you want to clear the entire chat history? This action cannot be undone.")) {
-            geminiChatData.history = [];
-            renderGeminiChatHistory();
-            saveGeminiChatData();
-        }
+        openGeminiModal('geminiConfirmClearChatModal');
+    }
+
+    function executeClearGeminiChat() {
+        geminiChatData.history = [];
+        renderGeminiChatHistory();
+        saveGeminiChatData();
+        closeGeminiModal('geminiConfirmClearChatModal');
     }
 
     async function handleSendGeminiPrompt() {
@@ -189,10 +235,6 @@
             }
         });
         
-        // The current prompt is already added to geminiChatData.history by addMessageToGeminiChat('user', promptText)
-        // and will be included in messagesToSend via the recentHistory processing if it's the last message.
-        // No need to explicitly add it again here if the logic above correctly includes it.
-
         try {
             const requestBody = {
                 contents: messagesToSend 
@@ -239,11 +281,18 @@
             }
         });
         DOM_GC.clearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
+
+        // Modal button listeners
+        DOM_GC.executeClearChatBtn.addEventListener('click', executeClearGeminiChat);
+        document.querySelectorAll('.gemini-modal-close-button, .gemini-modal-cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                const modalId = event.target.dataset.modalId;
+                if (modalId) closeGeminiModal(modalId);
+            });
+        });
     }
     
     window.addEventListener('message', (event) => {
-        // Add origin check in a real application for security
-        // if (event.origin !== 'YOUR_OS_ORIGIN_HERE') return; 
         if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'gemini') {
             GEMINI_API_KEY = event.data.key;
             console.log("Gemini Chat App: Gemini API Key received.");
