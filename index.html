@@ -98,7 +98,7 @@
             display: block;
         }
         .xp-window.minimized .window-body,
-        .xp-window.minimized .xp-menu-bar { /* Assuming xp-menu-bar might exist in some windows */
+        .xp-window.minimized .xp-menu-bar {
             max-height: 0 !important;
             padding-top: 0 !important;
             padding-bottom: 0 !important;
@@ -157,12 +157,12 @@
             font-size: 48px;
             line-height: 1;
             margin-bottom: 8px;
-            display: flex; /* For Play Jockey icon alignment */
-            align-items: center; /* For Play Jockey icon alignment */
-            justify-content: center; /* For Play Jockey icon alignment */
-            position: relative; /* For Play Jockey icon alignment */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
             width: 100%;
-            height: 50px; /* Give a defined height for alignment */
+            height: 50px;
         }
         .desktop-icon .icon-label {
             font-size: 12px;
@@ -170,7 +170,6 @@
             word-wrap: break-word;
             max-width: 100%;
         }
-        /* Play Jockey Icon Specific Style */
         .desktop-icon.playJockeyIconStyle .icon-image-base {
             filter: hue-rotate(140deg) saturate(1000%) brightness(70%);
         }
@@ -266,7 +265,7 @@
             from {opacity: 0; transform: scale(0.9);}
             to {opacity: 1; transform: scale(1);}
         }
-        .xp-button { 
+        .xp-button {
             background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px;
             min-width: 75px; text-align: center; cursor: pointer; margin: 2px;
         }
@@ -325,7 +324,7 @@
 
     <script>
         "use strict";
-        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.1'; // Incremented version
+        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.1';
         const ICON_GRID_SIZE = 25;
         const STANDARD_COLORS = [
             { name: 'Black', value: '#000000' }, { name: 'Silver', value: '#C0C0C0' },
@@ -339,7 +338,7 @@
             { name: 'Orange', value: '#FFA500' }, { name: 'Brown', value: '#A52A2A' },
             { name: 'Pink', value: '#FFC0CB' }, { name: 'Gold', value: '#FFD700' }
         ];
-        const FIREBASE_CONFIG = { // Copied from original monolithic file
+        const FIREBASE_CONFIG = {
           apiKey: "AIzaSyCVWUnnXiOvKRqbvngafdZC7DedEY-7vpg",
           authDomain: "lifexpapp-f5578.firebaseapp.com",
           projectId: "lifexpapp-f5578",
@@ -353,7 +352,7 @@
             iconPositions: {},
             customBgImage: null,
             customBgColor: null,
-            appApiKeys: { // Store fetched API keys here
+            appApiKeys: {
                 youtube: "",
                 gemini: ""
             }
@@ -378,7 +377,7 @@
             bgImageUrlInput: document.getElementById('bgImageUrlInput'),
             applyBgImageUrlBtn: document.getElementById('applyBgImageUrlBtn'),
             bgColorSwatchesContainer: document.getElementById('bgColorSwatchesContainer'),
-            modalCloseButtons: null 
+            modalCloseButtons: null
         };
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .close-modal-btn');
 
@@ -394,12 +393,12 @@
                         'youtube_api_key': '',
                         'gemini_api_key': ''
                     };
-                    firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+                    firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000;
                     await firebaseRemoteConfig.fetchAndActivate();
                     osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
                     osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
                     console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found");
-                    saveOsData(); // Save fetched keys
+                    saveOsData();
                 } else {
                     console.warn("Firebase SDK or config not available. API keys will not be fetched.");
                 }
@@ -410,12 +409,12 @@
 
 
         async function initOS() {
-            loadOsData(); // Load saved OS data first (might include previously fetched keys)
-            await initializeFirebaseAndLoadKeys(); // Then try to fetch/update keys
-            
+            loadOsData();
+            await initializeFirebaseAndLoadKeys();
+
             applyCurrentBackgroundStyle();
             populateColorSwatches();
-            
+
             try {
                 const response = await fetch('app-manifest.json');
                 if (!response.ok) throw new Error(`Failed to load app-manifest.json: ${response.statusText}`);
@@ -429,12 +428,12 @@
             initDesktopIcons();
             restoreAllWindowStates();
             addEventListeners();
-            
+
             window.addEventListener('message', handleIframeMessages);
         }
 
         function initDesktopIcons() {
-            DOM.desktop.innerHTML = ''; 
+            DOM.desktop.innerHTML = '';
             appManifest.forEach((app, index) => {
                 const iconElement = document.createElement('div');
                 iconElement.className = 'desktop-icon';
@@ -442,9 +441,9 @@
                 iconElement.dataset.appId = app.id;
                 iconElement.title = `Open ${app.name}`;
 
-                let iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`; // Default structure
+                let iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`;
 
-                if (app.customIconClass && app.id === 'playJockey') { // Specific handling for Play Jockey icon
+                if (app.customIconClass && app.id === 'playJockey') {
                     iconElement.classList.add(app.customIconClass);
                     iconHTML = `
                         <div class="icon-image">
@@ -452,9 +451,9 @@
                             <span class="icon-image-overlay">${app.icon}</span>
                         </div>`;
                 }
-                
+
                 iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
-                
+
                 const defaultX = 0;
                 const defaultY = index * 100;
 
@@ -468,7 +467,7 @@
                     if (!osData.iconPositions) osData.iconPositions = {};
                     osData.iconPositions[app.id] = { x: finalX, y: finalY };
                 }
-                
+
                 iconElement.addEventListener('mousedown', handleIconMouseDown);
                 iconElement.addEventListener('dblclick', handleIconDoubleClick);
                 DOM.desktop.appendChild(iconElement);
@@ -487,7 +486,7 @@
             iconDragOffsetX = e.clientX - activeDragIcon.offsetLeft;
             iconDragOffsetY = e.clientY - activeDragIcon.offsetTop;
             activeDragIcon.style.cursor = 'grabbing';
-            activeDragIcon.style.zIndex = (parseInt(activeDragIcon.style.zIndex) || 5) + highestZIndex + 1; 
+            activeDragIcon.style.zIndex = (parseInt(activeDragIcon.style.zIndex) || 5) + highestZIndex + 1;
             document.addEventListener('mousemove', handleIconMouseMove);
             document.addEventListener('mouseup', handleIconMouseUp);
             e.preventDefault();
@@ -505,7 +504,7 @@
             activeDragIcon.style.left = newX + 'px';
             activeDragIcon.style.top = newY + 'px';
         }
-        
+
         function findNonCollidingPosition(draggedIcon, initialX, initialY) {
             let currentX = initialX;
             let currentY = initialY;
@@ -527,10 +526,10 @@
                         x + iconWidth > otherLeft &&
                         y < otherTop + otherHeight &&
                         y + iconHeight > otherTop) {
-                        return true; 
+                        return true;
                     }
                 }
-                return false; 
+                return false;
             };
 
             let snappedX = Math.round(initialX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
@@ -541,7 +540,7 @@
             if (!checkCollisionAt(snappedX, snappedY, draggedIcon.id)) {
                 return { x: snappedX, y: snappedY };
             }
-            
+
             let layer = 1;
             while (attempt < maxAttempts) {
                 const positionsToTry = [];
@@ -571,10 +570,10 @@
                 if (attempt >= maxAttempts) break;
                 layer++;
                  if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
-                     break; 
+                     break;
                 }
             }
-            return { x: snappedX, y: snappedY }; 
+            return { x: snappedX, y: snappedY };
         }
 
 
@@ -592,10 +591,10 @@
 
             snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
             snappedY = Math.max(0, Math.min(snappedY, document.body.clientHeight - iconHeight));
-            
+
             snappedX = Math.round(snappedX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
             snappedY = Math.round(snappedY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
-            
+
             const { x: finalSnappedX, y: finalSnappedY } = findNonCollidingPosition(activeDragIcon, snappedX, snappedY);
 
             activeDragIcon.style.left = finalSnappedX + 'px';
@@ -626,10 +625,17 @@
             let windowElement = getById(windowId);
             let state = osData.windowStates[appConfig.id];
 
-            if (windowElement) { // Window already exists in DOM
+            if (windowElement) {
+                const iframe = windowElement.querySelector('iframe');
+
                 if (state && state.hiddenByUser) {
                     windowElement.style.display = 'flex';
                     state.hiddenByUser = false;
+
+                    if (iframe && !iframe.hasAttribute('src')) {
+                        iframe.setAttribute('src', appConfig.file);
+                    }
+
                     if (state.minimized) {
                         state.minimized = false;
                         windowElement.classList.remove('minimized');
@@ -642,22 +648,15 @@
                             setWindowDefaults(appConfig.id, false, appConfig);
                         }
                     }
-                     updateMinMaxButtonStates(appConfig.id);
+                    updateMinMaxButtonStates(appConfig.id);
                 } else if (state && state.minimized) {
-                     maximizeWindow(appConfig.id, appConfig); 
+                    maximizeWindow(appConfig.id, appConfig);
                 }
                 bringToFront(windowElement);
                 saveWindowState(appConfig.id);
-
-                // Send API key if window is being re-opened/focused
-                const iframe = windowElement.querySelector('iframe');
-                if (iframe && iframe.contentWindow) {
-                    sendApiKeyToApp(appConfig.id, iframe.contentWindow);
-                }
                 return windowElement;
             }
 
-            // Create new window
             highestZIndex++;
             windowElement = document.createElement('div');
             windowElement.className = 'xp-window';
@@ -679,14 +678,13 @@
                 <div class="resize-handle" id="resize-handle-${appConfig.id}"></div>
             `;
             DOM.desktop.appendChild(windowElement);
-            
-            const iframe = windowElement.querySelector('iframe');
-            iframe.onload = () => {
-                if (iframe.contentWindow) {
-                    sendApiKeyToApp(appConfig.id, iframe.contentWindow);
+
+            const newIframe = windowElement.querySelector('iframe');
+            newIframe.onload = () => {
+                if (newIframe.contentWindow) {
+                    sendApiKeyToApp(appConfig.id, newIframe.contentWindow);
                 }
             };
-
 
             if (!state) {
                 osData.windowStates[appConfig.id] = {};
@@ -710,29 +708,30 @@
                     setWindowDefaults(appConfig.id, false, appConfig);
                 }
             }
-            state.hiddenByUser = false; 
+            state.hiddenByUser = false;
 
             initWindowInteractions(appConfig.id, appConfig);
             updateMinMaxButtonStates(appConfig.id);
             saveWindowState(appConfig.id);
             return windowElement;
         }
-        
+
         function sendApiKeyToApp(appId, iframeContentWindow) {
+            if (!iframeContentWindow) return;
             if (appId === 'geminiChat' && osData.appApiKeys.gemini) {
                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'gemini', key: osData.appApiKeys.gemini }, '*');
             } else if (appId === 'playJockey' && osData.appApiKeys.youtube) {
                  iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'youtube', key: osData.appApiKeys.youtube }, '*');
             }
         }
-        
+
         function restoreAllWindowStates() {
             if (!osData.windowStates || !appManifest) return;
             let maxRestoredZ = highestZIndex;
             appManifest.forEach(appConfig => {
                 const state = osData.windowStates[appConfig.id];
                 if (state && !state.hiddenByUser) {
-                    const win = openAppWindow(appConfig); 
+                    const win = openAppWindow(appConfig);
                     if (win && state.zIndex) {
                         win.style.zIndex = state.zIndex;
                         maxRestoredZ = Math.max(maxRestoredZ, state.zIndex);
@@ -750,7 +749,7 @@
             const iframeElement = getById(`iframe-${appId}`);
 
             if (!windowElement || !titleBarElement) return;
-            
+
             windowElement.addEventListener('mousedown', (e) => {
                  if (e.target.closest('.desktop-icon') || e.target.closest('.modal')) return;
                  if (e.target === windowElement || titleBarElement.contains(e.target) && !e.target.closest('button') ||
@@ -781,7 +780,7 @@
                     resizeInitialWidth = activeResizeWindow.offsetWidth;
                     resizeInitialHeight = activeResizeWindow.offsetHeight;
                     if (iframeElement) iframeElement.style.pointerEvents = 'none';
-                    
+
                     const specificDoResize = (ev) => doResize(ev, appConfig);
                     document.addEventListener('mousemove', specificDoResize);
                     document.addEventListener('mouseup', function mouseUpListener() {
@@ -858,13 +857,8 @@
                 if (iframe) iframe.style.pointerEvents = 'auto';
                 saveWindowState(operatedWindow.id.replace('window-', ''));
             }
-            // Mousemove listeners are now added with specific handlers in initWindowInteractions
-            // and removed there upon mouseup. This global removeEventListener might not be needed
-            // if the specific ones are correctly managed.
-            // document.removeEventListener('mousemove', doDrag); 
-            // document.removeEventListener('mouseup', stopDragOrResize);
         }
-        
+
         function setWindowDefaults(appId, isBrowserResize = false, appConfig) {
             const appWindow = getById(`window-${appId}`);
             if (!appWindow || appWindow.classList.contains('minimized')) return;
@@ -879,7 +873,7 @@
                 appWindow.style.left = '0px';
                 return;
             }
-            
+
             const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
             const hasValidSavedPosition = state.x != null && state.y != null;
 
@@ -887,7 +881,7 @@
             const currentMinHeight = appConfig.minHeight || 100;
             const defaultWidth = appConfig.defaultWidth || 500;
             const defaultHeight = appConfig.defaultHeight || 400;
-            
+
             const openWindows = Object.keys(osData.windowStates).filter(id => {
                 const winEl = getById(`window-${id}`);
                 return winEl && winEl.style.display !== 'none' && !osData.windowStates[id].minimized;
@@ -904,7 +898,7 @@
 
                 let newLeft = (defaultOffsetX === 0 && window.innerWidth > newWidth) ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
                 let newTop = (defaultOffsetY === 0 && window.innerHeight > newHeight) ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
-                
+
                 newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
                 newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
                 if (window.innerHeight <= newHeight + 20) newTop = 10;
@@ -963,7 +957,6 @@
             if (!state) return;
 
             const isMinimized = appWindow.classList.contains('minimized');
-            let currentLastNormal = lastNormalStates[appId] || {};
 
             if (isMinimized) {
                 appWindow.classList.remove('minimized');
@@ -984,34 +977,34 @@
                         appWindow.style.height = state.height + 'px';
                         appWindow.style.left = state.x + 'px';
                         appWindow.style.top = state.y + 'px';
-                    } else if (currentLastNormal.width && currentLastNormal.height) {
-                        appWindow.style.width = currentLastNormal.width;
-                        appWindow.style.height = currentLastNormal.height;
-                        appWindow.style.left = currentLastNormal.left;
-                        appWindow.style.top = currentLastNormal.top;
+                    } else if (lastNormalStates[appId] && lastNormalStates[appId].width && lastNormalStates[appId].height) {
+                        appWindow.style.width = lastNormalStates[appId].width;
+                        appWindow.style.height = lastNormalStates[appId].height;
+                        appWindow.style.left = lastNormalStates[appId].left;
+                        appWindow.style.top = lastNormalStates[appId].top;
                     } else {
                         setWindowDefaults(appId, false, appConfig);
                     }
                     state.maximized = false;
                 }
-            } else if (appWindow.classList.contains('true-maximized')) { 
-                if (currentLastNormal.width && currentLastNormal.height) {
-                    appWindow.style.width = currentLastNormal.width;
-                    appWindow.style.height = currentLastNormal.height;
-                    appWindow.style.top = currentLastNormal.top;
-                    appWindow.style.left = currentLastNormal.left;
-                    state.width = parseInt(currentLastNormal.width);
-                    state.height = parseInt(currentLastNormal.height);
-                    state.x = parseInt(currentLastNormal.left);
-                    state.y = parseInt(currentLastNormal.top);
+            } else if (appWindow.classList.contains('true-maximized')) {
+                if (lastNormalStates[appId] && lastNormalStates[appId].width && lastNormalStates[appId].height) {
+                    appWindow.style.width = lastNormalStates[appId].width;
+                    appWindow.style.height = lastNormalStates[appId].height;
+                    appWindow.style.top = lastNormalStates[appId].top;
+                    appWindow.style.left = lastNormalStates[appId].left;
+                    state.width = parseInt(lastNormalStates[appId].width);
+                    state.height = parseInt(lastNormalStates[appId].height);
+                    state.x = parseInt(lastNormalStates[appId].left);
+                    state.y = parseInt(lastNormalStates[appId].top);
                 } else {
-                    setWindowDefaults(appId, false, appConfig); 
+                    setWindowDefaults(appId, false, appConfig);
                 }
                 appWindow.classList.remove('true-maximized');
                 state.maximized = false;
                 state.userManuallySetPosition = true;
                 state.userManuallySetSize = true;
-            } else { 
+            } else {
                 lastNormalStates[appId] = {
                     width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
                     height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
@@ -1030,20 +1023,14 @@
             updateMinMaxButtonStates(appId);
             saveWindowState(appId);
         }
-        
+
         function closeWindow(appId) {
             const appWindow = getById(`window-${appId}`);
             if (appWindow) {
                 appWindow.style.display = 'none';
                 const iframe = appWindow.querySelector('iframe');
                 if (iframe) {
-                    // More robust way to clear iframe and stop its scripts
-                    iframe.removeAttribute('src'); // Remove src to stop loading/scripts
-                    // Optionally, replace with a blank iframe to ensure it's fully cleared
-                    // const newIframe = document.createElement('iframe');
-                    // newIframe.id = iframe.id;
-                    // newIframe.name = iframe.name;
-                    // iframe.parentNode.replaceChild(newIframe, iframe);
+                    iframe.removeAttribute('src');
                 }
             }
             if (osData.windowStates[appId]) {
@@ -1063,21 +1050,21 @@
             const isMinimized = win.classList.contains('minimized');
             const isTrueMaximized = win.classList.contains('true-maximized');
 
-            minimizeBtn.disabled = isMinimized; 
-            maximizeBtn.disabled = false; 
+            minimizeBtn.disabled = isMinimized;
+            maximizeBtn.disabled = false;
 
             if (isMinimized) {
-                maximizeBtn.textContent = '1'; 
+                maximizeBtn.textContent = '1';
                 maximizeBtn.title = "Restore";
             } else if (isTrueMaximized) {
-                maximizeBtn.textContent = '2'; 
+                maximizeBtn.textContent = '2';
                 maximizeBtn.title = "Restore Down";
             } else {
-                maximizeBtn.textContent = '1'; 
+                maximizeBtn.textContent = '1';
                 maximizeBtn.title = "Maximize";
             }
         }
-        
+
         function saveWindowState(appId) {
             const win = getById(`window-${appId}`);
             if (!win) return;
@@ -1087,7 +1074,7 @@
                 osData.windowStates[appId] = {};
                 state = osData.windowStates[appId];
             }
-            
+
             state.minimized = win.classList.contains('minimized');
             state.maximized = win.classList.contains('true-maximized');
             state.zIndex = parseInt(win.style.zIndex) || highestZIndex;
@@ -1146,13 +1133,13 @@
             }
             highestZIndex = maxZ;
         }
-        
+
         function applyCurrentBackgroundStyle() {
             if (osData.customBgColor) {
                 document.body.style.backgroundImage = 'none';
                 document.body.style.backgroundColor = osData.customBgColor;
             } else if (osData.customBgImage) {
-                document.body.style.backgroundColor = ''; 
+                document.body.style.backgroundColor = '';
                 document.body.style.backgroundImage = `url('${osData.customBgImage}')`;
             } else {
                 document.body.style.backgroundColor = '#3A6EA5';
@@ -1175,7 +1162,7 @@
                 DOM.bgColorSwatchesContainer.appendChild(swatch);
             });
         }
-        
+
         function openModal(modalId) {
             const modal = getById(modalId);
             if (modal) modal.style.display = 'flex';
@@ -1199,7 +1186,7 @@
             DOM.uploadBgImageBtn.addEventListener('click', function() {
                 const file = DOM.newBgImageInput.files[0];
                 if (file) {
-                    if (file.size > 5 * 1024 * 1024) { 
+                    if (file.size > 5 * 1024 * 1024) {
                         alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
                     }
                     const reader = new FileReader();
@@ -1221,7 +1208,7 @@
                 const imageUrl = DOM.bgImageUrlInput.value.trim();
                 if (imageUrl) {
                     try {
-                        new URL(imageUrl); 
+                        new URL(imageUrl);
                         osData.customBgImage = imageUrl;
                         osData.customBgColor = null;
                         applyCurrentBackgroundStyle();
@@ -1234,7 +1221,7 @@
                     alert("Please enter an image URL.");
                 }
             });
-            
+
             DOM.bgColorSwatchesContainer.addEventListener('click', function(event) {
                 if (event.target.classList.contains('color-swatch-item')) {
                     const selectedColor = event.target.dataset.colorValue;
@@ -1254,7 +1241,7 @@
                     if (modalId) closeModal(modalId);
                 });
             });
-            
+
             window.addEventListener('resize', () => {
                 appManifest.forEach(appConfig => {
                     const win = getById(`window-${appConfig.id}`);
@@ -1265,12 +1252,8 @@
                 saveOsData();
             });
         }
-        
-        function handleIframeMessages(event) {
-            // This function is primarily for apps requesting API keys.
-            // Origin check is important for security in a real deployment.
-            // if (event.origin !== window.location.origin) return; 
 
+        function handleIframeMessages(event) {
             const { type, service, appId } = event.data;
             if (type === 'requestApiKey') {
                 const iframe = document.getElementById(`iframe-${appId}`);
