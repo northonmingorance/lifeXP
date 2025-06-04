@@ -24,8 +24,6 @@
     .pixel-size-input[type=number] { -moz-appearance: textfield; }
     .pixel-canvas-container { flex-grow: 1; background-color: #808080; padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; }
     #pixelCanvas { background-color: white; border: 1px solid #000; cursor: default; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; }
-
-    /* Modal Styles (similar to index.html for consistency) */
     .pixel-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .pixel-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: pixelFadeIn 0.3s; display: flex; flex-direction: column; }
     .pixel-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
@@ -124,7 +122,6 @@
         canvas: document.getElementById('pixelCanvas'),
         canvasContainer: document.getElementById('pixelCanvasContainer'),
         pixelWindowBody: document.getElementById('pixelWindowBody'),
-        // Modals
         pixelCanvasSizeModal: document.getElementById('pixelCanvasSizeModal'),
         pixelNewCanvasWidthInput: document.getElementById('pixelNewCanvasWidth'),
         pixelNewCanvasHeightInput: document.getElementById('pixelNewCanvasHeight'),
@@ -431,7 +428,7 @@
     }
 
     function savePixelCanvasImage() {
-        let filename = prompt("Choose filename:", "pixel_art.png"); // Updated prompt text
+        let filename = prompt("Choose filename:", "pixel_art.png");
         if (filename) {
             if (!filename.toLowerCase().endsWith('.png')) filename += '.png';
             const dataURL = DOM_PC.canvas.toDataURL('image/png');
@@ -522,13 +519,11 @@
 
         DOM_PC.fileSave.addEventListener('click', savePixelCanvasImage);
         DOM_PC.fileClearCanvas.addEventListener('click', () => {
-            // Removed confirm() dialog as per request
             clearPixelCanvasInternal(true);
             closePixelMenus();
         });
         DOM_PC.fileCanvasSize.addEventListener('click', openPixelCanvasSizePrompt);
         
-        // Modal Event Listeners
         DOM_PC.savePixelCanvasSizeBtn.addEventListener('click', handleSavePixelCanvasSize);
         DOM_PC.confirmPixelResizeExecuteBtn.addEventListener('click', executePixelCanvasResize);
         

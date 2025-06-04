@@ -28,12 +28,10 @@
     .playjockey-playlist-item.drag-over-target-before { border-top: 2px dashed #005CFE; }
     .playjockey-playlist-item.drag-over-target-after { border-bottom: 2px dashed #005CFE; }
 
-    /* Context Menu Styles */
     .pj-context-modal { display: none; position: fixed; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); z-index: 2000; padding: 3px 0; min-width: 120px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; }
     .pj-context-modal-item { padding: 5px 12px; cursor: default; color: black; }
     .pj-context-modal-item:hover { background-color: #005CFE; color: white; }
 
-    /* Modal Styles (copied and prefixed from index.html for app-specific modals) */
     .pj-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .pj-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: pjFadeIn 0.3s; display: flex; flex-direction: column; }
     .pj-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
@@ -169,7 +167,7 @@
 
 
 <script src="https://www.youtube.com/iframe_api"></script> <script>
-    const PJ_STORAGE_KEY = 'playJockeyAppData_v1.0.2'; // Incremented version
+    const PJ_STORAGE_KEY = 'playJockeyAppData_v1.0.2';
     let YOUTUBE_API_KEY = ""; 
 
     let pjData = {
@@ -191,14 +189,12 @@
         randomBtn: document.getElementById('playJockeyRandomBtn'),
         autoPlayBtn: document.getElementById('playJockeyAutoPlayBtn'),
         repeatBtn: document.getElementById('playJockeyRepeatBtn'),
-        // Context Menus
         trackContextMenu: document.getElementById('pjTrackContextMenu'),
         renameTrackContextBtn: document.getElementById('pjContextRenameTrack'),
         removeTrackContextBtn: document.getElementById('pjContextRemoveTrack'),
         playlistTabContextMenu: document.getElementById('pjPlaylistTabContextMenu'),
         renamePlaylistTabContextBtn: document.getElementById('pjTabContextRenamePlaylist'),
         removePlaylistTabContextBtn: document.getElementById('pjTabContextRemovePlaylist'),
-        // Modals
         youtubeSearchModal: document.getElementById('pjYoutubeSearchModal'),
         youtubeSearchResultsBody: document.getElementById('pjYoutubeSearchResultsBody'),
         youtubeSearchStatus: document.getElementById('pjYoutubeSearchStatus'),
@@ -231,7 +227,7 @@
 
     function loadPjData() {
         const stored = localStorage.getItem(PJ_STORAGE_KEY);
-        const defaultPlaylistId = 'playlist_default_0_' + Date.now(); // Ensure unique default
+        const defaultPlaylistId = 'playlist_default_0_' + Date.now();
         if (stored) {
             try {
                 pjData = JSON.parse(stored);
@@ -277,10 +273,9 @@
             if (pjData.playlists && pjData.playlists.length > 0) {
                 pjData.currentPlaylistId = pjData.playlists[0].id;
             } else {
-                // If no playlists exist, create one.
                 const defaultId = 'playlist_default_0_' + Date.now();
                 resetPjData(defaultId);
-                renderPjTabs(); // Update UI
+                renderPjTabs();
                 return pjData.playlists[0];
             }
         }
@@ -298,24 +293,22 @@
     }
     
     
-    window.onYouTubeIframeAPIReady = function() { // This global function is called by YT API
+    window.onYouTubeIframeAPIReady = function() {
         isYouTubeApiReady = true;
         console.log("Play Jockey: YouTube API Ready.");
         const currentPlaylist = getCurrentPjPlaylist();
-        const currentVideo = pjData.currentVideo; // Use the one from pjData
+        const currentVideo = pjData.currentVideo;
 
         if (pendingVideoToLoad && currentPlaylist?.videos.find(v => v.videoId === pendingVideoToLoad.videoId)) {
             playYouTubeVideoById(pendingVideoToLoad.videoId, pendingVideoToLoad.autoplayIntent);
             pendingVideoToLoad = null;
         } else if (currentVideo && currentPlaylist?.videos.find(v => v.id === currentVideo.id) && !ytPlayerInstance) {
-            // Check if the iframe's window is visible before autoplaying on load
-            // This is tricky. For now, let's assume if it was saved, it was intended to play.
-             if (window.frameElement && window.parent && window.parent.getById) { // Check if in OS
-                const appWindow = window.parent.getById(`window-playJockey`); // Assumes OS window ID
+             if (window.frameElement && window.parent && window.parent.getById) {
+                const appWindow = window.parent.getById(`window-playJockey`);
                 if (appWindow && appWindow.style.display !== 'none' && !appWindow.classList.contains('minimized')) {
                     playYouTubeVideoById(currentVideo.videoId, pjData.autoPlayEnabled);
                 }
-            } else { // Fallback if not clearly in OS or cannot check visibility
+            } else {
                  playYouTubeVideoById(currentVideo.videoId, pjData.autoPlayEnabled);
             }
         }
@@ -349,7 +342,7 @@
     }
     
     async function searchYouTubeVideos(query) {
-        DOM_PJ.youtubeSearchResultsBody.innerHTML = ''; // Clear previous results
+        DOM_PJ.youtubeSearchResultsBody.innerHTML = '';
         DOM_PJ.youtubeSearchStatus.textContent = 'Searching...';
         DOM_PJ.youtubeSearchStatus.style.display = 'block';
         openPjModal('pjYoutubeSearchModal');
@@ -384,7 +377,7 @@
     }
 
     function renderYouTubeSearchResults(items) {
-        DOM_PJ.youtubeSearchResultsBody.innerHTML = ''; // Clear previous
+        DOM_PJ.youtubeSearchResultsBody.innerHTML = '';
         items.forEach(item => {
             const videoId = item.id.videoId;
             const title = decodeHtmlEntitiesPJ(item.snippet.title);
@@ -439,7 +432,7 @@
         }
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$$${videoId}`, // Construct a basic URL
+            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$$${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -542,7 +535,7 @@
     function addNewPjPlaylist() { let newPlaylistName = "Playlist"; let counter = 1; const existingNames = pjData.playlists.map(p => p.name.toLowerCase()); let potentialName = newPlaylistName.toLowerCase(); while (existingNames.includes(potentialName)) { potentialName = `${newPlaylistName} ${counter}`.toLowerCase(); counter++; } if (counter > 1) newPlaylistName = `${newPlaylistName} ${counter-1}`; const newPlaylistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substring(2,9); pjData.playlists.push({ id: newPlaylistId, name: newPlaylistName, videos: [] }); switchPjPlaylist(newPlaylistId); }
     function switchPjPlaylist(playlistId) { if (pjData.currentPlaylistId === playlistId) return; pjData.currentPlaylistId = playlistId; pjData.currentVideo = null; pjData.randomHistory = []; if (ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') { ytPlayerInstance.stopVideo(); if (DOM_PJ.playerContainer) DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; ytPlayerInstance = null; } renderPjTabs(); renderPjPlaylist(); savePjData(); }
     function renderPjPlaylist() { DOM_PJ.playlistArea.innerHTML = ''; const currentPlaylist = getCurrentPjPlaylist(); if (!currentPlaylist || currentPlaylist.videos.length === 0) { const emptyMsg = document.createElement('div'); emptyMsg.textContent = "Playlist is empty. Add YouTube links or search!"; emptyMsg.style.padding = "10px"; emptyMsg.style.textAlign = "center"; emptyMsg.style.color = "#555"; DOM_PJ.playlistArea.appendChild(emptyMsg); updatePlayingClassInPjPlaylist(null); return; } currentPlaylist.videos.forEach(video => { const item = document.createElement('div'); item.className = 'playjockey-playlist-item'; let cleanTitle = decodeHtmlEntitiesPJ(video.title); let cleanArtist = decodeHtmlEntitiesPJ(video.artist); let displayTitle = cleanTitle; if (cleanTitle === "Loading title..." || cleanTitle === video.originalUrl || !cleanTitle.trim()) { const decodedOriginalUrl = decodeHtmlEntitiesPJ(video.originalUrl); displayTitle = decodedOriginalUrl.length > 40 ? decodedOriginalUrl.substring(0, 37) + '...' : decodedOriginalUrl; } else { displayTitle = cleanTitle.length > 40 ? cleanTitle.substring(0, 37) + '...' : cleanTitle; } let itemText = displayTitle; let itemTooltip = (cleanTitle !== "Loading title..." && cleanTitle.trim()) ? cleanTitle : decodeHtmlEntitiesPJ(video.originalUrl); if (cleanArtist && cleanArtist.trim() !== "") { const artistShort = cleanArtist.length > 20 ? cleanArtist.substring(0, 17) + '...' : cleanArtist; itemText = `${displayTitle} - ${artistShort}`; itemTooltip = `${itemTooltip} by ${cleanArtist}`; } item.textContent = itemText; item.title = itemTooltip; item.dataset.videoId = video.videoId; item.dataset.playlistItemId = video.id; item.draggable = true; if (pjData.currentVideo && pjData.currentVideo.id === video.id) { item.classList.add('playing'); } item.addEventListener('click', (event) => { if (event.target.closest('.pj-context-modal')) return; if (item.classList.contains('dragging')) return; const clickedItem = event.currentTarget; if (clickedItem && clickedItem.dataset.videoId) { playYouTubeVideoById(clickedItem.dataset.videoId, true, true); } }); item.addEventListener('contextmenu', showPjTrackContextMenu); DOM_PJ.playlistArea.appendChild(item); }); }
-    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { /* ... (same as before) ... */  if (!videoId) { console.warn("playYouTubeVideoById called with no videoId"); return; } const currentPlaylist = getCurrentPjPlaylist(); if (!currentPlaylist) { console.warn("No current playlist to play from"); return; } const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId); if (!videoToPlay) { console.warn(`Video with ID ${videoId} not found in current playlist.`); pjData.currentVideo = null; updatePlayingClassInPjPlaylist(null); if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); return; } if ( isManualPlay && videoToPlay && pjData.randomEnabled && pjData.autoPlayEnabled && pjData.repeatState === "off" && currentPlaylist.videos.length > 0 ) { const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id)); if (new Set(pjData.randomHistory).size >= uniqueVideoIdsInPlaylist.size) { pjData.randomHistory = [videoToPlay.id]; } else if (!pjData.randomHistory.includes(videoToPlay.id)) { pjData.randomHistory.push(videoToPlay.id); } } pjData.currentVideo = { ...videoToPlay }; updatePlayingClassInPjPlaylist(videoToPlay.id); savePjData(); if (!isYouTubeApiReady) { pendingVideoToLoad = { videoId, autoplayIntent }; console.log("Play Jockey: YouTube API not ready, video load queued:", videoId); if (typeof YT !== 'undefined' && YT.Player && !isYouTubeApiReady) { onYouTubeIframeAPIReady(); } return; } if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function' && ytPlayerInstance.getIframe && ytPlayerInstance.getIframe().parentNode) { ytPlayerInstance.loadVideoById({ 'videoId': videoId }); if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') { ytPlayerInstance.playVideo(); } } else { if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.id === 'playJockeyPlayerPlaceholder') { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; } else if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.tagName === 'IFRAME') { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; } else if (!DOM_PJ.playerContainer.firstChild) { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';} console.log("Play Jockey: Creating new YT Player instance for video:", videoId); ytPlayerInstance = new YT.Player('playJockeyPlayer', { height: '100%', width: '100%', videoId: videoId, playerVars: { 'autoplay': autoplayIntent ? 1 : 0, 'controls': 1, 'enablejsapi': 1, 'origin': window.location.origin, 'modestbranding': 1, 'rel': 0 }, events: { 'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); }, 'onStateChange': onPjPlayerStateChange, 'onError': (event) => { console.error("Play Jockey: YouTube Player Error:", event.data, "for video:", videoId); if (event.data === 2 || event.data === 5 || event.data === 100 || event.data === 101 || event.data === 150) { if (pjData.autoPlayEnabled) { console.log("Play Jockey: Video error, trying next video."); playNextPjVideo(); } } } } }); } }
+    function playYouTubeVideoById(videoId, autoplayIntent = true, isManualPlay = false) { if (!videoId) { console.warn("playYouTubeVideoById called with no videoId"); return; } const currentPlaylist = getCurrentPjPlaylist(); if (!currentPlaylist) { console.warn("No current playlist to play from"); return; } const videoToPlay = currentPlaylist.videos.find(v => v.videoId === videoId); if (!videoToPlay) { console.warn(`Video with ID ${videoId} not found in current playlist.`); pjData.currentVideo = null; updatePlayingClassInPjPlaylist(null); if(ytPlayerInstance && typeof ytPlayerInstance.stopVideo === 'function') ytPlayerInstance.stopVideo(); return; } if ( isManualPlay && videoToPlay && pjData.randomEnabled && pjData.autoPlayEnabled && pjData.repeatState === "off" && currentPlaylist.videos.length > 0 ) { const uniqueVideoIdsInPlaylist = new Set(currentPlaylist.videos.map(v => v.id)); if (new Set(pjData.randomHistory).size >= uniqueVideoIdsInPlaylist.size) { pjData.randomHistory = [videoToPlay.id]; } else if (!pjData.randomHistory.includes(videoToPlay.id)) { pjData.randomHistory.push(videoToPlay.id); } } pjData.currentVideo = { ...videoToPlay }; updatePlayingClassInPjPlaylist(videoToPlay.id); savePjData(); if (!isYouTubeApiReady) { pendingVideoToLoad = { videoId, autoplayIntent }; console.log("Play Jockey: YouTube API not ready, video load queued:", videoId); if (typeof YT !== 'undefined' && YT.Player && !isYouTubeApiReady) { onYouTubeIframeAPIReady(); } return; } if (ytPlayerInstance && typeof ytPlayerInstance.loadVideoById === 'function' && ytPlayerInstance.getIframe && ytPlayerInstance.getIframe().parentNode) { ytPlayerInstance.loadVideoById({ 'videoId': videoId }); if (autoplayIntent && typeof ytPlayerInstance.playVideo === 'function') { ytPlayerInstance.playVideo(); } } else { if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.id === 'playJockeyPlayerPlaceholder') { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; } else if (DOM_PJ.playerContainer.firstChild && DOM_PJ.playerContainer.firstChild.tagName === 'IFRAME') { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>'; } else if (!DOM_PJ.playerContainer.firstChild) { DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';} console.log("Play Jockey: Creating new YT Player instance for video:", videoId); ytPlayerInstance = new YT.Player('playJockeyPlayer', { height: '100%', width: '100%', videoId: videoId, playerVars: { 'autoplay': autoplayIntent ? 1 : 0, 'controls': 1, 'enablejsapi': 1, 'origin': window.location.origin, 'modestbranding': 1, 'rel': 0 }, events: { 'onReady': (event) => { if (autoplayIntent) event.target.playVideo(); }, 'onStateChange': onPjPlayerStateChange, 'onError': (event) => { console.error("Play Jockey: YouTube Player Error:", event.data, "for video:", videoId); if (event.data === 2 || event.data === 5 || event.data === 100 || event.data === 101 || event.data === 150) { if (pjData.autoPlayEnabled) { console.log("Play Jockey: Video error, trying next video."); playNextPjVideo(); } } } } }); } }
     function onPjPlayerStateChange(event) { if (event.data === YT.PlayerState.ENDED && pjData.autoPlayEnabled) { playNextPjVideo(); } }
     function playNextPjVideo() { const currentPlaylist = getCurrentPjPlaylist(); if (!ytPlayerInstance || !pjData.currentVideo || !currentPlaylist || currentPlaylist.videos.length === 0) { return; } let nextVideoItem = null; const currentVideoUniqueId = pjData.currentVideo.id; const activePlaylistVideos = currentPlaylist.videos; if (pjData.repeatState === "song") { nextVideoItem = activePlaylistVideos.find(item => item.id === currentVideoUniqueId); } else if (pjData.randomEnabled) { if (activePlaylistVideos.length === 0) return; if (activePlaylistVideos.length === 1) { if (pjData.repeatState === "off") { if (pjData.randomHistory.includes(currentVideoUniqueId) && pjData.randomHistory.length >= activePlaylistVideos.length) return; nextVideoItem = activePlaylistVideos[0]; } else { nextVideoItem = activePlaylistVideos[0]; } } else { let eligibleVideos = activePlaylistVideos.filter( video => !pjData.randomHistory.includes(video.id) || video.id === currentVideoUniqueId ); if (eligibleVideos.length === 1 && eligibleVideos[0].id === currentVideoUniqueId && pjData.repeatState !== "song") { eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); if (eligibleVideos.length === 0 && pjData.repeatState === "playlist") { pjData.randomHistory = [currentVideoUniqueId]; eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); } } else if (eligibleVideos.length === 0 && pjData.repeatState === "playlist") { pjData.randomHistory = [currentVideoUniqueId]; eligibleVideos = activePlaylistVideos.filter(video => video.id !== currentVideoUniqueId); } if (eligibleVideos.length === 0) { if (pjData.repeatState === "playlist") { pjData.randomHistory = []; eligibleVideos = [...activePlaylistVideos]; if(activePlaylistVideos.length === 1) nextVideoItem = activePlaylistVideos[0]; } else { pjData.randomHistory = []; return; } } if (eligibleVideos.length > 0 && !nextVideoItem) { const randomIndex = Math.floor(Math.random() * eligibleVideos.length); nextVideoItem = eligibleVideos[randomIndex]; } } if (nextVideoItem) { if (!pjData.randomHistory.includes(nextVideoItem.id)) { pjData.randomHistory.push(nextVideoItem.id); } if (pjData.repeatState === "playlist") { const maxHistorySize = Math.max(0, activePlaylistVideos.length -1); while (pjData.randomHistory.length > maxHistorySize && maxHistorySize > 0 && pjData.randomHistory.length >= activePlaylistVideos.length) { pjData.randomHistory.shift(); } } } } else { const currentIndex = activePlaylistVideos.findIndex(item => item.id === currentVideoUniqueId); if (currentIndex === -1) return; let nextIndex = currentIndex + 1; if (nextIndex >= activePlaylistVideos.length) { if (pjData.repeatState === "playlist") { nextIndex = 0; } else { return; } } if (activePlaylistVideos[nextIndex]) { nextVideoItem = activePlaylistVideos[nextIndex]; } } if (nextVideoItem && nextVideoItem.videoId) { playYouTubeVideoById(nextVideoItem.videoId, true, false); } }
     function updatePlayingClassInPjPlaylist(playingItemId) { const items = DOM_PJ.playlistArea.querySelectorAll('.playjockey-playlist-item'); items.forEach(item => { if (item.dataset.playlistItemId === playingItemId) { item.classList.add('playing'); } else { item.classList.remove('playing'); } }); }
@@ -559,7 +552,6 @@
     function cyclePjRepeat() { const states = ["off", "playlist", "song"]; let currentIndex = states.indexOf(pjData.repeatState); currentIndex = (currentIndex + 1) % states.length; pjData.repeatState = states[currentIndex]; pjData.randomHistory = []; const currentPlaylist = getCurrentPjPlaylist(); if (pjData.randomEnabled && pjData.currentVideo && currentPlaylist && currentPlaylist.videos.length > 0) { if (currentPlaylist.videos.length > 1 || pjData.repeatState !== "off") { pjData.randomHistory.push(pjData.currentVideo.id); } } updatePjRepeatButtonState(); savePjData(); }
     function updatePjRepeatButtonState() { DOM_PJ.repeatBtn.classList.remove('repeat-on'); switch (pjData.repeatState) { case "off": DOM_PJ.repeatBtn.textContent = 'Repeat: Off'; break; case "playlist": DOM_PJ.repeatBtn.textContent = 'Repeat: List'; DOM_PJ.repeatBtn.classList.add('repeat-on'); break; case "song": DOM_PJ.repeatBtn.textContent = 'Repeat: One'; DOM_PJ.repeatBtn.classList.add('repeat-on'); break; } }
 
-    // Context Menu and Modal Functions
     function openPjModal(modalId) { const modal = document.getElementById(modalId); if(modal) modal.style.display = 'flex'; }
     function closePjModal(modalId) { const modal = document.getElementById(modalId); if(modal) modal.style.display = 'none'; }
     function showPjTrackContextMenu(e) { e.preventDefault(); hidePjTrackContextMenu(); hidePjPlaylistTabContextMenu(); const clickedItem = e.target.closest('.playjockey-playlist-item'); if (clickedItem) { DOM_PJ.trackContextMenu.style.display = 'block'; let x = e.clientX; let y = e.clientY; const menuWidth = DOM_PJ.trackContextMenu.offsetWidth; const menuHeight = DOM_PJ.trackContextMenu.offsetHeight; const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight; if (x + menuWidth > viewportWidth) x = viewportWidth - menuWidth - 5; if (y + menuHeight > viewportHeight) y = viewportHeight - menuHeight - 5; DOM_PJ.trackContextMenu.style.left = `${Math.max(0,x)}px`; DOM_PJ.trackContextMenu.style.top = `${Math.max(0,y)}px`; DOM_PJ.trackContextMenu.dataset.itemId = clickedItem.dataset.playlistItemId; } }
@@ -584,18 +576,15 @@
         DOM_PJ.playlistArea.addEventListener('dragover', handlePjDragOver);
         DOM_PJ.playlistArea.addEventListener('dragleave', handlePjDragLeave);
         DOM_PJ.playlistArea.addEventListener('drop', handlePjDrop);
-        // Context menu for playlist items is now added directly in renderPjPlaylist
         DOM_PJ.autoPlayBtn.addEventListener('click', togglePjAutoPlay);
         DOM_PJ.randomBtn.addEventListener('click', togglePjRandom);
         DOM_PJ.repeatBtn.addEventListener('click', cyclePjRepeat);
 
-        // Context Menu Actions
         DOM_PJ.renameTrackContextBtn.addEventListener('click', handlePjContextRenameTrack);
         DOM_PJ.removeTrackContextBtn.addEventListener('click', handlePjContextRemoveTrack);
         DOM_PJ.renamePlaylistTabContextBtn.addEventListener('click', openRenamePjPlaylistModal);
         DOM_PJ.removePlaylistTabContextBtn.addEventListener('click', openConfirmRemovePjPlaylistModal);
 
-        // Modal Actions
         DOM_PJ.saveRenamedPlaylistBtn.addEventListener('click', saveRenamedPjPlaylist);
         DOM_PJ.playlistNewNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveRenamedPjPlaylist(); });
         DOM_PJ.confirmFinalPlaylistRemoveBtn.addEventListener('click', executePjPlaylistDeletion);
@@ -610,7 +599,6 @@
                 if(modalId) closePjModal(modalId);
             });
         });
-        // Close context menus if clicking outside
         document.addEventListener('click', (e) => {
             if (!DOM_PJ.trackContextMenu.contains(e.target) && !e.target.closest('.playjockey-playlist-item')) {
                 hidePjTrackContextMenu();

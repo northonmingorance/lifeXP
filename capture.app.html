@@ -69,7 +69,7 @@
 </div>
 
 <script>
-    const CAPTURE_APP_STORAGE_KEY = 'captureAppData_v1.0.3'; // Incremented version
+    const CAPTURE_APP_STORAGE_KEY = 'captureAppData_v1.0.3';
     const COMMON_RESOLUTIONS_CAPTURE = [
         { label: "320x240 (QVGA)", width: 320, height: 240 },
         { label: "640x480 (VGA)", width: 640, height: 480 },
@@ -152,7 +152,6 @@
 
         const finalVideoDeviceId = videoDeviceId || captureAppData.selectedVideoDevice;
         const finalAudioDeviceId = audioDeviceId || captureAppData.selectedAudioDevice;
-        // Use the passed resolution directly. If it's null, no specific resolution is requested.
         const finalResolutionToRequest = resolution; 
 
         let videoConstraints = {};
@@ -170,7 +169,6 @@
         if (Object.keys(videoConstraints).length === 0) { 
              videoConstraints = true; 
         } else if (videoConstraints.deviceId && Object.keys(videoConstraints).length === 1 && !finalResolutionToRequest) {
-            // Only device selected, no specific resolution means use device default
         }
 
 
@@ -193,25 +191,18 @@
                     const currentSettings = videoTracks[0].getSettings();
                     console.log("Capture App: Actual video resolution obtained:", currentSettings.width, "x", currentSettings.height);
                     
-                    if (!finalVideoDeviceId) { // If no device was specified, update with the one browser chose
+                    if (!finalVideoDeviceId) {
                         captureAppData.selectedVideoDevice = currentSettings.deviceId || videoTracks[0].id;
                     }
 
-                    // Try to match the obtained resolution with one from the list
                     const matchedKnownRes = COMMON_RESOLUTIONS_CAPTURE.find(r => r.width === currentSettings.width && r.height === currentSettings.height);
                     if (matchedKnownRes) {
-                        // If it matches a known one, set it as the selectedResolution
                         captureAppData.selectedResolution = { width: currentSettings.width, height: currentSettings.height, label: matchedKnownRes.label };
                         console.log("Capture App: Matched obtained resolution to known: ", matchedKnownRes.label);
                     } else {
-                        // If it doesn't match, and a specific resolution was requested (even as ideal),
-                        // it means the camera provided something different. We keep selectedResolution as what was *requested*
-                        // or null if no specific resolution was requested.
                         if (finalResolutionToRequest) {
                              console.log(`Capture App: Obtained ${currentSettings.width}x${currentSettings.height}, which differs from requested ideal ${finalResolutionToRequest.width}x${finalResolutionToRequest.height} and is not in the known list.`);
-                             // Keep captureAppData.selectedResolution as what was *intended* by the user from the list.
                         } else {
-                            // If no specific resolution was requested, selectedResolution should be null.
                             captureAppData.selectedResolution = null;
                             console.log("Capture App: Using browser/device default resolution, not in predefined list.");
                         }
@@ -496,7 +487,6 @@
                 item.addEventListener('click', async () => {
                     if (captureAppData.selectedVideoDevice !== device.deviceId) {
                         captureAppData.selectedVideoDevice = device.deviceId;
-                        // When a device is selected, use its default resolution initially by passing null for resolution
                         await startCaptureStream(captureAppData.selectedVideoDevice, captureAppData.selectedAudioDevice, null); 
                         saveCaptureAppData(); 
                     }
@@ -564,18 +554,15 @@
             item.textContent = res.label;
             item.addEventListener('click', async () => {
                 if (isResolutionMenuInteractionDelayed) { console.log("Resolution change is currently delayed."); return; }
-                // newRes will be the object like { label: "...", width: ..., height: ... }
                 const newRes = COMMON_RESOLUTIONS_CAPTURE.find(r => r.label === item.textContent);
 
                 const currentRes = captureAppData.selectedResolution;
-                let isDifferent = true; // Assume different unless proven same
-                if (currentRes && newRes) { // Both are specific resolutions
+                let isDifferent = true;
+                if (currentRes && newRes) {
                     isDifferent = (currentRes.width !== newRes.width || currentRes.height !== newRes.height);
-                } else if (!currentRes && !newRes) { // Both are effectively "browser default" (though newRes won't be null here)
+                } else if (!currentRes && !newRes) {
                     isDifferent = false; 
                 }
-                // If newRes is null (it won't be from this list), it means revert to browser default.
-                // If currentRes is null and newRes is specific, it's different.
 
                 if (isDifferent) {
                     captureAppData.selectedResolution = newRes ? { width: newRes.width, height: newRes.height, label: newRes.label } : null;
@@ -612,7 +599,6 @@
                     item.classList.add('selected');
                 }
             });
-             // If no specific resolution is selected (it's browser default), no item gets the 'selected' class.
         }
     }
     

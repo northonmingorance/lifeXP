@@ -1,6 +1,6 @@
 <style>
     :root {
-        --fixed-margin-width: 15px; /* Define the width of the fixed margin */
+        --fixed-margin-width: 15px;
     }
 
     body {
@@ -38,8 +38,8 @@
     .table-container {
         flex-grow: 1;
         overflow-y: auto;
-        overflow-x: auto; /* Ensure table container itself can scroll horizontally */
-        padding: 0 15px 15px 0; /* MODIFIED: Removed left padding */
+        overflow-x: auto;
+        padding: 0 15px 15px 0;
     }
     table {
         width: 100%;
@@ -63,7 +63,6 @@
         border-bottom: 1px solid #7F7F7F;
     }
 
-    /* Modified: Style for the fixed margin header cell */
     #weekdayHeaders th.fixed-margin-header {
         position: sticky;
         left: 0;
@@ -72,20 +71,17 @@
         padding: 0;
         background-color: #ECE9D8;
         z-index: 12;
-        border: none; /* MODIFIED: Removed all borders */
+        border: none;
     }
 
-    /* Modified: Style for the "Area" header cell, now after the fixed margin */
     #weekdayHeaders th.area-header-cell {
         position: sticky;
         left: var(--fixed-margin-width);
         z-index: 11;
         background-color: #D4D0C8;
         border-right: 1px solid #7F7F7F;
-        /* border-left will be the default from 'th' (1px solid #ACA899), now visually the first border */
     }
 
-    /* Modified: Style for the fixed margin data cells */
     td.fixed-margin-cell {
         position: sticky;
         left: 0;
@@ -94,10 +90,9 @@
         padding: 0;
         background-color: #ECE9D8;
         z-index: 6;
-        border: none; /* MODIFIED: Removed all borders */
+        border: none;
     }
 
-    /* Modified: Style for the "Area" data cells */
     td.area-name-cell {
         font-weight: bold;
         width: 180px;
@@ -106,7 +101,6 @@
         background-color: #ECE9D8;
         z-index: 5;
         border-right: 1px solid #7F7F7F;
-        /* border-left will be the default from 'td' (1px solid #ACA899), now visually the first border */
     }
 
     .area-stats { font-size: 0.9em; margin-top: 5px; color: #333; }
@@ -134,7 +128,6 @@
     .delete-area-btn:hover { background-color: #FF6363; }
     .delete-area-btn:active { border-style: inset; }
 
-    /* Modal Styles */
     .xp-tracker-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .xp-tracker-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: xpTrackerFadeIn 0.3s; display: flex; flex-direction: column; }
     .xp-tracker-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
@@ -329,7 +322,7 @@
         achievements: {},
         quests: {},
         currentWeekStartDate: null,
-        viewMode: 'week', // Default view mode
+        viewMode: 'week',
         selectedDayIndex: 0,
     };
 
@@ -346,7 +339,6 @@
         weekdayHeaders: document.getElementById('weekdayHeaders'),
         gridBody: document.getElementById('gridBody'),
         gridTable: document.getElementById('gridTable'),
-        // Modals
         newAreaModal: document.getElementById('xpNewAreaModal'),
         newAreaNameInput: document.getElementById('xpNewAreaNameInput'),
         saveNewAreaBtn: document.getElementById('xpSaveNewAreaBtn'),
@@ -548,7 +540,6 @@
     function addXpToArea(areaName, xpAmount) { const area = trackerData.areas.find(a => a.name === areaName); if (area) { area.xp = (area.xp || 0) + xpAmount; let leveledUp = false; let requiredForNext = xpForNextLevel(area.level || 1); while (area.xp >= requiredForNext && requiredForNext > 0) { area.xp -= requiredForNext; area.level = (area.level || 1) + 1; leveledUp = true; requiredForNext = xpForNextLevel(area.level); } if (leveledUp) { console.log(`${decodeHtmlEntities(area.name)} leveled up to Level ${area.level}!`); generateQuestsForCurrentWeekIfNeeded(true); } } }
     function subtractXpFromArea(areaName, xpAmount) { const area = trackerData.areas.find(a => a.name === areaName); if (area) { area.xp = (area.xp || 0) - xpAmount; let deLeveled = false; while (area.xp < 0) { if (area.level > 1) { area.level--; deLeveled = true; area.xp += xpForNextLevel(area.level); } else { area.xp = 0; break; } } if (deLeveled) { generateQuestsForCurrentWeekIfNeeded(true); } } }
 
-    // Modal Handlers
     function openNewAreaModal() { DOM_XP.newAreaNameInput.value = ''; openXpModal('xpNewAreaModal'); DOM_XP.newAreaNameInput.focus(); }
     function saveNewAreaFromModal() { const name = DOM_XP.newAreaNameInput.value.trim(); if (!name) { alert("Area name cannot be empty."); return; } if (trackerData.areas.find(a => a.name.toLowerCase() === name.toLowerCase())) { alert("Area with this name already exists."); return; } trackerData.areas.push({ name: name, level: 1, xp: 0 }); closeXpModal('xpNewAreaModal'); renderGrid(); generateQuestsForCurrentWeekIfNeeded(true); saveTrackerData(); }
     function promptRemoveAreaFromModal(areaName) { DOM_XP.confirmRemoveAreaMessage.textContent = `Are you sure you want to remove the area "${decodeHtmlEntities(areaName)}"? This action cannot be undone and will delete all associated achievements and quests.`; DOM_XP.confirmRemoveAreaExecuteBtn.dataset.areaNameToRemove = areaName; openXpModal('xpConfirmRemoveAreaModal'); }
@@ -594,14 +585,13 @@
     function navigateDate(offset) { const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate); if (!currentMon) return; if (trackerData.viewMode === 'week') { currentMon.setDate(currentMon.getDate() + (offset * 7)); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; } else { let newDayIndex = trackerData.selectedDayIndex + offset; if (newDayIndex < 0) { currentMon.setDate(currentMon.getDate() - 7); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; trackerData.selectedDayIndex = 6; } else if (newDayIndex > 6) { currentMon.setDate(currentMon.getDate() + 7); trackerData.currentWeekStartDate = getMonday(currentMon).toISOString().split('T')[0]; trackerData.selectedDayIndex = 0; } else { trackerData.selectedDayIndex = newDayIndex; } } updateDateDisplay(); renderWeekdayHeaders(); renderGrid(); generateQuestsForCurrentWeekIfNeeded(); saveTrackerData(); }
     function goToThisWeek() { trackerData.currentWeekStartDate = getMonday(new Date()).toISOString().split('T')[0]; if(trackerData.viewMode === 'day') { const today = new Date(); let currentDayOfWeek = today.getDay(); trackerData.selectedDayIndex = (currentDayOfWeek === 0) ? 6 : currentDayOfWeek - 1; } updateDateDisplay(); renderWeekdayHeaders(); renderGrid(); generateQuestsForCurrentWeekIfNeeded(); saveTrackerData(); }
     
-    // New function to synchronize button texts with the current view mode
     function syncViewModeButtonTexts() {
         if (trackerData.viewMode === 'week') {
             DOM_XP.toggleViewBtn.textContent = 'Day View';
             DOM_XP.prevWeekBtn.textContent = '< Prev Week';
             DOM_XP.nextWeekBtn.textContent = 'Next Week >';
             DOM_XP.thisWeekBtn.textContent = 'This Week';
-        } else { // trackerData.viewMode === 'day'
+        } else {
             DOM_XP.toggleViewBtn.textContent = 'Week View';
             DOM_XP.prevWeekBtn.textContent = '< Prev Day';
             DOM_XP.nextWeekBtn.textContent = 'Next Day >';
@@ -612,10 +602,6 @@
     function toggleViewMode() {
         if (trackerData.viewMode === 'week') {
             trackerData.viewMode = 'day';
-            // DOM_XP.toggleViewBtn.textContent = 'Week View'; // Handled by syncViewModeButtonTexts if called, or set directly
-            // DOM_XP.prevWeekBtn.textContent = '< Prev Day';
-            // DOM_XP.nextWeekBtn.textContent = 'Next Day >';
-            // DOM_XP.thisWeekBtn.textContent = 'Today';
             const today = new Date();
             const currentMon = parseYYYYMMDDToLocalDate(trackerData.currentWeekStartDate);
             if (currentMon) {
@@ -629,14 +615,10 @@
             } else {
                 trackerData.selectedDayIndex = 0;
             }
-        } else { // trackerData.viewMode === 'day'
+        } else {
             trackerData.viewMode = 'week';
-            // DOM_XP.toggleViewBtn.textContent = 'Day View'; // Handled by syncViewModeButtonTexts if called, or set directly
-            // DOM_XP.prevWeekBtn.textContent = '< Prev Week';
-            // DOM_XP.nextWeekBtn.textContent = 'Next Week >';
-            // DOM_XP.thisWeekBtn.textContent = 'This Week';
         }
-        syncViewModeButtonTexts(); // Update button texts based on the new mode
+        syncViewModeButtonTexts();
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();
@@ -645,7 +627,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadTrackerData();
-        syncViewModeButtonTexts(); // Call here to set initial button texts correctly
+        syncViewModeButtonTexts();
         updateDateDisplay();
         renderWeekdayHeaders();
         renderGrid();

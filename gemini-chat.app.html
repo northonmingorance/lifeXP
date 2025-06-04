@@ -24,9 +24,7 @@
     .gemini-chat-input-area { display: flex; flex-shrink: 0; padding: 8px 5px 5px 5px; border-top: 1px solid #ACA899; background-color: #ECE9D8; }
     #geminiChatPromptInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 6px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; resize: none; height: 44px; box-sizing: border-box; }
     #geminiChatSendBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; height: 44px; box-sizing: border-box; }
-
-    /* Gemini App Modal Styles */
-    .gemini-modal { display: none; position: fixed; z-index: 2000; /* Higher z-index within iframe */ left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .gemini-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .gemini-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: geminiFadeIn 0.3s; display: flex; flex-direction: column; }
     .gemini-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
     .gemini-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
@@ -81,7 +79,6 @@
         displayArea: document.getElementById('geminiChatDisplayArea'),
         promptInput: document.getElementById('geminiChatPromptInput'),
         sendBtn: document.getElementById('geminiChatSendBtn'),
-        // Modal elements
         confirmClearChatModal: document.getElementById('geminiConfirmClearChatModal'),
         executeClearChatBtn: document.getElementById('geminiExecuteClearChatBtn'),
     };
@@ -282,7 +279,6 @@
         });
         DOM_GC.clearHistoryBtn.addEventListener('click', handleClearGeminiChatHistory);
 
-        // Modal button listeners
         DOM_GC.executeClearChatBtn.addEventListener('click', executeClearGeminiChat);
         document.querySelectorAll('.gemini-modal-close-button, .gemini-modal-cancel-btn').forEach(btn => {
             btn.addEventListener('click', (event) => {
