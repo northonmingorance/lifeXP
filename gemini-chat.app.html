@@ -4,6 +4,8 @@
     .xp-button:active { border-style: inset; }
     .xp-button:hover { border-color: #005CFE; }
     .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
+    .xp-button-icon { min-width: auto; padding: 3px 6px; font-size: 14px; height: 30px; margin-right: 5px; line-height: 1; }
+
 
     .gemini-chat-body-container { display: flex; flex-direction: column; width: 100%; height: 100%; background-color: #ECE9D8; padding: 0; box-sizing: border-box; }
     .gemini-chat-controls-bar { display: flex; justify-content: flex-end; padding: 3px 5px 0px 5px; background-color: #ECE9D8; flex-shrink: 0; }
@@ -11,7 +13,10 @@
     .gemini-chat-display-area { flex-grow: 1; border: 1px inset #7F7F7F; background-color: #FFFFFF; padding: 8px; margin: 5px; margin-top: 0; overflow-y: auto; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; line-height: 1.4; }
     .gemini-chat-message { margin-bottom: 8px; padding: 6px 8px; border-radius: 3px; word-wrap: break-word; white-space: pre-wrap; max-width: 80%; box-sizing: border-box; }
     .gemini-chat-message .message-sender { font-weight: bold; display: block; margin-bottom: 3px; font-size: 10px; }
-    .gemini-chat-message .message-content {}
+    .gemini-chat-message .message-content-part { display: block; margin-top: 2px; }
+    .gemini-chat-message .message-content-part img,
+    .gemini-chat-message .message-content-part video,
+    .gemini-chat-message .message-content-part audio { max-width: 100%; max-height: 250px; border-radius: 2px; display: block; margin-top: 4px; }
     .gemini-chat-message .message-timestamp { font-size: 9px; color: #555; display: block; margin-top: 4px; text-align: inherit; }
     .gemini-chat-message.user-message { background-color: #E1EBF7; text-align: left; margin-left: auto; border: 1px solid #B4C9E2; }
     .gemini-chat-message.user-message .message-sender { color: #0039A9; }
@@ -21,7 +26,13 @@
     .gemini-chat-message.gemini-message.error-message .message-sender { color: #990000; }
     @keyframes thinking { 0% { content: 'Thinking.'; } 25% { content: 'Thinking..'; } 50% { content: 'Thinking...'; } 75% { content: 'Thinking..'; } 100% { content: 'Thinking.'; } }
     .gemini-thinking-animation::after { content: '...';  animation: thinking 1.5s infinite; display: inline-block;  }
-    .gemini-chat-input-area { display: flex; flex-shrink: 0; padding: 8px 5px 5px 5px; border-top: 1px solid #ACA899; background-color: #ECE9D8; }
+    .gemini-chat-input-container { display: flex; flex-direction: column; flex-shrink: 0; border-top: 1px solid #ACA899; background-color: #ECE9D8; padding: 0 5px 5px 5px;}
+    .gemini-chat-attachment-preview-area { padding: 5px 0; display: none; align-items: center; justify-content: space-between; font-size: 10px; background-color: #F7F7F7; border: 1px dashed #ACA899; margin-bottom:5px; border-radius: 2px; }
+    .gemini-chat-attachment-preview-area img { max-height: 40px; max-width: 60px; border-radius: 2px; margin-right: 8px; }
+    .gemini-chat-attachment-preview-area span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; margin-left: 8px; }
+    #geminiChatRemoveAttachmentBtn { font-size: 14px; padding: 0 5px; height: 20px; line-height: 10px; margin-right: 5px; }
+    .gemini-chat-main-input-area { display: flex; }
+    #geminiChatAttachFileBtn { height: 44px; }
     #geminiChatPromptInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 6px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; resize: none; height: 44px; box-sizing: border-box; }
     #geminiChatSendBtn { min-width: 60px; padding: 3px 8px; font-size: 11px; height: 44px; box-sizing: border-box; }
     .gemini-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
@@ -41,10 +52,19 @@
         <button id="geminiChatClearHistoryBtn" class="xp-button xp-button-small">Clear History</button>
     </div>
     <div class="gemini-chat-display-area" id="geminiChatDisplayArea">
+    </div>
+    <div class="gemini-chat-input-container">
+        <div id="geminiChatAttachmentPreviewArea">
+            <img id="geminiChatAttachmentPreviewImage" src="#" alt="Preview" style="display:none;" />
+            <span id="geminiChatAttachmentPreviewName"></span>
+            <button id="geminiChatRemoveAttachmentBtn" class="xp-button xp-button-small">✖</button>
         </div>
-    <div class="gemini-chat-input-area">
-        <textarea id="geminiChatPromptInput" placeholder="Type your message to Gemini..." rows="2"></textarea>
-        <button id="geminiChatSendBtn" class="xp-button">Send</button>
+        <div class="gemini-chat-main-input-area">
+            <button id="geminiChatAttachFileBtn" class="xp-button xp-button-icon" title="Attach File">📎</button>
+            <input type="file" id="geminiChatFileInput" accept="image/*,audio/*,video/*" style="display: none;">
+            <textarea id="geminiChatPromptInput" placeholder="Type your message to Gemini..." rows="2"></textarea>
+            <button id="geminiChatSendBtn" class="xp-button">Send</button>
+        </div>
     </div>
 </div>
 
@@ -68,6 +88,7 @@
     const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; 
     let GEMINI_API_KEY = ""; 
     const MAX_GEMINI_HISTORY_MESSAGES = 20;
+    const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 
     const SYSTEM_INSTRUCTION_TEXT = `**I. Core Philosophy & Purpose & Role:**
 
@@ -122,6 +143,7 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
     let geminiChatData = {
         history: []
     };
+    let currentAttachment = null; 
 
     const DOM_GC = {
         clearHistoryBtn: document.getElementById('geminiChatClearHistoryBtn'),
@@ -130,6 +152,12 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
         sendBtn: document.getElementById('geminiChatSendBtn'),
         confirmClearChatModal: document.getElementById('geminiConfirmClearChatModal'),
         executeClearChatBtn: document.getElementById('geminiExecuteClearChatBtn'),
+        attachFileBtn: document.getElementById('geminiChatAttachFileBtn'),
+        fileInput: document.getElementById('geminiChatFileInput'),
+        attachmentPreviewArea: document.getElementById('geminiChatAttachmentPreviewArea'),
+        attachmentPreviewImage: document.getElementById('geminiChatAttachmentPreviewImage'),
+        attachmentPreviewName: document.getElementById('geminiChatAttachmentPreviewName'),
+        removeAttachmentBtn: document.getElementById('geminiChatRemoveAttachmentBtn'),
     };
 
     function openGeminiModal(modalId) {
@@ -170,16 +198,39 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
             const senderSpan = document.createElement('span');
             senderSpan.classList.add('message-sender');
             
-            const contentSpan = document.createElement('span');
-            contentSpan.classList.add('message-content');
+            const contentContainer = document.createElement('div');
 
-            if (msg.id && msg.id.startsWith('gemini-thinking-')) { 
-                contentSpan.classList.add('gemini-thinking-animation'); 
-                contentSpan.textContent = ''; 
-            } else {
-                contentSpan.textContent = msg.content;
-            }
-
+            (msg.parts || []).forEach(part => {
+                const partDiv = document.createElement('div');
+                partDiv.classList.add('message-content-part');
+                if (part.type === 'text') {
+                    const textSpan = document.createElement('span');
+                    if (msg.id && msg.id.startsWith('gemini-thinking-')) {
+                        textSpan.classList.add('gemini-thinking-animation');
+                        textSpan.textContent = '';
+                    } else {
+                        textSpan.textContent = part.text;
+                    }
+                    partDiv.appendChild(textSpan);
+                } else if (part.type === 'image' && part.data_base64) {
+                    const img = document.createElement('img');
+                    img.src = `data:${part.mime_type};base64,${part.data_base64}`;
+                    img.alt = part.original_filename || 'Image';
+                    partDiv.appendChild(img);
+                } else if (part.type === 'audio' && part.data_base64) {
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = `data:${part.mime_type};base64,${part.data_base64}`;
+                    partDiv.appendChild(audio);
+                } else if (part.type === 'video' && part.data_base64) {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = `data:${part.mime_type};base64,${part.data_base64}`;
+                    partDiv.appendChild(video);
+                }
+                contentContainer.appendChild(partDiv);
+            });
+            
             const timestampSpan = document.createElement('span');
             timestampSpan.classList.add('message-timestamp');
             timestampSpan.textContent = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -198,20 +249,20 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
                 messageDiv.id = msg.id;
             }
             messageDiv.appendChild(senderSpan);
-            messageDiv.appendChild(contentSpan);
+            messageDiv.appendChild(contentContainer);
             messageDiv.appendChild(timestampSpan);
             DOM_GC.displayArea.appendChild(messageDiv);
         });
         DOM_GC.displayArea.scrollTop = DOM_GC.displayArea.scrollHeight;
     }
 
-    function addMessageToGeminiChat(type, content, isError = false, messageId = null) {
+    function addMessageToGeminiChat(type, parts, isError = false, messageId = null) {
         if (!geminiChatData.history) {
             geminiChatData.history = [];
         }
         const newMessage = {
             type: type,
-            content: content,
+            parts: parts,
             isError: isError,
             timestamp: new Date().toISOString()
         };
@@ -223,11 +274,11 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
         saveGeminiChatData();
     }
     
-    function updateGeminiChatMessage(messageId, newContent, isError = false) {
+    function updateGeminiChatMessage(messageId, newParts, isError = false) {
         if (!geminiChatData.history) return;
         const messageIndex = geminiChatData.history.findIndex(msg => msg.id === messageId);
         if (messageIndex !== -1) {
-            geminiChatData.history[messageIndex].content = newContent;
+            geminiChatData.history[messageIndex].parts = newParts;
             geminiChatData.history[messageIndex].isError = isError;
             if (messageId.startsWith('gemini-thinking-')) {
                  delete geminiChatData.history[messageIndex].id; 
@@ -243,30 +294,113 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
 
     function executeClearGeminiChat() {
         geminiChatData.history = [];
+        currentAttachment = null;
+        updateAttachmentPreview();
         renderGeminiChatHistory();
         saveGeminiChatData();
         closeGeminiModal('geminiConfirmClearChatModal');
     }
 
+    function updateAttachmentPreview() {
+        if (currentAttachment) {
+            DOM_GC.attachmentPreviewName.textContent = currentAttachment.name;
+            if (currentAttachment.type.startsWith('image/')) {
+                DOM_GC.attachmentPreviewImage.src = `data:${currentAttachment.type};base64,${currentAttachment.data_base64}`;
+                DOM_GC.attachmentPreviewImage.style.display = 'inline-block';
+            } else {
+                DOM_GC.attachmentPreviewImage.style.display = 'none';
+            }
+            DOM_GC.attachmentPreviewArea.style.display = 'flex';
+        } else {
+            DOM_GC.attachmentPreviewArea.style.display = 'none';
+            DOM_GC.attachmentPreviewImage.style.display = 'none';
+            DOM_GC.attachmentPreviewImage.src = '#';
+            DOM_GC.attachmentPreviewName.textContent = '';
+            DOM_GC.fileInput.value = null; 
+        }
+    }
+
+    DOM_GC.attachFileBtn.addEventListener('click', () => {
+        DOM_GC.fileInput.click();
+    });
+
+    DOM_GC.fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is ${(MAX_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0)} MB.`);
+                DOM_GC.fileInput.value = null;
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Full = e.target.result;
+                const base64Data = base64Full.split(',')[1];
+                currentAttachment = {
+                    name: file.name,
+                    type: file.type,
+                    data_base64: base64Data
+                };
+                updateAttachmentPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    DOM_GC.removeAttachmentBtn.addEventListener('click', () => {
+        currentAttachment = null;
+        updateAttachmentPreview();
+    });
+
     async function handleSendGeminiPrompt() {
         const promptText = DOM_GC.promptInput.value.trim();
-        if (!promptText) return;
+        const userMessageParts = [];
 
-        addMessageToGeminiChat('user', promptText);
+        if (currentAttachment) {
+            let partType = '';
+            if (currentAttachment.type.startsWith('image/')) partType = 'image';
+            else if (currentAttachment.type.startsWith('audio/')) partType = 'audio';
+            else if (currentAttachment.type.startsWith('video/')) partType = 'video';
+            else {
+                console.warn("Unsupported attachment type:", currentAttachment.type);
+            }
+
+            if (partType) {
+                 userMessageParts.push({
+                    type: partType,
+                    mime_type: currentAttachment.type,
+                    data_base64: currentAttachment.data_base64,
+                    original_filename: currentAttachment.name
+                });
+            }
+        }
+
+        if (promptText) {
+            userMessageParts.push({ type: 'text', text: promptText });
+        }
+
+        if (userMessageParts.length === 0) return;
+
+        addMessageToGeminiChat('user', userMessageParts);
         DOM_GC.promptInput.value = '';
+        currentAttachment = null;
+        updateAttachmentPreview(); 
+        
         DOM_GC.promptInput.disabled = true;
         DOM_GC.sendBtn.disabled = true;
+        DOM_GC.attachFileBtn.disabled = true;
 
         if (!GEMINI_API_KEY) {
-            addMessageToGeminiChat('gemini', "Error: Gemini API Key not available. Please ensure it's configured in the OS.", true);
+            addMessageToGeminiChat('gemini', [{ type: 'text', text: "Error: Gemini API Key not available. Please ensure it's configured in the OS." }], true);
             DOM_GC.promptInput.disabled = false;
             DOM_GC.sendBtn.disabled = false;
+            DOM_GC.attachFileBtn.disabled = false;
             DOM_GC.promptInput.focus();
             return;
         }
         
         const thinkingMsgId = `gemini-thinking-${Date.now()}`;
-        addMessageToGeminiChat('gemini', '', false, thinkingMsgId); 
+        addMessageToGeminiChat('gemini', [{type: 'text', text: ''}], false, thinkingMsgId); 
 
         const apiMessages = [];
         apiMessages.push({
@@ -279,21 +413,37 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
         });
         
         const historyForApi = geminiChatData.history.filter(
-            msg => !msg.isError && msg.id !== thinkingMsgId
+            msg => !msg.isError && msg.id !== thinkingMsgId 
         );
         
         const conversationalHistory = historyForApi.slice(-MAX_GEMINI_HISTORY_MESSAGES); 
 
         conversationalHistory.forEach(msg => {
-            apiMessages.push({
-                role: msg.type === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            });
+            const apiParts = (msg.parts || []).map(part => {
+                if (part.type === 'text') {
+                    return { text: part.text };
+                } else if (['image', 'audio', 'video'].includes(part.type) && part.data_base64) {
+                    return {
+                        inline_data: {
+                            mime_type: part.mime_type,
+                            data: part.data_base64
+                        }
+                    };
+                }
+                return null; 
+            }).filter(p => p !== null);
+
+            if (apiParts.length > 0) {
+                 apiMessages.push({
+                    role: msg.type === 'user' ? 'user' : 'model',
+                    parts: apiParts
+                });
+            }
         });
         
         try {
             const requestBody = {
-                contents: apiMessages 
+                contents: apiMessages,
             };
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
@@ -305,25 +455,28 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
                 const errorData = await response.json();
                 console.error("Gemini API Error:", errorData);
                 const errorMessage = errorData?.error?.message || `API request failed with status ${response.status}`;
-                updateGeminiChatMessage(thinkingMsgId, `Error: ${errorMessage}`, true);
+                updateGeminiChatMessage(thinkingMsgId, [{type: 'text', text: `Error: ${errorMessage}`}], true);
             } else {
                 const data = await response.json();
                 if (data.candidates && data.candidates.length > 0 &&
                     data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
-                    const geminiResponse = data.candidates[0].content.parts[0].text;
-                    updateGeminiChatMessage(thinkingMsgId, geminiResponse, false);
+                    const geminiResponseParts = data.candidates[0].content.parts.map(part => {
+                        if (part.text) return { type: 'text', text: part.text };
+                    });
+                    updateGeminiChatMessage(thinkingMsgId, geminiResponseParts, false);
                 } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                     updateGeminiChatMessage(thinkingMsgId, `Blocked: ${data.promptFeedback.blockReason}. ${data.promptFeedback.blockReasonMessage || ''}`, true);
+                     updateGeminiChatMessage(thinkingMsgId, [{type: 'text', text: `Blocked: ${data.promptFeedback.blockReason}. ${data.promptFeedback.blockReasonMessage || ''}`}], true);
                 } else {
-                    updateGeminiChatMessage(thinkingMsgId, "Received an empty or unexpected response from Gemini.", true);
+                    updateGeminiChatMessage(thinkingMsgId, [{type: 'text', text: "Received an empty or unexpected response from Gemini."}], true);
                 }
             }
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            updateGeminiChatMessage(thinkingMsgId, `Error: Could not connect to Gemini. ${error.message}`, true);
+            updateGeminiChatMessage(thinkingMsgId, [{type: 'text', text: `Error: Could not connect to Gemini. ${error.message}`}], true);
         } finally {
             DOM_GC.promptInput.disabled = false;
             DOM_GC.sendBtn.disabled = false;
+            DOM_GC.attachFileBtn.disabled = false;
             DOM_GC.promptInput.focus();
         }
     }
@@ -352,7 +505,7 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
             GEMINI_API_KEY = event.data.key;
             console.log("Gemini Chat App: Gemini API Key received.");
             if (!GEMINI_API_KEY) {
-                 addMessageToGeminiChat('gemini', "Warning: Gemini API Key received from OS is empty.", true);
+                 addMessageToGeminiChat('gemini', [{type: 'text', text: "Warning: Gemini API Key received from OS is empty."}], true);
             }
         }
     });
@@ -361,13 +514,14 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
         loadGeminiChatData();
         renderGeminiChatHistory();
         addGeminiChatEventListeners();
+        updateAttachmentPreview(); 
         
         if (window.parent && window.parent !== window) {
             console.log("Gemini Chat App: Requesting API key from parent OS.");
             window.parent.postMessage({ type: 'requestApiKey', service: 'gemini', appId: 'geminiChat' }, '*'); 
         } else {
             console.warn("Gemini Chat App: Not running in an iframe or parent context not detected for API key request.");
-             addMessageToGeminiChat('gemini', "Error: Cannot request API key. App may not be running in the OS shell.", true);
+             addMessageToGeminiChat('gemini', [{type: 'text', text: "Error: Cannot request API key. App may not be running in the OS shell."}], true);
         }
     });
 </script>
