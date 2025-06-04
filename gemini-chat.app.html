@@ -27,8 +27,8 @@
     @keyframes thinking { 0% { content: 'Thinking.'; } 25% { content: 'Thinking..'; } 50% { content: 'Thinking...'; } 75% { content: 'Thinking..'; } 100% { content: 'Thinking.'; } }
     .gemini-thinking-animation::after { content: '...';  animation: thinking 1.5s infinite; display: inline-block;  }
     .gemini-chat-input-container { display: flex; flex-direction: column; flex-shrink: 0; border-top: 1px solid #ACA899; background-color: #ECE9D8; padding: 0 5px 5px 5px;}
-    .gemini-chat-attachment-preview-area { padding: 5px 0; display: none; align-items: center; justify-content: space-between; font-size: 10px; background-color: #F7F7F7; border: 1px dashed #ACA899; margin-bottom:5px; border-radius: 2px; }
-    .gemini-chat-attachment-preview-area img { max-height: 40px; max-width: 60px; border-radius: 2px; margin-right: 8px; }
+    .gemini-chat-attachment-preview-area { padding: 5px 0; display: none; align-items: center; justify-content: space-between; font-size: 10px; background-color: #F7F7F7; border: 1px dashed #ACA899; margin-bottom:5px; border-radius: 2px; min-height: 30px; box-sizing: border-box; }
+    /* Removed geminiChatAttachmentPreviewArea img specific styles as it's now always hidden for preview */
     .gemini-chat-attachment-preview-area span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; margin-left: 8px; }
     #geminiChatRemoveAttachmentBtn { font-size: 14px; padding: 0 5px; height: 20px; line-height: 10px; margin-right: 5px; }
     .gemini-chat-main-input-area { display: flex; }
@@ -88,7 +88,7 @@
     const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; 
     let GEMINI_API_KEY = ""; 
     const MAX_GEMINI_HISTORY_MESSAGES = 20;
-    const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+    const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
 
     const SYSTEM_INSTRUCTION_TEXT = `**I. Core Philosophy & Purpose & Role:**
 
@@ -155,7 +155,7 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
         attachFileBtn: document.getElementById('geminiChatAttachFileBtn'),
         fileInput: document.getElementById('geminiChatFileInput'),
         attachmentPreviewArea: document.getElementById('geminiChatAttachmentPreviewArea'),
-        attachmentPreviewImage: document.getElementById('geminiChatAttachmentPreviewImage'),
+        attachmentPreviewImage: document.getElementById('geminiChatAttachmentPreviewImage'), // Kept for structure if needed later, but hidden for now.
         attachmentPreviewName: document.getElementById('geminiChatAttachmentPreviewName'),
         removeAttachmentBtn: document.getElementById('geminiChatRemoveAttachmentBtn'),
     };
@@ -304,12 +304,8 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
     function updateAttachmentPreview() {
         if (currentAttachment) {
             DOM_GC.attachmentPreviewName.textContent = currentAttachment.name;
-            if (currentAttachment.type.startsWith('image/')) {
-                DOM_GC.attachmentPreviewImage.src = `data:${currentAttachment.type};base64,${currentAttachment.data_base64}`;
-                DOM_GC.attachmentPreviewImage.style.display = 'inline-block';
-            } else {
-                DOM_GC.attachmentPreviewImage.style.display = 'none';
-            }
+            DOM_GC.attachmentPreviewImage.style.display = 'none'; // Ensure image element is hidden
+            DOM_GC.attachmentPreviewImage.src = '#'; // Reset src
             DOM_GC.attachmentPreviewArea.style.display = 'flex';
         } else {
             DOM_GC.attachmentPreviewArea.style.display = 'none';
@@ -361,7 +357,7 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
             if (currentAttachment.type.startsWith('image/')) partType = 'image';
             else if (currentAttachment.type.startsWith('audio/')) partType = 'audio';
             else if (currentAttachment.type.startsWith('video/')) partType = 'video';
-            else {
+            else { 
                 console.warn("Unsupported attachment type:", currentAttachment.type);
             }
 
@@ -462,6 +458,7 @@ Be the helpful hum in the background, the well-organized set of tools, the insig
                     data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
                     const geminiResponseParts = data.candidates[0].content.parts.map(part => {
                         if (part.text) return { type: 'text', text: part.text };
+                        return { type: 'text', text: (part.text || "") }; 
                     });
                     updateGeminiChatMessage(thinkingMsgId, geminiResponseParts, false);
                 } else if (data.promptFeedback && data.promptFeedback.blockReason) {
