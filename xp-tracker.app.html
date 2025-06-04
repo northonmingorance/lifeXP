@@ -1,5 +1,16 @@
 <style>
-    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #ECE9D8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    body { 
+        margin: 0; 
+        padding: 0; 
+        font-family: "Tahoma", "Geneva", sans-serif; 
+        font-size: 11px; 
+        background-color: #ECE9D8; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100vh; 
+        overflow-x: auto; /* Allow horizontal scrolling for the iframe body */
+        overflow-y: hidden; /* Prevent vertical scroll on body, table-container will handle it */
+    }
     .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
     .xp-button:active { border-style: inset; }
     .xp-button:hover { border-color: #005CFE; }
@@ -19,7 +30,13 @@
     #currentWeekDisplay { font-weight: bold; }
     #weekCountDisplay { font-size: 0.9em; color: #333; }
     .global-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; }
-    .table-container { flex-grow: 1; overflow: auto; padding: 0 15px 15px 15px;}
+    
+    .table-container { 
+        flex-grow: 1; 
+        overflow-y: auto; /* Vertical scroll for table container if needed */
+        overflow-x: visible; /* Allow table to dictate width, body will scroll */
+        padding: 0 15px 15px 15px;
+    }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th, td { border: 1px solid #ACA899; padding: 8px; text-align: left; vertical-align: top; word-wrap: break-word; }
     th { background-color: #D4D0C8; text-align: center; position: sticky; top: 0; z-index: 1;}
@@ -35,14 +52,14 @@
     .achievement-content img { max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: auto; margin-top: 0px; border-radius: 2px; }
     .achievement-item-actions { display: flex; gap: 3px; }
     .achievement-add-btn-cell {
-        display: block; /* For margin: auto to work */
-        width: 30px;  /* Fixed smaller width */
-        height: 22px; /* Adjusted height */
-        padding: 0;   /* Reset padding */
-        margin: 5px auto 0 auto; /* Centering: top, horizontal-auto, bottom */
-        line-height: 20px; /* For vertical text centering */
-        text-align: center; /* Ensure + is centered */
-        font-size: 14px; /* Make the '+' a bit larger if needed */
+        display: block; 
+        width: 30px;  
+        height: 22px; 
+        padding: 0;   
+        margin: 5px auto 0 auto; 
+        line-height: 20px; 
+        text-align: center; 
+        font-size: 14px; 
     }
     .area-name-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
     .delete-area-btn { padding: 1px 6px; min-width: auto; font-size: 10px; font-family: "Tahoma", "Geneva", sans-serif; font-weight: bold; margin-left: 10px; background-color: #E04343; color: white; border: 1px outset white; line-height: 1.2; cursor: pointer; }
