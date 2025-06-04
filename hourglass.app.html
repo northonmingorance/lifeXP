@@ -21,7 +21,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 20px; /* Padding around the content within the full window container */
+        padding: 20px;
         box-sizing: border-box;
         width: 100%;
         height: 100%;
@@ -29,7 +29,6 @@
 
     #timeRemainingDisplay,
     #timePassedDisplay {
-        font-size: 78px;
         font-weight: bold;
         padding: 10px;
         margin-bottom: 10px;
@@ -38,6 +37,9 @@
         border: 1px solid #7F7F7F;
         background-color: #FFFFFF;
         box-shadow: inset 1px 1px 2px #B0B0B0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     #timeRemainingDisplay {
@@ -47,12 +49,11 @@
         outline: 2px solid #005CFE;
     }
 
-
     .hourglass-controls {
         display: flex;
         justify-content: center;
         gap: 5px;
-        width: 100%; /* Controls bar takes full width of its part of the container */
+        width: 101.5%;
         flex-wrap: nowrap;
     }
 
@@ -92,11 +93,7 @@
         50% { background-color: #FFFFFF; color: #000000; }
     }
 
-    @media () {
-        #timeRemainingDisplay,
-        #timePassedDisplay {
-            font-size: 32px;
-        }
+    @media (max-height: 600px), (max-width: 400px) {
         .xp-button {
             font-size: 11px;
             padding: 6px 8px;
@@ -114,11 +111,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        flex-grow: 1;
+        justify-content: center;
     }
-
 </style>
-</head>
-<body>
 <div class="hourglass-app-container">
     <div class="content-wrapper">
         <div id="timeRemainingDisplay" contenteditable="true" title="Click to edit time (MM:SS)">05:00</div>
@@ -131,7 +127,6 @@
         </div>
     </div>
 </div>
-
 <script>
     const timeRemainingDisplay = document.getElementById('timeRemainingDisplay');
     const timePassedDisplay = document.getElementById('timePassedDisplay');
@@ -141,13 +136,25 @@
     const muteBtn = document.getElementById('muteBtn');
 
     let timerInterval = null;
-    let totalSetTimeInSeconds = 300; // Default 5 minutes
+    let totalSetTimeInSeconds = 300;
     let currentTimeRemainingInSeconds = totalSetTimeInSeconds;
     let currentTimePassedInSeconds = 0;
     let isMuted = false;
-    let originalTimeInput = "05:00"; // To store the raw input for reset
+    let originalTimeInput = "05:00";
 
     const HOURGLASS_STORAGE_KEY = 'hourglassTimerAppData_v1';
+
+    function updateDynamicFontSize() {
+        const windowHeight = window.innerHeight;
+        const availableHeightForDisplay = windowHeight * 0.8	;
+        const fontSizeForOneDisplay = availableHeightForDisplay / 2 * 0.7;
+        
+        let newSize = Math.max(20, Math.min(fontSizeForOneDisplay, 300));
+
+        timeRemainingDisplay.style.fontSize = `${newSize}px`;
+        timePassedDisplay.style.fontSize = `${newSize}px`;
+    }
+
 
     function loadSettings() {
         const storedSettings = localStorage.getItem(HOURGLASS_STORAGE_KEY);
@@ -159,7 +166,6 @@
                 originalTimeInput = settings.originalTimeInput || formatTime(totalSetTimeInSeconds);
                 currentTimeRemainingInSeconds = totalSetTimeInSeconds;
             } catch (e) {
-                console.error("Error loading Hourglass settings:", e);
                 totalSetTimeInSeconds = 300;
                 isMuted = false;
                 originalTimeInput = "05:00";
@@ -177,7 +183,6 @@
         };
         localStorage.setItem(HOURGLASS_STORAGE_KEY, JSON.stringify(settings));
     }
-
 
     function formatTime(totalSeconds) {
         if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
@@ -244,7 +249,6 @@
         }
         timeRemainingDisplay.setAttribute('data-editing', 'true');
     });
-
 
     function playAlertSound() {
         if (!isMuted && typeof Tone !== 'undefined') {
@@ -349,6 +353,9 @@
         loadSettings();
         timeRemainingDisplay.textContent = formatTime(currentTimeRemainingInSeconds);
         timePassedDisplay.textContent = formatTime(currentTimePassedInSeconds);
+        updateDynamicFontSize();
     });
+
+    window.addEventListener('resize', updateDynamicFontSize);
 
 </script>
