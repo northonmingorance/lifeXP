@@ -67,7 +67,7 @@
     "file": "hourglass.app.html",
     "minWidth": 375,
     "minHeight": 330,
-    "defaultWidth": 450,
-    "defaultHeight": 705
+    "defaultWidth": 375,
+    "defaultHeight": 330
   }
 ]
