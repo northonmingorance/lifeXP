@@ -59,5 +59,15 @@
     "minHeight": 240,
     "defaultWidth": 400,
     "defaultHeight": 300
+  },
+  {
+    "id": "hourglass",
+    "name": "Hourglass",
+    "icon": "⏳",
+    "file": "hourglass.app.html",
+    "minWidth": 375,
+    "minHeight": 250,
+    "defaultWidth": 450,
+    "defaultHeight": 705
   }
 ]

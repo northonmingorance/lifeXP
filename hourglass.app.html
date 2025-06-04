@@ -1,0 +1,354 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: "Tahoma", "Geneva", sans-serif;
+        font-size: 11px;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        background-color: #ECE9D8;
+        color: #000000;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .hourglass-app-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px; /* Padding around the content within the full window container */
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+    }
+
+    #timeRemainingDisplay,
+    #timePassedDisplay {
+        font-size: 78px;
+        font-weight: bold;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+        height: 100%;
+        border: 1px solid #7F7F7F;
+        background-color: #FFFFFF;
+        box-shadow: inset 1px 1px 2px #B0B0B0;
+    }
+
+    #timeRemainingDisplay {
+        cursor: pointer;
+    }
+    #timeRemainingDisplay:focus {
+        outline: 2px solid #005CFE;
+    }
+
+
+    .hourglass-controls {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        width: 100%; /* Controls bar takes full width of its part of the container */
+        flex-wrap: nowrap;
+    }
+
+    .xp-button {
+        background-color: #ECE9D8;
+        border: 1px outset #7F7F7F;
+        padding: 8px 10px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 12px;
+        flex-grow: 1;
+        flex-shrink: 1;
+        flex-basis: 0;
+        min-width: 60px;
+    }
+
+    .xp-button:active {
+        border-style: inset;
+    }
+
+    .xp-button:hover:not(:disabled) {
+        border-color: #005CFE;
+    }
+    .xp-button:disabled {
+        color: #7F7F7F;
+        border-color: #ACA899;
+        cursor: default;
+        opacity: 0.7;
+    }
+
+    .flashing {
+        animation: flashAnimation 0.7s infinite;
+    }
+
+    @keyframes flashAnimation {
+        0%, 100% { background-color: #FFDDDD; color: #D8000C; }
+        50% { background-color: #FFFFFF; color: #000000; }
+    }
+
+    @media () {
+        #timeRemainingDisplay,
+        #timePassedDisplay {
+            font-size: 32px;
+        }
+        .xp-button {
+            font-size: 11px;
+            padding: 6px 8px;
+            min-width: 50px;
+        }
+        .hourglass-controls {
+            gap: 3px;
+        }
+         .hourglass-app-container {
+            padding: 10px;
+        }
+    }
+    .content-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+</style>
+</head>
+<body>
+<div class="hourglass-app-container">
+    <div class="content-wrapper">
+        <div id="timeRemainingDisplay" contenteditable="true" title="Click to edit time (MM:SS)">05:00</div>
+        <div id="timePassedDisplay">00:00</div>
+        <div class="hourglass-controls">
+            <button id="startBtn" class="xp-button">Start</button>
+            <button id="pauseBtn" class="xp-button" disabled>Pause</button>
+            <button id="resetBtn" class="xp-button">Reset</button>
+            <button id="muteBtn" class="xp-button">Mute</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const timeRemainingDisplay = document.getElementById('timeRemainingDisplay');
+    const timePassedDisplay = document.getElementById('timePassedDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const muteBtn = document.getElementById('muteBtn');
+
+    let timerInterval = null;
+    let totalSetTimeInSeconds = 300; // Default 5 minutes
+    let currentTimeRemainingInSeconds = totalSetTimeInSeconds;
+    let currentTimePassedInSeconds = 0;
+    let isMuted = false;
+    let originalTimeInput = "05:00"; // To store the raw input for reset
+
+    const HOURGLASS_STORAGE_KEY = 'hourglassTimerAppData_v1';
+
+    function loadSettings() {
+        const storedSettings = localStorage.getItem(HOURGLASS_STORAGE_KEY);
+        if (storedSettings) {
+            try {
+                const settings = JSON.parse(storedSettings);
+                totalSetTimeInSeconds = settings.totalSetTimeInSeconds || 300;
+                isMuted = settings.isMuted || false;
+                originalTimeInput = settings.originalTimeInput || formatTime(totalSetTimeInSeconds);
+                currentTimeRemainingInSeconds = totalSetTimeInSeconds;
+            } catch (e) {
+                console.error("Error loading Hourglass settings:", e);
+                totalSetTimeInSeconds = 300;
+                isMuted = false;
+                originalTimeInput = "05:00";
+            }
+        }
+        updateDisplay();
+        updateMuteButtonText();
+    }
+
+    function saveSettings() {
+        const settings = {
+            totalSetTimeInSeconds,
+            isMuted,
+            originalTimeInput
+        };
+        localStorage.setItem(HOURGLASS_STORAGE_KEY, JSON.stringify(settings));
+    }
+
+
+    function formatTime(totalSeconds) {
+        if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function updateDisplay() {
+        timeRemainingDisplay.textContent = formatTime(currentTimeRemainingInSeconds);
+        timePassedDisplay.textContent = formatTime(currentTimePassedInSeconds);
+    }
+
+    function parseTimeInput(inputString) {
+        const parts = inputString.split(':');
+        if (parts.length === 2) {
+            const minutes = parseInt(parts[0], 10);
+            const seconds = parseInt(parts[1], 10);
+            if (!isNaN(minutes) && !isNaN(seconds) && minutes >= 0 && seconds >= 0 && seconds < 60) {
+                return (minutes * 60) + seconds;
+            }
+        } else if (!isNaN(parseInt(inputString, 10))) {
+            const totalSeconds = parseInt(inputString, 10);
+            if (totalSeconds >=0) return totalSeconds;
+        }
+        return null;
+    }
+
+    timeRemainingDisplay.addEventListener('blur', () => {
+        if (timerInterval) return;
+        const newTimeSeconds = parseTimeInput(timeRemainingDisplay.textContent);
+        if (newTimeSeconds !== null && newTimeSeconds >= 0) {
+            totalSetTimeInSeconds = newTimeSeconds;
+            currentTimeRemainingInSeconds = totalSetTimeInSeconds;
+            currentTimePassedInSeconds = 0;
+            originalTimeInput = formatTime(totalSetTimeInSeconds);
+            updateDisplay();
+            saveSettings();
+        } else {
+            timeRemainingDisplay.textContent = formatTime(totalSetTimeInSeconds);
+        }
+        timeRemainingDisplay.removeAttribute('data-editing');
+    });
+
+    timeRemainingDisplay.addEventListener('keydown', (event) => {
+        if (timerInterval) { event.preventDefault(); return; }
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            timeRemainingDisplay.blur();
+        }
+        if (!/^[0-9:]$/.test(event.key) &&
+            !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(event.key) &&
+            !(event.ctrlKey && event.key === 'a') &&
+            !(event.metaKey && event.key === 'a')
+        ) {
+            event.preventDefault();
+        }
+    });
+    
+    timeRemainingDisplay.addEventListener('focus', () => {
+         if (timerInterval) {
+            timeRemainingDisplay.blur();
+            return;
+        }
+        timeRemainingDisplay.setAttribute('data-editing', 'true');
+    });
+
+
+    function playAlertSound() {
+        if (!isMuted && typeof Tone !== 'undefined') {
+            try {
+                const synth = new Tone.Synth().toDestination();
+                synth.triggerAttackRelease("C5", "8n", Tone.now());
+                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+            } catch (e) {
+                console.error("Tone.js error:", e);
+            }
+        }
+    }
+
+    function startFlashing() {
+        timeRemainingDisplay.classList.add('flashing');
+    }
+
+    function stopFlashing() {
+        timeRemainingDisplay.classList.remove('flashing');
+    }
+
+    function startTimer() {
+        if (timerInterval) return;
+        if (currentTimeRemainingInSeconds <= 0) {
+            if (totalSetTimeInSeconds <= 0) totalSetTimeInSeconds = 300;
+            currentTimeRemainingInSeconds = totalSetTimeInSeconds;
+            currentTimePassedInSeconds = 0;
+            originalTimeInput = formatTime(totalSetTimeInSeconds);
+            updateDisplay();
+        }
+
+        stopFlashing();
+        timeRemainingDisplay.contentEditable = false;
+
+        timerInterval = setInterval(() => {
+            if (currentTimeRemainingInSeconds > 0) {
+                currentTimeRemainingInSeconds--;
+                currentTimePassedInSeconds++;
+                updateDisplay();
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                playAlertSound();
+                startFlashing();
+                startBtn.disabled = true;
+                pauseBtn.disabled = true;
+                timeRemainingDisplay.contentEditable = true;
+            }
+        }, 1000);
+
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+    }
+
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        timeRemainingDisplay.contentEditable = true;
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        stopFlashing();
+
+        const parsedOriginal = parseTimeInput(originalTimeInput);
+        if (parsedOriginal !== null && parsedOriginal >=0) {
+             totalSetTimeInSeconds = parsedOriginal;
+        } else {
+            totalSetTimeInSeconds = 300;
+            originalTimeInput = "05:00";
+        }
+
+        currentTimeRemainingInSeconds = totalSetTimeInSeconds;
+        currentTimePassedInSeconds = 0;
+        updateDisplay();
+
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        timeRemainingDisplay.contentEditable = true;
+        saveSettings();
+    }
+    
+    function updateMuteButtonText() {
+        muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        updateMuteButtonText();
+        saveSettings();
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    muteBtn.addEventListener('click', toggleMute);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+        timeRemainingDisplay.textContent = formatTime(currentTimeRemainingInSeconds);
+        timePassedDisplay.textContent = formatTime(currentTimePassedInSeconds);
+    });
+
+</script>
