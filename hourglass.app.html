@@ -40,6 +40,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        white-space: nowrap;
+        box-sizing: border-box;
     }
 
     #timeRemainingDisplay {
@@ -53,8 +56,9 @@
         display: flex;
         justify-content: center;
         gap: 5px;
-        width: 101.5%;
+        width: 100%;
         flex-wrap: nowrap;
+        box-sizing: border-box;
     }
 
     .xp-button {
@@ -113,6 +117,8 @@
         align-items: center;
         flex-grow: 1;
         justify-content: center;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 </style>
 <div class="hourglass-app-container">
