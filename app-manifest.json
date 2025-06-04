@@ -25,7 +25,7 @@
     "icon": "⏯️",
     "file": "play-jockey.app.html",
     "minWidth": 375,
-    "minHeight": 250,
+    "minHeight": 415,
     "defaultWidth": 480,
     "defaultHeight": 705,
     "customIconClass": "playJockeyIconStyle"
