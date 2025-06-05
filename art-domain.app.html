@@ -137,6 +137,7 @@
         const modal = document.getElementById(modalId);
         if (modal) modal.style.display = 'none';
         artDomainState.currentArtworkForModal = null;
+        DOM_AD.modalImage.src = '#'; // Clear image to prevent showing old one briefly
     }
 
     function saveLocalState() {
@@ -184,8 +185,14 @@
         try {
             const response = await fetch(url);
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || `API request failed: ${response.status}`);
+                let errorMsg = `API request failed: ${response.status} ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.detail || errorData.title || (errorData.error ? errorData.error.message : null) || errorMsg;
+                } catch (e) {
+                    // Response was not JSON, or JSON parsing failed. Use the statusText.
+                }
+                throw new Error(errorMsg);
             }
             const data = await response.json();
             artDomainState.currentArtworks = data.data || [];
@@ -214,12 +221,10 @@
 
             const img = document.createElement('img');
             img.className = 'thumbnail';
-            if (artwork.thumbnail && artwork.thumbnail.url) {
-                img.src = artwork.thumbnail.url;
-                img.alt = artwork.thumbnail.alt_text || artwork.title;
-            } else if (artwork.image_id) {
+            
+            if (artwork.image_id) {
                 img.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/200,/0/default.jpg`;
-                img.alt = artwork.title;
+                img.alt = artwork.title || (artwork.thumbnail && artwork.thumbnail.alt_text ? artwork.thumbnail.alt_text : 'Artwork thumbnail');
             } else {
                 img.src = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=No+Image`;
                 img.alt = 'Placeholder Image';
@@ -267,6 +272,8 @@
         artDomainState.currentArtworkForModal = artwork;
 
         DOM_AD.modalTitle.textContent = artwork.title || 'Artwork Details';
+        DOM_AD.modalImage.src = '#'; // Clear previous image immediately
+        
         if (artwork.image_id) {
             DOM_AD.modalImage.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/600,/0/default.jpg`;
             DOM_AD.modalImage.alt = artwork.title || 'Artwork Image';
@@ -276,7 +283,7 @@
             DOM_AD.modalImage.src = `https://placehold.co/600x400/ECE9D8/7F7F7F?text=No+Preview`;
             DOM_AD.modalImage.alt = 'No Image Available';
             DOM_AD.modalDownloadBtn.disabled = true;
-             DOM_AD.modalImage.style.display = 'block';
+            DOM_AD.modalImage.style.display = 'block';
         }
         DOM_AD.modalImage.onerror = function() {
             this.src = `https://placehold.co/600x400/ECE9D8/7F7F7F?text=Preview+Error`;
@@ -295,7 +302,7 @@
         openArtDomainModal('artDomainDetailModal');
     }
 
-    async function handleDownloadImage() {
+    function handleDownloadImage() {
         if (!artDomainState.currentArtworkForModal || !artDomainState.currentArtworkForModal.image_id) {
             alert("No image available for download.");
             return;
@@ -303,23 +310,8 @@
         const artwork = artDomainState.currentArtworkForModal;
         const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/full/0/default.jpg`;
         const fileName = `${(artwork.title || 'artwork').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${artwork.id}.jpg`;
-
-        try {
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('Failed to fetch image for download.');
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-        } catch (error) {
-            console.error("Download error:", error);
-            alert(`Could not download image. You can try saving directly from: ${imageUrl}`);
-            window.open(imageUrl, '_blank');
-        }
+        
+        window.open(imageUrl, '_blank');
     }
 
     function addArtDomainEventListeners() {
