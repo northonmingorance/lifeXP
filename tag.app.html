@@ -1,0 +1,700 @@
+<style>
+    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; color: #000000; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button:active { border-style: inset; }
+    .xp-button:hover:not(:disabled) { border-color: #005CFE; background-color: #F0F8FF; }
+    .xp-button:disabled { color: #7F7F7F; border-color: #ACA899; cursor: default; opacity: 0.7; }
+    .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
+
+    .tag-app-body-container { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; }
+    .tag-controls-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background-color: #ECE9D8; border-bottom: 1px solid #ACA899; flex-shrink: 0; }
+    #tagFilterInput { flex-grow: 1; margin-right: 8px; border: 1px inset #7F7F7F; padding: 5px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; max-width: 250px;}
+    
+    .tag-tabs-bar { display: flex; flex-wrap: nowrap; overflow-x: auto; background-color: #C0C0C0; padding: 3px 3px 0 3px; border-bottom: 1px solid #808080; flex-shrink: 0; gap: 2px; }
+    .tag-collection-tab { padding: 6px 10px; border: 1px outset #FFFFFF; border-bottom: none; background-color: #D4D0C8; cursor: default; font-size: 10px; white-space: nowrap; border-top-left-radius: 3px; border-top-right-radius: 3px; }
+    .tag-collection-tab:hover { background-color: #E0E0E0; border-color: #B0B0B0;}
+    .tag-collection-tab.active { background-color: #ECE9D8; border-style: inset; border-bottom: 1px solid #ECE9D8; position: relative; z-index: 1; font-weight: bold; }
+    .tag-add-collection-btn { padding: 4px 7px !important; font-size:12px !important; line-height:1; margin-left: 2px !important; min-width:auto !important;}
+
+    .tag-display-area { flex-grow: 1; overflow-y: auto; padding: 8px; background-color: #FFFFFF; border: 1px inset #B0B0B0; margin: 5px; margin-top: 5px; position:relative; z-index:0;}
+    .tag-list-item { display: flex; align-items: flex-start; padding: 10px; border: 1px outset #D4D0C8; border-radius: 3px; margin-bottom: 8px; background-color: #FDFDFD; cursor: default; position: relative; transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out; }
+    .tag-list-item:hover { border: 1px solid #005CFE; background-color: #F0F8FF; }
+    .tag-item-thumbnail { width: 65px; height: 65px; flex-shrink: 0; margin-right: 12px; background-color: #F0F0F0; border: 1px solid #C8C8C8; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 2px; }
+    .tag-item-thumbnail img { max-width: 100%; max-height: 100%; object-fit: cover; }
+    .tag-item-thumbnail span { font-size: 30px; color: #B0B0B0; }
+    .tag-item-info { flex-grow: 1; display: flex; flex-direction: column; }
+    .tag-item-name { font-weight: bold; font-size: 13px; color: #0039A9; margin-bottom: 4px; }
+    .tag-item-category { font-size: 10px; color: #4A4A4A; margin-bottom: 5px; background-color: #EAEAEA; padding: 2px 5px; border-radius: 2px; align-self: flex-start; }
+    .tag-item-description { font-size: 11px; color: #333333; margin-bottom: 5px; white-space: pre-wrap; word-wrap: break-word; max-height: 4.5em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.4;}
+    .tag-item-timestamp { font-size: 9px; color: #707070; margin-top: auto; }
+    .tag-empty-message { text-align: center; padding: 25px; color: #777777; font-size: 12px; }
+
+    .tag-context-menu { display: none; position: fixed; background-color: #ECE9D8; border: 1px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); z-index: 2000; padding: 3px 0; min-width: 140px; }
+    .tag-context-menu-item { padding: 6px 15px; cursor: default; color: black; }
+    .tag-context-menu-item:hover { background-color: #005CFE; color: white; }
+
+    .tag-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .tag-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: tagFadeIn 0.3s; display: flex; flex-direction: column; }
+    .tag-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .tag-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .tag-modal-close-button:hover, .tag-modal-close-button:focus { background: #FF6363; }
+    .tag-modal-close-button:active { border-style: inset; }
+    .tag-modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; max-height: 70vh; }
+    .tag-modal-body p { margin-top: 0; margin-bottom: 10px; }
+    .tag-modal-body label { display: block; margin-bottom: 4px; margin-top: 10px; font-weight: normal; }
+    .tag-modal-body input[type="text"], .tag-modal-body textarea, .tag-modal-body input[type="file"] { width: calc(100% - 12px); padding: 5px; margin-bottom: 10px; border: 1px inset #7F7F7F; box-sizing: border-box; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF;}
+    .tag-modal-body textarea { resize: vertical; min-height: 60px; }
+    .tag-modal-body #tagImagePreviewContainer { margin-top: 5px; margin-bottom:10px; text-align:center; }
+    .tag-modal-body #tagImagePreview { max-width: 150px; max-height: 150px; border: 1px solid #ACA899; display: none; margin: 5px auto; }
+    .tag-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes tagFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+</style>
+
+<div class="tag-app-body-container">
+    <div class="tag-controls-bar">
+        <input type="text" id="tagFilterInput" placeholder="Filter items by name, category...">
+        <button id="tagAddBtn" class="xp-button">Add Item</button>
+    </div>
+    <div class="tag-tabs-bar" id="tagTabsBar"></div>
+    <div class="tag-display-area" id="tagDisplayArea">
+    </div>
+</div>
+
+<div id="tagAddEditModal" class="tag-modal">
+    <div class="tag-modal-content" style="max-width: 480px;">
+        <div class="tag-modal-title-bar">
+            <span id="tagAddEditModalTitle">Add New Item</span>
+            <span class="tag-modal-close-button" data-modal-id="tagAddEditModal">r</span>
+        </div>
+        <div class="tag-modal-body">
+            <input type="hidden" id="tagEditIdInput">
+            <label for="tagNameInput">Name:</label>
+            <input type="text" id="tagNameInput" placeholder="e.g., Favorite Mug, Sci-fi Movie Idea">
+            <label for="tagCategoryInput">Category:</label>
+            <input type="text" id="tagCategoryInput" placeholder="e.g., Kitchenware, Story Ideas, Plants">
+            <label for="tagDescriptionInput">Description (optional):</label>
+            <textarea id="tagDescriptionInput" rows="4"></textarea>
+            <label for="tagImageInput">Image (optional):</label>
+            <input type="file" id="tagImageInput" accept="image/*">
+            <div id="tagImagePreviewContainer">
+                <img id="tagImagePreview" src="#" alt="Image Preview">
+                <button id="tagRemoveImageBtn" class="xp-button xp-button-small" style="display:none; margin-top:5px;">Remove Image</button>
+            </div>
+        </div>
+        <div class="tag-modal-footer">
+            <button id="tagSaveBtn" class="xp-button">Save Item</button>
+            <button class="xp-button tag-modal-cancel-btn" data-modal-id="tagAddEditModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="tagConfirmDeleteModal" class="tag-modal">
+    <div class="tag-modal-content" style="max-width: 400px;">
+        <div class="tag-modal-title-bar">
+            <span>Confirm Item Deletion</span>
+            <span class="tag-modal-close-button" data-modal-id="tagConfirmDeleteModal">r</span>
+        </div>
+        <div class="tag-modal-body">
+            <p id="tagConfirmDeleteMessageText">Are you sure you want to delete this item?</p>
+        </div>
+        <div class="tag-modal-footer">
+            <button id="tagExecuteDeleteBtn" class="xp-button">Delete Item</button>
+            <button class="xp-button tag-modal-cancel-btn" data-modal-id="tagConfirmDeleteModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="tagCollectionContextMenu" class="tag-context-menu">
+    <div class="tag-context-menu-item" id="tagCollectionContextRename">Rename Collection</div>
+    <div class="tag-context-menu-item" id="tagCollectionContextDelete">Delete Collection</div>
+</div>
+
+<div id="tagItemContextMenu" class="tag-context-menu">
+    <div class="tag-context-menu-item" id="tagItemContextEdit">Edit Item</div>
+    <div class="tag-context-menu-item" id="tagItemContextDelete">Delete Item</div>
+</div>
+
+<div id="tagRenameCollectionModal" class="tag-modal">
+    <div class="tag-modal-content" style="max-width: 400px;">
+        <div class="tag-modal-title-bar">
+            <span>Rename Collection</span>
+            <span class="tag-modal-close-button" data-modal-id="tagRenameCollectionModal">r</span>
+        </div>
+        <div class="tag-modal-body">
+            <label for="tagCollectionNewNameInput">New collection name:</label>
+            <input type="text" id="tagCollectionNewNameInput" placeholder="Enter collection name">
+        </div>
+        <div class="tag-modal-footer">
+            <button id="tagSaveRenamedCollectionBtn" class="xp-button">Save</button>
+            <button class="xp-button tag-modal-cancel-btn" data-modal-id="tagRenameCollectionModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="tagConfirmDeleteCollectionModal" class="tag-modal">
+    <div class="tag-modal-content" style="max-width: 400px;">
+        <div class="tag-modal-title-bar">
+            <span>Confirm Collection Deletion</span>
+            <span class="tag-modal-close-button" data-modal-id="tagConfirmDeleteCollectionModal">r</span>
+        </div>
+        <div class="tag-modal-body">
+            <p id="tagConfirmDeleteCollectionMessageText">Are you sure you want to delete this collection and all its items?</p>
+        </div>
+        <div class="tag-modal-footer">
+            <button id="tagExecuteDeleteCollectionBtn" class="xp-button">Delete Collection</button>
+            <button class="xp-button tag-modal-cancel-btn" data-modal-id="tagConfirmDeleteCollectionModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const TAG_APP_STORAGE_KEY_V2 = 'tagAppData_v2.0.1'; 
+    const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; 
+
+    let tagAppData = {
+        collections: [],
+        currentCollectionId: null
+    };
+
+    let currentEditingTagId = null; 
+    let currentEditingCollectionId = null; 
+    let currentImageBase64 = null;
+
+    const DOM_TAG = {
+        addBtn: document.getElementById('tagAddBtn'),
+        filterInput: document.getElementById('tagFilterInput'),
+        tabsBar: document.getElementById('tagTabsBar'),
+        displayArea: document.getElementById('tagDisplayArea'),
+        addEditModal: document.getElementById('tagAddEditModal'),
+        addEditModalTitle: document.getElementById('tagAddEditModalTitle'),
+        editIdInput: document.getElementById('tagEditIdInput'),
+        nameInput: document.getElementById('tagNameInput'),
+        categoryInput: document.getElementById('tagCategoryInput'),
+        descriptionInput: document.getElementById('tagDescriptionInput'),
+        imageInput: document.getElementById('tagImageInput'),
+        imagePreviewContainer: document.getElementById('tagImagePreviewContainer'),
+        imagePreview: document.getElementById('tagImagePreview'),
+        removeImageBtn: document.getElementById('tagRemoveImageBtn'),
+        saveBtn: document.getElementById('tagSaveBtn'),
+        confirmDeleteModal: document.getElementById('tagConfirmDeleteModal'),
+        confirmDeleteMessageText: document.getElementById('tagConfirmDeleteMessageText'),
+        executeDeleteBtn: document.getElementById('tagExecuteDeleteBtn'),
+        
+        collectionContextMenu: document.getElementById('tagCollectionContextMenu'),
+        collectionContextRename: document.getElementById('tagCollectionContextRename'),
+        collectionContextDelete: document.getElementById('tagCollectionContextDelete'),
+        itemContextMenu: document.getElementById('tagItemContextMenu'),
+        itemContextEdit: document.getElementById('tagItemContextEdit'),
+        itemContextDelete: document.getElementById('tagItemContextDelete'),
+
+        renameCollectionModal: document.getElementById('tagRenameCollectionModal'),
+        collectionNewNameInput: document.getElementById('tagCollectionNewNameInput'),
+        saveRenamedCollectionBtn: document.getElementById('tagSaveRenamedCollectionBtn'),
+        confirmDeleteCollectionModal: document.getElementById('tagConfirmDeleteCollectionModal'),
+        confirmDeleteCollectionMessageText: document.getElementById('tagConfirmDeleteCollectionMessageText'),
+        executeDeleteCollectionBtn: document.getElementById('tagExecuteDeleteCollectionBtn'),
+    };
+
+    function openTagModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeTagModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'none';
+    }
+
+    function loadTagAppData() {
+        const stored = localStorage.getItem(TAG_APP_STORAGE_KEY_V2);
+        const defaultCollectionId = 'collection_default_0_' + Date.now();
+        if (stored) {
+            try {
+                tagAppData = JSON.parse(stored);
+                tagAppData.collections = tagAppData.collections || [{id: defaultCollectionId, name: "My Collection", tags: []}];
+                if (tagAppData.collections.length === 0) {
+                     tagAppData.collections = [{id: defaultCollectionId, name: "My Collection", tags: []}];
+                }
+                tagAppData.currentCollectionId = tagAppData.currentCollectionId || tagAppData.collections[0]?.id || defaultCollectionId;
+                if (!tagAppData.collections.find(c => c.id === tagAppData.currentCollectionId)) {
+                    tagAppData.currentCollectionId = tagAppData.collections[0]?.id || defaultCollectionId;
+                }
+            } catch (e) {
+                resetTagAppData(defaultCollectionId);
+            }
+        } else {
+            resetTagAppData(defaultCollectionId);
+        }
+    }
+    
+    function resetTagAppData(defaultId) {
+        tagAppData = {
+            collections: [{id: defaultId, name: "My Collection", tags: []}],
+            currentCollectionId: defaultId
+        };
+    }
+
+    function saveTagAppData() {
+        localStorage.setItem(TAG_APP_STORAGE_KEY_V2, JSON.stringify(tagAppData));
+    }
+    
+    function getCurrentTagCollection() {
+        if (!tagAppData.currentCollectionId || !tagAppData.collections) {
+             if (tagAppData.collections && tagAppData.collections.length > 0) {
+                tagAppData.currentCollectionId = tagAppData.collections[0].id;
+            } else {
+                const defaultId = 'collection_default_0_' + Date.now();
+                resetTagAppData(defaultId);
+                renderTagCollectionTabs();
+                return tagAppData.collections[0];
+            }
+        }
+        let foundCollection = tagAppData.collections.find(c => c.id === tagAppData.currentCollectionId);
+        if (!foundCollection && tagAppData.collections.length > 0) {
+            tagAppData.currentCollectionId = tagAppData.collections[0].id;
+            foundCollection = tagAppData.collections[0];
+        } else if (!foundCollection && tagAppData.collections.length === 0) {
+             const defaultId = 'collection_default_0_' + Date.now();
+             resetTagAppData(defaultId);
+             renderTagCollectionTabs();
+             return tagAppData.collections[0];
+        }
+        return foundCollection;
+    }
+
+    function decodeHtmlEntities(text) {
+        if (typeof text !== 'string') return String(text);
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        return textarea.value;
+    }
+
+    function renderTagCollectionTabs() {
+        DOM_TAG.tabsBar.innerHTML = '';
+        tagAppData.collections.forEach(collection => {
+            const tab = document.createElement('div');
+            tab.className = 'tag-collection-tab';
+            const displayName = decodeHtmlEntities(collection.name);
+            tab.textContent = displayName.length > 20 ? displayName.substring(0,17) + '...' : displayName;
+            tab.title = displayName;
+            tab.dataset.collectionId = collection.id;
+            if (collection.id === tagAppData.currentCollectionId) {
+                tab.classList.add('active');
+            }
+            tab.addEventListener('click', () => switchTagCollection(collection.id));
+            tab.addEventListener('contextmenu', (e) => showTagCollectionContextMenu(e, collection.id));
+            DOM_TAG.tabsBar.appendChild(tab);
+        });
+        const addTabBtn = document.createElement('button');
+        addTabBtn.className = 'tag-collection-tab tag-add-collection-btn xp-button xp-button-small';
+        addTabBtn.textContent = '+';
+        addTabBtn.title = "New Collection";
+        addTabBtn.addEventListener('click', handleAddNewTagCollection);
+        DOM_TAG.tabsBar.appendChild(addTabBtn);
+    }
+
+    function handleAddNewTagCollection() {
+        let newCollectionName = "Collection";
+        let counter = 1;
+        const existingNames = tagAppData.collections.map(c => c.name.toLowerCase());
+        let potentialName = newCollectionName.toLowerCase();
+        while(existingNames.includes(potentialName)) {
+            potentialName = `${newCollectionName} ${counter}`.toLowerCase();
+            counter++;
+        }
+        if (counter > 1) newCollectionName = `${newCollectionName} ${counter-1}`;
+
+        const newCollectionId = 'collection_' + Date.now() + '_' + Math.random().toString(36).substring(2,9);
+        tagAppData.collections.push({ id: newCollectionId, name: newCollectionName, tags: [] });
+        switchTagCollection(newCollectionId); 
+        saveTagAppData();
+    }
+
+    function switchTagCollection(collectionId) {
+        if (tagAppData.currentCollectionId === collectionId) return;
+        tagAppData.currentCollectionId = collectionId;
+        renderTagCollectionTabs();
+        renderTagsList(DOM_TAG.filterInput.value);
+        saveTagAppData();
+    }
+
+
+    function renderTagsList(filterText = '') {
+        DOM_TAG.displayArea.innerHTML = '';
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) {
+            DOM_TAG.displayArea.innerHTML = '<div class="tag-empty-message">No collection selected or available.</div>';
+            return;
+        }
+
+        const lowerFilterText = filterText.toLowerCase();
+        const tagsToDisplay = currentCollection.tags.filter(tag => {
+            return (tag.name && tag.name.toLowerCase().includes(lowerFilterText)) ||
+                   (tag.category && tag.category.toLowerCase().includes(lowerFilterText)) ||
+                   (tag.description && tag.description.toLowerCase().includes(lowerFilterText));
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+
+        if (tagsToDisplay.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'tag-empty-message';
+            emptyMsg.textContent = filterText ? "No items match your filter in this collection." : `No items in "${decodeHtmlEntities(currentCollection.name)}". Click 'Add Item' to create one!`;
+            DOM_TAG.displayArea.appendChild(emptyMsg);
+            return;
+        }
+
+        tagsToDisplay.forEach(tag => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'tag-list-item';
+            itemDiv.dataset.tagId = tag.id;
+
+            const thumbnailDiv = document.createElement('div');
+            thumbnailDiv.className = 'tag-item-thumbnail';
+            if (tag.imageUrl) {
+                const img = document.createElement('img');
+                img.src = tag.imageUrl;
+                img.alt = decodeHtmlEntities(tag.name);
+                thumbnailDiv.appendChild(img);
+            } else {
+                const placeholderSpan = document.createElement('span');
+                placeholderSpan.textContent = '📎'; 
+                thumbnailDiv.appendChild(placeholderSpan);
+            }
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'tag-item-info';
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'tag-item-name';
+            nameDiv.textContent = decodeHtmlEntities(tag.name);
+            
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'tag-item-category';
+            categoryDiv.textContent = tag.category ? decodeHtmlEntities(tag.category) : 'Uncategorized';
+
+            const descriptionDiv = document.createElement('div');
+            descriptionDiv.className = 'tag-item-description';
+            descriptionDiv.textContent = tag.description ? decodeHtmlEntities(tag.description) : '';
+            
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'tag-item-timestamp';
+            const createdDate = new Date(tag.createdAt).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+            timestampDiv.textContent = `Added: ${createdDate}`;
+
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(categoryDiv);
+            if(tag.description) infoDiv.appendChild(descriptionDiv);
+            infoDiv.appendChild(timestampDiv);
+
+            itemDiv.appendChild(thumbnailDiv);
+            itemDiv.appendChild(infoDiv);
+            
+            itemDiv.addEventListener('contextmenu', showTagItemContextMenu);
+            itemDiv.addEventListener('click', () => handleEditTag(tag.id));
+
+            DOM_TAG.displayArea.appendChild(itemDiv);
+        });
+    }
+
+    function resetAddEditModal() {
+        DOM_TAG.addEditModalTitle.textContent = 'Add New Item';
+        DOM_TAG.editIdInput.value = '';
+        DOM_TAG.nameInput.value = '';
+        DOM_TAG.categoryInput.value = '';
+        DOM_TAG.descriptionInput.value = '';
+        DOM_TAG.imageInput.value = null;
+        DOM_TAG.imagePreview.src = '#';
+        DOM_TAG.imagePreview.style.display = 'none';
+        DOM_TAG.removeImageBtn.style.display = 'none';
+        currentEditingTagId = null;
+        currentImageBase64 = null;
+    }
+
+    function handleAddTagButtonClick() {
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) {
+            alert("Please select or create a collection first.");
+            return;
+        }
+        resetAddEditModal();
+        openTagModal('tagAddEditModal');
+        DOM_TAG.nameInput.focus();
+    }
+    
+    DOM_TAG.imageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > MAX_IMAGE_SIZE_BYTES) {
+                alert(`Image is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is ${(MAX_IMAGE_SIZE_BYTES / 1024 / 1024).toFixed(0)} MB.`);
+                DOM_TAG.imageInput.value = null;
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                DOM_TAG.imagePreview.src = e.target.result;
+                DOM_TAG.imagePreview.style.display = 'block';
+                DOM_TAG.removeImageBtn.style.display = 'inline-block';
+                currentImageBase64 = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    DOM_TAG.removeImageBtn.addEventListener('click', function() {
+        DOM_TAG.imageInput.value = null;
+        DOM_TAG.imagePreview.src = '#';
+        DOM_TAG.imagePreview.style.display = 'none';
+        DOM_TAG.removeImageBtn.style.display = 'none';
+        currentImageBase64 = null;
+    });
+
+    function handleSaveTag() {
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) {
+            alert("No active collection. Cannot save item.");
+            return;
+        }
+
+        const name = DOM_TAG.nameInput.value.trim();
+        if (!name) {
+            alert('Item name cannot be empty.');
+            DOM_TAG.nameInput.focus();
+            return;
+        }
+        const category = DOM_TAG.categoryInput.value.trim();
+        const description = DOM_TAG.descriptionInput.value.trim();
+        const now = new Date().toISOString();
+        
+        const tagIdToSave = DOM_TAG.editIdInput.value;
+
+        if (tagIdToSave) { 
+            const tagIndex = currentCollection.tags.findIndex(t => t.id === tagIdToSave);
+            if (tagIndex > -1) {
+                currentCollection.tags[tagIndex].name = name;
+                currentCollection.tags[tagIndex].category = category;
+                currentCollection.tags[tagIndex].description = description;
+                currentCollection.tags[tagIndex].updatedAt = now;
+                if (currentImageBase64 !== undefined) { 
+                     currentCollection.tags[tagIndex].imageUrl = currentImageBase64;
+                }
+            }
+        } else { 
+            const newTag = {
+                id: 'tag_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+                name: name,
+                category: category,
+                description: description,
+                imageUrl: currentImageBase64,
+                createdAt: now,
+                updatedAt: now
+            };
+            currentCollection.tags.push(newTag);
+        }
+        
+        currentImageBase64 = null; 
+        saveTagAppData();
+        renderTagsList(DOM_TAG.filterInput.value);
+        closeTagModal('tagAddEditModal');
+    }
+
+    function handleEditTag(tagId) {
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) return;
+        const tagToEdit = currentCollection.tags.find(t => t.id === tagId);
+        if (!tagToEdit) return;
+
+        resetAddEditModal();
+        DOM_TAG.addEditModalTitle.textContent = 'Edit Item';
+        DOM_TAG.editIdInput.value = tagToEdit.id;
+        DOM_TAG.nameInput.value = decodeHtmlEntities(tagToEdit.name);
+        DOM_TAG.categoryInput.value = tagToEdit.category ? decodeHtmlEntities(tagToEdit.category) : '';
+        DOM_TAG.descriptionInput.value = tagToEdit.description ? decodeHtmlEntities(tagToEdit.description) : '';
+        currentImageBase64 = tagToEdit.imageUrl; 
+
+        if (tagToEdit.imageUrl) {
+            DOM_TAG.imagePreview.src = tagToEdit.imageUrl;
+            DOM_TAG.imagePreview.style.display = 'block';
+            DOM_TAG.removeImageBtn.style.display = 'inline-block';
+        } else {
+            DOM_TAG.imagePreview.src = '#';
+            DOM_TAG.imagePreview.style.display = 'none';
+            DOM_TAG.removeImageBtn.style.display = 'none';
+        }
+        
+        openTagModal('tagAddEditModal');
+    }
+
+    function handleDeleteTagRequest(tagId) {
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) return;
+        const tagToDelete = currentCollection.tags.find(t => t.id === tagId);
+        if (!tagToDelete) return;
+        DOM_TAG.confirmDeleteMessageText.textContent = `Are you sure you want to delete the item "${decodeHtmlEntities(tagToDelete.name)}"? This action cannot be undone.`;
+        DOM_TAG.executeDeleteBtn.dataset.tagIdToDelete = tagId;
+        openTagModal('tagConfirmDeleteModal');
+    }
+
+    function executeDeleteTag() {
+        const currentCollection = getCurrentTagCollection();
+        if (!currentCollection) return;
+        const tagIdToDelete = DOM_TAG.executeDeleteBtn.dataset.tagIdToDelete;
+        if (!tagIdToDelete) return;
+        currentCollection.tags = currentCollection.tags.filter(t => t.id !== tagIdToDelete);
+        saveTagAppData();
+        renderTagsList(DOM_TAG.filterInput.value);
+        closeTagModal('tagConfirmDeleteModal');
+    }
+    
+    function showTagItemContextMenu(e) {
+        e.preventDefault();
+        hideAllContextMenus();
+        const clickedItem = e.target.closest('.tag-list-item');
+        if (clickedItem && clickedItem.dataset.tagId) {
+            DOM_TAG.itemContextMenu.style.display = 'block';
+            positionContextMenu(e, DOM_TAG.itemContextMenu);
+            currentEditingTagId = clickedItem.dataset.tagId;
+        }
+    }
+
+    function showTagCollectionContextMenu(e, collectionId) {
+        e.preventDefault();
+        hideAllContextMenus();
+        DOM_TAG.collectionContextMenu.style.display = 'block';
+        positionContextMenu(e, DOM_TAG.collectionContextMenu);
+        currentEditingCollectionId = collectionId;
+    }
+    
+    function positionContextMenu(event, menuElement) {
+        let x = event.clientX;
+        let y = event.clientY;
+        const menuWidth = menuElement.offsetWidth;
+        const menuHeight = menuElement.offsetHeight;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        if (x + menuWidth > viewportWidth) x = Math.max(0, viewportWidth - menuWidth - 5);
+        if (y + menuHeight > viewportHeight) y = Math.max(0, viewportHeight - menuHeight - 5);
+        
+        menuElement.style.left = `${x}px`;
+        menuElement.style.top = `${y}px`;
+    }
+
+    function hideAllContextMenus() {
+        DOM_TAG.itemContextMenu.style.display = 'none';
+        DOM_TAG.collectionContextMenu.style.display = 'none';
+        currentEditingTagId = null;
+        currentEditingCollectionId = null;
+    }
+    
+    function handleRenameCollection() {
+        const collection = tagAppData.collections.find(c => c.id === currentEditingCollectionId);
+        if (collection) {
+            DOM_TAG.collectionNewNameInput.value = decodeHtmlEntities(collection.name);
+            DOM_TAG.saveRenamedCollectionBtn.dataset.collectionId = currentEditingCollectionId;
+            openTagModal('tagRenameCollectionModal');
+            DOM_TAG.collectionNewNameInput.focus();
+        }
+        hideAllContextMenus();
+    }
+
+    function saveRenamedCollection() {
+        const collectionId = DOM_TAG.saveRenamedCollectionBtn.dataset.collectionId;
+        const newName = DOM_TAG.collectionNewNameInput.value.trim();
+        if (!collectionId || !newName) {
+            alert("Collection name cannot be empty.");
+            return;
+        }
+        const collection = tagAppData.collections.find(c => c.id === collectionId);
+        if (collection) {
+            collection.name = newName;
+            renderTagCollectionTabs();
+            saveTagAppData();
+        }
+        closeTagModal('tagRenameCollectionModal');
+    }
+
+    function handleDeleteCollectionRequest() {
+        if (tagAppData.collections.length <= 1) {
+            alert("Cannot delete the last collection.");
+            hideAllContextMenus();
+            return;
+        }
+        const collection = tagAppData.collections.find(c => c.id === currentEditingCollectionId);
+        if (collection) {
+            DOM_TAG.confirmDeleteCollectionMessageText.textContent = `Delete collection "${decodeHtmlEntities(collection.name)}" and all its items?`;
+            DOM_TAG.executeDeleteCollectionBtn.dataset.collectionId = currentEditingCollectionId;
+            openTagModal('tagConfirmDeleteCollectionModal');
+        }
+        hideAllContextMenus();
+    }
+    
+    function executeDeleteCollection() {
+        const collectionIdToDelete = DOM_TAG.executeDeleteCollectionBtn.dataset.collectionId;
+        if (!collectionIdToDelete || tagAppData.collections.length <= 1) {
+             closeTagModal('tagConfirmDeleteCollectionModal');
+            return;
+        }
+        tagAppData.collections = tagAppData.collections.filter(c => c.id !== collectionIdToDelete);
+        if (tagAppData.currentCollectionId === collectionIdToDelete) {
+            tagAppData.currentCollectionId = tagAppData.collections[0]?.id || null;
+        }
+        renderTagCollectionTabs();
+        renderTagsList(DOM_TAG.filterInput.value);
+        saveTagAppData();
+        closeTagModal('tagConfirmDeleteCollectionModal');
+    }
+
+
+    function addTagEventListeners() {
+        DOM_TAG.addBtn.addEventListener('click', handleAddTagButtonClick);
+        DOM_TAG.saveBtn.addEventListener('click', handleSaveTag);
+        DOM_TAG.executeDeleteBtn.addEventListener('click', executeDeleteTag);
+        
+        DOM_TAG.filterInput.addEventListener('input', (e) => {
+            renderTagsList(e.target.value);
+        });
+
+        DOM_TAG.itemContextEdit.addEventListener('click', () => {
+            if (currentEditingTagId) handleEditTag(currentEditingTagId);
+            hideAllContextMenus();
+        });
+        DOM_TAG.itemContextDelete.addEventListener('click', () => {
+            if (currentEditingTagId) handleDeleteTagRequest(currentEditingTagId);
+            hideAllContextMenus();
+        });
+        
+        DOM_TAG.collectionContextRename.addEventListener('click', handleRenameCollection);
+        DOM_TAG.collectionContextDelete.addEventListener('click', handleDeleteCollectionRequest);
+
+        DOM_TAG.saveRenamedCollectionBtn.addEventListener('click', saveRenamedCollection);
+        DOM_TAG.collectionNewNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveRenamedCollection();
+        });
+        DOM_TAG.executeDeleteCollectionBtn.addEventListener('click', executeDeleteCollection);
+        
+        document.addEventListener('click', (e) => {
+            if (!DOM_TAG.itemContextMenu.contains(e.target) && 
+                !DOM_TAG.collectionContextMenu.contains(e.target) &&
+                !e.target.closest('.tag-list-item') &&
+                !e.target.closest('.tag-collection-tab')) {
+                hideAllContextMenus();
+            }
+        });
+
+        document.querySelectorAll('.tag-modal-close-button, .tag-modal-cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                const modalId = event.target.dataset.modalId;
+                if (modalId) closeTagModal(modalId);
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTagAppData();
+        renderTagCollectionTabs();
+        renderTagsList();
+        addTagEventListeners();
+        hideAllContextMenus();
+    });
+</script>
