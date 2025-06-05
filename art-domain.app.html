@@ -222,15 +222,35 @@
             const img = document.createElement('img');
             img.className = 'thumbnail';
             
+            const placeholderUrl = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=Error`;
+            const lqipPlaceholderUrl = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=No+LQIP`;
+
             if (artwork.image_id) {
                 img.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/200,/0/default.jpg`;
                 img.alt = artwork.title || (artwork.thumbnail && artwork.thumbnail.alt_text ? artwork.thumbnail.alt_text : 'Artwork thumbnail');
+                img.onerror = function() {
+                    // First fallback: Try LQIP
+                    if (artwork.thumbnail && artwork.thumbnail.lqip) {
+                        this.src = artwork.thumbnail.lqip;
+                        this.alt = artwork.title || 'Low quality preview';
+                        // Second fallback if LQIP also fails (e.g., invalid base64)
+                        this.onerror = function() { this.src = placeholderUrl; this.alt = 'Image Load Error'; };
+                    } else {
+                        // No LQIP, go directly to placeholder
+                        this.src = placeholderUrl;
+                        this.alt = 'Image Load Error';
+                    }
+                };
+            } else if (artwork.thumbnail && artwork.thumbnail.lqip) {
+                // No image_id, but LQIP is available
+                img.src = artwork.thumbnail.lqip;
+                img.alt = artwork.title || 'Low quality preview';
+                img.onerror = function() { this.src = placeholderUrl; this.alt = 'Image Load Error'; };
             } else {
+                // No image_id and no LQIP
                 img.src = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=No+Image`;
                 img.alt = 'Placeholder Image';
             }
-            img.onerror = function() { this.src = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=Error`; this.alt = 'Image Load Error'; };
-
 
             const titleDiv = document.createElement('div');
             titleDiv.className = 'title';
@@ -272,7 +292,7 @@
         artDomainState.currentArtworkForModal = artwork;
 
         DOM_AD.modalTitle.textContent = artwork.title || 'Artwork Details';
-        DOM_AD.modalImage.src = '#'; // Clear previous image immediately
+        DOM_AD.modalImage.src = '#'; 
         
         if (artwork.image_id) {
             DOM_AD.modalImage.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/600,/0/default.jpg`;
@@ -309,7 +329,7 @@
         }
         const artwork = artDomainState.currentArtworkForModal;
         const imageUrl = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/full/0/default.jpg`;
-        const fileName = `${(artwork.title || 'artwork').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${artwork.id}.jpg`;
+        // const fileName = `${(artwork.title || 'artwork').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${artwork.id}.jpg`;
         
         window.open(imageUrl, '_blank');
     }
