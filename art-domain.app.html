@@ -226,7 +226,7 @@
             const lqipPlaceholderUrl = `https://placehold.co/200x150/ECE9D8/7F7F7F?text=No+LQIP`;
 
             if (artwork.image_id) {
-                img.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/200,/0/default.jpg`;
+                img.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/843,/0/default.jpg`;
                 img.alt = artwork.title || (artwork.thumbnail && artwork.thumbnail.alt_text ? artwork.thumbnail.alt_text : 'Artwork thumbnail');
                 img.onerror = function() {
                     // First fallback: Try LQIP
@@ -295,7 +295,7 @@
         DOM_AD.modalImage.src = '#'; 
         
         if (artwork.image_id) {
-            DOM_AD.modalImage.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/600,/0/default.jpg`;
+            DOM_AD.modalImage.src = `https://www.artic.edu/iiif/2/${artwork.image_id}/full/843,/0/default.jpg`;
             DOM_AD.modalImage.alt = artwork.title || 'Artwork Image';
             DOM_AD.modalDownloadBtn.disabled = false;
             DOM_AD.modalImage.style.display = 'block';
