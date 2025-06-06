@@ -95,9 +95,9 @@
     "name": "Compass",
     "icon": "🧭",
     "file": "compass.app.html",
-    "minWidth": 560,
+    "minWidth": 600,
     "minHeight": 580,
-    "defaultWidth": 560,
+    "defaultWidth": 600,
     "defaultHeight": 580
   }
 ]
