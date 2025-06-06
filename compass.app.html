@@ -1,50 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compass</title>
-    <style>
-        body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; color: #000000; }
-        .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
-        .xp-button:active { border-style: inset; }
-        .xp-button:hover:not(:disabled) { border-color: #005CFE; background-color: #F0F8FF; }
-        .xp-button:disabled { color: #7F7F7F; border-color: #ACA899; cursor: default; opacity: 0.7; }
-        .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
+<style>
+    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; color: #000000; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button:active { border-style: inset; }
+    .xp-button:hover:not(:disabled) { border-color: #005CFE; background-color: #F0F8FF; }
+    .xp-button:disabled { color: #7F7F7F; border-color: #ACA899; cursor: default; opacity: 0.7; }
+    .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
 
-        .compass-app-container { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; }
-        .compass-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background-color: #ECE9D8; border-bottom: 1px solid #ACA899; flex-shrink: 0; flex-wrap: wrap; gap: 5px; }
-        .compass-search-area { display: flex; flex-grow: 1; min-width: 200px; }
-        #compassSearchInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 5px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; }
-        .compass-main-content { display: flex; flex-grow: 1; overflow: hidden; }
-        .compass-map-area { flex-grow: 1; display: flex; flex-direction: column; border-right: 1px solid #ACA899; }
-        #compassMapFrameContainer { position: relative; flex-grow: 1; background-color: #808080; display: flex; justify-content: center; align-items: center; border-top: 1px solid #7F7F7F; }
-        #compassMapFrame { width: 100%; height: 100%; border: none; }
-        #compassMapOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); color: white; display: flex; justify-content: center; align-items: center; font-size: 14px; text-align: center; padding: 20px; z-index: 10; margin-left: 5px #ECE9D8; margin-bottom: 5px }
-        .compass-landmark-sidebar { width: 220px; flex-shrink: 0; background-color: #F0F0F0; display: flex; flex-direction: column; overflow: hidden; }
-        .compass-landmark-header { padding: 8px; font-weight: bold; background-color: #D4D0C8; border-bottom: 1px solid #808080; text-align: center; flex-shrink: 0; }
-        #compassLandmarkList { list-style-type: none; margin: 0; padding: 5px; overflow-y: auto; flex-grow: 1; }
-        .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: pointer; }
-        .compass-landmark-item:hover { border: 1px solid #005CFE; background-color: #F0F8FF; }
-        .landmark-item-name { font-weight: bold; color: #0039A9; word-wrap: break-word; }
-        .landmark-item-coords { font-size: 10px; color: #555; margin-top: 3px; }
-        .landmark-item-actions { margin-top: 5px; text-align: right; }
-        #compassAddLandmarkBtn { flex-shrink: 0; margin-left: 5px; }
+    .compass-app-container { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; }
+    .compass-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background-color: #ECE9D8; border-bottom: 1px solid #ACA899; flex-shrink: 0; flex-wrap: wrap; gap: 5px; }
+    .compass-search-area { display: flex; flex-grow: 1; min-width: 200px; }
+    #compassSearchInput { flex-grow: 1; margin-right: 5px; border: 1px inset #7F7F7F; padding: 5px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; }
+    .compass-main-content { display: flex; flex-grow: 1; overflow: hidden; }
+    .compass-map-area { flex-grow: 1; display: flex; flex-direction: column; border-right: 1px solid #ACA899; }
+    #compassMapFrameContainer { position: relative; flex-grow: 1; background-color: #808080; display: flex; justify-content: center; align-items: center; border-top: 1px solid #7F7F7F; }
+    #compassMapFrame { width: 100%; height: 100%; border: none; }
+    #compassMapOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); color: white; display: flex; justify-content: center; align-items: center; font-size: 14px; text-align: center; padding: 20px; z-index: 10; }
+    .compass-landmark-sidebar { width: 220px; flex-shrink: 0; background-color: #F0F0F0; display: flex; flex-direction: column; overflow: hidden; }
+    .compass-landmark-header { padding: 8px; font-weight: bold; background-color: #D4D0C8; border-bottom: 1px solid #808080; text-align: center; flex-shrink: 0; }
+    #compassLandmarkList { list-style-type: none; margin: 0; padding: 5px; overflow-y: auto; flex-grow: 1; }
+    .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: pointer; }
+    .compass-landmark-item:hover { border: 1px solid #005CFE; background-color: #F0F8FF; }
+    .landmark-item-name { font-weight: bold; color: #0039A9; word-wrap: break-word; }
+    .landmark-item-coords { font-size: 10px; color: #555; margin-top: 3px; }
+    .landmark-item-actions { margin-top: 5px; text-align: right; }
+    #compassAddLandmarkBtn { flex-shrink: 0; margin-left: 5px; }
 
-        .compass-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
-        .compass-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: compassFadeIn 0.3s; display: flex; flex-direction: column; }
-        .compass-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
-        .compass-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
-        .compass-modal-close-button:hover { background: #FF6363; }
-        .compass-modal-body { padding: 15px; }
-        .compass-modal-body p { margin-top: 0; }
-        .compass-modal-body label { display: block; margin-bottom: 5px; margin-top: 10px; }
-        .compass-modal-body input[type="text"] { width: calc(100% - 12px); padding: 5px; border: 1px inset #7F7F7F; }
-        .compass-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; }
-        @keyframes compassFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
-    </style>
-</head>
-<body>
+    .compass-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .compass-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: compassFadeIn 0.3s; display: flex; flex-direction: column; }
+    .compass-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .compass-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .compass-modal-close-button:hover { background: #FF6363; }
+    .compass-modal-body { padding: 15px; }
+    .compass-modal-body p { margin-top: 0; }
+    .compass-modal-body label { display: block; margin-bottom: 5px; margin-top: 10px; }
+    .compass-modal-body input[type="text"] { width: calc(100% - 12px); padding: 5px; border: 1px inset #7F7F7F; }
+    .compass-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; }
+    @keyframes compassFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+</style>
 
 <div class="compass-app-container">
     <div class="compass-top-bar">
@@ -210,7 +202,15 @@
             
             const data = await response.json();
             const textResponse = data.candidates[0].content.parts[0].text;
-            const jsonString = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            const startIndex = textResponse.indexOf('{');
+            const endIndex = textResponse.lastIndexOf('}');
+
+            if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+                 throw new Error("Could not find a valid JSON object in the API response.");
+            }
+
+            const jsonString = textResponse.substring(startIndex, endIndex + 1);
             const coords = JSON.parse(jsonString);
 
             if (coords && typeof coords.lat === 'number' && typeof coords.lon === 'number') {
@@ -334,5 +334,3 @@
     });
 
 </script>
-</body>
-</html>
