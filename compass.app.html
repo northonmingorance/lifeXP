@@ -26,7 +26,7 @@
         .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: pointer; }
         .compass-landmark-item:hover { border: 1px solid #005CFE; background-color: #F0F8FF; }
         .landmark-item-name { font-weight: bold; color: #0039A9; }
-        .landmark-item-coords { font-size: 10px; color: #555; margin-top: 3px; }
+        .landmark-item-query { font-size: 10px; color: #555; margin-top: 3px; font-style: italic; }
         .landmark-item-actions { margin-top: 5px; text-align: right; }
         #compassAddLandmarkBtn { flex-shrink: 0; margin-left: 5px; }
 
@@ -74,7 +74,7 @@
             <span class="compass-modal-close-button" data-modal-id="compassAddLandmarkModal">r</span>
         </div>
         <div class="compass-modal-body">
-            <p>Enter a name for the current map location.</p>
+            <p>Enter a name for the location in the search bar.</p>
             <label for="landmarkNameInput">Name:</label>
             <input type="text" id="landmarkNameInput" placeholder="e.g., Favorite Coffee Shop">
         </div>
@@ -86,15 +86,13 @@
 </div>
 
 <script>
-    // --- Configuration ---
-    const COMPASS_STORAGE_KEY = 'compassAppData_v2';
-    let GOOGLE_MAPS_API_KEY = ""; // This will be populated by the parent OS
-
     // --- Application State ---
+    const COMPASS_STORAGE_KEY = 'compassAppData_v3'; // Incremented version
     let compassData = {
-        landmarks: []
+        landmarks: [] // Will store objects like { name: "...", query: "..." }
     };
-    let currentMapLocation = { lat: 0, lon: 0 };
+    // Keep track of lat/lon for the "My Location" feature, but not for saving landmarks.
+    let currentMapLocation = { lat: 0, lon: 0 }; 
 
     // --- DOM Elements ---
     const DOM = {
@@ -115,6 +113,7 @@
         if (stored) {
             try {
                 const parsedData = JSON.parse(stored);
+                // Ensure landmarks are loaded correctly, default to empty array if missing
                 compassData.landmarks = parsedData.landmarks || [];
             } catch (e) {
                 console.error("Error loading Compass data, resetting.", e);
@@ -127,19 +126,30 @@
         localStorage.setItem(COMPASS_STORAGE_KEY, JSON.stringify(compassData));
     }
 
-    // --- Core App Logic ---
-    function updateMap(lat, lon, zoom = 14) {
+    // --- Map Functions ---
+    function updateMapWithCoords(lat, lon, zoom = 14) {
+        // This function is now specifically for coordinate-based updates (My Location)
         currentMapLocation.lat = lat;
         currentMapLocation.lon = lon;
         const embedUrl = `https://maps.google.com/maps?q=${lat},${lon}&hl=en&z=${zoom}&output=embed`;
         DOM.mapFrame.src = embedUrl;
     }
+    
+    function updateMapWithQuery(query) {
+        // This function is for search-based updates
+        const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=14&output=embed`;
+        DOM.mapFrame.src = embedUrl;
+    }
 
+    // --- Event Handlers ---
     function handleGetCurrentLocation() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    updateMap(position.coords.latitude, position.coords.longitude);
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    updateMapWithCoords(lat, lon);
+                    DOM.searchInput.value = ''; // Clear search input when using "My Location"
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
@@ -152,82 +162,80 @@
         }
     }
 
-    async function handleSearchLocation() {
+    function handleSearchLocation() {
         const query = DOM.searchInput.value.trim();
         if (!query) {
             alert("Please enter a location to search.");
             return;
         }
-
-        if (!GOOGLE_MAPS_API_KEY) {
-            alert("API Key is missing. The Compass app cannot search without a Google Maps API key provided by the OS.");
-            return;
-        }
-
-        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`;
-
-        try {
-            const response = await fetch(geocodeUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-
-            if (data.status === 'OK' && data.results.length > 0) {
-                const location = data.results[0].geometry.location;
-                updateMap(location.lat, location.lng);
-            } else {
-                alert(`Could not find location: ${data.status}. ${data.error_message || 'No results found.'}`);
-                console.error("Geocoding API Error:", data);
-            }
-        } catch (error) {
-            alert("An error occurred while trying to search for the location.");
-            console.error("Fetch/Network Error:", error);
-        }
+        updateMapWithQuery(query);
     }
-
+    
+    // --- Landmark UI & Logic ---
     function renderLandmarkList() {
         DOM.landmarkList.innerHTML = '';
         if (compassData.landmarks.length === 0) {
             DOM.landmarkList.innerHTML = '<li style="padding: 10px; text-align: center; color: #555;">No saved landmarks.</li>';
             return;
         }
-        compassData.landmarks.forEach((landmark, index) => {
+        // Sort landmarks alphabetically by name
+        const sortedLandmarks = [...compassData.landmarks].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedLandmarks.forEach((landmark) => {
             const li = document.createElement('li');
             li.className = 'compass-landmark-item';
-            li.dataset.index = index;
+            // Use landmark.query to find it in the original array for deletion
+            li.dataset.query = landmark.query;
+            li.dataset.name = landmark.name;
+
             li.innerHTML = `
                 <div class="landmark-item-name">${landmark.name}</div>
-                <div class="landmark-item-coords">Lat: ${Number(landmark.lat).toFixed(4)}, Lon: ${Number(landmark.lon).toFixed(4)}</div>
+                <div class="landmark-item-query">${landmark.query}</div>
                 <div class="landmark-item-actions">
-                    <button class="xp-button xp-button-small landmark-delete-btn" data-index="${index}">Delete</button>
+                    <button class="xp-button xp-button-small landmark-delete-btn">Delete</button>
                 </div>
             `;
+            
+            // Main click action: search for the landmark's query
             li.addEventListener('click', (e) => {
                 if (e.target.classList.contains('landmark-delete-btn')) return;
-                updateMap(landmark.lat, landmark.lon);
+                DOM.searchInput.value = landmark.query;
+                handleSearchLocation();
             });
+
             DOM.landmarkList.appendChild(li);
         });
-
+        
+        // Add delete functionality after rendering
         document.querySelectorAll('.landmark-delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const indexToDelete = parseInt(e.target.dataset.index);
-                if (window.confirm(`Are you sure you want to delete "${compassData.landmarks[indexToDelete].name}"?`)) {
-                    compassData.landmarks.splice(indexToDelete, 1);
-                    saveCompassData();
-                    renderLandmarkList();
+                e.stopPropagation(); // Prevent the main li click event
+                const landmarkItem = e.target.closest('.compass-landmark-item');
+                const landmarkName = landmarkItem.dataset.name;
+                
+                if (confirm(`Are you sure you want to delete "${landmarkName}"?`)) {
+                    // Find and remove the landmark from the original data array
+                    const indexToDelete = compassData.landmarks.findIndex(lm => lm.name === landmarkName && lm.query === landmarkItem.dataset.query);
+                    if (indexToDelete > -1) {
+                        compassData.landmarks.splice(indexToDelete, 1);
+                        saveCompassData();
+                        renderLandmarkList(); // Re-render the list
+                    }
                 }
             });
         });
     }
-
-    // --- Modal Handling ---
+    
     function openAddLandmarkModal() {
-        DOM.landmarkNameInput.value = '';
+        const query = DOM.searchInput.value.trim();
+        if (!query) {
+            alert("Please search for a location first before saving it as a landmark.");
+            return;
+        }
+        DOM.landmarkNameInput.value = query; // Pre-fill name with the search query
         DOM.addLandmarkModal.style.display = 'flex';
         DOM.landmarkNameInput.focus();
+        DOM.landmarkNameInput.select();
     }
     
     function closeAddLandmarkModal() {
@@ -237,25 +245,31 @@
     function saveNewLandmark() {
         const name = DOM.landmarkNameInput.value.trim();
         if (!name) {
-            alert("Please enter a name for the Landmark.");
+            alert("Please enter a name for the landmark.");
             return;
         }
         
-        const lat = currentMapLocation.lat;
-        const lon = currentMapLocation.lon;
-
-        if ((lat === 0 && lon === 0) || !lat) {
-            alert("Cannot save landmark. Location coordinates are not set. Try searching or using 'My Location'.");
+        // **MODIFIED**: Get the query from the search input instead of coordinates
+        const query = DOM.searchInput.value.trim();
+        if (!query) {
+            // This case should be prevented by the check in openAddLandmarkModal, but good to have a safeguard
+            alert("Cannot save a landmark without a location query.");
             return;
         }
 
-        compassData.landmarks.push({ name, lat, lon });
+        // Check for duplicates
+        if (compassData.landmarks.some(lm => lm.name.toLowerCase() === name.toLowerCase())) {
+            alert("A landmark with this name already exists. Please choose a different name.");
+            return;
+        }
+
+        compassData.landmarks.push({ name, query });
         saveCompassData();
         renderLandmarkList();
         closeAddLandmarkModal();
     }
 
-    // --- Event Listeners Setup ---
+    // --- Initialization ---
     function addEventListeners() {
         DOM.currentLocationBtn.addEventListener('click', handleGetCurrentLocation);
         DOM.searchBtn.addEventListener('click', handleSearchLocation);
@@ -267,44 +281,23 @@
         DOM.addLandmarkBtn.addEventListener('click', openAddLandmarkModal);
         DOM.landmarkSaveBtn.addEventListener('click', saveNewLandmark);
 
+        // General modal close buttons
         document.querySelectorAll('.compass-modal-close-button, .compass-modal-cancel-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modalId = e.target.dataset.modalId;
                 if (modalId) {
-                    document.getElementById(modalId).style.display = 'none';
+                    const modal = document.getElementById(modalId);
+                    if (modal) modal.style.display = 'none';
                 }
             });
         });
     }
-    
-    // --- API Key Communication with Parent OS ---
-    window.addEventListener('message', (event) => {
-        // Ensure the message is from a trusted source if necessary, but for now we accept from parent
-        if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'googleMaps') {
-            GOOGLE_MAPS_API_KEY = event.data.key;
-            console.log("Compass App: Google Maps API Key received.");
-            if (!GOOGLE_MAPS_API_KEY) {
-                 console.warn("Compass App: Google Maps API Key received from OS is empty. Search will be disabled.");
-            }
-        }
-    });
 
-
-    // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
         loadCompassData();
         addEventListeners();
         renderLandmarkList();
-        handleGetCurrentLocation();
-        
-        // Request API key from the parent OS window
-        if (window.parent && window.parent !== window) {
-            console.log("Compass App: Requesting Google Maps API key from parent OS.");
-            // We use 'googleMaps' as the service name, which the parent must recognize
-            window.parent.postMessage({ type: 'requestApiKey', service: 'googleMaps', appId: 'compass' }, '*'); 
-        } else {
-            console.warn("Compass App: Not running in an iframe or parent context not detected. API key request will fail.");
-        }
+        handleGetCurrentLocation(); // Get initial location on load
     });
 
 </script>
