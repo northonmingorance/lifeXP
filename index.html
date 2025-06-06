@@ -44,6 +44,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #000;
+            cursor: grab;
             height: 28px;
             box-sizing: border-box;
             flex-shrink: 0;
@@ -322,7 +324,7 @@
 
     <script>
         "use strict";
-        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.2'; // Incremented version
+        const OS_STORAGE_KEY = 'lifeXpOsData_v1.0.1';
         const ICON_GRID_SIZE = 25;
         const STANDARD_COLORS = [
             { name: 'Black', value: '#000000' }, { name: 'Silver', value: '#C0C0C0' },
@@ -336,7 +338,6 @@
             { name: 'Orange', value: '#FFA500' }, { name: 'Brown', value: '#A52A2A' },
             { name: 'Pink', value: '#FFC0CB' }, { name: 'Gold', value: '#FFD700' }
         ];
-        // Firebase config remains the same
         const FIREBASE_CONFIG = {
           apiKey: "AIzaSyCVWUnnXiOvKRqbvngafdZC7DedEY-7vpg",
           authDomain: "lifexpapp-f5578.firebaseapp.com",
@@ -354,7 +355,7 @@
             appApiKeys: {
                 youtube: "",
                 gemini: "",
-                googleMaps: "" // Added new key
+                googleMaps: ""
             }
         };
         let lastNormalStates = {};
@@ -389,7 +390,6 @@
                 if (typeof firebase !== 'undefined' && FIREBASE_CONFIG) {
                     firebase.initializeApp(FIREBASE_CONFIG);
                     firebaseRemoteConfig = firebase.remoteConfig();
-                    // Set default values for all keys
                     firebaseRemoteConfig.defaultConfig = {
                         'youtube_api_key': '',
                         'gemini_api_key': '',
@@ -397,17 +397,10 @@
                     };
                     firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000;
                     await firebaseRemoteConfig.fetchAndActivate();
-                    
-                    // Fetch all keys from remote config
                     osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
                     osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
-                    osData.appApiKeys.googleMaps = firebaseRemoteConfig.getString('google_maps_api_key'); // Fetch maps key
-                    
-                    console.log("Firebase Remote Config fetched.");
-                    console.log(" - YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found");
-                    console.log(" - Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found");
-                    console.log(" - Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found"); // Log status
-                    
+                    osData.appApiKeys.googleMaps = firebaseRemoteConfig.getString('google_maps_api_key');
+                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found", "Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found");
                     saveOsData();
                 } else {
                     console.warn("Firebase SDK or config not available. API keys will not be fetched.");
@@ -426,7 +419,6 @@
             populateColorSwatches();
 
             try {
-                // Assuming app-manifest.json now includes the compass app
                 const response = await fetch('app-manifest.json');
                 if (!response.ok) throw new Error(`Failed to load app-manifest.json: ${response.statusText}`);
                 appManifest = await response.json();
@@ -443,7 +435,6 @@
             window.addEventListener('message', handleIframeMessages);
         }
 
-        // --- The following functions are included for completeness but are unchanged ---
         function initDesktopIcons() {
             DOM.desktop.innerHTML = '';
             appManifest.forEach((app, index) => {
@@ -452,14 +443,23 @@
                 iconElement.id = `icon-${app.id}`;
                 iconElement.dataset.appId = app.id;
                 iconElement.title = `Open ${app.name}`;
+
                 let iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`;
+
                 if (app.customIconClass && app.id === 'playJockey') {
                     iconElement.classList.add(app.customIconClass);
-                    iconHTML = `<div class="icon-image"><span class="icon-image-base">${app.icon}</span><span class="icon-image-overlay">${app.icon}</span></div>`;
+                    iconHTML = `
+                        <div class="icon-image">
+                            <span class="icon-image-base">${app.icon}</span>
+                            <span class="icon-image-overlay">${app.icon}</span>
+                        </div>`;
                 }
+
                 iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
+
                 const defaultX = 0;
                 const defaultY = index * 100;
+
                 if (osData.iconPositions && osData.iconPositions[app.id]) {
                     iconElement.style.left = osData.iconPositions[app.id].x + 'px';
                     iconElement.style.top = osData.iconPositions[app.id].y + 'px';
@@ -470,6 +470,7 @@
                     if (!osData.iconPositions) osData.iconPositions = {};
                     osData.iconPositions[app.id] = { x: finalX, y: finalY };
                 }
+
                 iconElement.addEventListener('mousedown', handleIconMouseDown);
                 iconElement.addEventListener('dblclick', handleIconDoubleClick);
                 DOM.desktop.appendChild(iconElement);
@@ -508,28 +509,105 @@
         }
 
         function findNonCollidingPosition(draggedIcon, initialX, initialY) {
+            let currentX = initialX;
+            let currentY = initialY;
+            let attempt = 0;
+            const maxAttempts = 100;
+            const iconWidth = draggedIcon.offsetWidth || 90;
+            const iconHeight = draggedIcon.offsetHeight || 100;
+
+            const checkCollisionAt = (x, y, currentDraggedIconId) => {
+                const iconsToCompare = Array.from(DOM.desktop.querySelectorAll('.desktop-icon')).filter(
+                    icon => icon.id !== currentDraggedIconId && icon.style.left && icon.style.top
+                );
+                for (const otherIcon of iconsToCompare) {
+                    const otherLeft = parseInt(otherIcon.style.left, 10);
+                    const otherTop = parseInt(otherIcon.style.top, 10);
+                    const otherWidth = otherIcon.offsetWidth || 90;
+                    const otherHeight = otherIcon.offsetHeight || 100;
+                    if (x < otherLeft + otherWidth &&
+                        x + iconWidth > otherLeft &&
+                        y < otherTop + otherHeight &&
+                        y + iconHeight > otherTop) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
             let snappedX = Math.round(initialX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
             let snappedY = Math.round(initialY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+            snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
+            snappedY = Math.max(0, Math.min(snappedY, document.body.clientHeight - iconHeight));
+
+            if (!checkCollisionAt(snappedX, snappedY, draggedIcon.id)) {
+                return { x: snappedX, y: snappedY };
+            }
+
+            let layer = 1;
+            while (attempt < maxAttempts) {
+                const positionsToTry = [];
+                for (let i = -layer; i <= layer; i++) {
+                    positionsToTry.push({ x: snappedX + i * ICON_GRID_SIZE, y: snappedY - layer * ICON_GRID_SIZE });
+                    if (layer !== 0) positionsToTry.push({ x: snappedX + i * ICON_GRID_SIZE, y: snappedY + layer * ICON_GRID_SIZE });
+                }
+                for (let i = -layer + 1; i < layer; i++) {
+                    positionsToTry.push({ x: snappedX - layer * ICON_GRID_SIZE, y: snappedY + i * ICON_GRID_SIZE });
+                    if (layer !== 0) positionsToTry.push({ x: snappedX + layer * ICON_GRID_SIZE, y: snappedY + i * ICON_GRID_SIZE });
+                }
+
+                for (const pos of positionsToTry) {
+                    attempt++;
+                    if (attempt >= maxAttempts) break;
+                    let testX = pos.x;
+                    let testY = pos.y;
+                    testX = Math.max(0, Math.min(testX, document.body.clientWidth - iconWidth));
+                    testY = Math.max(0, Math.min(testY, document.body.clientHeight - iconHeight));
+                    testX = Math.round(testX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+                    testY = Math.round(testY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+
+                    if (!checkCollisionAt(testX, testY, draggedIcon.id)) {
+                        return { x: testX, y: testY };
+                    }
+                }
+                if (attempt >= maxAttempts) break;
+                layer++;
+                 if (layer * ICON_GRID_SIZE > Math.max(document.body.clientWidth, document.body.clientHeight) && attempt > 20) {
+                     break;
+                }
+            }
             return { x: snappedX, y: snappedY };
         }
+
 
         function handleIconMouseUp(e) {
             if (!activeDragIcon) return;
             activeDragIcon.style.zIndex = '5';
             let finalX = activeDragIcon.offsetLeft;
             let finalY = activeDragIcon.offsetTop;
+
             let snappedX = Math.round(finalX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
             let snappedY = Math.round(finalY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+
             const iconWidth = activeDragIcon.offsetWidth || 90;
             const iconHeight = activeDragIcon.offsetHeight || 100;
+
             snappedX = Math.max(0, Math.min(snappedX, document.body.clientWidth - iconWidth));
             snappedY = Math.max(0, Math.min(snappedY, document.body.clientHeight - iconHeight));
-            activeDragIcon.style.left = snappedX + 'px';
-            activeDragIcon.style.top = snappedY + 'px';
+
+            snappedX = Math.round(snappedX / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+            snappedY = Math.round(snappedY / ICON_GRID_SIZE) * ICON_GRID_SIZE;
+
+            const { x: finalSnappedX, y: finalSnappedY } = findNonCollidingPosition(activeDragIcon, snappedX, snappedY);
+
+            activeDragIcon.style.left = finalSnappedX + 'px';
+            activeDragIcon.style.top = finalSnappedY + 'px';
+
             const appId = activeDragIcon.dataset.appId;
             if (!osData.iconPositions) osData.iconPositions = {};
-            osData.iconPositions[appId] = { x: snappedX, y: snappedY };
+            osData.iconPositions[appId] = { x: finalSnappedX, y: finalSnappedY };
             saveOsData();
+
             activeDragIcon.style.cursor = 'grab';
             activeDragIcon = null;
             document.removeEventListener('mousemove', handleIconMouseMove);
@@ -552,15 +630,30 @@
 
             if (windowElement) {
                 const iframe = windowElement.querySelector('iframe');
+
                 if (state && state.hiddenByUser) {
                     windowElement.style.display = 'flex';
                     state.hiddenByUser = false;
+
                     if (iframe && !iframe.hasAttribute('src')) {
                         iframe.setAttribute('src', appConfig.file);
                     }
-                }
-                if (state && state.minimized) {
-                     maximizeWindow(appConfig.id, appConfig);
+
+                    if (state.minimized) {
+                        state.minimized = false;
+                        windowElement.classList.remove('minimized');
+                        if (lastNormalStates[appConfig.id]) {
+                            windowElement.style.width = lastNormalStates[appConfig.id].width;
+                            windowElement.style.height = lastNormalStates[appConfig.id].height;
+                            windowElement.style.left = lastNormalStates[appConfig.id].left;
+                            windowElement.style.top = lastNormalStates[appConfig.id].top;
+                        } else {
+                            setWindowDefaults(appConfig.id, false, appConfig);
+                        }
+                    }
+                    updateMinMaxButtonStates(appConfig.id);
+                } else if (state && state.minimized) {
+                    maximizeWindow(appConfig.id, appConfig);
                 }
                 bringToFront(windowElement);
                 saveWindowState(appConfig.id);
@@ -603,13 +696,17 @@
             } else {
                 if (state.maximized) {
                     windowElement.classList.add('true-maximized');
-                    windowElement.style.width = '100vw'; windowElement.style.height = '100vh';
-                    windowElement.style.top = '0px'; windowElement.style.left = '0px';
+                    windowElement.style.width = '100vw';
+                    windowElement.style.height = '100vh';
+                    windowElement.style.top = '0px';
+                    windowElement.style.left = '0px';
                 } else if (state.minimized) {
                     windowElement.classList.add('minimized');
                 } else if (state.width && state.height && state.x != null && state.y != null) {
-                    windowElement.style.width = state.width + 'px'; windowElement.style.height = state.height + 'px';
-                    windowElement.style.left = state.x + 'px'; windowElement.style.top = state.y + 'px';
+                    windowElement.style.width = state.width + 'px';
+                    windowElement.style.height = state.height + 'px';
+                    windowElement.style.left = state.x + 'px';
+                    windowElement.style.top = state.y + 'px';
                 } else {
                     setWindowDefaults(appConfig.id, false, appConfig);
                 }
@@ -622,93 +719,568 @@
             return windowElement;
         }
 
+        function sendApiKeyToApp(appId, iframeContentWindow) {
+            if (!iframeContentWindow) return;
+            let service = '';
+            let key = '';
+            
+            if (appId === 'geminiChat') {
+                service = 'gemini';
+                key = osData.appApiKeys.gemini;
+            } else if (appId === 'playJockey') {
+                service = 'youtube';
+                key = osData.appApiKeys.youtube;
+            } else if (appId === 'compass') { // Added case for compass
+                service = 'googleMaps';
+                key = osData.appApiKeys.googleMaps;
+            }
+
+            if(service && key) {
+                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: service, key: key }, '*');
+            }
+        }
+
         function restoreAllWindowStates() {
             if (!osData.windowStates || !appManifest) return;
+            let maxRestoredZ = highestZIndex;
             appManifest.forEach(appConfig => {
                 const state = osData.windowStates[appConfig.id];
                 if (state && !state.hiddenByUser) {
                     const win = openAppWindow(appConfig);
                     if (win && state.zIndex) {
                         win.style.zIndex = state.zIndex;
-                        highestZIndex = Math.max(highestZIndex, state.zIndex);
+                        maxRestoredZ = Math.max(maxRestoredZ, state.zIndex);
                     }
                 }
             });
+            highestZIndex = maxRestoredZ;
         }
-        
+
+
         function initWindowInteractions(appId, appConfig) {
             const windowElement = getById(`window-${appId}`);
             const titleBarElement = getById(`title-bar-${appId}`);
             const resizeHandleElement = getById(`resize-handle-${appId}`);
-            titleBarElement.addEventListener('mousedown', (e) => { if(!e.target.closest('button')) { activeDragWindow = windowElement; /*...*/ }});
-            resizeHandleElement.addEventListener('mousedown', (e) => { activeResizeWindow = windowElement; /*...*/ });
+            const iframeElement = getById(`iframe-${appId}`);
+
+            if (!windowElement || !titleBarElement) return;
+
+            windowElement.addEventListener('mousedown', (e) => {
+                 if (e.target.closest('.desktop-icon') || e.target.closest('.modal')) return;
+                 if (e.target === windowElement || titleBarElement.contains(e.target) && !e.target.closest('button') ||
+                    (windowElement.querySelector('.window-body')?.contains(e.target) && e.target.tagName !== 'IFRAME' && !e.target.closest('button, input, select, textarea, .resize-handle'))) {
+                     bringToFront(windowElement);
+                 }
+            }, true);
+
+            titleBarElement.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button') || windowElement.classList.contains('true-maximized') || activeDragIcon) return;
+                activeDragWindow = windowElement;
+                dragOffsetX = e.clientX - activeDragWindow.offsetLeft;
+                dragOffsetY = e.clientY - activeDragWindow.offsetTop;
+                activeDragWindow.classList.add('disable-selection');
+                if (iframeElement) iframeElement.style.pointerEvents = 'none';
+                document.addEventListener('mousemove', doDrag);
+                document.addEventListener('mouseup', stopDragOrResize);
+                bringToFront(windowElement);
+            });
+
+            if (resizeHandleElement) {
+                resizeHandleElement.addEventListener('mousedown', (e) => {
+                    if (windowElement.classList.contains('true-maximized') || activeDragIcon) return;
+                    activeResizeWindow = windowElement;
+                    activeResizeWindow.classList.add('disable-selection');
+                    resizeInitialX = e.clientX;
+                    resizeInitialY = e.clientY;
+                    resizeInitialWidth = activeResizeWindow.offsetWidth;
+                    resizeInitialHeight = activeResizeWindow.offsetHeight;
+                    if (iframeElement) iframeElement.style.pointerEvents = 'none';
+
+                    const specificDoResize = (ev) => doResize(ev, appConfig);
+                    document.addEventListener('mousemove', specificDoResize);
+                    document.addEventListener('mouseup', function mouseUpListener() {
+                        stopDragOrResize();
+                        document.removeEventListener('mousemove', specificDoResize);
+                        document.removeEventListener('mouseup', mouseUpListener);
+                    });
+                    bringToFront(windowElement);
+                });
+            }
+
             getById(`minimize-btn-${appId}`).addEventListener('click', () => minimizeWindow(appId));
             getById(`maximize-btn-${appId}`).addEventListener('click', () => maximizeWindow(appId, appConfig));
             getById(`close-btn-${appId}`).addEventListener('click', () => closeWindow(appId));
-            windowElement.addEventListener('mousedown', () => bringToFront(windowElement));
         }
-        function bringToFront(win) { highestZIndex++; win.style.zIndex = highestZIndex; saveWindowState(win.id.replace('window-','')); }
-        function minimizeWindow(appId) { getById(`window-${appId}`).classList.add('minimized'); updateMinMaxButtonStates(appId); saveWindowState(appId); }
-        function maximizeWindow(appId, appConfig) { getById(`window-${appId}`).classList.toggle('true-maximized', !getById(`window-${appId}`).classList.contains('true-maximized')); getById(`window-${appId}`).classList.remove('minimized'); updateMinMaxButtonStates(appId); saveWindowState(appId); }
-        function closeWindow(appId) { getById(`window-${appId}`).style.display = 'none'; osData.windowStates[appId].hiddenByUser = true; saveWindowState(appId); }
-        function updateMinMaxButtonStates(appId) { /* Logic to update buttons */ }
-        function setWindowDefaults(appId, isResize, appConfig) { /* Logic to set default/saved position */ }
+
+        function bringToFront(windowElement) {
+            if (!windowElement) return;
+            highestZIndex++;
+            windowElement.style.zIndex = highestZIndex;
+            const appId = windowElement.id.replace('window-', '');
+            if (osData.windowStates[appId]) {
+                osData.windowStates[appId].zIndex = highestZIndex;
+            }
+        }
+
+        function doDrag(e) {
+            if (!activeDragWindow) return;
+            let newLeft = e.clientX - dragOffsetX;
+            let newTop = e.clientY - dragOffsetY;
+            const windowWidth = activeDragWindow.offsetWidth;
+            const windowHeight = activeDragWindow.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            newLeft = Math.max(0, Math.min(newLeft, viewportWidth - windowWidth));
+            newTop = Math.max(0, Math.min(newTop, viewportHeight - windowHeight));
+            activeDragWindow.style.left = newLeft + 'px';
+            activeDragWindow.style.top = newTop + 'px';
+            const appId = activeDragWindow.id.replace('window-', '');
+            if (osData.windowStates[appId]) {
+                osData.windowStates[appId].userManuallySetPosition = true;
+            }
+        }
+
+        function doResize(e, appConfig) {
+            if (!activeResizeWindow) return;
+            const appId = activeResizeWindow.id.replace('window-', '');
+            const currentMinWidth = appConfig.minWidth || 150;
+            const currentMinHeight = appConfig.minHeight || 100;
+
+            let newWidth = resizeInitialWidth + (e.clientX - resizeInitialX);
+            let newHeight = resizeInitialHeight + (e.clientY - resizeInitialY);
+            activeResizeWindow.style.width = Math.max(currentMinWidth, newWidth) + 'px';
+            activeResizeWindow.style.height = Math.max(currentMinHeight, newHeight) + 'px';
+            if (osData.windowStates[appId]) {
+                osData.windowStates[appId].userManuallySetSize = true;
+            }
+        }
+
+        function stopDragOrResize() {
+            let operatedWindow = null;
+            if (activeDragWindow) {
+                activeDragWindow.classList.remove('disable-selection');
+                operatedWindow = activeDragWindow;
+                activeDragWindow = null;
+            }
+            if (activeResizeWindow) {
+                activeResizeWindow.classList.remove('disable-selection');
+                operatedWindow = activeResizeWindow;
+                activeResizeWindow = null;
+            }
+            if (operatedWindow) {
+                const iframe = operatedWindow.querySelector('iframe');
+                if (iframe) iframe.style.pointerEvents = 'auto';
+                saveWindowState(operatedWindow.id.replace('window-', ''));
+            }
+        }
+
+        function setWindowDefaults(appId, isBrowserResize = false, appConfig) {
+            const appWindow = getById(`window-${appId}`);
+            if (!appWindow || appWindow.classList.contains('minimized')) return;
+
+            const state = osData.windowStates[appId];
+            if (!state) return;
+
+            if (appWindow.classList.contains('true-maximized') && !isBrowserResize) {
+                appWindow.style.width = '100vw';
+                appWindow.style.height = '100vh';
+                appWindow.style.top = '0px';
+                appWindow.style.left = '0px';
+                return;
+            }
+
+            const hasValidSavedSize = state.width && state.width > 0 && state.height && state.height > 0;
+            const hasValidSavedPosition = state.x != null && state.y != null;
+
+            const currentMinWidth = appConfig.minWidth || 150;
+            const currentMinHeight = appConfig.minHeight || 100;
+            const defaultWidth = appConfig.defaultWidth || 500;
+            const defaultHeight = appConfig.defaultHeight || 400;
+
+            const openWindows = Object.keys(osData.windowStates).filter(id => {
+                const winEl = getById(`window-${id}`);
+                return winEl && winEl.style.display !== 'none' && !osData.windowStates[id].minimized;
+            }).length;
+            const defaultOffsetX = 20 + (openWindows % 5) * 30;
+            const defaultOffsetY = 20 + (openWindows % 5) * 30;
+
+
+            if (isBrowserResize || !state.userManuallySetPosition || !state.userManuallySetSize || !hasValidSavedSize || !hasValidSavedPosition) {
+                let newWidth = defaultWidth;
+                let newHeight = defaultHeight;
+                newWidth = Math.max(currentMinWidth, newWidth);
+                newHeight = Math.max(currentMinHeight, newHeight);
+
+                let newLeft = (defaultOffsetX === 0 && window.innerWidth > newWidth) ? (window.innerWidth - newWidth) / 2 : defaultOffsetX;
+                let newTop = (defaultOffsetY === 0 && window.innerHeight > newHeight) ? (window.innerHeight - newHeight) / 2 : defaultOffsetY;
+
+                newTop = Math.max(10, Math.min(newTop, window.innerHeight - newHeight - 10));
+                newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - newWidth - 10));
+                if (window.innerHeight <= newHeight + 20) newTop = 10;
+                if (window.innerWidth <= newWidth + 20) newLeft = 10;
+
+                if (!state.userManuallySetSize || !hasValidSavedSize || isBrowserResize) {
+                    appWindow.style.width = newWidth + 'px';
+                    appWindow.style.height = newHeight + 'px';
+                    state.width = newWidth;
+                    state.height = newHeight;
+                    state.userManuallySetSize = false;
+                }
+                if (!state.userManuallySetPosition || !hasValidSavedPosition || isBrowserResize) {
+                    appWindow.style.left = newLeft + 'px';
+                    appWindow.style.top = newTop + 'px';
+                    state.x = newLeft;
+                    state.y = newTop;
+                    state.userManuallySetPosition = false;
+                }
+            }
+        }
+
+
+        function minimizeWindow(appId) {
+            const appWindow = getById(`window-${appId}`);
+            if (!appWindow || appWindow.classList.contains('minimized')) return;
+            const state = osData.windowStates[appId];
+            if (!state) return;
+
+            state.minimized = true;
+            if (appWindow.classList.contains('true-maximized')) {
+                state.wasMaximizedBeforeMinimize = true;
+                if (lastNormalStates[appId]) {
+                    state.width = parseInt(lastNormalStates[appId].width);
+                    state.height = parseInt(lastNormalStates[appId].height);
+                    state.x = parseInt(lastNormalStates[appId].left);
+                    state.y = parseInt(lastNormalStates[appId].top);
+                }
+            } else {
+                state.wasMaximizedBeforeMinimize = false;
+                state.width = appWindow.offsetWidth;
+                state.height = appWindow.offsetHeight;
+                state.x = appWindow.offsetLeft;
+                state.y = appWindow.offsetTop;
+            }
+            appWindow.classList.remove('true-maximized');
+            appWindow.classList.add('minimized');
+            updateMinMaxButtonStates(appId);
+            saveWindowState(appId);
+        }
+
+        function maximizeWindow(appId, appConfig) {
+            const appWindow = getById(`window-${appId}`);
+            if (!appWindow) return;
+            const state = osData.windowStates[appId];
+            if (!state) return;
+
+            const isMinimized = appWindow.classList.contains('minimized');
+
+            if (isMinimized) {
+                appWindow.classList.remove('minimized');
+                state.minimized = false;
+                const wasMaximized = state.wasMaximizedBeforeMinimize;
+                delete state.wasMaximizedBeforeMinimize;
+
+                if (wasMaximized) {
+                    appWindow.style.width = '100vw';
+                    appWindow.style.height = '100vh';
+                    appWindow.style.top = '0px';
+                    appWindow.style.left = '0px';
+                    appWindow.classList.add('true-maximized');
+                    state.maximized = true;
+                } else {
+                    if (state.width && state.height && state.x != null && state.y != null) {
+                        appWindow.style.width = state.width + 'px';
+                        appWindow.style.height = state.height + 'px';
+                        appWindow.style.left = state.x + 'px';
+                        appWindow.style.top = state.y + 'px';
+                    } else if (lastNormalStates[appId] && lastNormalStates[appId].width && lastNormalStates[appId].height) {
+                        appWindow.style.width = lastNormalStates[appId].width;
+                        appWindow.style.height = lastNormalStates[appId].height;
+                        appWindow.style.left = lastNormalStates[appId].left;
+                        appWindow.style.top = lastNormalStates[appId].top;
+                    } else {
+                        setWindowDefaults(appId, false, appConfig);
+                    }
+                    state.maximized = false;
+                }
+            } else if (appWindow.classList.contains('true-maximized')) {
+                if (lastNormalStates[appId] && lastNormalStates[appId].width && lastNormalStates[appId].height) {
+                    appWindow.style.width = lastNormalStates[appId].width;
+                    appWindow.style.height = lastNormalStates[appId].height;
+                    appWindow.style.top = lastNormalStates[appId].top;
+                    appWindow.style.left = lastNormalStates[appId].left;
+                    state.width = parseInt(lastNormalStates[appId].width);
+                    state.height = parseInt(lastNormalStates[appId].height);
+                    state.x = parseInt(lastNormalStates[appId].left);
+                    state.y = parseInt(lastNormalStates[appId].top);
+                } else {
+                    setWindowDefaults(appId, false, appConfig);
+                }
+                appWindow.classList.remove('true-maximized');
+                state.maximized = false;
+                state.userManuallySetPosition = true;
+                state.userManuallySetSize = true;
+            } else {
+                lastNormalStates[appId] = {
+                    width: appWindow.style.width || (appWindow.offsetWidth + 'px'),
+                    height: appWindow.style.height || (appWindow.offsetHeight + 'px'),
+                    top: appWindow.style.top || (appWindow.offsetTop + 'px'),
+                    left: appWindow.style.left || (appWindow.offsetLeft + 'px')
+                };
+                appWindow.style.width = '100vw';
+                appWindow.style.height = '100vh';
+                appWindow.style.top = '0px';
+                appWindow.style.left = '0px';
+                appWindow.classList.add('true-maximized');
+                state.maximized = true;
+                state.userManuallySetPosition = false;
+                state.userManuallySetSize = false;
+            }
+            updateMinMaxButtonStates(appId);
+            saveWindowState(appId);
+        }
+
+        function closeWindow(appId) {
+            const appWindow = getById(`window-${appId}`);
+            if (appWindow) {
+                appWindow.style.display = 'none';
+                const iframe = appWindow.querySelector('iframe');
+                if (iframe) {
+                    iframe.removeAttribute('src');
+                }
+            }
+            if (osData.windowStates[appId]) {
+                osData.windowStates[appId].hiddenByUser = true;
+            }
+            saveWindowState(appId);
+        }
+
+
+        function updateMinMaxButtonStates(appId) {
+            const win = getById(`window-${appId}`);
+            const minimizeBtn = getById(`minimize-btn-${appId}`);
+            const maximizeBtn = getById(`maximize-btn-${appId}`);
+
+            if (!win || !minimizeBtn || !maximizeBtn) return;
+
+            const isMinimized = win.classList.contains('minimized');
+            const isTrueMaximized = win.classList.contains('true-maximized');
+
+            minimizeBtn.disabled = isMinimized;
+            maximizeBtn.disabled = false;
+
+            if (isMinimized) {
+                maximizeBtn.textContent = '1';
+                maximizeBtn.title = "Restore";
+            } else if (isTrueMaximized) {
+                maximizeBtn.textContent = '2';
+                maximizeBtn.title = "Restore Down";
+            } else {
+                maximizeBtn.textContent = '1';
+                maximizeBtn.title = "Maximize";
+            }
+        }
+
         function saveWindowState(appId) {
-             const win = getById(`window-${appId}`); if (!win) return;
-             let state = osData.windowStates[appId] || {};
-             state.minimized = win.classList.contains('minimized');
-             state.maximized = win.classList.contains('true-maximized');
-             state.zIndex = parseInt(win.style.zIndex);
-             state.hiddenByUser = win.style.display === 'none';
-             if (!state.minimized && !state.maximized) {
-                state.x = win.offsetLeft; state.y = win.offsetTop;
-                state.width = win.offsetWidth; state.height = win.offsetHeight;
-             }
-             osData.windowStates[appId] = state;
-             saveOsData();
+            const win = getById(`window-${appId}`);
+            if (!win) return;
+
+            let state = osData.windowStates[appId];
+            if (!state) {
+                osData.windowStates[appId] = {};
+                state = osData.windowStates[appId];
+            }
+
+            state.minimized = win.classList.contains('minimized');
+            state.maximized = win.classList.contains('true-maximized');
+            state.zIndex = parseInt(win.style.zIndex) || highestZIndex;
+            state.hiddenByUser = (win.style.display === 'none');
+
+            if (!state.minimized && !state.maximized) {
+                state.x = win.offsetLeft;
+                state.y = win.offsetTop;
+                state.width = win.offsetWidth;
+                state.height = win.offsetHeight;
+            }
+            saveOsData();
         }
+
+
+        function saveOsData() {
+            try {
+                localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(osData));
+            } catch (error) {
+                console.error("Could not save OS data:", error);
+                if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                    alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
+                }
+            }
+        }
+
         function loadOsData() {
             const storedData = localStorage.getItem(OS_STORAGE_KEY);
             const defaultOsData = {
-                windowStates: {}, iconPositions: {}, customBgImage: null, customBgColor: null,
+                windowStates: {},
+                iconPositions: {},
+                customBgImage: null,
+                customBgColor: null,
                 appApiKeys: { youtube: "", gemini: "", googleMaps: "" }
             };
-            if(storedData) {
+            if (storedData) {
                 try {
-                    const parsed = JSON.parse(storedData);
-                    osData = { ...defaultOsData, ...parsed };
-                    osData.appApiKeys = { ...defaultOsData.appApiKeys, ...(parsed.appApiKeys || {})};
-                } catch(e) { osData = defaultOsData; }
-            } else { osData = defaultOsData; }
+                    const parsedData = JSON.parse(storedData);
+                    osData = { ...defaultOsData, ...parsedData };
+                    osData.windowStates = { ...defaultOsData.windowStates, ...(parsedData.windowStates || {}) };
+                    osData.iconPositions = { ...defaultOsData.iconPositions, ...(parsedData.iconPositions || {}) };
+                    osData.appApiKeys = { ...defaultOsData.appApiKeys, ...(parsedData.appApiKeys || {}) };
+
+                } catch (error) {
+                    console.error("Error parsing stored OS data. Reverting to defaults.", error);
+                    osData = JSON.parse(JSON.stringify(defaultOsData));
+                }
+            } else {
+                 osData = JSON.parse(JSON.stringify(defaultOsData));
+            }
+            let maxZ = 10;
+            for (const appId in osData.windowStates) {
+                if (osData.windowStates[appId].zIndex) {
+                    maxZ = Math.max(maxZ, osData.windowStates[appId].zIndex);
+                }
+            }
+            highestZIndex = maxZ;
         }
-        function saveOsData() { localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(osData)); }
-        function applyCurrentBackgroundStyle() { /* ... */ }
-        function populateColorSwatches() { /* ... */ }
-        function openModal(id) { getById(id).style.display = 'flex'; }
-        function closeModal(id) { getById(id).style.display = 'none'; }
-        function addEventListeners() { /* All other event listeners */ }
-        
-        // --- API Key Management ---
-        function sendApiKeyToApp(appId, iframeContentWindow) {
-            if (!iframeContentWindow) return;
-            const appConfig = appManifest.find(app => app.id === appId);
-            if (!appConfig || !appConfig.apiKeyService) return;
 
-            const service = appConfig.apiKeyService;
-            const key = osData.appApiKeys[service];
-
-            if(service && key) {
-                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: service, key: key }, '*');
+        function applyCurrentBackgroundStyle() {
+            if (osData.customBgColor) {
+                document.body.style.backgroundImage = 'none';
+                document.body.style.backgroundColor = osData.customBgColor;
+            } else if (osData.customBgImage) {
+                document.body.style.backgroundColor = '';
+                document.body.style.backgroundImage = `url('${osData.customBgImage}')`;
+            } else {
+                document.body.style.backgroundColor = '#3A6EA5';
+                document.body.style.backgroundImage = "url('https://archive.org/download/bliss-600dpi/bliss-600dpi.png')";
             }
         }
-        
-        // CORRECTED: This function now properly handles the 'googleMaps' service request.
+
+        function populateColorSwatches() {
+            DOM.bgColorSwatchesContainer.innerHTML = '';
+            STANDARD_COLORS.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.style.width = '30px';
+                swatch.style.height = '30px';
+                swatch.style.backgroundColor = color.value;
+                swatch.style.border = '1px solid #7F7F7F';
+                swatch.style.cursor = 'pointer';
+                swatch.title = color.name;
+                swatch.dataset.colorValue = color.value;
+                swatch.classList.add('color-swatch-item');
+                DOM.bgColorSwatchesContainer.appendChild(swatch);
+            });
+        }
+
+        function openModal(modalId) {
+            const modal = getById(modalId);
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            const modal = getById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        function addEventListeners() {
+            document.body.addEventListener('contextmenu', function(event) {
+                if (event.target === document.body || event.target === DOM.desktop) {
+                    event.preventDefault();
+                    DOM.newBgImageInput.value = null;
+                    DOM.bgImageUrlInput.value = '';
+                    openModal('changeBgImageModal');
+                }
+            });
+
+            DOM.uploadBgImageBtn.addEventListener('click', function() {
+                const file = DOM.newBgImageInput.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        osData.customBgImage = reader.result;
+                        osData.customBgColor = null;
+                        applyCurrentBackgroundStyle();
+                        saveOsData();
+                        closeModal('changeBgImageModal');
+                    }
+                    reader.onerror = function() { alert("Error reading image file."); }
+                    reader.readAsDataURL(file);
+                } else {
+                    alert("Please select an image file first.");
+                }
+            });
+
+            DOM.applyBgImageUrlBtn.addEventListener('click', function() {
+                const imageUrl = DOM.bgImageUrlInput.value.trim();
+                if (imageUrl) {
+                    try {
+                        new URL(imageUrl);
+                        osData.customBgImage = imageUrl;
+                        osData.customBgColor = null;
+                        applyCurrentBackgroundStyle();
+                        saveOsData();
+                        closeModal('changeBgImageModal');
+                    } catch (e) {
+                        alert("Invalid image URL provided. Please enter a complete and valid URL (e.g., https://example.com/image.png).");
+                    }
+                } else {
+                    alert("Please enter an image URL.");
+                }
+            });
+
+            DOM.bgColorSwatchesContainer.addEventListener('click', function(event) {
+                if (event.target.classList.contains('color-swatch-item')) {
+                    const selectedColor = event.target.dataset.colorValue;
+                    if (selectedColor) {
+                        osData.customBgColor = selectedColor;
+                        osData.customBgImage = null;
+                        applyCurrentBackgroundStyle();
+                        saveOsData();
+                        closeModal('changeBgImageModal');
+                    }
+                }
+            });
+
+            DOM.modalCloseButtons.forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const modalId = event.target.dataset.modalId || event.target.closest('.modal').id;
+                    if (modalId) closeModal(modalId);
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                appManifest.forEach(appConfig => {
+                    const win = getById(`window-${appConfig.id}`);
+                    if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
+                         setWindowDefaults(appConfig.id, true, appConfig);
+                    }
+                });
+                saveOsData();
+            });
+        }
+
         function handleIframeMessages(event) {
             const { type, service, appId } = event.data;
             if (type === 'requestApiKey' && appId && service) {
                 const iframe = document.getElementById(`iframe-${appId}`);
                 if (iframe && iframe.contentWindow) {
                     let keyToSend = osData.appApiKeys[service] || null;
+                    if (service === 'gemini') {
+                        keyToSend = osData.appApiKeys.gemini;
+                    } else if (service === 'youtube') {
+                        keyToSend = osData.appApiKeys.youtube;
+                    } else if (service === 'googleMaps') { // Added handler for 'googleMaps'
+                        keyToSend = osData.appApiKeys.googleMaps;
+                    }
 
                     if (keyToSend !== null) {
                          iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: service, key: keyToSend }, '*');
