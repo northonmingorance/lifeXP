@@ -1,0 +1,296 @@
+<style>
+    body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; color: #000000; }
+    .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; font-size: 11px; text-align: center; cursor: pointer; margin: 2px; }
+    .xp-button:active { border-style: inset; }
+    .xp-button:hover:not(:disabled) { border-color: #005CFE; background-color: #F0F8FF; }
+    .xp-button:disabled { color: #7F7F7F; border-color: #ACA899; cursor: default; opacity: 0.7; }
+
+    .archive-app-container { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; }
+    .archive-search-bar { display: flex; padding: 8px; background-color: #F0F0F0; border-bottom: 1px solid #ACA899; gap: 5px; flex-wrap: wrap; flex-shrink: 0; }
+    .archive-search-bar input[type="text"], .archive-search-bar select { flex: 1 1 150px; border: 1px inset #7F7F7F; padding: 5px; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; background-color: #FFFFFF; }
+    .archive-results-grid {
+        flex-grow: 1;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+        padding: 10px;
+        overflow-y: auto;
+        background-color: #FFFFFF;
+        border: 1px inset #B0B0B0;
+    }
+    .archive-result-item {
+        background-color: #FDFDFD;
+        border: 1px outset #D4D0C8;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 8px;
+        transition: all 0.2s ease-in-out;
+        overflow: hidden;
+    }
+    .archive-result-item:hover { border-color: #005CFE; background-color: #F0F8FF; transform: translateY(-2px); }
+    .archive-item-img-container {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 0;
+        margin-bottom: 5px;
+    }
+    .archive-result-item img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        background-color: #F0F0F0;
+        border: 1px solid #C8C8C8;
+    }
+    .archive-item-text-container { flex-shrink: 0; width: 100%; }
+    .archive-result-item .title { font-weight: bold; font-size: 12px; color: #0039A9; height: 2.4em; line-height: 1.2em; overflow: hidden; margin-bottom: 3px; }
+    .archive-result-item .details { font-size: 10px; color: #4A4A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .archive-pagination { display: flex; justify-content: center; align-items: center; padding: 8px; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    #archivePageInfo { margin: 0 10px; font-weight: bold; }
+
+    .archive-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .archive-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 600px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: archiveFadeIn 0.3s; display: flex; flex-direction: column; }
+    .archive-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .archive-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .archive-modal-body { display: flex; padding: 15px; gap: 15px; overflow-y: auto; max-height: 70vh; }
+    .archive-modal-image-container { flex: 1; }
+    #archiveModalImage { width: 100%; height: auto; max-height: 400px; object-fit: contain; border: 1px solid #ACA899; }
+    .archive-modal-details-container { flex: 1; }
+    #archiveModalTitle { font-size: 16px; font-weight: bold; color: #0039A9; margin-bottom: 10px; }
+    .archive-modal-detail { margin-bottom: 8px; }
+    .archive-modal-detail strong { display: inline-block; width: 100px; }
+    .archive-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes archiveFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+</style>
+
+<div class="archive-app-container">
+    <div class="archive-search-bar">
+        <input type="text" id="archiveSearchInput" placeholder="Search Internet Archive...">
+        <input type="text" id="archiveCreatorSearchInput" placeholder="Search by creator...">
+        <select id="archiveMediaTypeSelect">
+            <option value="">All Media Types</option>
+            <option value="texts">Texts</option>
+            <option value="audio">Audio</option>
+            <option value="movies">Video</option>
+            <option value="image">Images</option>
+            <option value="collection">Collections</option>
+        </select>
+        <button id="archiveSearchBtn" class="xp-button">Search</button>
+    </div>
+    <div class="archive-results-grid" id="archiveResultsGrid"></div>
+    <div class="archive-pagination">
+        <button id="archivePrevBtn" class="xp-button" disabled>Previous</button>
+        <span id="archivePageInfo">Page 1</span>
+        <button id="archiveNextBtn" class="xp-button" disabled>Next</button>
+    </div>
+</div>
+
+<div id="archiveDetailModal" class="archive-modal">
+    <div class="archive-modal-content">
+        <div class="archive-modal-title-bar">
+            <span id="archiveModalTitleBar">Item Details</span>
+            <span class="archive-modal-close-button">r</span>
+        </div>
+        <div class="archive-modal-body">
+            <div class="archive-modal-image-container">
+                <img id="archiveModalImage" src="" alt="High-resolution preview">
+            </div>
+            <div class="archive-modal-details-container">
+                <h2 id="archiveModalTitle"></h2>
+                <div class="archive-modal-detail"><strong>Creator:</strong> <span id="archiveModalCreator"></span></div>
+                <div class="archive-modal-detail"><strong>Media Type:</strong> <span id="archiveModalMediaType"></span></div>
+                <div class="archive-modal-detail"><strong>Year:</strong> <span id="archiveModalYear"></span></div>
+                <div class="archive-modal-detail"><strong>Topics:</strong> <span id="archiveModalTopics"></span></div>
+            </div>
+        </div>
+        <div class="archive-modal-footer">
+            <a id="archiveModalLink" href="#" target="_blank" class="xp-button">View on Archive.org</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('archiveSearchInput');
+    const creatorSearchInput = document.getElementById('archiveCreatorSearchInput');
+    const mediaTypeSelect = document.getElementById('archiveMediaTypeSelect');
+    const searchBtn = document.getElementById('archiveSearchBtn');
+    const resultsGrid = document.getElementById('archiveResultsGrid');
+    const prevBtn = document.getElementById('archivePrevBtn');
+    const nextBtn = document.getElementById('archiveNextBtn');
+    const pageInfo = document.getElementById('archivePageInfo');
+    const detailModal = document.getElementById('archiveDetailModal');
+    const modalCloseButton = document.querySelector('.archive-modal-title-bar .archive-modal-close-button');
+
+    let currentPage = 1;
+    let currentQuery = '';
+    let currentCreator = '';
+    let currentMediaType = '';
+    let seenIdentifiers = new Set();
+    let isFetching = false;
+
+    const fetchArchiveData = async () => {
+        if ((!currentQuery && !currentCreator) || isFetching) return;
+        isFetching = true;
+        resultsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding-top: 20px;">Loading...</div>';
+        searchBtn.disabled = true;
+
+        let uniqueDocs = [];
+        let tempPage = currentPage;
+        let hitApiEnd = false;
+
+        while (uniqueDocs.length < 16) {
+            let queryClauses = [];
+            if (currentQuery) {
+                queryClauses.push(currentQuery);
+            }
+            if (currentCreator) {
+                queryClauses.push(`creator:("${currentCreator}")`);
+            }
+            if (currentMediaType) {
+                queryClauses.push(`mediatype:(${currentMediaType})`);
+            }
+            
+            const finalQuery = queryClauses.join(" AND ");
+            const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(finalQuery)}&fl[]=identifier,title,creator,mediatype,year,subject&rows=16&page=${tempPage}&output=json`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const newDocs = data.response.docs;
+                if (newDocs.length === 0) {
+                    hitApiEnd = true;
+                    break; 
+                }
+
+                for (const doc of newDocs) {
+                    if (!seenIdentifiers.has(doc.identifier)) {
+                        seenIdentifiers.add(doc.identifier);
+                        uniqueDocs.push(doc);
+                        if (uniqueDocs.length === 16) {
+                            break;
+                        }
+                    }
+                }
+                
+                if (uniqueDocs.length < 16) {
+                    tempPage++;
+                }
+
+            } catch (error) {
+                resultsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding-top: 20px;">Error loading results.</div>';
+                hitApiEnd = true;
+                break;
+            }
+        }
+        
+        if (uniqueDocs.length < 16) {
+            hitApiEnd = true;
+        }
+
+        renderResults(uniqueDocs);
+        updatePagination(hitApiEnd);
+        isFetching = false;
+        searchBtn.disabled = false;
+    };
+
+    const renderResults = (docs) => {
+        resultsGrid.innerHTML = '';
+        if (docs.length === 0) {
+            resultsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding-top: 20px;">No new results found.</div>';
+            return;
+        }
+        docs.forEach(doc => {
+            const item = document.createElement('div');
+            item.className = 'archive-result-item';
+            item.dataset.identifier = doc.identifier;
+            const thumbnailUrl = `https://archive.org/services/get-item-image.php?identifier=${doc.identifier}`;
+            const title = doc.title || 'Untitled';
+            const creator = Array.isArray(doc.creator) ? doc.creator.join(', ') : (doc.creator || 'N/A');
+            const mediatype = doc.mediatype || 'N/A';
+            
+            item.innerHTML = `
+                <div class="archive-item-img-container">
+                    <img src="${thumbnailUrl}" alt="${title}" onerror="this.src='https://archive.org/images/glogo.png';">
+                </div>
+                <div class="archive-item-text-container">
+                    <div class="title" title="${title}">${title}</div>
+                    <div class="details" title="${mediatype}">${mediatype}</div>
+                    <div class="details" title="${creator}">${creator}</div>
+                </div>
+            `;
+            item.addEventListener('click', () => showDetailModal(doc));
+            resultsGrid.appendChild(item);
+        });
+    };
+
+    const updatePagination = (isLastPage) => {
+        pageInfo.textContent = `Page ${currentPage}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = isLastPage;
+    };
+
+    const showDetailModal = (doc) => {
+        document.getElementById('archiveModalImage').src = `https://archive.org/services/get-item-image.php?identifier=${doc.identifier}`;
+        document.getElementById('archiveModalTitle').textContent = doc.title || 'Untitled';
+        document.getElementById('archiveModalCreator').textContent = Array.isArray(doc.creator) ? doc.creator.join(', ') : doc.creator || 'N/A';
+        document.getElementById('archiveModalMediaType').textContent = doc.mediatype || 'N/A';
+        document.getElementById('archiveModalYear').textContent = doc.year || 'N/A';
+        document.getElementById('archiveModalTopics').textContent = Array.isArray(doc.subject) ? doc.subject.join(', ') : doc.subject || 'N/A';
+        document.getElementById('archiveModalLink').href = `https://archive.org/details/${doc.identifier}`;
+        detailModal.style.display = 'flex';
+    };
+
+    const startNewSearch = () => {
+        currentQuery = searchInput.value.trim();
+        currentCreator = creatorSearchInput.value.trim();
+        currentMediaType = mediaTypeSelect.value;
+        if (!currentQuery && !currentCreator) {
+            resultsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding-top: 20px;">Please enter a search term or creator.</div>';
+            return;
+        }
+        seenIdentifiers.clear();
+        fetchArchiveData();
+    };
+
+    searchBtn.addEventListener('click', () => {
+        currentPage = 1;
+        startNewSearch();
+    });
+
+    searchInput.addEventListener('keypress', e => e.key === 'Enter' && searchBtn.click());
+    creatorSearchInput.addEventListener('keypress', e => e.key === 'Enter' && searchBtn.click());
+
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            startNewSearch();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (!nextBtn.disabled) {
+            currentPage++;
+            fetchArchiveData();
+        }
+    });
+
+    modalCloseButton.addEventListener('click', () => {
+        detailModal.style.display = 'none';
+    });
+
+    detailModal.addEventListener('click', (event) => {
+        if (event.target === detailModal) {
+            detailModal.style.display = 'none';
+        }
+    });
+});
+</script>

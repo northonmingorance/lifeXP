@@ -81,10 +81,10 @@
     "defaultHeight": 330
   },
   {
-    "id": "artDomain",
-    "name": "Art Domain",
-    "icon": "🖼️",
-    "file": "art-domain.app.html",
+    "id": "archive",
+    "name": "Archive",
+    "icon": "🏛️",
+    "file": "archive.app.html",
     "minWidth": 375,
     "minHeight": 330,
     "defaultWidth": 375,
