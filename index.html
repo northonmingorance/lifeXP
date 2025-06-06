@@ -354,7 +354,8 @@
             customBgColor: null,
             appApiKeys: {
                 youtube: "",
-                gemini: ""
+                gemini: "",
+                googleMaps: ""
             }
         };
         let lastNormalStates = {};
@@ -391,13 +392,15 @@
                     firebaseRemoteConfig = firebase.remoteConfig();
                     firebaseRemoteConfig.defaultConfig = {
                         'youtube_api_key': '',
-                        'gemini_api_key': ''
+                        'gemini_api_key': '',
+                        'google_maps_api_key': ''
                     };
                     firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000;
                     await firebaseRemoteConfig.fetchAndActivate();
                     osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
                     osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
-                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found");
+                    osData.appApiKeys.googleMaps = firebaseRemoteConfig.getString('google_maps_api_key');
+                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found", "Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found");
                     saveOsData();
                 } else {
                     console.warn("Firebase SDK or config not available. API keys will not be fetched.");
@@ -715,13 +718,25 @@
             saveWindowState(appConfig.id);
             return windowElement;
         }
-
+        
         function sendApiKeyToApp(appId, iframeContentWindow) {
             if (!iframeContentWindow) return;
-            if (appId === 'geminiChat' && osData.appApiKeys.gemini) {
-                iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'gemini', key: osData.appApiKeys.gemini }, '*');
-            } else if (appId === 'playJockey' && osData.appApiKeys.youtube) {
-                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: 'youtube', key: osData.appApiKeys.youtube }, '*');
+            let service = '';
+            let key = '';
+            
+            if (appId === 'geminiChat') {
+                service = 'gemini';
+                key = osData.appApiKeys.gemini;
+            } else if (appId === 'playJockey') {
+                service = 'youtube';
+                key = osData.appApiKeys.youtube;
+            } else if (appId === 'compass') { // Added case for compass
+                service = 'googleMaps';
+                key = osData.appApiKeys.googleMaps;
+            }
+
+            if(service && key) {
+                 iframeContentWindow.postMessage({ type: 'apiKeyResponse', service: service, key: key }, '*');
             }
         }
 
@@ -1108,7 +1123,7 @@
                 iconPositions: {},
                 customBgImage: null,
                 customBgColor: null,
-                appApiKeys: { youtube: "", gemini: "" }
+                appApiKeys: { youtube: "", gemini: "" googleMaps: "" }
             };
             if (storedData) {
                 try {
@@ -1255,15 +1270,23 @@
 
         function handleIframeMessages(event) {
             const { type, service, appId } = event.data;
-            if (type === 'requestApiKey') {
+            if (type === 'requestApiKey' && appId && service) {
                 const iframe = document.getElementById(`iframe-${appId}`);
                 if (iframe && iframe.contentWindow) {
-                    if (service === 'gemini' && osData.appApiKeys.gemini) {
-                        iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: 'gemini', key: osData.appApiKeys.gemini }, '*');
-                    } else if (service === 'youtube' && osData.appApiKeys.youtube) {
-                        iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: 'youtube', key: osData.appApiKeys.youtube }, '*');
+                    let keyToSend = null;
+                    if (service === 'gemini') {
+                        keyToSend = osData.appApiKeys.gemini;
+                    } else if (service === 'youtube') {
+                        keyToSend = osData.appApiKeys.youtube;
+                    } else if (service === 'googleMaps') { // Added handler for 'googleMaps'
+                        keyToSend = osData.appApiKeys.googleMaps;
+                    }
+
+                    if (keyToSend !== null) {
+                         iframe.contentWindow.postMessage({ type: 'apiKeyResponse', service: service, key: keyToSend }, '*');
+                         console.log(`OS: Sent '${service}' API key to app '${appId}'.`);
                     } else {
-                         console.warn(`OS: API key for ${service} not available or not requested by a known app.`);
+                         console.warn(`OS: API key for service '${service}' not available for app '${appId}'.`);
                     }
                 }
             }

@@ -88,15 +88,12 @@
 <script>
     // --- Configuration ---
     const COMPASS_STORAGE_KEY = 'compassAppData_v2';
-    // IMPORTANT: To enable location searching, you must get a Google Maps API key from the
-    // Google Cloud Console and replace the placeholder string below.
-    const API_KEY = 'AIzaSyCrFLFaQ2vhnjZgY9SXLEx5qVKp97_l4Qs';
+    let GOOGLE_MAPS_API_KEY = ""; // This will be populated by the parent OS
 
     // --- Application State ---
     let compassData = {
         landmarks: []
     };
-    // This object now reliably holds the coordinates of the location currently shown on the map.
     let currentMapLocation = { lat: 0, lon: 0 };
 
     // --- DOM Elements ---
@@ -131,14 +128,6 @@
     }
 
     // --- Core App Logic ---
-
-    /**
-     * Updates the map iframe and the currentMapLocation state variable.
-     * This is the single source of truth for the map's current location.
-     * @param {number} lat - Latitude
-     * @param {number} lon - Longitude
-     * @param {number} [zoom=14] - Map zoom level
-     */
     function updateMap(lat, lon, zoom = 14) {
         currentMapLocation.lat = lat;
         currentMapLocation.lon = lon;
@@ -146,9 +135,6 @@
         DOM.mapFrame.src = embedUrl;
     }
 
-    /**
-     * Fetches the user's current GPS location and updates the map.
-     */
     function handleGetCurrentLocation() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -166,10 +152,6 @@
         }
     }
 
-    /**
-     * [MODIFIED] Geocodes the search query to get coordinates and updates the map.
-     * This function now correctly updates the application state.
-     */
     async function handleSearchLocation() {
         const query = DOM.searchInput.value.trim();
         if (!query) {
@@ -177,14 +159,12 @@
             return;
         }
 
-        if (API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY_HERE' || !API_KEY) {
-            alert("API Key is missing. Please add your Google Maps API key to the script to enable search functionality.");
-            // Fallback to the old, less precise search method if no key is provided.
-            DOM.mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=14&output=embed`;
+        if (!GOOGLE_MAPS_API_KEY) {
+            alert("API Key is missing. The Compass app cannot search without a Google Maps API key provided by the OS.");
             return;
         }
 
-        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${API_KEY}`;
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`;
 
         try {
             const response = await fetch(geocodeUrl);
@@ -195,7 +175,6 @@
 
             if (data.status === 'OK' && data.results.length > 0) {
                 const location = data.results[0].geometry.location;
-                // Note: The Geocoding API returns 'lng', which we map to 'lon'.
                 updateMap(location.lat, location.lng);
             } else {
                 alert(`Could not find location: ${data.status}. ${data.error_message || 'No results found.'}`);
@@ -207,9 +186,6 @@
         }
     }
 
-    /**
-     * Renders the list of saved landmarks in the sidebar.
-     */
     function renderLandmarkList() {
         DOM.landmarkList.innerHTML = '';
         if (compassData.landmarks.length === 0) {
@@ -238,7 +214,6 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const indexToDelete = parseInt(e.target.dataset.index);
-                // A simple custom confirmation modal would be better than window.confirm in a real app.
                 if (window.confirm(`Are you sure you want to delete "${compassData.landmarks[indexToDelete].name}"?`)) {
                     compassData.landmarks.splice(indexToDelete, 1);
                     saveCompassData();
@@ -247,7 +222,7 @@
             });
         });
     }
-    
+
     // --- Modal Handling ---
     function openAddLandmarkModal() {
         DOM.landmarkNameInput.value = '';
@@ -259,10 +234,6 @@
         DOM.addLandmarkModal.style.display = 'none';
     }
 
-    /**
-     * Saves a new landmark using the coordinates from the `currentMapLocation` state.
-     * This function no longer needs changes as the state is now always correct.
-     */
     function saveNewLandmark() {
         const name = DOM.landmarkNameInput.value.trim();
         if (!name) {
@@ -270,11 +241,10 @@
             return;
         }
         
-        // This now correctly uses the coordinates from either "My Location" or the last search.
         const lat = currentMapLocation.lat;
         const lon = currentMapLocation.lon;
 
-        if (lat === 0 && lon === 0) {
+        if ((lat === 0 && lon === 0) || !lat) {
             alert("Cannot save landmark. Location coordinates are not set. Try searching or using 'My Location'.");
             return;
         }
@@ -306,13 +276,35 @@
             });
         });
     }
+    
+    // --- API Key Communication with Parent OS ---
+    window.addEventListener('message', (event) => {
+        // Ensure the message is from a trusted source if necessary, but for now we accept from parent
+        if (event.data && event.data.type === 'apiKeyResponse' && event.data.service === 'googleMaps') {
+            GOOGLE_MAPS_API_KEY = event.data.key;
+            console.log("Compass App: Google Maps API Key received.");
+            if (!GOOGLE_MAPS_API_KEY) {
+                 console.warn("Compass App: Google Maps API Key received from OS is empty. Search will be disabled.");
+            }
+        }
+    });
+
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
         loadCompassData();
         addEventListeners();
         renderLandmarkList();
-        handleGetCurrentLocation(); // Get initial location on load
+        handleGetCurrentLocation();
+        
+        // Request API key from the parent OS window
+        if (window.parent && window.parent !== window) {
+            console.log("Compass App: Requesting Google Maps API key from parent OS.");
+            // We use 'googleMaps' as the service name, which the parent must recognize
+            window.parent.postMessage({ type: 'requestApiKey', service: 'googleMaps', appId: 'compass' }, '*'); 
+        } else {
+            console.warn("Compass App: Not running in an iframe or parent context not detected. API key request will fail.");
+        }
     });
 
 </script>
