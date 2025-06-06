@@ -23,11 +23,14 @@
         .compass-landmark-sidebar { width: 220px; flex-shrink: 0; background-color: #F0F0F0; display: flex; flex-direction: column; overflow: hidden; }
         .compass-landmark-header { padding: 8px; font-weight: bold; background-color: #D4D0C8; border-bottom: 1px solid #808080; text-align: center; flex-shrink: 0; }
         #compassLandmarkList { list-style-type: none; margin: 0; padding: 5px; overflow-y: auto; flex-grow: 1; }
-        .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: pointer; }
+        .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: grab; user-select: none; }
+        .compass-landmark-item:active { cursor: grabbing; }
+        .compass-landmark-item.dragging { opacity: 0.5; background: #cce5ff; }
         .compass-landmark-item:hover { border: 1px solid #005CFE; background-color: #F0F8FF; }
-        .landmark-item-name { font-weight: bold; color: #0039A9; }
-        .landmark-item-query { font-size: 10px; color: #555; margin-top: 3px; font-style: italic; }
-        .landmark-item-actions { margin-top: 5px; text-align: right; }
+        .landmark-item-name { font-weight: bold; color: #0039A9; pointer-events: none; }
+        .landmark-item-query { font-size: 10px; color: #555; margin-top: 3px; font-style: italic; pointer-events: none; }
+        .landmark-item-actions { margin-top: 5px; text-align: right; pointer-events: none; }
+        .landmark-item-actions .xp-button { pointer-events: all; }
         #compassAddLandmarkBtn { flex-shrink: 0; margin-left: 5px; }
 
         .compass-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
@@ -86,15 +89,11 @@
 </div>
 
 <script>
-    // --- Application State ---
-    const COMPASS_STORAGE_KEY = 'compassAppData_v3'; // Incremented version
-    let compassData = {
-        landmarks: [] // Will store objects like { name: "...", query: "..." }
-    };
-    // Keep track of lat/lon for the "My Location" feature, but not for saving landmarks.
-    let currentMapLocation = { lat: 0, lon: 0 }; 
+    const COMPASS_STORAGE_KEY = 'compassAppData_v4';
+    let compassData = { landmarks: [] };
+    let currentMapLocation = { lat: 0, lon: 0 };
+    let draggedItem = null;
 
-    // --- DOM Elements ---
     const DOM = {
         searchInput: document.getElementById('compassSearchInput'),
         searchBtn: document.getElementById('compassSearchBtn'),
@@ -107,13 +106,11 @@
         landmarkSaveBtn: document.getElementById('landmarkSaveBtn'),
     };
 
-    // --- Data Persistence ---
     function loadCompassData() {
         const stored = localStorage.getItem(COMPASS_STORAGE_KEY);
         if (stored) {
             try {
                 const parsedData = JSON.parse(stored);
-                // Ensure landmarks are loaded correctly, default to empty array if missing
                 compassData.landmarks = parsedData.landmarks || [];
             } catch (e) {
                 console.error("Error loading Compass data, resetting.", e);
@@ -126,9 +123,7 @@
         localStorage.setItem(COMPASS_STORAGE_KEY, JSON.stringify(compassData));
     }
 
-    // --- Map Functions ---
     function updateMapWithCoords(lat, lon, zoom = 14) {
-        // This function is now specifically for coordinate-based updates (My Location)
         currentMapLocation.lat = lat;
         currentMapLocation.lon = lon;
         const embedUrl = `https://maps.google.com/maps?q=${lat},${lon}&hl=en&z=${zoom}&output=embed`;
@@ -136,12 +131,10 @@
     }
     
     function updateMapWithQuery(query) {
-        // This function is for search-based updates
         const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=14&output=embed`;
         DOM.mapFrame.src = embedUrl;
     }
 
-    // --- Event Handlers ---
     function handleGetCurrentLocation() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -149,7 +142,7 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     updateMapWithCoords(lat, lon);
-                    DOM.searchInput.value = ''; // Clear search input when using "My Location"
+                    DOM.searchInput.value = '';
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
@@ -171,32 +164,27 @@
         updateMapWithQuery(query);
     }
     
-    // --- Landmark UI & Logic ---
     function renderLandmarkList() {
         DOM.landmarkList.innerHTML = '';
         if (compassData.landmarks.length === 0) {
             DOM.landmarkList.innerHTML = '<li style="padding: 10px; text-align: center; color: #555;">No saved landmarks.</li>';
             return;
         }
-        // Sort landmarks alphabetically by name
-        const sortedLandmarks = [...compassData.landmarks].sort((a, b) => a.name.localeCompare(b.name));
-
-        sortedLandmarks.forEach((landmark) => {
+        
+        compassData.landmarks.forEach((landmark, index) => {
             const li = document.createElement('li');
             li.className = 'compass-landmark-item';
-            // Use landmark.query to find it in the original array for deletion
-            li.dataset.query = landmark.query;
-            li.dataset.name = landmark.name;
+            li.dataset.index = index;
+            li.setAttribute('draggable', 'true');
 
             li.innerHTML = `
                 <div class="landmark-item-name">${landmark.name}</div>
                 <div class="landmark-item-query">${landmark.query}</div>
                 <div class="landmark-item-actions">
-                    <button class="xp-button xp-button-small landmark-delete-btn">Delete</button>
+                    <button class="xp-button xp-button-small landmark-delete-btn" data-index="${index}">Delete</button>
                 </div>
             `;
             
-            // Main click action: search for the landmark's query
             li.addEventListener('click', (e) => {
                 if (e.target.classList.contains('landmark-delete-btn')) return;
                 DOM.searchInput.value = landmark.query;
@@ -206,21 +194,14 @@
             DOM.landmarkList.appendChild(li);
         });
         
-        // Add delete functionality after rendering
         document.querySelectorAll('.landmark-delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent the main li click event
-                const landmarkItem = e.target.closest('.compass-landmark-item');
-                const landmarkName = landmarkItem.dataset.name;
-                
-                if (confirm(`Are you sure you want to delete "${landmarkName}"?`)) {
-                    // Find and remove the landmark from the original data array
-                    const indexToDelete = compassData.landmarks.findIndex(lm => lm.name === landmarkName && lm.query === landmarkItem.dataset.query);
-                    if (indexToDelete > -1) {
-                        compassData.landmarks.splice(indexToDelete, 1);
-                        saveCompassData();
-                        renderLandmarkList(); // Re-render the list
-                    }
+                e.stopPropagation();
+                const indexToDelete = parseInt(e.target.dataset.index, 10);
+                if (confirm(`Are you sure you want to delete "${compassData.landmarks[indexToDelete].name}"?`)) {
+                    compassData.landmarks.splice(indexToDelete, 1);
+                    saveCompassData();
+                    renderLandmarkList();
                 }
             });
         });
@@ -232,7 +213,7 @@
             alert("Please search for a location first before saving it as a landmark.");
             return;
         }
-        DOM.landmarkNameInput.value = query; // Pre-fill name with the search query
+        DOM.landmarkNameInput.value = query;
         DOM.addLandmarkModal.style.display = 'flex';
         DOM.landmarkNameInput.focus();
         DOM.landmarkNameInput.select();
@@ -249,15 +230,12 @@
             return;
         }
         
-        // **MODIFIED**: Get the query from the search input instead of coordinates
         const query = DOM.searchInput.value.trim();
         if (!query) {
-            // This case should be prevented by the check in openAddLandmarkModal, but good to have a safeguard
             alert("Cannot save a landmark without a location query.");
             return;
         }
 
-        // Check for duplicates
         if (compassData.landmarks.some(lm => lm.name.toLowerCase() === name.toLowerCase())) {
             alert("A landmark with this name already exists. Please choose a different name.");
             return;
@@ -269,35 +247,86 @@
         closeAddLandmarkModal();
     }
 
-    // --- Initialization ---
     function addEventListeners() {
         DOM.currentLocationBtn.addEventListener('click', handleGetCurrentLocation);
         DOM.searchBtn.addEventListener('click', handleSearchLocation);
         DOM.searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleSearchLocation();
-            }
+            if (e.key === 'Enter') handleSearchLocation();
         });
         DOM.addLandmarkBtn.addEventListener('click', openAddLandmarkModal);
         DOM.landmarkSaveBtn.addEventListener('click', saveNewLandmark);
 
-        // General modal close buttons
         document.querySelectorAll('.compass-modal-close-button, .compass-modal-cancel-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const modalId = e.target.dataset.modalId;
-                if (modalId) {
-                    const modal = document.getElementById(modalId);
-                    if (modal) modal.style.display = 'none';
-                }
+                const modal = e.target.closest('.compass-modal');
+                if(modal) modal.style.display = 'none';
             });
         });
+
+        const list = DOM.landmarkList;
+        list.addEventListener('dragstart', (e) => {
+            draggedItem = e.target;
+            setTimeout(() => {
+                e.target.classList.add('dragging');
+            }, 0);
+        });
+
+        list.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+
+        list.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(list, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            if (afterElement == null) {
+                list.appendChild(dragging);
+            } else {
+                list.insertBefore(dragging, afterElement);
+            }
+        });
+
+        list.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const newLandmarks = [];
+            const listItems = list.querySelectorAll('.compass-landmark-item');
+            listItems.forEach(item => {
+                const originalIndex = parseInt(item.dataset.index, 10);
+                newLandmarks.push(compassData.landmarks[originalIndex]);
+            });
+            
+            // Re-map the original data based on the new DOM order
+            const reorderedLandmarks = Array.from(list.children).map(child => {
+                 const originalIndex = parseInt(child.dataset.index, 10);
+                 return compassData.landmarks.find((lm, idx) => idx === originalIndex);
+            });
+            
+            compassData.landmarks = reorderedLandmarks.filter(Boolean); // filter out undefined if any issues occur
+            saveCompassData();
+            renderLandmarkList(); // Re-render to fix indices and listeners
+        });
+
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.compass-landmark-item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadCompassData();
         addEventListeners();
         renderLandmarkList();
-        handleGetCurrentLocation(); // Get initial location on load
+        handleGetCurrentLocation();
     });
 
 </script>
