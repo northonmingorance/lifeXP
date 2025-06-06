@@ -85,9 +85,9 @@
     "name": "Archive",
     "icon": "🏛️",
     "file": "archive.app.html",
-    "minWidth": 375,
-    "minHeight": 330,
-    "defaultWidth": 375,
-    "defaultHeight": 330
+    "minWidth": 560,
+    "minHeight": 580,
+    "defaultWidth": 560,
+    "defaultHeight": 580
   }
 ]
