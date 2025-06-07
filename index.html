@@ -280,9 +280,8 @@
             outline-offset: 1px;
             transform: scale(1.1);
         }
-        /* Custom Alert Modal Styles */
         #alertModal .modal-content {
-            max-width: 400px; /* Smaller width for alerts */
+            max-width: 400px;
         }
         #alertModal .modal-body {
             display: flex;
@@ -292,7 +291,7 @@
         #alertModal .alert-icon {
             font-size: 32px;
             margin-right: 15px;
-            color: #f0ad4e; /* Warning yellow */
+            color: #f0ad4e;
         }
         #alertModal .modal-footer {
             text-align: center;
@@ -424,7 +423,6 @@
 
         function getById(id) { return document.getElementById(id); }
 
-        // --- NEW --- Function to show a custom alert modal
         function showAlert(message, title = 'System Message') {
             DOM.alertModalMessage.textContent = message;
             getById('alertModalTitle').textContent = title;
@@ -470,7 +468,6 @@
                 appManifest = await response.json();
             } catch (error) {
                 console.error("Error loading app manifest:", error);
-                // --- REPLACED alert() ---
                 showAlert("Could not load application list. Desktop might not function correctly.", "Loading Error");
                 return;
             }
@@ -1158,7 +1155,6 @@
             } catch (error) {
                 console.error("Could not save OS data:", error);
                 if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                     // --- REPLACED alert() ---
                     showAlert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.", "Storage Error");
                 }
             }
@@ -1250,7 +1246,6 @@
                 const file = DOM.newBgImageInput.files[0];
                 if (file) {
                     if (file.size > 5 * 1024 * 1024) {
-                        // --- REPLACED alert() ---
                         showAlert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.", "File Size Warning");
                     }
                     const reader = new FileReader();
@@ -1261,11 +1256,9 @@
                         saveOsData();
                         closeModal('changeBgImageModal');
                     }
-                    // --- REPLACED alert() ---
                     reader.onerror = function() { showAlert("Error reading image file.", "File Error"); }
                     reader.readAsDataURL(file);
                 } else {
-                    // --- REPLACED alert() ---
                     showAlert("Please select an image file first.");
                 }
             });
@@ -1281,11 +1274,9 @@
                         saveOsData();
                         closeModal('changeBgImageModal');
                     } catch (e) {
-                        // --- REPLACED alert() ---
                         showAlert("Invalid image URL provided. Please enter a complete and valid URL (e.g., https://example.com/image.png).", "URL Error");
                     }
                 } else {
-                    // --- REPLACED alert() ---
                     showAlert("Please enter an image URL.");
                 }
             });
