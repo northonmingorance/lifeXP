@@ -54,6 +54,11 @@
     .pj-youtube-result-item-title { font-weight: bold; color: #0039A9; font-size: 12px; margin-bottom: 3px; }
     .pj-youtube-result-item-channel { font-size: 10px; color: #555; }
     #pjYoutubeSearchStatus { padding: 15px; font-size: 12px; text-align: center;}
+    
+    #pjAlertModal .pj-modal-content { max-width: 400px; }
+    #pjAlertModal .pj-modal-body { display: flex; align-items: center; padding: 20px; }
+    #pjAlertModal .alert-icon { font-size: 32px; margin-right: 15px; color: #f0ad4e; }
+    #pjAlertModal .pj-modal-footer { text-align: center; }
 </style>
 
 <div class="playjockey-body-container">
@@ -165,8 +170,25 @@
     </div>
 </div>
 
+<!-- Generic Alert Modal for Play Jockey -->
+<div id="pjAlertModal" class="pj-modal">
+    <div class="pj-modal-content">
+        <div class="pj-modal-title-bar">
+            <span id="pjAlertModalTitle">Notification</span>
+            <span class="pj-modal-close-button" data-modal-id="pjAlertModal">r</span>
+        </div>
+        <div class="pj-modal-body">
+            <div class="alert-icon">!</div>
+            <p id="pjAlertModalMessage" style="word-break: break-word;"></p>
+        </div>
+        <div class="pj-modal-footer">
+            <button id="pjAlertModalOkBtn" class="xp-button pj-modal-cancel-button" data-modal-id="pjAlertModal">OK</button>
+        </div>
+    </div>
+</div>
 
-<script src="https://www.youtube.com/iframe_api"></script> <script>
+<script src="https://www.youtube.com/iframe_api"></script> 
+<script>
     const PJ_STORAGE_KEY = 'playJockeyAppData_v1.0.2';
     let YOUTUBE_API_KEY = ""; 
 
@@ -211,6 +233,9 @@
         confirmRemoveTrackModal: document.getElementById('pjConfirmRemoveTrackModal'),
         confirmRemoveTrackMessage: document.getElementById('pjConfirmRemoveTrackMessage'),
         confirmFinalTrackRemoveBtn: document.getElementById('pjConfirmFinalTrackRemoveBtn'),
+        pjAlertModal: document.getElementById('pjAlertModal'),
+        pjAlertModalTitle: document.getElementById('pjAlertModalTitle'),
+        pjAlertModalMessage: document.getElementById('pjAlertModalMessage'),
     };
 
     let ytPlayerInstance = null;
@@ -218,6 +243,12 @@
     let pendingVideoToLoad = null;
     let pjDraggedItem = null;
     
+    function showPjAlert(message, title = 'Notification') {
+        DOM_PJ.pjAlertModalTitle.textContent = title;
+        DOM_PJ.pjAlertModalMessage.textContent = message;
+        openPjModal('pjAlertModal');
+    }
+
     function decodeHtmlEntitiesPJ(text) {
         if (typeof text !== 'string') return text;
         const textarea = document.createElement('textarea');
@@ -328,13 +359,13 @@
 
     async function handlePjInput() {
         const input = DOM_PJ.linkInput.value.trim();
-        if (!input) { alert("Please enter a YouTube link or search query."); return; }
+        if (!input) { showPjAlert("Please enter a YouTube link or search query."); return; }
 
         if (isValidYouTubeUrl(input)) {
             addYouTubeLinkToPj(input);
         } else {
             if (!YOUTUBE_API_KEY) {
-                 alert("YouTube API Key is not available for video search. Please add direct YouTube video links or ensure the API key is loaded by the OS.");
+                 showPjAlert("YouTube API Key is not available for video search. Please add direct YouTube video links or ensure the API key is loaded by the OS.");
                  return;
             }
             searchYouTubeVideos(input);
@@ -424,15 +455,15 @@
         if (!currentPlaylist) {
             addNewPjPlaylist();
             currentPlaylist = getCurrentPjPlaylist();
-            if (!currentPlaylist) { alert("Error: Could not create playlist."); return; }
+            if (!currentPlaylist) { showPjAlert("Error: Could not create playlist."); return; }
         }
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
-            alert("This video is already in the current playlist.");
+            showPjAlert("This video is already in the current playlist.");
             return;
         }
         const videoEntry = {
             id: 'pjv_' + Date.now() + '_' + Math.random().toString(36).substring(2,7),
-            originalUrl: `https://www.youtube.com/watch?v=$$$$$$$$$${videoId}`,
+            originalUrl: `https://www.youtube.com/watch?v=${videoId}`,
             videoId: videoId,
             title: title,
             artist: artist.replace(/\s-\sTopic$/, '').trim()
@@ -448,17 +479,17 @@
 
     function addYouTubeLinkToPj(link) {
         const videoId = extractYouTubeVideoId(link);
-        if (!videoId) { alert("Invalid YouTube link."); return; }
+        if (!videoId) { showPjAlert("Invalid YouTube link."); return; }
 
         let currentPlaylist = getCurrentPjPlaylist();
         if (!currentPlaylist) {
             addNewPjPlaylist(); 
             currentPlaylist = getCurrentPjPlaylist();
-            if (!currentPlaylist) { alert("Error: Could not create playlist."); return; }
+            if (!currentPlaylist) { showPjAlert("Error: Could not create playlist."); return; }
         }
 
         if (currentPlaylist.videos.some(video => video.videoId === videoId)) {
-            alert("This video is already in the current playlist.");
+            showPjAlert("This video is already in the current playlist.");
             DOM_PJ.linkInput.value = '';
             return;
         }
@@ -560,10 +591,10 @@
     function hidePjPlaylistTabContextMenu() { DOM_PJ.playlistTabContextMenu.style.display = 'none'; delete DOM_PJ.playlistTabContextMenu.dataset.playlistId; }
     function handlePjContextRenameTrack() { const itemId = DOM_PJ.trackContextMenu.dataset.itemId; const currentPlaylist = getCurrentPjPlaylist(); if(!itemId || !currentPlaylist) return hidePjTrackContextMenu(); const item = currentPlaylist.videos.find(v => v.id === itemId); if(item) { DOM_PJ.trackNewNameInput.value = decodeHtmlEntitiesPJ(item.title); DOM_PJ.trackNewArtistInput.value = decodeHtmlEntitiesPJ(item.artist); DOM_PJ.saveRenamedTrackBtn.dataset.itemId = itemId; openPjModal('pjRenameTrackModal'); DOM_PJ.trackNewNameInput.focus(); } hidePjTrackContextMenu(); }
     function handlePjContextRemoveTrack() { const itemId = DOM_PJ.trackContextMenu.dataset.itemId; const currentPlaylist = getCurrentPjPlaylist(); if(!itemId || !currentPlaylist) return hidePjTrackContextMenu(); const item = currentPlaylist.videos.find(v => v.id === itemId); if(item) { DOM_PJ.confirmRemoveTrackMessage.textContent = `Remove "${decodeHtmlEntitiesPJ(item.title)}"?`; DOM_PJ.confirmFinalTrackRemoveBtn.dataset.itemId = itemId; openPjModal('pjConfirmRemoveTrackModal'); } hidePjTrackContextMenu(); }
-    function saveRenamedPjTrack() { const itemId = DOM_PJ.saveRenamedTrackBtn.dataset.itemId; const newName = DOM_PJ.trackNewNameInput.value.trim(); const newArtist = DOM_PJ.trackNewArtistInput.value.trim(); const currentPlaylist = getCurrentPjPlaylist(); if (!itemId || !currentPlaylist || !newName) return alert("Track name cannot be empty."); const item = currentPlaylist.videos.find(v => v.id === itemId); if(item){ item.title = newName; item.artist = newArtist; if(pjData.currentVideo && pjData.currentVideo.id === itemId){pjData.currentVideo.title = newName; pjData.currentVideo.artist = newArtist;} renderPjPlaylist(); savePjData(); } closePjModal('pjRenameTrackModal'); }
+    function saveRenamedPjTrack() { const itemId = DOM_PJ.saveRenamedTrackBtn.dataset.itemId; const newName = DOM_PJ.trackNewNameInput.value.trim(); const newArtist = DOM_PJ.trackNewArtistInput.value.trim(); const currentPlaylist = getCurrentPjPlaylist(); if (!itemId || !currentPlaylist || !newName) { showPjAlert("Track name cannot be empty."); return; } const item = currentPlaylist.videos.find(v => v.id === itemId); if(item){ item.title = newName; item.artist = newArtist; if(pjData.currentVideo && pjData.currentVideo.id === itemId){pjData.currentVideo.title = newName; pjData.currentVideo.artist = newArtist;} renderPjPlaylist(); savePjData(); } closePjModal('pjRenameTrackModal'); }
     function executePjTrackDeletion() { const itemId = DOM_PJ.confirmFinalTrackRemoveBtn.dataset.itemId; const currentPlaylist = getCurrentPjPlaylist(); if (!itemId || !currentPlaylist) return closePjModal('pjConfirmRemoveTrackModal'); const itemIndex = currentPlaylist.videos.findIndex(v => v.id === itemId); if(itemIndex > -1){ const removed = currentPlaylist.videos.splice(itemIndex,1)[0]; if(pjData.currentVideo && pjData.currentVideo.id === removed.id){ if(ytPlayerInstance && ytPlayerInstance.stopVideo) ytPlayerInstance.stopVideo(); pjData.currentVideo = null; if(pjData.autoPlayEnabled && currentPlaylist.videos.length>0) playNextPjVideo(); else if(currentPlaylist.videos.length === 0) DOM_PJ.playerContainer.innerHTML = '<div id="playJockeyPlayer"></div>';} renderPjPlaylist(); savePjData(); } closePjModal('pjConfirmRemoveTrackModal');}
     function openRenamePjPlaylistModal() { const playlistId = DOM_PJ.playlistTabContextMenu.dataset.playlistId; if(!playlistId) return hidePjPlaylistTabContextMenu(); const playlist = pjData.playlists.find(p=>p.id === playlistId); if(playlist) { DOM_PJ.playlistNewNameInput.value = decodeHtmlEntitiesPJ(playlist.name); DOM_PJ.saveRenamedPlaylistBtn.dataset.playlistId = playlistId; openPjModal('pjRenamePlaylistModal'); DOM_PJ.playlistNewNameInput.focus(); } hidePjPlaylistTabContextMenu(); }
-    function saveRenamedPjPlaylist() { const playlistId = DOM_PJ.saveRenamedPlaylistBtn.dataset.playlistId; const newName = DOM_PJ.playlistNewNameInput.value.trim(); if(!playlistId || !newName) return alert("Playlist name cannot be empty."); const playlist = pjData.playlists.find(p => p.id === playlistId); if(playlist) { playlist.name = newName; renderPjTabs(); savePjData(); } closePjModal('pjRenamePlaylistModal'); }
+    function saveRenamedPjPlaylist() { const playlistId = DOM_PJ.saveRenamedPlaylistBtn.dataset.playlistId; const newName = DOM_PJ.playlistNewNameInput.value.trim(); if(!playlistId || !newName) { showPjAlert("Playlist name cannot be empty."); return; } const playlist = pjData.playlists.find(p => p.id === playlistId); if(playlist) { playlist.name = newName; renderPjTabs(); savePjData(); } closePjModal('pjRenamePlaylistModal'); }
     function openConfirmRemovePjPlaylistModal() { const playlistId = DOM_PJ.playlistTabContextMenu.dataset.playlistId; if(!playlistId) return hidePjPlaylistTabContextMenu(); const playlist = pjData.playlists.find(p=>p.id === playlistId); if(playlist) { DOM_PJ.confirmRemovePlaylistMessage.textContent = `Delete playlist "${decodeHtmlEntitiesPJ(playlist.name)}"?`; DOM_PJ.confirmFinalPlaylistRemoveBtn.dataset.playlistId = playlistId; openPjModal('pjConfirmRemovePlaylistModal'); } hidePjPlaylistTabContextMenu(); }
     function executePjPlaylistDeletion() { const playlistId = DOM_PJ.confirmFinalPlaylistRemoveBtn.dataset.playlistId; if(!playlistId || pjData.playlists.length <=1) return closePjModal('pjConfirmRemovePlaylistModal'); const index = pjData.playlists.findIndex(p=>p.id === playlistId); if(index > -1) { pjData.playlists.splice(index,1); if(pjData.currentPlaylistId === playlistId) { if(ytPlayerInstance && ytPlayerInstance.stopVideo) ytPlayerInstance.stopVideo(); pjData.currentVideo = null; pjData.currentPlaylistId = pjData.playlists[0]?.id || null; if(!pjData.currentPlaylistId && pjData.playlists.length === 0) { const defaultId = 'playlist_default_0_' + Date.now(); resetPjData(defaultId); } } renderPjTabs(); renderPjPlaylist(); savePjData(); } closePjModal('pjConfirmRemovePlaylistModal'); }
 
