@@ -280,6 +280,23 @@
             outline-offset: 1px;
             transform: scale(1.1);
         }
+        /* Custom Alert Modal Styles */
+        #alertModal .modal-content {
+            max-width: 400px; /* Smaller width for alerts */
+        }
+        #alertModal .modal-body {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+        #alertModal .alert-icon {
+            font-size: 32px;
+            margin-right: 15px;
+            color: #f0ad4e; /* Warning yellow */
+        }
+        #alertModal .modal-footer {
+            text-align: center;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-remote-config.js"></script>
@@ -287,6 +304,7 @@
 <body>
     <div id="desktop"></div>
 
+    <!-- Background Image Chooser Modal -->
     <div id="changeBgImageModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-bar">
@@ -321,6 +339,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Generic Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title-bar">
+                <span id="alertModalTitle">System Message</span>
+                 <span class="close-button" data-modal-id="alertModal">r</span>
+            </div>
+            <div class="modal-body">
+                <div class="alert-icon">!</div>
+                <p id="alertModalMessage" style="word-break: break-word;"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="alertModalOkBtn" class="xp-button close-modal-btn" data-modal-id="alertModal">OK</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         "use strict";
@@ -378,12 +414,22 @@
             bgImageUrlInput: document.getElementById('bgImageUrlInput'),
             applyBgImageUrlBtn: document.getElementById('applyBgImageUrlBtn'),
             bgColorSwatchesContainer: document.getElementById('bgColorSwatchesContainer'),
+            alertModal: document.getElementById('alertModal'),
+            alertModalMessage: document.getElementById('alertModalMessage'),
+            alertModalOkBtn: document.getElementById('alertModalOkBtn'),
             modalCloseButtons: null
         };
         DOM.modalCloseButtons = document.querySelectorAll('.modal .close-button, .modal .close-modal-btn');
 
 
         function getById(id) { return document.getElementById(id); }
+
+        // --- NEW --- Function to show a custom alert modal
+        function showAlert(message, title = 'System Message') {
+            DOM.alertModalMessage.textContent = message;
+            getById('alertModalTitle').textContent = title;
+            openModal('alertModal');
+        }
 
         async function initializeFirebaseAndLoadKeys() {
             try {
@@ -424,7 +470,8 @@
                 appManifest = await response.json();
             } catch (error) {
                 console.error("Error loading app manifest:", error);
-                alert("Could not load application list. Desktop might not function correctly.");
+                // --- REPLACED alert() ---
+                showAlert("Could not load application list. Desktop might not function correctly.", "Loading Error");
                 return;
             }
 
@@ -1111,7 +1158,8 @@
             } catch (error) {
                 console.error("Could not save OS data:", error);
                 if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                    alert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.");
+                     // --- REPLACED alert() ---
+                    showAlert("Could not save data: Storage limit exceeded. This might be due to a very large background image from file upload. Try a smaller file or use the URL option for large images.", "Storage Error");
                 }
             }
         }
@@ -1202,7 +1250,8 @@
                 const file = DOM.newBgImageInput.files[0];
                 if (file) {
                     if (file.size > 5 * 1024 * 1024) {
-                        alert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.");
+                        // --- REPLACED alert() ---
+                        showAlert("Image file is large (over 5MB). This might exceed browser storage limits when saved. Try a smaller file or use the URL option for large images.", "File Size Warning");
                     }
                     const reader = new FileReader();
                     reader.onloadend = function() {
@@ -1212,10 +1261,12 @@
                         saveOsData();
                         closeModal('changeBgImageModal');
                     }
-                    reader.onerror = function() { alert("Error reading image file."); }
+                    // --- REPLACED alert() ---
+                    reader.onerror = function() { showAlert("Error reading image file.", "File Error"); }
                     reader.readAsDataURL(file);
                 } else {
-                    alert("Please select an image file first.");
+                    // --- REPLACED alert() ---
+                    showAlert("Please select an image file first.");
                 }
             });
 
@@ -1230,10 +1281,12 @@
                         saveOsData();
                         closeModal('changeBgImageModal');
                     } catch (e) {
-                        alert("Invalid image URL provided. Please enter a complete and valid URL (e.g., https://example.com/image.png).");
+                        // --- REPLACED alert() ---
+                        showAlert("Invalid image URL provided. Please enter a complete and valid URL (e.g., https://example.com/image.png).", "URL Error");
                     }
                 } else {
-                    alert("Please enter an image URL.");
+                    // --- REPLACED alert() ---
+                    showAlert("Please enter an image URL.");
                 }
             });
 
