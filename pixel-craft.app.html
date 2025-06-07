@@ -22,8 +22,16 @@
     .pixel-size-input::-webkit-outer-spin-button,
     .pixel-size-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .pixel-size-input[type=number] { -moz-appearance: textfield; }
-    .pixel-canvas-container { flex-grow: 1; background-color: #808080; padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; }
+    .pixel-canvas-container { flex-grow: 1; background-color: #808080; padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; position: relative; }
     #pixelCanvas { background-color: white; border: 1px solid #000; cursor: default; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; }
+    #pixelTempCanvas {
+        position: absolute;
+        pointer-events: none;
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        z-index: 10;
+    }
     .pixel-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .pixel-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: pixelFadeIn 0.3s; display: flex; flex-direction: column; }
     .pixel-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
@@ -37,7 +45,6 @@
     .pixel-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
     @keyframes pixelFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
 </style>
-
 <div id="pixelWindowBody">
     <div class="pixel-menu-bar" id="pixelMenuBar">
         <div class="pixel-menu-item" tabindex="0">
@@ -54,10 +61,14 @@
         <button class="pixel-tool-button active" id="pixelPencilTool" title="Pencil">✏️</button>
         <button class="pixel-tool-button" id="pixelEraserTool" title="Eraser">🧼</button>
         <button class="pixel-tool-button" id="pixelBucketTool" title="Paint Bucket">🫗</button>
+        <button class="pixel-tool-button" id="pixelLineTool" title="Line Tool">📏</button>
+        <button class="pixel-tool-button" id="pixelRectangleTool" title="Rectangle Tool">⬛</button>
+        <button class="pixel-tool-button" id="pixelEllipseTool" title="Ellipse Tool">⚫</button>
         <input type="color" class="pixel-color-picker" id="pixelColorPicker" value="#000000" title="Color Picker">
     </div>
     <div class="pixel-canvas-container">
         <canvas id="pixelCanvas"></canvas>
+        <canvas id="pixelTempCanvas"></canvas>
     </div>
 </div>
 
@@ -97,9 +108,25 @@
     </div>
 </div>
 
+<div id="confirmClearCanvasModal" class="pixel-modal">
+    <div class="pixel-modal-content">
+        <div class="pixel-modal-title-bar">
+            <span>Confirm Clear Canvas</span>
+            <span class="pixel-modal-close-button" data-modal-id="confirmClearCanvasModal">r</span>
+        </div>
+        <div class="pixel-modal-body">
+            <p>Are you sure you want to clear the entire canvas? This action cannot be undone.</p>
+        </div>
+        <div class="pixel-modal-footer">
+            <button id="confirmClearCanvasExecuteBtn" class="xp-button">Yes, Clear</button>
+            <button class="xp-button pixel-modal-cancel-btn" data-modal-id="confirmClearCanvasModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
 
 <script>
-    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.4'; 
+    const PIXEL_CRAFT_STORAGE_KEY = 'pixelCraftAppData_v1.0.7';
     let pixelCraftData = {
         currentColor: '#000000',
         currentTool: 'pencil',
@@ -117,9 +144,13 @@
         pencilTool: document.getElementById('pixelPencilTool'),
         eraserTool: document.getElementById('pixelEraserTool'),
         bucketTool: document.getElementById('pixelBucketTool'),
+        lineTool: document.getElementById('pixelLineTool'),
+        rectangleTool: document.getElementById('pixelRectangleTool'),
+        ellipseTool: document.getElementById('pixelEllipseTool'),
         colorPicker: document.getElementById('pixelColorPicker'),
         sizeInput: document.getElementById('pixelSizeInput'),
         canvas: document.getElementById('pixelCanvas'),
+        tempCanvas: document.getElementById('pixelTempCanvas'),
         canvasContainer: document.getElementById('pixelCanvasContainer'),
         pixelWindowBody: document.getElementById('pixelWindowBody'),
         pixelCanvasSizeModal: document.getElementById('pixelCanvasSizeModal'),
@@ -128,12 +159,20 @@
         savePixelCanvasSizeBtn: document.getElementById('savePixelCanvasSizeBtn'),
         confirmPixelResizeModal: document.getElementById('confirmPixelResizeModal'),
         confirmPixelResizeExecuteBtn: document.getElementById('confirmPixelResizeExecuteBtn'),
+        confirmClearCanvasModal: document.getElementById('confirmClearCanvasModal'),
+        confirmClearCanvasExecuteBtn: document.getElementById('confirmClearCanvasExecuteBtn'),
     };
 
     let pixelCtx = null;
+    let tempCtx = null;
     let pixelIsDrawing = false;
     let pixelLastX = 0;
     let pixelLastY = 0;
+
+    let isDrawingShape = false;
+    let shapeStartX = 0;
+    let shapeStartY = 0;
+    let isShiftDown = false;
 
     function loadPixelCraftData() {
         const stored = localStorage.getItem(PIXEL_CRAFT_STORAGE_KEY);
@@ -167,19 +206,24 @@
     }
     
     function initPixelApp() {
-        if (!DOM_PC.canvas) {
-            console.error("Pixel Craft: Canvas element not found on init.");
+        if (!DOM_PC.canvas || !DOM_PC.tempCanvas) {
+            console.error("Pixel Craft: Canvas elements not found on init.");
             return;
         }
         pixelCtx = DOM_PC.canvas.getContext('2d');
-        if (!pixelCtx) {
+        tempCtx = DOM_PC.tempCanvas.getContext('2d');
+        if (!pixelCtx || !tempCtx) {
             console.error("Pixel Craft: Could not get 2D context from canvas.");
             return;
         }
         pixelCtx.imageSmoothingEnabled = false; 
+        tempCtx.imageSmoothingEnabled = false;
 
         DOM_PC.canvas.width = pixelCraftData.canvasWidth;
         DOM_PC.canvas.height = pixelCraftData.canvasHeight;
+        
+        DOM_PC.tempCanvas.width = pixelCraftData.canvasWidth;
+        DOM_PC.tempCanvas.height = pixelCraftData.canvasHeight;
         
         if (pixelCraftData.canvasContent) {
             const img = new Image();
@@ -215,15 +259,32 @@
         DOM_PC.pencilTool.classList.remove('active');
         DOM_PC.eraserTool.classList.remove('active');
         DOM_PC.bucketTool.classList.remove('active');
-        if (tool === 'pencil') {
-            DOM_PC.pencilTool.classList.add('active');
-            DOM_PC.canvas.style.cursor = 'crosshair';
-        } else if (tool === 'eraser') {
-            DOM_PC.eraserTool.classList.add('active');
-            DOM_PC.canvas.style.cursor = 'crosshair';
-        } else if (tool === 'bucket') {
-            DOM_PC.bucketTool.classList.add('active');
-            DOM_PC.canvas.style.cursor = 'copy'; 
+        DOM_PC.lineTool.classList.remove('active');
+        DOM_PC.rectangleTool.classList.remove('active');
+        DOM_PC.ellipseTool.classList.remove('active');
+        
+        DOM_PC.canvas.style.cursor = 'crosshair';
+        
+        switch(tool) {
+            case 'pencil':
+                DOM_PC.pencilTool.classList.add('active');
+                break;
+            case 'eraser':
+                DOM_PC.eraserTool.classList.add('active');
+                break;
+            case 'bucket':
+                DOM_PC.bucketTool.classList.add('active');
+                DOM_PC.canvas.style.cursor = 'copy';
+                break;
+            case 'line':
+                DOM_PC.lineTool.classList.add('active');
+                break;
+            case 'rectangle':
+                DOM_PC.rectangleTool.classList.add('active');
+                break;
+            case 'ellipse':
+                DOM_PC.ellipseTool.classList.add('active');
+                break;
         }
         savePixelCraftData(false); 
     }
@@ -231,11 +292,12 @@
     function handlePixelWindowResize() {
         const container = DOM_PC.canvasContainer;
         const canvasEl = DOM_PC.canvas;
+        const tempCanvasEl = DOM_PC.tempCanvas;
         const body = DOM_PC.pixelWindowBody;
         const menu = DOM_PC.menuBar;
         const toolbarEl = DOM_PC.pixelWindowBody.querySelector('.pixel-toolbar'); 
 
-        if (!container || !canvasEl || !body || !menu || !toolbarEl) {
+        if (!container || !canvasEl || !tempCanvasEl || !body || !menu || !toolbarEl) {
             return;
         }
         
@@ -243,25 +305,15 @@
         const menuBarHeight = menu.offsetHeight;
         const toolbarHeight = toolbarEl.offsetHeight;
         
-        const containerClientWidth = container.clientWidth;
-        const bodyClientHeight = body.clientHeight;
-
-        if (containerClientWidth <= 0 || bodyClientHeight <= 0) {
-            return;
-        }
-
-        const availableWidthForCanvas = containerClientWidth - containerPadding;
-        const availableHeightForCanvas = bodyClientHeight - menuBarHeight - toolbarHeight - containerPadding;
+        const availableWidthForCanvas = container.clientWidth - containerPadding;
+        const availableHeightForCanvas = body.clientHeight - menuBarHeight - toolbarHeight - containerPadding;
 
         if (availableWidthForCanvas <= 0 || availableHeightForCanvas <= 0) {
             return;
         }
         
         const canvasAspectRatio = pixelCraftData.canvasWidth / pixelCraftData.canvasHeight;
-        if (isNaN(canvasAspectRatio) || canvasAspectRatio <= 0) {
-            console.error("Pixel Craft: Invalid canvas aspect ratio.", pixelCraftData.canvasWidth, pixelCraftData.canvasHeight);
-            return;
-        }
+        if (isNaN(canvasAspectRatio) || canvasAspectRatio <= 0) return;
 
         let displayWidth = availableWidthForCanvas;
         let displayHeight = displayWidth / canvasAspectRatio;
@@ -276,13 +328,18 @@
 
         canvasEl.style.width = displayWidth + 'px';
         canvasEl.style.height = displayHeight + 'px';
+        tempCanvasEl.style.width = displayWidth + 'px';
+        tempCanvasEl.style.height = displayHeight + 'px';
+
+        tempCanvasEl.style.top = canvasEl.offsetTop + 'px';
+        tempCanvasEl.style.left = canvasEl.offsetLeft + 'px';
     }
+
 
     function getCanvasCoordinates(e) {
         const rect = DOM_PC.canvas.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) { 
-            return { x: 0, y: 0};
-        }
+        if (rect.width === 0 || rect.height === 0) return { x: 0, y: 0 };
+        
         const scaleX = DOM_PC.canvas.width / rect.width;
         const scaleY = DOM_PC.canvas.height / rect.height;
         
@@ -292,36 +349,22 @@
         return { x: Math.floor(canvasX), y: Math.floor(canvasY) };
     }
     
-    function drawPixelBlock(x, y) {
+    function drawPixelBlock(x, y, ctx) {
+        const context = ctx || pixelCtx;
         const brushSize = parseInt(pixelCraftData.pixelSize);
         const startX = Math.floor(x / brushSize) * brushSize;
         const startY = Math.floor(y / brushSize) * brushSize;
-
-        if (pixelCraftData.currentTool === 'pencil') {
-            pixelCtx.fillStyle = pixelCraftData.currentColor;
-            pixelCtx.fillRect(startX, startY, brushSize, brushSize);
-        } else if (pixelCraftData.currentTool === 'eraser') {
-            pixelCtx.clearRect(startX, startY, brushSize, brushSize);
+        
+        if (pixelCraftData.currentTool === 'eraser' && context === pixelCtx) {
+            context.clearRect(startX, startY, brushSize, brushSize);
+        } else {
+            context.fillStyle = pixelCraftData.currentColor;
+            context.fillRect(startX, startY, brushSize, brushSize);
         }
     }
 
-    function startPixelDrawing(e) {
-        if (pixelCraftData.currentTool === 'bucket') return;
-        pixelIsDrawing = true;
-        const coords = getCanvasCoordinates(e);
-        pixelLastX = coords.x;
-        pixelLastY = coords.y;
-        drawPixelBlock(coords.x, coords.y); 
-    }
-
-    function stopPixelDrawing() {
-        if (pixelIsDrawing) {
-            pixelIsDrawing = false;
-            savePixelCraftData(true); 
-        }
-    }
-    
-    function drawLine(x0, y0, x1, y1) {
+    function drawLine(x0, y0, x1, y1, ctx) {
+        const context = ctx || pixelCtx;
         const dx = Math.abs(x1 - x0);
         const dy = -Math.abs(y1 - y0); 
         const sx = x0 < x1 ? 1 : -1;
@@ -329,32 +372,172 @@
         let err = dx + dy;
 
         while (true) {
-            drawPixelBlock(x0, y0);
+            drawPixelBlock(x0, y0, context);
             if (x0 === x1 && y0 === y1) break;
             let e2 = 2 * err;
             if (e2 >= dy) { 
-                if (x0 === x1 && sx !==0 && dx !== 0) break; 
+                if (x0 === x1) break; 
                 err += dy;
                 x0 += sx;
             }
             if (e2 <= dx) { 
-                if (y0 === y1 && sy !==0 && dy !== 0) break; 
+                if (y0 === y1) break; 
                 err += dx;
                 y0 += sy;
-            }
-            if (Math.abs(x0 - x1) > dx + 1 || Math.abs(y0 - y1) > Math.abs(dy) + 1) {
-                console.warn("DrawLine safety break triggered");
-                break;
             }
         }
     }
 
-    function pixelDraw(e) {
-        if (!pixelIsDrawing || pixelCraftData.currentTool === 'bucket') return;
+    function drawPixelRectangle(x0, y0, x1, y1, ctx) {
+        drawLine(x0, y0, x1, y0, ctx);
+        drawLine(x0, y1, x1, y1, ctx);
+        drawLine(x0, y0, x0, y1, ctx);
+        drawLine(x1, y0, x1, y1, ctx);
+    }
+
+    function drawPixelEllipse(x0, y0, x1, y1, ctx) {
+        let a = Math.abs(x1 - x0), b = Math.abs(y1 - y0), b1 = b & 1;
+        let dx = 4 * (1 - a) * b * b, dy = 4 * (b1 + 1) * a * a;
+        let err = dx + dy + b1 * a * a, e2; 
+    
+        if (x0 > x1) { x0 = x1; x1 += a; }
+        if (y0 > y1) y0 = y1; 
+        y0 += (b + 1) / 2; y1 = y0 - b1;
+        a *= 8 * a; b1 = 8 * b * b;
+    
+        do {
+            drawPixelBlock(x1, y0, ctx); 
+            drawPixelBlock(x0, y0, ctx);
+            drawPixelBlock(x0, y1, ctx);
+            drawPixelBlock(x1, y1, ctx);
+            e2 = 2 * err;
+            if (e2 <= dy) { y0++; y1--; err += dy += a; } 
+            if (e2 >= dx || 2 * err > dy) { x0++; x1--; err += dx += b1; }
+        } while (x0 <= x1);
+    
+        while (y0 - y1 < b) {
+            drawPixelBlock(x0 - 1, y0, ctx);
+            drawPixelBlock(x1 + 1, y0++, ctx);
+            drawPixelBlock(x0 - 1, y1, ctx);
+            drawPixelBlock(x1 + 1, y1--, ctx);
+        }
+    }
+
+    function drawShapePreview() {
+        if (!isDrawingShape) return;
+        
+        tempCtx.clearRect(0, 0, DOM_PC.tempCanvas.width, DOM_PC.tempCanvas.height);
+
+        let endCoords = getCanvasCoordinates({ clientX: pixelLastX, clientY: pixelLastY });
+        let x0 = shapeStartX;
+        let y0 = shapeStartY;
+        let x1 = endCoords.x;
+        let y1 = endCoords.y;
+
+        switch(pixelCraftData.currentTool) {
+            case 'line':
+                if(isShiftDown) {
+                    const dx = x1 - x0;
+                    const dy = y1 - y0;
+                    const angle = Math.atan2(dy, dx);
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const snapAngle = Math.PI / 12;
+                    const snappedAngle = Math.round(angle / snapAngle) * snapAngle;
+                    x1 = x0 + Math.round(length * Math.cos(snappedAngle));
+                    y1 = y0 + Math.round(length * Math.sin(snappedAngle));
+                }
+                drawLine(x0, y0, x1, y1, tempCtx);
+                break;
+
+            case 'rectangle':
+                 if(isShiftDown) {
+                    const width = Math.abs(x1 - x0);
+                    const height = Math.abs(y1 - y0);
+                    const size = Math.max(width, height);
+                    x1 = x0 + (size * Math.sign(x1 - x0));
+                    y1 = y0 + (size * Math.sign(y1 - y0));
+                }
+                drawPixelRectangle(x0, y0, x1, y1, tempCtx);
+                break;
+            
+            case 'ellipse':
+                let cx = Math.round((x0 + x1) / 2);
+                let cy = Math.round((y0 + y1) / 2);
+                let rx = Math.abs(cx - x0);
+                let ry = Math.abs(cy - y0);
+                
+                if (isShiftDown) {
+                    rx = ry = Math.max(rx, ry);
+                }
+                drawPixelEllipse(cx - rx, cy - ry, cx + rx, cy + ry, tempCtx);
+                break;
+        }
+    }
+    
+    function handleMouseDown(e) {
+        const tool = pixelCraftData.currentTool;
         const coords = getCanvasCoordinates(e);
-        drawLine(pixelLastX, pixelLastY, coords.x, coords.y);
-        pixelLastX = coords.x;
-        pixelLastY = coords.y;
+        pixelLastX = e.clientX; 
+        pixelLastY = e.clientY;
+
+        if (tool === 'pencil' || tool === 'eraser') {
+            pixelIsDrawing = true;
+            const startCoords = getCanvasCoordinates(e);
+            drawPixelBlock(startCoords.x, startCoords.y, pixelCtx); 
+        } else if (tool === 'line' || tool === 'rectangle' || tool === 'ellipse') {
+            isDrawingShape = true;
+            shapeStartX = coords.x;
+            shapeStartY = coords.y;
+        } else if (tool === 'bucket') {
+            pixelBucketFill(e);
+        }
+    }
+    
+    function handleMouseMove(e) {
+        const tool = pixelCraftData.currentTool;
+        
+        if (pixelIsDrawing && (tool === 'pencil' || tool === 'eraser')) {
+            const startCoords = getCanvasCoordinates({ clientX: pixelLastX, clientY: pixelLastY });
+            const endCoords = getCanvasCoordinates(e);
+            drawLine(startCoords.x, startCoords.y, endCoords.x, endCoords.y, pixelCtx);
+        } else if (isDrawingShape) {
+            drawShapePreview();
+        }
+        
+        pixelLastX = e.clientX;
+        pixelLastY = e.clientY;
+    }
+
+    function handleMouseUp(e) {
+        const tool = pixelCraftData.currentTool;
+
+        if (pixelIsDrawing) {
+            pixelIsDrawing = false;
+            savePixelCraftData(true);
+        } else if (isDrawingShape) {
+            pixelCtx.drawImage(DOM_PC.tempCanvas, 0, 0);
+            tempCtx.clearRect(0, 0, DOM_PC.tempCanvas.width, DOM_PC.tempCanvas.height);
+            isDrawingShape = false;
+            savePixelCraftData(true);
+        }
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Shift' && !isShiftDown) {
+            isShiftDown = true;
+            if (isDrawingShape) {
+                drawShapePreview();
+            }
+        }
+    }
+
+    function handleKeyUp(e) {
+        if (e.key === 'Shift') {
+            isShiftDown = false;
+            if (isDrawingShape) {
+                drawShapePreview();
+            }
+        }
     }
 
     function pixelBucketFill(e) {
@@ -381,38 +564,18 @@
         const bFill = parseInt(fillColorHex.slice(5, 7), 16);
         const aFill = 255; 
 
-        if (targetColorR === rFill && targetColorG === gFill && targetColorB === bFill && targetColorA === aFill) {
-            return; 
-        }
+        if (targetColorR === rFill && targetColorG === gFill && targetColorB === bFill && targetColorA === aFill) return; 
 
         const stack = [[startX, startY]];
         
         while (stack.length) {
             const [x, y] = stack.pop();
-            
             if (x < 0 || x >= canvasWidth || y < 0 || y >= canvasHeight) continue;
             
             const currentIndex = (y * canvasWidth + x) * 4;
-
-            if (data[currentIndex] === rFill && 
-                data[currentIndex+1] === gFill && 
-                data[currentIndex+2] === bFill && 
-                data[currentIndex+3] === aFill) continue; 
-
-            if (data[currentIndex] === targetColorR &&
-                data[currentIndex + 1] === targetColorG &&
-                data[currentIndex + 2] === targetColorB &&
-                data[currentIndex + 3] === targetColorA) {
-                
-                data[currentIndex] = rFill;
-                data[currentIndex + 1] = gFill;
-                data[currentIndex + 2] = bFill;
-                data[currentIndex + 3] = aFill;
-
-                stack.push([x + 1, y]);
-                stack.push([x - 1, y]);
-                stack.push([x, y + 1]);
-                stack.push([x, y - 1]);
+            if (data[currentIndex] === targetColorR && data[currentIndex + 1] === targetColorG && data[currentIndex + 2] === targetColorB && data[currentIndex + 3] === targetColorA) {
+                data[currentIndex] = rFill; data[currentIndex + 1] = gFill; data[currentIndex + 2] = bFill; data[currentIndex + 3] = aFill;
+                stack.push([x + 1, y]); stack.push([x - 1, y]); stack.push([x, y + 1]); stack.push([x, y - 1]);
             }
         }
         pixelCtx.putImageData(imageData, 0, 0);
@@ -450,13 +613,6 @@
     }
 
     function handleSavePixelCanvasSize() {
-        const newWidth = parseInt(DOM_PC.pixelNewCanvasWidthInput.value);
-        const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
-
-        if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
-            alert("Invalid canvas dimensions. Width and height must be numbers between 50 and 2000.");
-            return;
-        }
         DOM_PC.pixelCanvasSizeModal.style.display = 'none';
         DOM_PC.confirmPixelResizeModal.style.display = 'flex';
     }
@@ -466,8 +622,8 @@
         const newHeight = parseInt(DOM_PC.pixelNewCanvasHeightInput.value);
 
         if (isNaN(newWidth) || isNaN(newHeight) || newWidth < 50 || newWidth > 2000 || newHeight < 50 || newHeight > 2000) {
-            alert("Invalid canvas dimensions. Width and height must be numbers between 50 and 2000.");
             DOM_PC.confirmPixelResizeModal.style.display = 'none';
+            openPixelCanvasSizePrompt();
             return;
         }
         
@@ -475,6 +631,9 @@
         pixelCraftData.canvasHeight = newHeight;
         DOM_PC.canvas.width = newWidth;
         DOM_PC.canvas.height = newHeight;
+        DOM_PC.tempCanvas.width = newWidth;
+        DOM_PC.tempCanvas.height = newHeight;
+
         clearPixelCanvasInternal(false); 
         handlePixelWindowResize(); 
         savePixelCraftData(true); 
@@ -510,23 +669,32 @@
         DOM_PC.pencilTool.addEventListener('click', () => setPixelTool('pencil'));
         DOM_PC.eraserTool.addEventListener('click', () => setPixelTool('eraser'));
         DOM_PC.bucketTool.addEventListener('click', () => setPixelTool('bucket'));
+        DOM_PC.lineTool.addEventListener('click', () => setPixelTool('line'));
+        DOM_PC.rectangleTool.addEventListener('click', () => setPixelTool('rectangle'));
+        DOM_PC.ellipseTool.addEventListener('click', () => setPixelTool('ellipse'));
 
-        DOM_PC.canvas.addEventListener('mousedown', startPixelDrawing);
-        DOM_PC.canvas.addEventListener('mouseup', stopPixelDrawing);
-        DOM_PC.canvas.addEventListener('mouseleave', stopPixelDrawing); 
-        DOM_PC.canvas.addEventListener('mousemove', pixelDraw);
-        DOM_PC.canvas.addEventListener('click', pixelBucketFill); 
+        DOM_PC.canvas.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        DOM_PC.canvas.addEventListener('mouseleave', () => {
+            if(pixelIsDrawing) savePixelCraftData(true);
+            pixelIsDrawing = false;
+        }); 
 
         DOM_PC.fileSave.addEventListener('click', savePixelCanvasImage);
         DOM_PC.fileClearCanvas.addEventListener('click', () => {
-            clearPixelCanvasInternal(true);
+            DOM_PC.confirmClearCanvasModal.style.display = 'flex';
             closePixelMenus();
         });
         DOM_PC.fileCanvasSize.addEventListener('click', openPixelCanvasSizePrompt);
         
         DOM_PC.savePixelCanvasSizeBtn.addEventListener('click', handleSavePixelCanvasSize);
         DOM_PC.confirmPixelResizeExecuteBtn.addEventListener('click', executePixelCanvasResize);
-        
+        DOM_PC.confirmClearCanvasExecuteBtn.addEventListener('click', () => {
+            clearPixelCanvasInternal(true);
+            DOM_PC.confirmClearCanvasModal.style.display = 'none';
+        });
+
         document.querySelectorAll('.pixel-modal-close-button, .pixel-modal-cancel-btn').forEach(btn => {
             btn.addEventListener('click', (event) => {
                 const modalId = event.target.dataset.modalId;
@@ -535,6 +703,9 @@
                 }
             });
         });
+
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
 
         let pixelActiveMenu = null;
         DOM_PC.menuBar.querySelectorAll('.pixel-menu-bar > .pixel-menu-item').forEach(menuItem => {
