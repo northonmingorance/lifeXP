@@ -43,6 +43,10 @@
     .gemini-modal-body p { margin-top: 0; margin-bottom: 10px; }
     .gemini-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
     @keyframes geminiFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+    
+    #geminiAlertModal .gemini-modal-body { display: flex; align-items: center; padding: 20px; text-align: left;}
+    #geminiAlertModal .alert-icon { font-size: 32px; margin-right: 15px; color: #f0ad4e; }
+    #geminiAlertModal .gemini-modal-footer { text-align: center; }
 </style>
 
 <div class="gemini-chat-body-container">
@@ -81,6 +85,23 @@
         </div>
     </div>
 </div>
+
+<div id="geminiAlertModal" class="gemini-modal">
+    <div class="gemini-modal-content">
+        <div class="gemini-modal-title-bar">
+            <span id="geminiAlertModalTitle">Notification</span>
+            <span class="gemini-modal-close-button" data-modal-id="geminiAlertModal">r</span>
+        </div>
+        <div class="gemini-modal-body">
+            <div class="alert-icon">!</div>
+            <p id="geminiAlertModalMessage" style="word-break: break-word;"></p>
+        </div>
+        <div class="gemini-modal-footer">
+            <button id="geminiAlertModalOkBtn" class="xp-button gemini-modal-cancel-btn" data-modal-id="geminiAlertModal">OK</button>
+        </div>
+    </div>
+</div>
+
 
 <script>
     const GEMINI_CHAT_STORAGE_KEY = 'geminiChatAppData_v1.0.1'; 
@@ -158,7 +179,16 @@
         attachmentPreviewImage: document.getElementById('geminiChatAttachmentPreviewImage'),
         attachmentPreviewName: document.getElementById('geminiChatAttachmentPreviewName'),
         removeAttachmentBtn: document.getElementById('geminiChatRemoveAttachmentBtn'),
+        geminiAlertModal: document.getElementById('geminiAlertModal'),
+        geminiAlertModalTitle: document.getElementById('geminiAlertModalTitle'),
+        geminiAlertModalMessage: document.getElementById('geminiAlertModalMessage'),
     };
+    
+    function showGeminiAlert(message, title = 'Notification') {
+        DOM_GC.geminiAlertModalTitle.textContent = title;
+        DOM_GC.geminiAlertModalMessage.textContent = message;
+        openGeminiModal('geminiAlertModal');
+    }
 
     function openGeminiModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -324,7 +354,7 @@
         const file = event.target.files[0];
         if (file) {
             if (file.size > MAX_FILE_SIZE_BYTES) {
-                alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is ${(MAX_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0)} MB.`);
+                showGeminiAlert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is ${(MAX_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0)} MB.`, "File Size Error");
                 DOM_GC.fileInput.value = null;
                 return;
             }
