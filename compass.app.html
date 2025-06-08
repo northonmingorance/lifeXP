@@ -61,6 +61,9 @@
     .compass-modal-body input[type="text"] { width: calc(100% - 12px); padding: 5px; border: 1px inset #7F7F7F; }
     .compass-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; }
     @keyframes compassFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+    #compassAlertModal .compass-modal-body { display: flex; align-items: center; padding: 20px; }
+    #compassAlertModal .alert-icon { font-size: 32px; margin-right: 15px; color: #f0ad4e; }
+    #compassAlertModal .compass-modal-footer { text-align: center; }
 </style>
 
 <div class="compass-app-container">
@@ -123,6 +126,21 @@
     </div>
 </div>
 
+<div id="compassAlertModal" class="compass-modal">
+    <div class="compass-modal-content">
+        <div class="compass-modal-title-bar">
+            <span id="compassAlertModalTitle">Notification</span>
+            <span class="compass-modal-close-button" data-modal-id="compassAlertModal">r</span>
+        </div>
+        <div class="compass-modal-body">
+            <div class="alert-icon">!</div>
+            <p id="compassAlertModalMessage" style="word-break: break-word;"></p>
+        </div>
+        <div class="compass-modal-footer">
+            <button class="xp-button compass-modal-cancel-btn" data-modal-id="compassAlertModal">OK</button>
+        </div>
+    </div>
+</div>
 
 <script>
     const COMPASS_STORAGE_KEY = 'compassAppData_v5';
@@ -145,8 +163,17 @@
         mainContent: document.querySelector('.compass-main-content'),
         deleteConfirmModal: document.getElementById('compassDeleteConfirmModal'),
         landmarkNameToDelete: document.getElementById('landmarkNameToDelete'),
-        landmarkConfirmDeleteBtn: document.getElementById('landmarkConfirmDeleteBtn')
+        landmarkConfirmDeleteBtn: document.getElementById('landmarkConfirmDeleteBtn'),
+        alertModal: document.getElementById('compassAlertModal'),
+        alertModalTitle: document.getElementById('compassAlertModalTitle'),
+        alertModalMessage: document.getElementById('compassAlertModalMessage'),
     };
+    
+    function showCompassAlert(message, title = 'Notification') {
+        DOM.alertModalTitle.textContent = title;
+        DOM.alertModalMessage.textContent = message;
+        DOM.alertModal.style.display = 'flex';
+    }
 
     function loadCompassData() {
         const stored = localStorage.getItem(COMPASS_STORAGE_KEY);
@@ -190,19 +217,19 @@
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
-                    alert(`Error getting location: ${error.message}`);
+                    showCompassAlert(`Error getting location: ${error.message}`, "Geolocation Error");
                 },
                 { enableHighAccuracy: true }
             );
         } else {
-            alert("Geolocation is not supported by your browser.");
+            showCompassAlert("Geolocation is not supported by your browser.", "Unsupported Feature");
         }
     }
 
     function handleSearchLocation() {
         const query = DOM.searchInput.value.trim();
         if (!query) {
-            alert("Please enter a location to search.");
+            showCompassAlert("Please enter a location to search.");
             return;
         }
         updateMapWithQuery(query);
@@ -254,7 +281,7 @@
     function openAddLandmarkModal() {
         const query = DOM.searchInput.value.trim();
         if (!query) {
-            alert("Please search for a location first before saving it as a landmark.");
+            showCompassAlert("Please search for a location first before saving it as a landmark.");
             return;
         }
         DOM.landmarkNameInput.value = query;
@@ -270,18 +297,18 @@
     function saveNewLandmark() {
         const name = DOM.landmarkNameInput.value.trim();
         if (!name) {
-            alert("Please enter a name for the landmark.");
+            showCompassAlert("Please enter a name for the landmark.");
             return;
         }
         
         const query = DOM.searchInput.value.trim();
         if (!query) {
-            alert("Cannot save a landmark without a location query.");
+            showCompassAlert("Cannot save a landmark without a location query.");
             return;
         }
 
         if (compassData.landmarks.some(lm => lm.name.toLowerCase() === name.toLowerCase())) {
-            alert("A landmark with this name already exists. Please choose a different name.");
+            showCompassAlert("A landmark with this name already exists. Please choose a different name.");
             return;
         }
 
