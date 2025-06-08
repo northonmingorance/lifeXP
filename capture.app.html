@@ -32,6 +32,17 @@
     #captureActionBtn.recording { background-color: #FF6347; border-color: #CD5C5C; color: white; }
     #captureActionBtn.recording:hover { background-color: #E55337; border-color: #B24331; }
     #captureStatusMessage { color: white; padding: 10px; text-align: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0,0,0,0.7); border-radius: 5px; display: none; z-index: 20;}
+    .capture-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .capture-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: captureFadeIn 0.3s; display: flex; flex-direction: column; }
+    .capture-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .capture-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .capture-modal-close-button:hover, .capture-modal-close-button:focus { background: #FF6363; }
+    .capture-modal-close-button:active { border-style: inset; }
+    .capture-modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; text-align: left; display: flex; align-items: center; }
+    .capture-modal-body .alert-icon { font-size: 32px; margin-right: 15px; color: #f0ad4e; }
+    .capture-modal-body p { margin: 0; }
+    .capture-modal-footer { padding: 10px 15px; text-align: center; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes captureFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
 
 </style>
 
@@ -68,6 +79,23 @@
     </div>
 </div>
 
+<div id="captureAlertModal" class="capture-modal">
+    <div class="capture-modal-content">
+        <div class="capture-modal-title-bar">
+            <span id="captureAlertModalTitle">Notification</span>
+            <span class="capture-modal-close-button" data-modal-id="captureAlertModal">r</span>
+        </div>
+        <div class="capture-modal-body">
+            <div class="alert-icon">!</div>
+            <p id="captureAlertModalMessage"></p>
+        </div>
+        <div class="capture-modal-footer">
+            <button class="xp-button capture-modal-cancel-btn" data-modal-id="captureAlertModal">OK</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
     const CAPTURE_APP_STORAGE_KEY = 'captureAppData_v1.0.3';
     const COMMON_RESOLUTIONS_CAPTURE = [
@@ -103,13 +131,32 @@
         videoElement: document.getElementById('captureVideo'),
         actionBtn: document.getElementById('captureActionBtn'),
         toggleModeBtn: document.getElementById('captureToggleModeBtn'),
-        statusMessage: document.getElementById('captureStatusMessage')
+        statusMessage: document.getElementById('captureStatusMessage'),
+        alertModal: document.getElementById('captureAlertModal'),
+        alertModalTitle: document.getElementById('captureAlertModalTitle'),
+        alertModalMessage: document.getElementById('captureAlertModalMessage'),
     };
 
     let mediaRecorder = null;
     let recordedChunks = [];
     let isResolutionMenuInteractionDelayed = false; 
     let resolutionMenuDelayTimerId = null; 
+
+    function openCaptureModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeCaptureModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'none';
+    }
+
+    function showCaptureAlert(message, title = 'Notification') {
+        DOM_CAP.alertModalTitle.textContent = title;
+        DOM_CAP.alertModalMessage.textContent = message;
+        openCaptureModal('captureAlertModal');
+    }
 
     function loadCaptureAppData() {
         const stored = localStorage.getItem(CAPTURE_APP_STORAGE_KEY);
@@ -289,7 +336,7 @@
 
     function toggleCaptureMode() {
         if (captureAppData.isRecording) {
-            alert("Please stop recording before switching modes.");
+            showCaptureAlert("Please stop recording before switching modes.", "Action Blocked");
             return;
         }
         captureAppData.captureMode = (captureAppData.captureMode === 'photo') ? 'video' : 'photo';
@@ -606,6 +653,13 @@
         DOM_CAP.actionBtn.addEventListener('click', handleMainCaptureAction);
         DOM_CAP.toggleModeBtn.addEventListener('click', toggleCaptureMode);
         setupCaptureMenus();
+
+        document.querySelectorAll('.capture-modal-cancel-btn, .capture-modal-close-button').forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                const modalId = event.target.dataset.modalId;
+                if (modalId) closeCaptureModal(modalId);
+            });
+        });
 
         const attemptStartStream = () => {
              if (document.visibilityState === 'visible') { 
