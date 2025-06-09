@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compass</title>
 <style>
     body { margin: 0; padding: 0; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #ECE9D8; color: #000000; }
     .xp-button { background-color: #ECE9D8; border: 1px outset #7F7F7F; padding: 5px 12px; min-width: 75px; text-align: center; cursor: pointer; margin: 2px; font-size: 12px; }
@@ -7,8 +13,6 @@
     .xp-button-small { padding: 2px 5px; font-size: 10px; min-width: auto; margin: 0 2px;}
     .xp-button.danger { background-color: #E04343; color: white; border-color: #c00; }
     .xp-button.danger:hover { background-color: #FF6363; }
-
-
     .compass-app-container { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; }
     .compass-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background-color: #ECE9D8; border-bottom: 1px solid #ACA899; flex-shrink: 0; flex-wrap: wrap; gap: 5px; }
     .compass-search-area { display: flex; flex-grow: 1; min-width: 200px; }
@@ -17,27 +21,9 @@
     .compass-map-area { flex-grow: 1; display: flex; flex-direction: column; }
     #compassMapFrameContainer { flex-grow: 1; background-color: #808080; display: flex; justify-content: center; align-items: center; border-top: 1px solid #7F7F7F; }
     #compassMapFrame { width: 100%; height: 100%; border: none; }
-    
-    #sidebar-resizer {
-        width: 5px;
-        cursor: col-resize;
-        background-color: #ACA899;
-        border-left: 1px solid #7F7F7F;
-        border-right: 1px solid #7F7F7F;
-    }
-    #sidebar-resizer:hover {
-        background-color: #808080;
-    }
-
-    .compass-landmark-sidebar { 
-        flex-shrink: 0; 
-        background-color: #F0F0F0; 
-        display: flex; 
-        flex-direction: column; 
-        overflow: hidden;
-        min-width: 150px;
-        max-width: 500px;
-    }
+    #sidebar-resizer { width: 5px; cursor: col-resize; background-color: #ACA899; border-left: 1px solid #7F7F7F; border-right: 1px solid #7F7F7F; }
+    #sidebar-resizer:hover { background-color: #808080; }
+    .compass-landmark-sidebar { flex-shrink: 0; background-color: #F0F0F0; display: flex; flex-direction: column; overflow: hidden; min-width: 150px; max-width: 500px; }
     .compass-landmark-header { padding: 8px; font-weight: bold; background-color: #D4D0C8; border-bottom: 1px solid #808080; text-align: center; flex-shrink: 0; }
     #compassLandmarkList { list-style-type: none; margin: 0; padding: 5px; overflow-y: auto; flex-grow: 1; }
     .compass-landmark-item { padding: 8px; border: 1px outset #FFFFFF; border-bottom-color: #808080; border-right-color: #808080; margin-bottom: 4px; background-color: #FFFFFF; cursor: grab; user-select: none; }
@@ -49,23 +35,26 @@
     .landmark-item-actions { margin-top: 5px; text-align: right; pointer-events: none; }
     .landmark-item-actions .xp-button { pointer-events: all; }
     #compassAddLandmarkBtn { flex-shrink: 0; margin-left: 5px; }
-
     .compass-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
     .compass-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 400px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: compassFadeIn 0.3s; display: flex; flex-direction: column; }
     .compass-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
     .compass-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
     .compass-modal-close-button:hover { background: #FF6363; }
-    .compass-modal-body { padding: 15px; }
+    .compass-modal-body { padding: 15px; max-height: 60vh; overflow-y: auto; }
     .compass-modal-body p { margin: 5px 0 15px 0;}
     .compass-modal-body label { display: block; margin-bottom: 5px; margin-top: 10px; }
-    .compass-modal-body input[type="text"] { width: calc(100% - 12px); padding: 5px; border: 1px inset #7F7F7F; }
+    .compass-modal-body input[type="text"], .compass-modal-body input[type="file"] { width: 100%; padding: 5px; border: 1px inset #7F7F7F; box-sizing: border-box; }
+    .compass-modal-body textarea { width: 100%; padding: 5px; border: 1px inset #7F7F7F; font-family: "Tahoma", "Geneva", sans-serif; font-size: 11px; resize: vertical; min-height: 60px; box-sizing: border-box; }
     .compass-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; }
     @keyframes compassFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
     #compassAlertModal .compass-modal-body { display: flex; align-items: center; padding: 20px; }
     #compassAlertModal .alert-icon { font-size: 32px; margin-right: 15px; color: #f0ad4e; }
     #compassAlertModal .compass-modal-footer { text-align: center; }
+    .preview-area { margin-top: 5px; }
+    .preview-area img, .preview-area video { max-width: 100%; max-height: 150px; border: 1px solid #ACA899; background-color: #FFF; }
 </style>
-
+</head>
+<body>
 <div class="compass-app-container">
     <div class="compass-top-bar">
         <div class="compass-search-area">
@@ -126,6 +115,36 @@
     </div>
 </div>
 
+<div id="compassDetailsModal" class="compass-modal">
+    <div class="compass-modal-content" style="max-width: 450px;">
+        <div class="compass-modal-title-bar">
+            <span id="detailsModalTitle">Landmark Details</span>
+            <span class="compass-modal-close-button" data-modal-id="compassDetailsModal">r</span>
+        </div>
+        <div class="compass-modal-body">
+            <label for="landmarkNoteInput">Notes:</label>
+            <textarea id="landmarkNoteInput" rows="4"></textarea>
+            
+            <label for="landmarkLinkInput">Link URL:</label>
+            <input type="text" id="landmarkLinkInput" placeholder="https://example.com">
+
+            <label for="landmarkImageInput">Upload Image:</label>
+            <input type="file" id="landmarkImageInput" accept="image/*">
+            <div id="imagePreview" class="preview-area"></div>
+            <p><small>Warning: Large files may exceed storage limits.</small></p>
+
+            <label for="landmarkVideoInput">Upload Video:</label>
+            <input type="file" id="landmarkVideoInput" accept="video/*">
+            <div id="videoPreview" class="preview-area"></div>
+            <p><small>Warning: Large files may exceed storage limits.</small></p>
+        </div>
+        <div class="compass-modal-footer">
+            <button id="detailsSaveBtn" class="xp-button">Save</button>
+            <button class="xp-button compass-modal-cancel-btn" data-modal-id="compassDetailsModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <div id="compassAlertModal" class="compass-modal">
     <div class="compass-modal-content">
         <div class="compass-modal-title-bar">
@@ -144,6 +163,7 @@
 
 <script>
     const COMPASS_STORAGE_KEY = 'compassAppData_v5';
+    const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
     let compassData = { landmarks: [], sidebarWidth: 220 };
     let currentMapLocation = { lat: 0, lon: 0 };
     let draggedItem = null;
@@ -167,6 +187,15 @@
         alertModal: document.getElementById('compassAlertModal'),
         alertModalTitle: document.getElementById('compassAlertModalTitle'),
         alertModalMessage: document.getElementById('compassAlertModalMessage'),
+        detailsModal: document.getElementById('compassDetailsModal'),
+        detailsModalTitle: document.getElementById('detailsModalTitle'),
+        landmarkNoteInput: document.getElementById('landmarkNoteInput'),
+        landmarkLinkInput: document.getElementById('landmarkLinkInput'),
+        landmarkImageInput: document.getElementById('landmarkImageInput'),
+        landmarkVideoInput: document.getElementById('landmarkVideoInput'),
+        imagePreview: document.getElementById('imagePreview'),
+        videoPreview: document.getElementById('videoPreview'),
+        detailsSaveBtn: document.getElementById('detailsSaveBtn'),
     };
     
     function showCompassAlert(message, title = 'Notification') {
@@ -180,18 +209,24 @@
         if (stored) {
             try {
                 const parsedData = JSON.parse(stored);
-                compassData.landmarks = parsedData.landmarks || [];
+                compassData.landmarks = (parsedData.landmarks || []).map(lm => ({
+                    ...lm,
+                    attachments: lm.attachments || { note: '', link: '', image: '', video: '' }
+                }));
                 compassData.sidebarWidth = parsedData.sidebarWidth || 220;
                 DOM.sidebar.style.width = compassData.sidebarWidth + 'px';
             } catch (e) {
-                console.error("Error loading Compass data, resetting.", e);
                 compassData = { landmarks: [], sidebarWidth: 220 };
             }
         }
     }
 
     function saveCompassData() {
-        localStorage.setItem(COMPASS_STORAGE_KEY, JSON.stringify(compassData));
+        try {
+            localStorage.setItem(COMPASS_STORAGE_KEY, JSON.stringify(compassData));
+        } catch (e) {
+            showCompassAlert('Could not save data. Storage may be full. Try removing large images or videos.', 'Storage Error');
+        }
     }
 
     function updateMapWithCoords(lat, lon, zoom = 14) {
@@ -216,7 +251,6 @@
                     DOM.searchInput.value = '';
                 },
                 (error) => {
-                    console.error("Geolocation error:", error);
                     showCompassAlert(`Error getting location: ${error.message}`, "Geolocation Error");
                 },
                 { enableHighAccuracy: true }
@@ -252,12 +286,13 @@
                 <div class="landmark-item-name">${landmark.name}</div>
                 <div class="landmark-item-query">${landmark.query}</div>
                 <div class="landmark-item-actions">
+                    <button class="xp-button xp-button-small landmark-details-btn" data-index="${index}">Details</button>
                     <button class="xp-button xp-button-small landmark-delete-btn" data-index="${index}">Delete</button>
                 </div>
             `;
             
             li.addEventListener('click', (e) => {
-                if (e.target.classList.contains('landmark-delete-btn')) return;
+                if (e.target.classList.contains('landmark-delete-btn') || e.target.classList.contains('landmark-details-btn')) return;
                 DOM.searchInput.value = landmark.query;
                 handleSearchLocation();
             });
@@ -274,6 +309,14 @@
                 DOM.landmarkNameToDelete.textContent = landmarkName;
                 DOM.landmarkConfirmDeleteBtn.dataset.index = indexToDelete;
                 DOM.deleteConfirmModal.style.display = 'flex';
+            });
+        });
+
+        document.querySelectorAll('.landmark-details-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const indexToView = parseInt(e.target.dataset.index, 10);
+                openDetailsModal(indexToView);
             });
         });
     }
@@ -312,10 +355,88 @@
             return;
         }
 
-        compassData.landmarks.push({ name, query });
+        compassData.landmarks.push({ name, query, attachments: { note: '', link: '', image: '', video: '' } });
         saveCompassData();
         renderLandmarkList();
         closeAddLandmarkModal();
+    }
+
+    function renderPreview(container, dataUrl, type) {
+        container.innerHTML = '';
+        if (!dataUrl) return;
+
+        if (type === 'image') {
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            container.appendChild(img);
+        } else if (type === 'video') {
+            const video = document.createElement('video');
+            video.src = dataUrl;
+            video.controls = true;
+            container.appendChild(video);
+        }
+    }
+
+    function openDetailsModal(index) {
+        const landmark = compassData.landmarks[index];
+        if (!landmark) return;
+
+        DOM.detailsModalTitle.textContent = `Details for: ${landmark.name}`;
+        DOM.landmarkNoteInput.value = landmark.attachments.note || '';
+        DOM.landmarkLinkInput.value = landmark.attachments.link || '';
+        
+        DOM.landmarkImageInput.value = '';
+        DOM.landmarkVideoInput.value = '';
+
+        renderPreview(DOM.imagePreview, landmark.attachments.image, 'image');
+        renderPreview(DOM.videoPreview, landmark.attachments.video, 'video');
+
+        DOM.detailsSaveBtn.dataset.index = index;
+        DOM.detailsModal.style.display = 'flex';
+    }
+    
+    const readFileAsDataURL = (file) => {
+        return new Promise((resolve, reject) => {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                reject(new Error(`File is too large. Maximum size is ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB.`));
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    async function saveLandmarkDetails() {
+        const index = parseInt(DOM.detailsSaveBtn.dataset.index, 10);
+        const landmark = compassData.landmarks[index];
+        if (!landmark) return;
+
+        DOM.detailsSaveBtn.disabled = true;
+
+        landmark.attachments.note = DOM.landmarkNoteInput.value.trim();
+        landmark.attachments.link = DOM.landmarkLinkInput.value.trim();
+        
+        try {
+            const imageFile = DOM.landmarkImageInput.files[0];
+            if (imageFile) {
+                landmark.attachments.image = await readFileAsDataURL(imageFile);
+            }
+
+            const videoFile = DOM.landmarkVideoInput.files[0];
+            if (videoFile) {
+                landmark.attachments.video = await readFileAsDataURL(videoFile);
+            }
+            
+            saveCompassData();
+            DOM.detailsModal.style.display = 'none';
+
+        } catch (error) {
+            showCompassAlert(error.message, 'File Error');
+        } finally {
+             DOM.detailsSaveBtn.disabled = false;
+        }
     }
 
     function addEventListeners() {
@@ -326,6 +447,7 @@
         });
         DOM.addLandmarkBtn.addEventListener('click', openAddLandmarkModal);
         DOM.landmarkSaveBtn.addEventListener('click', saveNewLandmark);
+        DOM.detailsSaveBtn.addEventListener('click', saveLandmarkDetails);
         
         DOM.landmarkConfirmDeleteBtn.addEventListener('click', () => {
             const indexToDelete = parseInt(DOM.landmarkConfirmDeleteBtn.dataset.index, 10);
@@ -342,6 +464,17 @@
                 const modal = e.target.closest('.compass-modal');
                 if(modal) modal.style.display = 'none';
             });
+        });
+
+        DOM.landmarkImageInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                renderPreview(DOM.imagePreview, URL.createObjectURL(e.target.files[0]), 'image');
+            }
+        });
+        DOM.landmarkVideoInput.addEventListener('change', (e) => {
+             if (e.target.files[0]) {
+                renderPreview(DOM.videoPreview, URL.createObjectURL(e.target.files[0]), 'video');
+            }
         });
 
         const list = DOM.landmarkList;
@@ -433,3 +566,5 @@
     });
 
 </script>
+</body>
+</html>
