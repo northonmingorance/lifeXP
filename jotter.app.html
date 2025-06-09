@@ -20,8 +20,24 @@
 </style>
 
 <div class="jotter-menu-bar" id="jotterMenuBarInFrame">
-    <div class="jotter-menu-item" tabindex="0"> File <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div> </div> </div>
-    <div class="jotter-menu-item" tabindex="0"> View <div class="jotter-dropdown-content"> <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame"> <span>Font Size:</span> <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button> <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72"> <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button> </div> </div> </div>
+    <div class="jotter-menu-item" tabindex="0">
+        File
+        <div class="jotter-dropdown-content">
+            <div class="jotter-dropdown-item" id="fileOpenInFrame">Open</div>
+            <div class="jotter-dropdown-item" id="fileSaveInFrame">Save</div>
+        </div>
+    </div>
+    <div class="jotter-menu-item" tabindex="0">
+        View
+        <div class="jotter-dropdown-content">
+            <div class="jotter-dropdown-item font-size-control-container" id="fontSizeControlItemInFrame">
+                <span>Font Size:</span>
+                <button class="font-size-btn" id="fontDecrementBtnInFrame">-</button>
+                <input type="number" class="font-size-input" id="fontSizeInputInFrame" value="14" min="8" max="72">
+                <button class="font-size-btn" id="fontIncrementBtnInFrame">+</button>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="editorArea" contenteditable="true"></div>
 
@@ -32,7 +48,7 @@
     const fontDecrementBtn = document.getElementById('fontDecrementBtnInFrame');
     const fontIncrementBtn = document.getElementById('fontIncrementBtnInFrame');
     const fontSizeInput = document.getElementById('fontSizeInputInFrame');
-    let jotterContent = ''; // In-memory storage for this session
+    let jotterContent = '';
 
     function loadJotterContent() {
         const savedContent = localStorage.getItem('jotterAppContent_v1');
@@ -54,7 +70,6 @@
     
     editorArea.addEventListener('input', saveJotterContent);
 
-
     jotterMenuBar.querySelectorAll('.jotter-menu-bar > .jotter-menu-item').forEach(menuItem => {
         menuItem.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -62,19 +77,26 @@
                 if(!menuItem.classList.contains('open')) { if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open'); menuItem.classList.add('open'); activeMenu = menuItem; } return;
             }
             if (activeMenu && activeMenu !== menuItem) activeMenu.classList.remove('open');
-            menuItem.classList.toggle('open'); activeMenu = menuItem.classList.contains('open') ? menuItem : null;
+            menuItem.classList.toggle('open');
+            activeMenu = menuItem.classList.contains('open') ? menuItem : null;
         });
     });
 
     window.addEventListener('click', (event) => { 
         if (activeMenu && !activeMenu.contains(event.target) && !event.target.closest('.font-size-control-container')) { 
-            activeMenu.classList.remove('open'); activeMenu = null; 
+            activeMenu.classList.remove('open'); 
+            activeMenu = null; 
         } 
     });
     
     document.getElementById('fileSaveInFrame').addEventListener('click', (event) => { 
         event.stopPropagation(); 
         performSave(); 
+    });
+    
+    document.getElementById('fileOpenInFrame').addEventListener('click', (event) => {
+        event.stopPropagation();
+        performOpen();
     });
 
     function performSave() {
@@ -92,6 +114,28 @@
         }
         if (activeMenu) { activeMenu.classList.remove('open'); activeMenu = null; }
     }
+    
+    function performOpen() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.html';
+        fileInput.onchange = e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const fileContent = event.target.result;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(fileContent, 'text/html');
+                    editorArea.innerHTML = doc.body.innerHTML;
+                    saveJotterContent();
+                };
+                reader.readAsText(file);
+            }
+        };
+        fileInput.click();
+        if (activeMenu) { activeMenu.classList.remove('open'); activeMenu = null; }
+    }
 
     editorArea.addEventListener('keydown', function(e) { if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); performSave(); } });
     
@@ -103,6 +147,7 @@
             saveJotterContent();
         } 
     }
+
     fontDecrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize - 1); });
     fontIncrementBtn.addEventListener('click', (event) => { event.stopPropagation(); let currentSize = parseInt(fontSizeInput.value) || 14; applyFontSize(currentSize + 1); });
     fontSizeInput.addEventListener('change', () => { applyFontSize(fontSizeInput.value); });
