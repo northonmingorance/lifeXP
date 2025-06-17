@@ -170,7 +170,14 @@
         flex-direction: column;
     }
 
-    .cycle-day-cell .moon-event-icon,
+    .cycle-day-cell .moon-event-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, 0vh);
+        width: 100%;
+    }
+
     .quarter-day-cell .moon-event-icon {
         position: absolute;
         top: 50%;
