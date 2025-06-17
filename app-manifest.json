@@ -99,5 +99,15 @@
     "minHeight": 580,
     "defaultWidth": 600,
     "defaultHeight": 580
+  },
+  {
+    "id": "almanac",
+    "name": "Almanac",
+    "icon": "🌙",
+    "file": "almanac.app.html",
+    "minWidth": 600,
+    "minHeight": 580,
+    "defaultWidth": 600,
+    "defaultHeight": 580
   }
 ]
