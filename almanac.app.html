@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         todaysEvents.forEach((evt) => {
             const eventEl = document.createElement('div');
             eventEl.className = 'moon-event-icon';
-            eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} UTC`;
+            eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             eventEl.innerHTML = `<span>${evt.emoji}</span>`;
             eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
             const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
@@ -543,10 +543,28 @@ document.addEventListener('DOMContentLoaded', () => {
         daysInQuarter.forEach(day => {
             const td = document.createElement('td');
             td.className = 'quarter-day-cell';
-            const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
-            eventsOnDay.forEach(evt => {
-                td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
-            });
+            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            let emoji, title;
+
+            if (primaryEventOnDay) {
+                emoji = primaryEventOnDay.emoji;
+                title = `${primaryEventOnDay.name} at ${primaryEventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                const [startCycle, endCycle] = getCycleBoundaries(day);
+                if (startCycle && endCycle) {
+                    const cycleDuration = endCycle.date.getTime() - startCycle.date.getTime();
+                    const age = day.getTime() - startCycle.date.getTime();
+                    const phaseIndex = Math.floor((age / cycleDuration) * 8) % 8;
+                    emoji = PHASE_EMOJIS[phaseIndex];
+                    title = FULL_PHASE_NAMES[phaseIndex];
+                } else {
+                    emoji = '';
+                }
+            }
+
+            if (emoji) {
+                td.innerHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
+            }
             contentTr.appendChild(td);
         });
         contentTbody.appendChild(contentTr);
@@ -612,10 +630,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             td.innerHTML = dayNumberHTML;
 
-            const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
-            eventsOnDay.forEach(evt => {
-                td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
-            });
+            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            let emoji, title;
+
+            if (primaryEventOnDay) {
+                emoji = primaryEventOnDay.emoji;
+                title = `${primaryEventOnDay.name} at ${primaryEventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                const cycleDuration = endEvent.date.getTime() - startEvent.date.getTime();
+                const age = d.getTime() - startEvent.date.getTime();
+                const currentAge = Math.max(0, age);
+                const phaseIndex = Math.floor((currentAge / cycleDuration) * 8) % 8;
+                emoji = PHASE_EMOJIS[phaseIndex];
+                title = FULL_PHASE_NAMES[phaseIndex];
+            }
+
+            if (emoji) {
+                td.innerHTML += `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
+            }
 
             d.setUTCDate(d.getUTCDate() + 1);
         }
