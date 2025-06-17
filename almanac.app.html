@@ -1,693 +1,669 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Moon Calendar</title>
-    <style>
-        :root {
-            --bg-color: #ECE9D8;
-            --surface-color: #F0F0F0;
-            --border-color: #ACA899;
-            --border-highlight-color: #7F7F7F;
-            --header-bg-color: #D4D0C8;
-            --button-bg-color: #ECE9D8;
-            --button-text-color: #000000;
-            --button-hover-border: #005CFE;
-            --text-color: #000000;
-            --primary-color: #005CFE;
-            --today-highlight-bg: #005CFE;
-            --today-highlight-text: #FFFFFF;
-        }
+<style>
+    :root {
+        --bg-color: #ECE9D8;
+        --surface-color: #F0F0F0;
+        --border-color: #ACA899;
+        --border-highlight-color: #7F7F7F;
+        --header-bg-color: #D4D0C8;
+        --button-bg-color: #ECE9D8;
+        --button-text-color: #000000;
+        --button-hover-border: #005CFE;
+        --text-color: #000000;
+        --primary-color: #005CFE;
+        --today-highlight-bg: #005CFE;
+        --today-highlight-text: #FFFFFF;
+    }
 
-        body {
-            margin: 0;
-            padding: 15px;
-            font-family: "Tahoma", "Geneva", sans-serif;
-            font-size: 12px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            box-sizing: border-box;
-        }
+    body {
+        margin: 0;
+        padding: 15px;
+        font-family: "Tahoma", "Geneva", sans-serif;
+        font-size: 12px;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        box-sizing: border-box;
+    }
 
-        .moon-calendar-app {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-        }
+    .moon-calendar-app {
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+    }
 
-        .controls-bar {
-            display: flex;
-            margin-bottom: 15px;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--surface-color);
-            flex-shrink: 0;
-        }
+    .controls-bar {
+        display: flex;
+        margin-bottom: 15px;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--surface-color);
+        flex-shrink: 0;
+    }
 
-        .controls-bar.layout-single-row {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: nowrap;
-        }
-        .controls-bar.layout-single-row > div {
-            margin: 2px 5px;
-            flex-shrink: 0;
-        }
-        .controls-bar.layout-multi-row {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .controls-bar.layout-multi-row > div {
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding: 5px 0;
-        }
-        .controls-bar.layout-multi-row > div:last-child {
-            margin-bottom: 0;
-        }
-        .controls-bar.layout-multi-row .controls-group {
-            text-align: center;
-        }
-        
-        .date-navigation, .view-actions {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 5px;
-        }
+    .controls-bar.layout-single-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+    .controls-bar.layout-single-row > div {
+        margin: 2px 5px;
+        flex-shrink: 0;
+    }
+    .controls-bar.layout-multi-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .controls-bar.layout-multi-row > div {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 5px 0;
+    }
+    .controls-bar.layout-multi-row > div:last-child {
+        margin-bottom: 0;
+    }
+    .controls-bar.layout-multi-row .controls-group {
+        text-align: center;
+    }
+    
+    .date-navigation, .view-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
 
-        .controls-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0 10px;
-            text-align: center;
-            gap: 5px;
-        }
+    .controls-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 10px;
+        text-align: center;
+        gap: 5px;
+    }
 
-        .xp-button {
-            background-color: var(--button-bg-color);
-            border: 1px outset var(--border-highlight-color);
-            padding: 5px 12px;
-            min-width: 75px;
-            text-align: center;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 11px;
-        }
-        .xp-button:active, .xp-button.active {
-            border-style: inset;
-        }
-        .xp-button:hover {
-            border-color: var(--button-hover-border);
-        }
+    .xp-button {
+        background-color: var(--button-bg-color);
+        border: 1px outset var(--border-highlight-color);
+        padding: 5px 12px;
+        min-width: 75px;
+        text-align: center;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 11px;
+    }
+    .xp-button:active, .xp-button.active {
+        border-style: inset;
+    }
+    .xp-button:hover {
+        border-color: var(--button-hover-border);
+    }
 
-        .view-title {
-            font-weight: bold;
-            font-size: 1.1em;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+    .view-title {
+        font-weight: bold;
+        font-size: 1.1em;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
 
-        .app-view-container {
-            flex-grow: 1;
-            overflow: auto;
-            position: relative;
-            border: 1px solid var(--border-highlight-color);
-            background-color: var(--surface-color);
-        }
+    .app-view-container {
+        flex-grow: 1;
+        overflow: auto;
+        position: relative;
+        border: 1px solid var(--border-highlight-color);
+        background-color: var(--surface-color);
+    }
 
-        .app-view {
-            display: none;
-            width: 100%;
-            height: 100%;
-        }
+    .app-view {
+        display: none;
+        width: 100%;
+        height: 100%;
+        padding: 3px;
+        box-sizing: border-box;
+    }
 
-        .app-view.active {
-            display: block;
-        }
+    .app-view.active {
+        display: block;
+    }
 
-        .calendar-table {
-            width: 100%;
-            table-layout: fixed;
-        }
+    .calendar-table {
+        width: 100%;
+        height: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
 
-        .calendar-table th, .calendar-table td {
-            border: 1px solid var(--border-color);
-            padding: 8px;
-            text-align: center;
-            vertical-align: top;
-        }
+    .calendar-table th, .calendar-table td {
+        border: 1px solid var(--border-color);
+        padding: 8px;
+        text-align: center;
+        vertical-align: top;
+    }
 
-        .calendar-table th {
-            background-color: var(--header-bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        
-        /* Cycle & Quarter View Specific */
-        .cycle-day-cell, .quarter-day-cell {
-            height: 100px; position: relative;
-        }
+    .calendar-table th {
+        background-color: var(--header-bg-color);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .cycle-day-cell, .quarter-day-cell {
+        position: relative;
+    }
 
-        .cycle-day-cell .moon-event-icon,
-        .quarter-day-cell .moon-event-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-        }
+    #quarter-view.active {
+        display: flex;
+        flex-direction: column;
+    }
 
-        .day-number { font-weight: bold; font-size: 1.2em; margin-bottom: 5px;  }
-        .cycle-day-cell.other-month { opacity: 0.5; background-color: #F5F5F5; }
-        .day-number.today, .quarter-day-header.today .day-number {
-            background-color: var(--today-highlight-bg);
-            color: var(--today-highlight-text);
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2px;
-            box-sizing: border-box;
-        }
-        .moon-event-icon { font-size: 24px; text-align: center; align-items: center; vertical-align: center; }
-        .moon-event-details { font-size: 0.9em; margin-top: 5px; }
+    .cycle-day-cell .moon-event-icon,
+    .quarter-day-cell .moon-event-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+    }
 
-        /* Quarter View Header */
-        #quarter-grid-header-container {
-            position: sticky;
-            top: 0;
-            background: var(--surface-color);
-            z-index: 9;
-        }
-        .quarter-header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .quarter-header-table th { border-bottom: 1px solid var(--border-highlight-color); }
-        .quarter-day-name { color: #555; }
+    .day-number { font-weight: bold; font-size: 1.2em; margin-bottom: 5px;  }
+    .cycle-day-cell.other-month { opacity: 0.5; background-color: #F5F5F5; }
+    
+    .cycle-day-cell .day-number,
+    .quarter-day-header .day-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2px;
+        box-sizing: border-box;
+    }
 
-        /* Day View Specific */
-        #day-view-content { height: 100%; overflow-y: auto; }
-        .day-schedule-table { width: 100%; border-collapse: collapse; }
-        .day-schedule-table td { border: none; border-bottom: 1px solid #E0E0E0; vertical-align: middle; }
-        .time-label-cell { width: 80px; text-align: right; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
-        .schedule-grid-cell { position: relative; height: 60px; }
-        .moon-event {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #6c5ce7;
-            color: #fff;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            font-size: 24px;
-            z-index: 5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #fff;
-        }
+    .cycle-day-cell .day-number.today,
+    .quarter-day-header.today .day-number {
+        background-color: var(--today-highlight-bg);
+        color: var(--today-highlight-text);
+    }
 
-    </style>
-</head>
-<body>
+    .moon-event-icon { font-size: 24px; text-align: center; align-items: center; vertical-align: center; }
+    .moon-event-details { font-size: 0.9em; margin-top: 5px; }
 
-    <div class="moon-calendar-app">
-        <header class="controls-bar" id="controlsBar">
-             <div class="date-navigation" id="date-nav-controls">
-                </div>
-            <div class="controls-group">
-                <div class="view-title" id="view-title-display">Loading...</div>
+    #quarter-grid-header-container {
+        position: sticky;
+        background: var(--surface-color);
+        z-index: 9;
+    }
+    .quarter-header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .quarter-day-name { color: #555; }
+
+    #day-view-content { height: 100%; overflow-y: auto; }
+    .day-schedule-table { width: 100%; border-collapse: collapse; }
+    .day-schedule-table td { border: none; border-bottom: 1px solid #E0E0E0; vertical-align: middle; }
+    .time-label-cell { width: 80px; text-align: right; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
+    .schedule-grid-cell { position: relative; height: 60px; }
+    .moon-event {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #6c5ce7;
+        color: #fff;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        font-size: 24px;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #fff;
+    }
+
+</style>
+
+<div class="moon-calendar-app">
+    <header class="controls-bar" id="controlsBar">
+         <div class="date-navigation" id="date-nav-controls">
             </div>
-            <div class="view-actions" id="main-nav-buttons">
-                <button class="xp-button active" data-view="day-view">Day</button>
-                <button class="xp-button" data-view="quarter-view">Quarter</button>
-                <button class="xp-button" data-view="cycle-view">Cycle</button>
-            </div>
-        </header>
-
-        <div class="app-view-container">
-            <div id="day-view" class="app-view active"></div>
-            <div id="quarter-view" class="app-view"></div>
-            <div id="cycle-view" class="app-view"></div>
+        <div class="controls-group">
+            <div class="view-title" id="view-title-display">Loading...</div>
         </div>
+        <div class="view-actions" id="main-nav-buttons">
+            <button class="xp-button active" data-view="day-view">Day</button>
+            <button class="xp-button" data-view="quarter-view">Quarter</button>
+            <button class="xp-button" data-view="cycle-view">Cycle</button>
+        </div>
+    </header>
+
+    <div class="app-view-container">
+        <div id="day-view" class="app-view active"></div>
+        <div id="quarter-view" class="app-view"></div>
+        <div id="cycle-view" class="app-view"></div>
     </div>
+</div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-        // --- CONSTANTS AND CONFIGURATION ---
-        const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const FULL_PHASE_NAMES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
-        const PHASE_EMOJIS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
-        const PRIMARY_PHASE_NAMES = ["New Moon", "First Quarter", "Full Moon", "Last Quarter"];
-        const NEW_FULL_MOON_NAMES = ["New Moon", "Full Moon"];
+    const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const FULL_PHASE_NAMES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+    const PHASE_EMOJIS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+    const PRIMARY_PHASE_NAMES = ["New Moon", "First Quarter", "Full Moon", "Last Quarter"];
+    const NEW_FULL_MOON_NAMES = ["New Moon", "Full Moon"];
 
-        // --- STATE ---
-        let viewDate = new Date();
-        let currentView = 'day-view';
-        let allMoonEvents = [];
-        const moonDataCache = {};
-        let isLoading = false;
+    let viewDate = new Date();
+    let currentView = 'day-view';
+    let allMoonEvents = [];
+    const moonDataCache = {};
+    let isLoading = false;
 
-        // --- DOM ELEMENTS ---
-        const controlsBar = document.getElementById('controlsBar');
-        const mainNavButtons = document.getElementById('main-nav-buttons');
-        const viewTitleDisplay = document.getElementById('view-title-display');
-        const dateNavControls = document.getElementById('date-nav-controls');
-        const views = {
-            'day-view': document.getElementById('day-view'),
-            'quarter-view': document.getElementById('quarter-view'),
-            'cycle-view': document.getElementById('cycle-view')
+    const controlsBar = document.getElementById('controlsBar');
+    const mainNavButtons = document.getElementById('main-nav-buttons');
+    const viewTitleDisplay = document.getElementById('view-title-display');
+    const dateNavControls = document.getElementById('date-nav-controls');
+    const views = {
+        'day-view': document.getElementById('day-view'),
+        'quarter-view': document.getElementById('quarter-view'),
+        'cycle-view': document.getElementById('cycle-view')
+    };
+    
+    async function fetchAndProcessMoonData(year) {
+        if (moonDataCache[year]) {
+            return moonDataCache[year];
+        }
+        const API_URL = `https://aa.usno.navy.mil/api/moon/phases/year?year=${year}`;
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            const processedData = data.phasedata.map(evt => {
+                const dateStr = `${evt.year}-${String(evt.month).padStart(2, '0')}-${String(evt.day).padStart(2, '0')}T${evt.time}:00Z`;
+                return {
+                    name: evt.phase,
+                    date: new Date(dateStr),
+                    emoji: PHASE_EMOJIS[PRIMARY_PHASE_NAMES.indexOf(evt.phase) * 2] || '❓'
+                };
+            });
+            
+            moonDataCache[year] = processedData;
+            return processedData;
+        } catch (error) {
+            console.error(`Failed to fetch moon data for ${year}:`, error);
+            moonDataCache[year] = []; 
+            return [];
+        }
+    }
+    
+    async function loadRequiredMoonData(date) {
+        if (isLoading) return;
+        isLoading = true;
+        viewTitleDisplay.innerHTML = "Loading...";
+
+        const year = date.getFullYear();
+        const requiredYears = [year - 1, year, year + 1];
+        
+        const promises = requiredYears.map(y => fetchAndProcessMoonData(y));
+        await Promise.all(promises);
+
+        let combinedEvents = [];
+        for (const y of requiredYears) {
+            if(moonDataCache[y]) {
+                combinedEvents.push(...moonDataCache[y]);
+            }
+        }
+        
+        const uniqueEvents = Array.from(new Map(combinedEvents.map(event => [event.date.toISOString(), event])).values());
+        allMoonEvents = uniqueEvents.sort((a, b) => a.date - b.date);
+
+        isLoading = false;
+    }
+
+    function getCycleBoundaries(date) {
+        const time = date.getTime();
+        const newMoons = allMoonEvents.filter(e => e.name === "New Moon");
+        let startEvent, endEvent;
+        for (let i = 0; i < newMoons.length - 1; i++) {
+            if (time >= newMoons[i].date.getTime() && time < newMoons[i+1].date.getTime()) {
+                startEvent = newMoons[i];
+                endEvent = newMoons[i+1];
+                break;
+            }
+        }
+        return [startEvent, endEvent];
+    }
+
+    function getQuarterBoundaries(date) {
+        const time = date.getTime();
+        const majorEvents = allMoonEvents.filter(e => NEW_FULL_MOON_NAMES.includes(e.name));
+        let startEvent, endEvent;
+        for (let i = 0; i < majorEvents.length - 1; i++) {
+             if (time >= majorEvents[i].date.getTime() && time < majorEvents[i+1].date.getTime()) {
+                startEvent = majorEvents[i];
+                endEvent = majorEvents[i+1];
+                break;
+            }
+        }
+        return [startEvent, endEvent];
+    }
+    
+    function daysInMilliseconds(days) { return days * 24 * 60 * 60 * 1000; }
+    
+    function isSameDay(d1, d2) { if (!d1 || !d2) return false; return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
+    function isSameUTCDay(d1, d2) {
+        if (!d1 || !d2) return false;
+        return d1.getUTCFullYear() === d2.getUTCFullYear() &&
+               d1.getUTCMonth() === d2.getUTCMonth() &&
+               d1.getUTCDate() === d2.getUTCDate();
+    }
+    function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
+    function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getUTCDate()}${getOrdinalSuffix(date.getUTCDate())}`; }
+    function getOrdinalSuffix(i) {
+        var j = i % 10, k = i % 100;
+        if (j == 1 && k != 11) return "st";
+        if (j == 2 && k != 12) return "nd";
+        if (j == 3 && k != 13) return "rd";
+        return "th";
+    }
+
+    function checkControlsBarLayout() {
+        if (!controlsBar || !controlsBar.clientWidth) return;
+        const children = [
+            controlsBar.querySelector('.date-navigation'),
+            controlsBar.querySelector('.controls-group'),
+            controlsBar.querySelector('.view-actions')
+        ].filter(el => el);
+        if (children.length === 0) return;
+        
+        const originalClasses = controlsBar.className;
+        controlsBar.className = 'controls-bar layout-single-row';
+        let totalChildrenWidth = 0;
+        children.forEach(child => {
+            const childStyle = getComputedStyle(child);
+            totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
+        });
+        controlsBar.className = originalClasses;
+
+        const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
+
+        if (totalChildrenWidth > controlsBarClientWidth && controlsBarClientWidth > 0) {
+            controlsBar.classList.add('layout-multi-row');
+            controlsBar.classList.remove('layout-single-row');
+        } else {
+            controlsBar.classList.add('layout-single-row');
+            controlsBar.classList.remove('layout-multi-row');
+        }
+    }
+    
+    function updateControls() {
+        dateNavControls.innerHTML = '';
+        const addNavButton = (text, clickHandler) => {
+            const button = document.createElement('button');
+            button.className = 'xp-button';
+            button.textContent = text;
+            button.addEventListener('click', clickHandler);
+            dateNavControls.appendChild(button);
         };
-        
-        // --- API & DATA HANDLING ---
-        async function fetchAndProcessMoonData(year) {
-            // Return cached data if available
-            if (moonDataCache[year]) {
-                return moonDataCache[year];
-            }
-            // Construct the API URL for the given year
-            const API_URL = `https://aa.usno.navy.mil/api/moon/phases/year?year=${year}`;
-            try {
-                // Fetch data from the API
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-                const data = await response.json();
-                
-                // Process the raw phase data into the application's format
-                const processedData = data.phasedata.map(evt => {
-                    // Create a valid ISO 8601 date string in UTC
-                    const dateStr = `${evt.year}-${String(evt.month).padStart(2, '0')}-${String(evt.day).padStart(2, '0')}T${evt.time}:00Z`;
-                    return {
-                        name: evt.phase,
-                        date: new Date(dateStr),
-                        // Assign an emoji based on the phase name
-                        emoji: PHASE_EMOJIS[PRIMARY_PHASE_NAMES.indexOf(evt.phase) * 2] || '❓'
-                    };
-                });
-                
-                // Cache the processed data
-                moonDataCache[year] = processedData;
-                return processedData;
-            } catch (error) {
-                console.error(`Failed to fetch moon data for ${year}:`, error);
-                // Cache an empty array on error to prevent repeated failed requests
-                moonDataCache[year] = []; 
-                return [];
-            }
+
+        const goBackToToday = () => { viewDate = new Date(); updateAllViews(); };
+
+        if (currentView === 'day-view') {
+            addNavButton('< Prev Day', () => { viewDate.setDate(viewDate.getDate() - 1); updateAllViews(); });
+            addNavButton('Today', goBackToToday);
+            addNavButton('Next Day >', () => { viewDate.setDate(viewDate.getDate() + 1); updateAllViews(); });
+        } else if (currentView === 'quarter-view') {
+            addNavButton('< Prev Quarter', () => { const b = getQuarterBoundaries(viewDate); if(b[0]) { viewDate = new Date(b[0].date.getTime() - daysInMilliseconds(1)); } updateAllViews(); });
+            addNavButton('Current Quarter', goBackToToday);
+            addNavButton('Next Quarter >', () => { const b = getQuarterBoundaries(viewDate); if(b[1]) { viewDate = new Date(b[1].date.getTime() + 1000); } updateAllViews(); });
+        } else if (currentView === 'cycle-view') {
+            addNavButton('< Prev Cycle', () => { const b = getCycleBoundaries(viewDate); if (b[0]) { viewDate = new Date(b[0].date.getTime() - daysInMilliseconds(1)); } updateAllViews(); });
+            addNavButton('Current Cycle', goBackToToday);
+            addNavButton('Next Cycle >', () => { const b = getCycleBoundaries(viewDate); if (b[1]) { viewDate = new Date(b[1].date.getTime() + 1000); } updateAllViews(); });
         }
-        
-        async function loadRequiredMoonData(date) {
-            if (isLoading) return;
-            isLoading = true;
-            viewTitleDisplay.innerHTML = "Loading...";
+         setTimeout(checkControlsBarLayout, 0);
+    }
 
-            const year = date.getFullYear();
-            // Load data for previous, current, and next year to handle views spanning year boundaries
-            const requiredYears = [year - 1, year, year + 1];
-            
-            const promises = requiredYears.map(y => fetchAndProcessMoonData(y));
-            await Promise.all(promises);
-
-            let combinedEvents = [];
-            for (const y of requiredYears) {
-                if(moonDataCache[y]) {
-                    combinedEvents.push(...moonDataCache[y]);
-                }
-            }
-            
-            // Deduplicate events (in case of overlap) and sort them by date
-            const uniqueEvents = Array.from(new Map(combinedEvents.map(event => [event.date.toISOString(), event])).values());
-            allMoonEvents = uniqueEvents.sort((a, b) => a.date - b.date);
-
-            isLoading = false;
-        }
-
-        // --- CORE CALCULATION LOGIC ---
-        
-        function getCycleBoundaries(date) {
-            const time = date.getTime();
-            const newMoons = allMoonEvents.filter(e => e.name === "New Moon");
-            let startEvent, endEvent;
-            for (let i = 0; i < newMoons.length - 1; i++) {
-                if (time >= newMoons[i].date.getTime() && time < newMoons[i+1].date.getTime()) {
-                    startEvent = newMoons[i];
-                    endEvent = newMoons[i+1];
-                    break;
-                }
-            }
-            return [startEvent, endEvent];
-        }
-
-        function getQuarterBoundaries(date) {
-            const time = date.getTime();
-            const majorEvents = allMoonEvents.filter(e => NEW_FULL_MOON_NAMES.includes(e.name));
-            let startEvent, endEvent;
-            for (let i = 0; i < majorEvents.length - 1; i++) {
-                 if (time >= majorEvents[i].date.getTime() && time < majorEvents[i+1].date.getTime()) {
-                    startEvent = majorEvents[i];
-                    endEvent = majorEvents[i+1];
-                    break;
-                }
-            }
-            return [startEvent, endEvent];
-        }
-        
-        function daysInMilliseconds(days) { return days * 24 * 60 * 60 * 1000; }
-        
-        // --- UTILITY FUNCTIONS ---
-        // Compares dates based on local time zone
-        function isSameDay(d1, d2) { if (!d1 || !d2) return false; return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
-        // Compares dates based on UTC
-        function isSameUTCDay(d1, d2) {
-            if (!d1 || !d2) return false;
-            return d1.getUTCFullYear() === d2.getUTCFullYear() &&
-                   d1.getUTCMonth() === d2.getUTCMonth() &&
-                   d1.getUTCDate() === d2.getUTCDate();
-        }
-        function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
-        function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getUTCDate()}${getOrdinalSuffix(date.getUTCDate())}`; }
-        function getOrdinalSuffix(i) {
-            var j = i % 10, k = i % 100;
-            if (j == 1 && k != 11) return "st";
-            if (j == 2 && k != 12) return "nd";
-            if (j == 3 && k != 13) return "rd";
-            return "th";
-        }
-
-        // --- UI RENDERING & LAYOUT ---
-
-        function checkControlsBarLayout() {
-            if (!controlsBar || !controlsBar.clientWidth) return;
-            const children = [
-                controlsBar.querySelector('.date-navigation'),
-                controlsBar.querySelector('.controls-group'),
-                controlsBar.querySelector('.view-actions')
-            ].filter(el => el);
-            if (children.length === 0) return;
-            
-            const originalClasses = controlsBar.className;
-            controlsBar.className = 'controls-bar layout-single-row';
-            let totalChildrenWidth = 0;
-            children.forEach(child => {
-                const childStyle = getComputedStyle(child);
-                totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
-            });
-            controlsBar.className = originalClasses;
-
-            const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
-
-            if (totalChildrenWidth > controlsBarClientWidth && controlsBarClientWidth > 0) {
-                controlsBar.classList.add('layout-multi-row');
-                controlsBar.classList.remove('layout-single-row');
+    function renderDayView() {
+        const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
+        const primaryEventToday = todaysEvents.find(evt => PRIMARY_PHASE_NAMES.includes(evt.name));
+        let emoji;
+        if (primaryEventToday) {
+            emoji = primaryEventToday.emoji;
+        } else {
+            const [startCycle, endCycle] = getCycleBoundaries(viewDate);
+            if (startCycle && endCycle) {
+                const cycleDuration = endCycle.date.getTime() - startCycle.date.getTime();
+                const age = viewDate.getTime() - startCycle.date.getTime();
+                const phaseIndex = Math.floor((age / cycleDuration) * 8) % 8;
+                emoji = PHASE_EMOJIS[phaseIndex];
             } else {
-                controlsBar.classList.add('layout-single-row');
-                controlsBar.classList.remove('layout-multi-row');
+                emoji = '❓';
             }
         }
-        
-        function updateControls() {
-            dateNavControls.innerHTML = '';
-            const addNavButton = (text, clickHandler) => {
-                const button = document.createElement('button');
-                button.className = 'xp-button';
-                button.textContent = text;
-                button.addEventListener('click', clickHandler);
-                dateNavControls.appendChild(button);
-            };
-
-            const goBackToToday = () => { viewDate = new Date(); updateAllViews(); };
-
-            if (currentView === 'day-view') {
-                addNavButton('< Prev Day', () => { viewDate.setDate(viewDate.getDate() - 1); updateAllViews(); });
-                addNavButton('Today', goBackToToday);
-                addNavButton('Next Day >', () => { viewDate.setDate(viewDate.getDate() + 1); updateAllViews(); });
-            } else if (currentView === 'quarter-view') {
-                addNavButton('< Prev Quarter', () => { const b = getQuarterBoundaries(viewDate); if(b[0]) { viewDate = new Date(b[0].date.getTime() - daysInMilliseconds(1)); } updateAllViews(); });
-                addNavButton('Current Quarter', goBackToToday);
-                addNavButton('Next Quarter >', () => { const b = getQuarterBoundaries(viewDate); if(b[1]) { viewDate = new Date(b[1].date.getTime() + 1000); } updateAllViews(); });
-            } else if (currentView === 'cycle-view') {
-                addNavButton('< Prev Cycle', () => { const b = getCycleBoundaries(viewDate); if (b[0]) { viewDate = new Date(b[0].date.getTime() - daysInMilliseconds(1)); } updateAllViews(); });
-                addNavButton('Current Cycle', goBackToToday);
-                addNavButton('Next Cycle >', () => { const b = getCycleBoundaries(viewDate); if (b[1]) { viewDate = new Date(b[1].date.getTime() + 1000); } updateAllViews(); });
-            }
-             setTimeout(checkControlsBarLayout, 0);
+        viewTitleDisplay.innerHTML = `<span>${emoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
+        const viewContainer = views['day-view'];
+        viewContainer.innerHTML = '';
+        const table = document.createElement('table');
+        table.className = 'day-schedule-table';
+        const tbody = document.createElement('tbody');
+        for (let i = 0; i < 24; i++) {
+            const tr = document.createElement('tr');
+            const timeLabel = `${i === 0 ? '12' : (i > 12 ? i - 12 : i)} ${i < 12 ? 'AM' : 'PM'}`;
+            tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell"></td>`;
+            tbody.appendChild(tr);
         }
-
-        function renderDayView() {
-            const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
-            const primaryEventToday = todaysEvents.find(evt => PRIMARY_PHASE_NAMES.includes(evt.name));
-            let emoji;
-            if (primaryEventToday) {
-                emoji = primaryEventToday.emoji;
-            } else {
-                const [startCycle, endCycle] = getCycleBoundaries(viewDate);
-                if (startCycle && endCycle) {
-                    const cycleDuration = endCycle.date.getTime() - startCycle.date.getTime();
-                    const age = viewDate.getTime() - startCycle.date.getTime();
-                    const phaseIndex = Math.floor((age / cycleDuration) * 8) % 8;
-                    emoji = PHASE_EMOJIS[phaseIndex];
-                } else {
-                    emoji = '❓'; // Fallback
-                }
-            }
-            viewTitleDisplay.innerHTML = `<span>${emoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
-            const viewContainer = views['day-view'];
-            viewContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = 'day-schedule-table';
-            const tbody = document.createElement('tbody');
-            for (let i = 0; i < 24; i++) {
-                const tr = document.createElement('tr');
-                const timeLabel = `${i === 0 ? '12' : (i > 12 ? i - 12 : i)} ${i < 12 ? 'AM' : 'PM'}`;
-                tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell"></td>`;
-                tbody.appendChild(tr);
-            }
-            table.appendChild(tbody);
-            viewContainer.innerHTML = `<div id="day-view-content"></div>`;
-            viewContainer.firstChild.appendChild(table);
-            todaysEvents.forEach((evt) => {
-                const eventEl = document.createElement('div');
-                eventEl.className = 'moon-event-icon';
-                eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} UTC`;
-                eventEl.innerHTML = `<span>${evt.emoji}</span>`;
-                eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
-                const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
-                if (targetCell) {
-                    targetCell.appendChild(eventEl);
-                }
-            });
-        }
-        
-        function renderQuarterView() {
-            const today = new Date();
-            const boundaries = getQuarterBoundaries(viewDate);
-
-            if (!boundaries || !boundaries[0] || !boundaries[1]) {
-                views['quarter-view'].innerHTML = "Not enough quarter data available for this date.";
-                viewTitleDisplay.innerHTML = "Quarter Data Unavailable";
-                return;
-            }
-
-            const startEvent = boundaries[0];
-            const endEvent = boundaries[1];
-            const startDate = startEvent.date;
-            const endDate = endEvent.date;
-
-            const startTitle = formatQuarterTitleDate(startDate);
-            const endTitle = formatQuarterTitleDate(endDate);
-            viewTitleDisplay.innerHTML = `<span>${startEvent.emoji}</span> <span>${startTitle} - ${endTitle} Quarter</span> <span>${endEvent.emoji}</span>`;
-            
-            const viewContainer = views['quarter-view'];
-            viewContainer.innerHTML = ''; 
-
-            const daysInQuarter = [];
-            let d = new Date(startDate);
-            d.setUTCHours(0,0,0,0);
-            
-            // The end date is the day of the next major moon phase.
-            // A quarter represents the time BETWEEN two major phases, so the loop stops before the end date.
-            let normalizedEndDate = new Date(endDate);
-            normalizedEndDate.setUTCHours(0,0,0,0);
-            
-            while(d.getTime() < normalizedEndDate.getTime()) {
-                daysInQuarter.push(new Date(d));
-                d.setUTCDate(d.getUTCDate() + 1);
-            }
-
-            const headerContainer = document.createElement('div');
-            headerContainer.id = 'quarter-grid-header-container';
-            const headerTable = document.createElement('table');
-            headerTable.className = 'quarter-header-table';
-            const headerThead = document.createElement('thead');
-            const headerTr = document.createElement('tr');
-            daysInQuarter.forEach(day => {
-                const th = document.createElement('th');
-                th.className = 'quarter-day-header';
-                if(isSameUTCDay(day, today)) th.classList.add('today');
-                th.innerHTML = `<div class="quarter-day-name">${DAY_NAMES_SHORT[day.getUTCDay()]}</div><div class="day-number">${day.getUTCDate()}</div>`;
-                headerTr.appendChild(th);
-            });
-            headerThead.appendChild(headerTr);
-            headerTable.appendChild(headerThead);
-            headerContainer.appendChild(headerTable);
-            
-            const contentTable = document.createElement('table');
-            contentTable.className = 'calendar-table';
-            const contentTbody = document.createElement('tbody');
-            const contentTr = document.createElement('tr');
-
-            daysInQuarter.forEach(day => {
-                const td = document.createElement('td');
-                td.className = 'quarter-day-cell';
-                const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
-                eventsOnDay.forEach(evt => {
-                    td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
-                });
-                contentTr.appendChild(td);
-            });
-            contentTbody.appendChild(contentTr);
-            contentTable.appendChild(contentTbody);
-            
-            viewContainer.appendChild(headerContainer);
-            viewContainer.appendChild(contentTable);
-        }
-
-        function renderCycleView() {
-            const today = new Date();
-            const [startEvent, endEvent] = getCycleBoundaries(viewDate);
-
-            if (!startEvent || !endEvent) {
-                views['cycle-view'].innerHTML = "Cycle Data Unavailable"; 
-                viewTitleDisplay.innerHTML = "Cycle Data Unavailable";
-                return;
-            }
-
-            const startDate = startEvent.date;
-            const endDate = endEvent.date;
-
-            const startMonth = getMonthName(startDate);
-            const endMonth = getMonthName(endDate);
-            const titleYear = startDate.getUTCFullYear();
-            const titleText = startMonth === endMonth ? `${startMonth} ${titleYear} Cycle` : `${startMonth} - ${endMonth} ${titleYear} Cycle`;
-            viewTitleDisplay.innerHTML = `<span>${titleText}</span>`;
-            
-            const viewContainer = views['cycle-view'];
-            viewContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = 'calendar-table';
-            
-            const thead = table.createTHead();
-            const headerTr = thead.insertRow();
-            DAY_NAMES_SHORT.forEach(name => { headerTr.innerHTML += `<th>${name}</th>`; });
-            
-            const tbody = table.createTBody();
-            let currentTr = tbody.insertRow();
-
-            for (let i = 0; i < startDate.getUTCDay(); i++) {
-                const cell = currentTr.insertCell();
-                cell.className = 'cycle-day-cell other-month';
-            }
-            
-            let d = new Date(startDate.getTime());
-            d.setUTCHours(0,0,0,0); 
-
-            let normalizedEndDate = new Date(endDate.getTime());
-            normalizedEndDate.setUTCHours(0,0,0,0);
-
-            while (d.getTime() < normalizedEndDate.getTime()) {
-                if (d.getUTCDay() === 0 && currentTr.cells.length > 0) {
-                    currentTr = tbody.insertRow();
-                }
-
-                const td = currentTr.insertCell();
-                td.className = 'cycle-day-cell';
-
-                let dayNumberHTML = `<div class="day-number">${d.getUTCDate()}</div>`;
-                if (isSameUTCDay(d, today)) {
-                    dayNumberHTML = `<div class="day-number today">${d.getUTCDate()}</div>`;
-                }
-                td.innerHTML = dayNumberHTML;
-
-                const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
-                eventsOnDay.forEach(evt => {
-                    td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
-                });
-
-                d.setUTCDate(d.getUTCDate() + 1);
-            }
-            
-            while (currentTr.cells.length > 0 && currentTr.cells.length < 7) {
-                const cell = currentTr.insertCell();
-                cell.className = 'cycle-day-cell other-month';
-            }
-
-            viewContainer.appendChild(table);
-        }
-
-        // --- CONTROL AND INITIALIZATION ---
-        
-        async function switchView(viewId) {
-            currentView = viewId;
-            document.querySelectorAll('#main-nav-buttons .xp-button').forEach(button => {
-                button.classList.toggle('active', button.dataset.view === viewId);
-            });
-            for (const key in views) {
-                views[key].classList.toggle('active', key === viewId);
-            }
-            await updateAllViews();
-        }
-
-        async function updateAllViews() {
-            await loadRequiredMoonData(viewDate);
-            updateControls();
-            const renderFunction = {
-                'day-view': renderDayView,
-                'quarter-view': renderQuarterView,
-                'cycle-view': renderCycleView
-            }[currentView];
-
-            if(renderFunction) renderFunction();
-        }
-
-        mainNavButtons.addEventListener('click', (event) => {
-            if (event.target.matches('.xp-button')) {
-                const viewId = event.target.dataset.view;
-                if(viewId) switchView(viewId);
+        table.appendChild(tbody);
+        viewContainer.innerHTML = `<div id="day-view-content"></div>`;
+        viewContainer.firstChild.appendChild(table);
+        todaysEvents.forEach((evt) => {
+            const eventEl = document.createElement('div');
+            eventEl.className = 'moon-event-icon';
+            eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} UTC`;
+            eventEl.innerHTML = `<span>${evt.emoji}</span>`;
+            eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
+            const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
+            if (targetCell) {
+                targetCell.appendChild(eventEl);
             }
         });
-        
-        async function init() {
-            await switchView('day-view');
-            checkControlsBarLayout();
-            window.addEventListener('resize', checkControlsBarLayout);
+    }
+    
+    function renderQuarterView() {
+        const today = new Date();
+        const boundaries = getQuarterBoundaries(viewDate);
+
+        if (!boundaries || !boundaries[0] || !boundaries[1]) {
+            views['quarter-view'].innerHTML = "Not enough quarter data available for this date.";
+            viewTitleDisplay.innerHTML = "Quarter Data Unavailable";
+            return;
         }
 
-        init();
+        const startEvent = boundaries[0];
+        const endEvent = boundaries[1];
+        const startDate = startEvent.date;
+        const endDate = endEvent.date;
+
+        const startTitle = formatQuarterTitleDate(startDate);
+        const endTitle = formatQuarterTitleDate(endDate);
+        viewTitleDisplay.innerHTML = `<span>${startEvent.emoji}</span> <span>${startTitle} - ${endTitle} Quarter</span> <span>${endEvent.emoji}</span>`;
+        
+        const viewContainer = views['quarter-view'];
+        viewContainer.innerHTML = ''; 
+
+        const daysInQuarter = [];
+        let d = new Date(startDate);
+        d.setUTCHours(0,0,0,0);
+        
+        let normalizedEndDate = new Date(endDate);
+        normalizedEndDate.setUTCHours(0,0,0,0);
+        
+        while(d.getTime() < normalizedEndDate.getTime()) {
+            daysInQuarter.push(new Date(d));
+            d.setUTCDate(d.getUTCDate() + 1);
+        }
+
+        const headerContainer = document.createElement('div');
+        headerContainer.id = 'quarter-grid-header-container';
+        const headerTable = document.createElement('table');
+        headerTable.className = 'quarter-header-table';
+        const headerThead = document.createElement('thead');
+        const headerTr = document.createElement('tr');
+        daysInQuarter.forEach(day => {
+            const th = document.createElement('th');
+            th.className = 'quarter-day-header';
+            if(isSameUTCDay(day, today)) th.classList.add('today');
+            th.innerHTML = `<div class="quarter-day-name">${DAY_NAMES_SHORT[day.getUTCDay()]}</div><div class="day-number">${day.getUTCDate()}</div>`;
+            headerTr.appendChild(th);
+        });
+        headerThead.appendChild(headerTr);
+        headerTable.appendChild(headerThead);
+        headerContainer.appendChild(headerTable);
+        
+        const contentTable = document.createElement('table');
+        contentTable.className = 'calendar-table';
+        const contentTbody = document.createElement('tbody');
+        const contentTr = document.createElement('tr');
+
+        daysInQuarter.forEach(day => {
+            const td = document.createElement('td');
+            td.className = 'quarter-day-cell';
+            const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            eventsOnDay.forEach(evt => {
+                td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
+            });
+            contentTr.appendChild(td);
+        });
+        contentTbody.appendChild(contentTr);
+        contentTable.appendChild(contentTbody);
+        
+        viewContainer.appendChild(headerContainer);
+        viewContainer.appendChild(contentTable);
+    }
+
+    function renderCycleView() {
+        const today = new Date();
+        const [startEvent, endEvent] = getCycleBoundaries(viewDate);
+
+        if (!startEvent || !endEvent) {
+            views['cycle-view'].innerHTML = "Cycle Data Unavailable"; 
+            viewTitleDisplay.innerHTML = "Cycle Data Unavailable";
+            return;
+        }
+
+        const startDate = startEvent.date;
+        const endDate = endEvent.date;
+
+        const startMonth = getMonthName(startDate);
+        const endMonth = getMonthName(endDate);
+        const titleYear = startDate.getUTCFullYear();
+        const titleText = startMonth === endMonth ? `${startMonth} ${titleYear} Cycle` : `${startMonth} - ${endMonth} ${titleYear} Cycle`;
+        viewTitleDisplay.innerHTML = `<span>${titleText}</span>`;
+        
+        const viewContainer = views['cycle-view'];
+        viewContainer.innerHTML = '';
+        const table = document.createElement('table');
+        table.className = 'calendar-table';
+        
+        const thead = table.createTHead();
+        const headerTr = thead.insertRow();
+        DAY_NAMES_SHORT.forEach(name => { headerTr.innerHTML += `<th>${name}</th>`; });
+        
+        const tbody = table.createTBody();
+        let currentTr = tbody.insertRow();
+
+        for (let i = 0; i < startDate.getUTCDay(); i++) {
+            const cell = currentTr.insertCell();
+            cell.className = 'cycle-day-cell other-month';
+        }
+        
+        let d = new Date(startDate.getTime());
+        d.setUTCHours(0,0,0,0); 
+
+        let normalizedEndDate = new Date(endDate.getTime());
+        normalizedEndDate.setUTCHours(0,0,0,0);
+
+        while (d.getTime() < normalizedEndDate.getTime()) {
+            if (d.getUTCDay() === 0 && currentTr.cells.length > 0) {
+                currentTr = tbody.insertRow();
+            }
+
+            const td = currentTr.insertCell();
+            td.className = 'cycle-day-cell';
+
+            let dayNumberHTML = `<div class="day-number">${d.getUTCDate()}</div>`;
+            if (isSameUTCDay(d, today)) {
+                dayNumberHTML = `<div class="day-number today">${d.getUTCDate()}</div>`;
+            }
+            td.innerHTML = dayNumberHTML;
+
+            const eventsOnDay = allMoonEvents.filter(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            eventsOnDay.forEach(evt => {
+                td.innerHTML += `<div class="moon-event-icon" title="${evt.name} at ${evt.date.toLocaleTimeString(undefined, { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC">${evt.emoji}</div>`;
+            });
+
+            d.setUTCDate(d.getUTCDate() + 1);
+        }
+        
+        while (currentTr.cells.length > 0 && currentTr.cells.length < 7) {
+            const cell = currentTr.insertCell();
+            cell.className = 'cycle-day-cell other-month';
+        }
+
+        viewContainer.appendChild(table);
+    }
+
+    async function switchView(viewId) {
+        currentView = viewId;
+        document.querySelectorAll('#main-nav-buttons .xp-button').forEach(button => {
+            button.classList.toggle('active', button.dataset.view === viewId);
+        });
+        for (const key in views) {
+            views[key].classList.toggle('active', key === viewId);
+        }
+        await updateAllViews();
+    }
+
+    async function updateAllViews() {
+        await loadRequiredMoonData(viewDate);
+        updateControls();
+        const renderFunction = {
+            'day-view': renderDayView,
+            'quarter-view': renderQuarterView,
+            'cycle-view': renderCycleView
+        }[currentView];
+
+        if(renderFunction) renderFunction();
+    }
+
+    mainNavButtons.addEventListener('click', (event) => {
+        if (event.target.matches('.xp-button')) {
+            const viewId = event.target.dataset.view;
+            if(viewId) switchView(viewId);
+        }
     });
-    </script>
-</body>
-</html>
+    
+    async function init() {
+        await switchView('day-view');
+        checkControlsBarLayout();
+        window.addEventListener('resize', checkControlsBarLayout);
+    }
+
+    init();
+});
+</script>
