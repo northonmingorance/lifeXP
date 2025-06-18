@@ -164,6 +164,10 @@
     .cycle-day-cell, .quarter-day-cell {
         position: relative;
     }
+    
+    .quarter-day-cell {
+        transform: translateY(40%);
+    }
 
     #quarter-view.active {
         display: flex;
@@ -628,10 +632,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const weatherEmoji = getWeatherEmoji(weatherPattern);
                 weatherHtml = `<span style="margin-left: 10px;">${currentTemp}°C ${weatherEmoji}</span>`;
             } else {
-                weatherHtml = `<span style="margin-left: 10px; color: #888;">Weather N/A</span>`;
+                weatherHtml = '';
             }
         } else {
-            weatherHtml = `<span style="margin-left: 10px; color: #888;">Location needed for weather</span>`;
+            weatherHtml = '';
         }
 
         viewTitleDisplay.innerHTML = `<span>${moonEmoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>${weatherHtml}`;
@@ -773,10 +777,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const weatherEmoji = getWeatherEmoji(weatherPattern);
                     weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
                 } else {
-                    weatherHtml = `<div class="weather-info" style="color: #888;">Weather N/A</div>`;
+                    weatherHtml = '';
                 }
             } else {
-                 weatherHtml = `<div class="weather-info" style="color: #888;">Loc. needed</div>`;
+                 weatherHtml = '';
             }
 
             if (moonEmoji) {
