@@ -191,8 +191,8 @@
     
     .cycle-day-cell .day-number,
     .quarter-day-header .day-number {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: inline-flex;
         justify-content: center;
@@ -240,29 +240,6 @@
         border: 2px solid #fff;
     }
 
-    /* New Weather Styles */
-    .weather-info {
-        font-size: 0.9em;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        margin-top: 4px;
-    }
-    .weather-temp {
-        font-weight: bold;
-    }
-    .weather-emoji {
-        font-size: 1.4em;
-        line-height: 1;
-    }
-    #view-title-display .weather-info {
-        flex-direction: row;
-        gap: 8px;
-        align-items: center;
-        margin-top: 0;
-    }
-
 </style>
 
 <div class="moon-calendar-app">
@@ -301,12 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const moonDataCache = {};
     let isLoading = false;
 
-    // --- New Weather Variables ---
-    let openWeatherApiKey = null;
-    let userLocation = null; // { latitude, longitude }
-    const weatherDataCache = {};
-
-
     const controlsBar = document.getElementById('controlsBar');
     const mainNavButtons = document.getElementById('main-nav-buttons');
     const viewTitleDisplay = document.getElementById('view-title-display');
@@ -317,152 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'cycle-view': document.getElementById('cycle-view')
     };
     
-    // --- New Weather Functions ---
-
-    /**
-     * Requests the OpenWeather API key from the parent window (index.html).
-     */
-    function requestApiKey() {
-        if (window.parent) {
-            console.log("Requesting OpenWeather API key from parent...");
-            window.parent.postMessage({ type: 'requestApiKey', appId: 'almanac', service: 'openWeather' }, '*');
-        } else {
-             console.error("Not in an iframe, cannot request API key.");
-             viewTitleDisplay.innerHTML = "Weather unavailable: Cannot request API key.";
-        }
-    }
-
-    /**
-     * Handles receiving messages from the parent, specifically the API key.
-     */
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'apiKeyResponse' && event.data.service === 'openWeather') {
-            openWeatherApiKey = event.data.key;
-            if (openWeatherApiKey) {
-                console.log('OpenWeather API Key received.');
-                initWeather();
-            } else {
-                console.error('OpenWeather API Key not received.');
-                viewTitleDisplay.innerHTML = "Weather unavailable: API Key is missing.";
-            }
-        }
-    });
-
-    /**
-     * Initializes weather functionality by getting user's location.
-     */
-    function initWeather() {
-        if (!navigator.geolocation) {
-            console.error("Geolocation is not supported by this browser.");
-            viewTitleDisplay.innerHTML = "Weather unavailable: Geolocation not supported.";
-            // Still render the rest of the app without weather
-            updateAllViews();
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                userLocation = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                };
-                console.log('User location obtained:', userLocation);
-                // Once location is known, update the views
-                updateAllViews();
-            },
-            () => {
-                 console.error("Geolocation access denied by user.");
-                 viewTitleDisplay.innerHTML = "Weather unavailable: Geolocation access denied.";
-                 // Still render the rest of the app without weather
-                 updateAllViews();
-            }
-        );
-    }
-    
-    /**
-     * Gets a date string in YYYY-MM-DD format for cache keys.
-     */
-    function getYYYYMMDD(date) {
-        const d = new Date(date);
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-        return d.toISOString().split('T')[0];
-    }
-
-    /**
-     * Fetches weather data for a specific location. Uses a cache to be efficient.
-     * One API call fetches 8 days of forecast data.
-     */
-    async function fetchWeatherDataForDay(date) {
-        if (!openWeatherApiKey || !userLocation) return null;
-
-        const dateKey = getYYYYMMDD(date);
-        if (weatherDataCache[dateKey]) {
-            return weatherDataCache[dateKey];
-        }
-
-        // Only make a new API call if we don't have any cached data at all.
-        // A single call will populate data for the next 8 days.
-        if (Object.keys(weatherDataCache).length > 0) {
-            // Check if ANY cached item is recent enough.
-            const mostRecentCacheKey = Object.keys(weatherDataCache).sort().pop();
-            const todayKey = getYYYYMMDD(new Date());
-            if (mostRecentCacheKey >= todayKey) {
-                return null; // We have future data, but not for this specific day. Don't re-fetch yet.
-            }
-        }
-
-        const { latitude, longitude } = userLocation;
-        const API_URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`;
-
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`Weather API Error: ${response.status}`);
-            
-            const data = await response.json();
-            
-            // Clear old cache and populate with new forecast
-            Object.keys(weatherDataCache).forEach(key => delete weatherDataCache[key]);
-            
-            data.daily.forEach((dailyData, index) => {
-                const forecastDate = new Date();
-                forecastDate.setUTCHours(0,0,0,0);
-                forecastDate.setUTCDate(forecastDate.getUTCDate() + index);
-                const forecastDateKey = getYYYYMMDD(forecastDate);
-                
-                weatherDataCache[forecastDateKey] = {
-                    currentTemp: (index === 0) ? data.current.temp : null,
-                    min: dailyData.temp.min,
-                    max: dailyData.temp.max,
-                    main: dailyData.weather[0].main,
-                };
-            });
-            
-            console.log("Weather data fetched and cached for 8 days.");
-            return weatherDataCache[dateKey] || null;
-
-        } catch (error) {
-            console.error(`Failed to fetch weather data:`, error);
-            return null;
-        }
-    }
-
-    /**
-     * Returns an emoji for a given weather condition string.
-     */
-    function getWeatherEmoji(weatherMain) {
-        if (!weatherMain) return '';
-        const lowerCaseMain = weatherMain.toLowerCase();
-        if (lowerCaseMain.includes('thunderstorm')) return '⛈️';
-        if (lowerCaseMain.includes('drizzle')) return '💧';
-        if (lowerCaseMain.includes('rain')) return '🌧️';
-        if (lowerCaseMain.includes('snow')) return '❄️';
-        if (lowerCaseMain.includes('mist') || lowerCaseMain.includes('fog') || lowerCaseMain.includes('haze') || lowerCaseMain.includes('smoke')) return '🌫️';
-        if (lowerCaseMain.includes('clear')) return '☀️';
-        if (lowerCaseMain.includes('clouds')) return '☁️';
-        return '🌡️';
-    }
-
-
     async function fetchAndProcessMoonData(year) {
         if (moonDataCache[year]) {
             return moonDataCache[year];
@@ -621,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
          setTimeout(checkControlsBarLayout, 0);
     }
 
-    async function renderDayView() {
+    function renderDayView() {
         const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
         const primaryEventToday = todaysEvents.find(evt => PRIMARY_PHASE_NAMES.includes(evt.name));
         let emoji;
@@ -639,18 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         viewTitleDisplay.innerHTML = `<span>${emoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
-        
-        // Add weather to title
-        const weatherData = await fetchWeatherDataForDay(viewDate);
-        if (weatherData && weatherData.currentTemp) {
-            const weatherEmoji = getWeatherEmoji(weatherData.main);
-            const temp = Math.round(weatherData.currentTemp);
-            const weatherTitleEl = document.createElement('div');
-            weatherTitleEl.className = 'weather-info';
-            weatherTitleEl.innerHTML = `<span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span> <span class="weather-temp">${temp}°C</span>`;
-            viewTitleDisplay.appendChild(weatherTitleEl);
-        }
-
         const viewContainer = views['day-view'];
         viewContainer.innerHTML = '';
         const table = document.createElement('table');
@@ -667,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewContainer.firstChild.appendChild(table);
         todaysEvents.forEach((evt) => {
             const eventEl = document.createElement('div');
-            eventEl.className = 'moon-event';
+            eventEl.className = 'moon-event-icon';
             eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             eventEl.innerHTML = `<span>${evt.emoji}</span>`;
             eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
@@ -678,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    async function renderQuarterView() {
+    function renderQuarterView() {
         const today = new Date();
         const boundaries = getQuarterBoundaries(viewDate);
 
@@ -734,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentTbody = document.createElement('tbody');
         const contentTr = document.createElement('tr');
 
-        for (const day of daysInQuarter) {
+        daysInQuarter.forEach(day => {
             const td = document.createElement('td');
             td.className = 'quarter-day-cell';
             const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
@@ -759,23 +572,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (emoji) {
                 td.innerHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
-
-            const weatherData = await fetchWeatherDataForDay(day);
-            if (weatherData) {
-                const weatherEmoji = getWeatherEmoji(weatherData.main);
-                const minTemp = Math.round(weatherData.min);
-                const maxTemp = Math.round(weatherData.max);
-                const weatherCellEl = document.createElement('div');
-                weatherCellEl.className = 'weather-info';
-                weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
-                    <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
-                `;
-                td.appendChild(weatherCellEl);
-            }
-
             contentTr.appendChild(td);
-        }
+        });
         contentTbody.appendChild(contentTr);
         contentTable.appendChild(contentTbody);
         
@@ -783,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewContainer.appendChild(contentTable);
     }
 
-    async function renderCycleView() {
+    function renderCycleView() {
         const today = new Date();
         const [startEvent, endEvent] = getCycleBoundaries(viewDate);
 
@@ -837,6 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSameUTCDay(d, today)) {
                 dayNumberHTML = `<div class="day-number today">${d.getUTCDate()}</div>`;
             }
+            td.innerHTML = dayNumberHTML;
 
             const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
             let emoji, title;
@@ -852,27 +651,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 emoji = PHASE_EMOJIS[phaseIndex];
                 title = FULL_PHASE_NAMES[phaseIndex];
             }
-            
-            let moonIconHTML = '';
-            if (emoji) {
-                moonIconHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
-            }
-            
-            td.innerHTML = dayNumberHTML + moonIconHTML;
 
-            // Add weather for cycle view as well
-            const weatherData = await fetchWeatherDataForDay(d);
-            if (weatherData) {
-                const weatherEmoji = getWeatherEmoji(weatherData.main);
-                const minTemp = Math.round(weatherData.min);
-                const maxTemp = Math.round(weatherData.max);
-                const weatherCellEl = document.createElement('div');
-                weatherCellEl.className = 'weather-info';
-                weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
-                    <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
-                `;
-                td.appendChild(weatherCellEl);
+            if (emoji) {
+                td.innerHTML += `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
 
             d.setUTCDate(d.getUTCDate() + 1);
@@ -906,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'cycle-view': renderCycleView
         }[currentView];
 
-        if(renderFunction) await renderFunction();
+        if(renderFunction) renderFunction();
     }
 
     mainNavButtons.addEventListener('click', (event) => {
@@ -917,15 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     async function init() {
-        // Set the default view visually first
-        views[currentView].classList.add('active');
-        document.querySelector(`#main-nav-buttons .xp-button[data-view="${currentView}"]`).classList.add('active');
-        
-        // Start the data loading chain by requesting the API key.
-        // The rest of the initialization (getting location, updating views)
-        // will proceed via callbacks and event listeners.
-        requestApiKey();
-
+        await switchView('day-view');
         checkControlsBarLayout();
         window.addEventListener('resize', checkControlsBarLayout);
     }
