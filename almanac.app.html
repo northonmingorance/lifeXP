@@ -291,11 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
         'Snow': '❄️',
         'Mist': '🌫️',
         'Smoke': '💨',
-        'Haze': ' 🌫️',
+        'Haze': ' haze',
         'Dust': '🌪️',
-        'Fog': ' 🌫️',
+        'Fog': ' foggy',
         'Sand': '🏜️',
-        'Ash': '🌋',
+        'Ash': '�',
         'Squall': '🌬️',
         'Tornado': '🌪️',
         'Clear': '☀️',
@@ -369,7 +369,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
 
-        const dateKey = date.toISOString().split('T')[0];
+        // Generate dateKey based on the local date of the input 'date'
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const cacheKey = `${dateKey}-${latitude}-${longitude}-${type}`;
 
         if (weatherDataCache[cacheKey]) {
@@ -397,25 +398,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (type === 'forecast') {
                 const dailyData = {};
                 data.list.forEach(item => {
-                    const itemDate = new Date(item.dt * 1000);
-                    const dayKey = itemDate.toISOString().split('T')[0];
+                    const itemDate = new Date(item.dt * 1000); // This Date object is already in local time based on the user's system
+                    // Generate localDayKey based on the local date components
+                    const localDayKey = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
 
-                    if (!dailyData[dayKey]) {
-                        dailyData[dayKey] = {
+                    if (!dailyData[localDayKey]) {
+                        dailyData[localDayKey] = {
                             min_temp: item.main.temp_min,
                             max_temp: item.main.temp_max,
                             main_weather: item.weather[0].main
                         };
                     } else {
-                        dailyData[dayKey].min_temp = Math.min(dailyData[dayKey].min_temp, item.main.temp_min);
-                        dailyData[dayKey].max_temp = Math.max(dailyData[dayKey].max_temp, item.main.temp_max);
+                        dailyData[localDayKey].min_temp = Math.min(dailyData[localDayKey].min_temp, item.main.temp_min);
+                        dailyData[localDayKey].max_temp = Math.max(dailyData[localDayKey].max_temp, item.main.temp_max);
                     }
                 });
                 
+                // Cache processed daily data with the local date key
                 for (const day in dailyData) {
-                    weatherDataCache[`${day}-${latitude}-${longitude}-forecast`] = dailyData[day];
+                    const localForecastCacheKey = `${day}-${latitude}-${longitude}-forecast`;
+                    weatherDataCache[localForecastCacheKey] = dailyData[day];
                 }
-                return dailyData[dateKey];
+                // Return data for the requested date using its local date key
+                const requestedLocalForecastCacheKey = `${dateKey}-${latitude}-${longitude}-forecast`;
+                return weatherDataCache[requestedLocalForecastCacheKey];
             }
         } catch (error) {
             console.error(`Failed to fetch weather data for ${dateKey} (${type}):`, error);
@@ -452,7 +458,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dateStr = `${evt.year}-${String(evt.month).padStart(2, '0')}-${String(evt.day).padStart(2, '0')}T${evt.time}:00Z`;
                 return {
                     name: evt.phase,
-                    date: new Date(dateStr),
+                    // The Date object created from the ISO string (which ends with Z for UTC)
+                    // will automatically adjust to the local timezone when local methods are called on it.
+                    date: new Date(dateStr), 
                     emoji: PHASE_EMOJIS[PRIMARY_PHASE_NAMES.indexOf(evt.phase) * 2] || '❓'
                 };
             });
@@ -521,14 +529,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function daysInMilliseconds(days) { return days * 24 * 60 * 60 * 1000; }
     
     function isSameDay(d1, d2) { if (!d1 || !d2) return false; return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
-    function isSameUTCDay(d1, d2) {
+    // Changed isSameUTCDay to isSameLocalDay to reflect local timezone changes
+    function isSameLocalDay(d1, d2) {
         if (!d1 || !d2) return false;
-        return d1.getUTCFullYear() === d2.getUTCFullYear() &&
-               d1.getUTCMonth() === d2.getUTCMonth() &&
-               d1.getUTCDate() === d2.getUTCDate();
+        return d1.getFullYear() === d2.getFullYear() &&
+               d1.getMonth() === d2.getMonth() &&
+               d1.getDate() === d2.getDate();
     }
-    function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
-    function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getUTCDate()}${getOrdinalSuffix(date.getUTCDate())}`; }
+    function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long' }); }
+    function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getDate()}${getOrdinalSuffix(date.getDate())}`; }
     function getOrdinalSuffix(i) {
         var j = i % 10, k = i % 100;
         if (j == 1 && k != 11) return "st";
@@ -644,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (weatherForHour && weatherForHour.list) {
                 const forecastEntry = weatherForHour.list.find(entry => {
                     const entryDate = new Date(entry.dt * 1000);
-                    return entryDate.getUTCHours() === i;
+                    return entryDate.getHours() === i; // Use getHours for local time comparison
                 });
 
                 if (forecastEntry) {
@@ -699,14 +708,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const daysInQuarter = [];
         let d = new Date(startDate);
-        d.setUTCHours(0,0,0,0);
-        
+        d.setHours(0,0,0,0); // Use setHours for local time
+
         let normalizedEndDate = new Date(endDate);
-        normalizedEndDate.setUTCHours(0,0,0,0);
+        normalizedEndDate.setHours(0,0,0,0); // Use setHours for local time
         
         while(d.getTime() < normalizedEndDate.getTime()) {
             daysInQuarter.push(new Date(d));
-            d.setUTCDate(d.getUTCDate() + 1);
+            d.setDate(d.getDate() + 1); // Use setDate for local day increment
         }
 
         const headerContainer = document.createElement('div');
@@ -718,8 +727,8 @@ document.addEventListener('DOMContentLoaded', () => {
         daysInQuarter.forEach(day => {
             const th = document.createElement('th');
             th.className = 'quarter-day-header';
-            if(isSameUTCDay(day, today)) th.classList.add('today');
-            th.innerHTML = `<div class="quarter-day-name">${DAY_NAMES_SHORT[day.getUTCDay()]}</div><div class="day-number">${day.getUTCDate()}</div>`;
+            if(isSameDay(day, today)) th.classList.add('today'); // isSameDay already uses local time
+            th.innerHTML = `<div class="quarter-day-name">${DAY_NAMES_SHORT[day.getDay()]}</div><div class="day-number">${day.getDate()}</div>`; // Use getDay and getDate for local
             headerTr.appendChild(th);
         });
         headerThead.appendChild(headerTr);
@@ -738,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const contentWrapper = document.createElement('div');
             contentWrapper.className = 'quarter-day-content-wrapper';
             
-            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            const primaryEventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name)); // isSameDay uses local time
             let moonEmoji, moonTitle;
 
             if (primaryEventOnDay) {
@@ -805,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const startMonth = getMonthName(startDate);
         const endMonth = getMonthName(endDate);
-        const titleYear = startDate.getUTCFullYear();
+        const titleYear = startDate.getFullYear(); // Use getFullYear for local
         const titleText = startMonth === endMonth ? `${startMonth} ${titleYear} Cycle` : `${startMonth} - ${endMonth} ${titleYear} Cycle`;
         viewTitleDisplay.innerHTML = `<span>${titleText}</span>`;
         
@@ -821,32 +830,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = table.createTBody();
         let currentTr = tbody.insertRow();
 
-        for (let i = 0; i < startDate.getUTCDay(); i++) {
+        for (let i = 0; i < startDate.getDay(); i++) { // Use getDay for local
             const cell = currentTr.insertCell();
             cell.className = 'cycle-day-cell other-month';
         }
         
         let d = new Date(startDate.getTime());
-        d.setUTCHours(0,0,0,0); 
+        d.setHours(0,0,0,0); // Use setHours for local time
 
         let normalizedEndDate = new Date(endDate.getTime());
-        normalizedEndDate.setUTCHours(0,0,0,0);
+        normalizedEndDate.setHours(0,0,0,0); // Use setHours for local time
 
         while (d.getTime() < normalizedEndDate.getTime()) {
-            if (d.getUTCDay() === 0 && currentTr.cells.length > 0) {
+            if (d.getDay() === 0 && currentTr.cells.length > 0) { // Use getDay for local
                 currentTr = tbody.insertRow();
             }
 
             const td = currentTr.insertCell();
             td.className = 'cycle-day-cell';
 
-            let dayNumberHTML = `<div class="day-number">${d.getUTCDate()}</div>`;
-            if (isSameUTCDay(d, today)) {
-                dayNumberHTML = `<div class="day-number today">${d.getUTCDate()}</div>`;
+            let dayNumberHTML = `<div class="day-number">${d.getDate()}</div>`; // Use getDate for local
+            if (isSameDay(d, today)) { // isSameDay uses local time
+                dayNumberHTML = `<div class="day-number today">${d.getDate()}</div>`;
             }
             td.innerHTML = dayNumberHTML;
 
-            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            const primaryEventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name)); // isSameDay uses local time
             let emoji, title;
 
             if (primaryEventOnDay) {
@@ -865,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 td.innerHTML += `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
 
-            d.setUTCDate(d.getUTCDate() + 1);
+            d.setDate(d.getDate() + 1); // Use setDate for local day increment
         }
         
         while (currentTr.cells.length > 0 && currentTr.cells.length < 7) {
@@ -916,3 +925,4 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
 });
 </script>
+�
