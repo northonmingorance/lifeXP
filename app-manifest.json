@@ -106,7 +106,7 @@
     "icon": "🌙",
     "file": "almanac.app.html",
     "minWidth": 600,
-    "minHeight": 580,
+    "minHeight": 600,
     "defaultWidth": 600,
     "defaultHeight": 580
   }
