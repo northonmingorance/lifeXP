@@ -390,7 +390,8 @@
             appApiKeys: {
                 youtube: "",
                 gemini: "",
-                googleMaps: ""
+                googleMaps: "",
+                openWeather: ""
             }
         };
         let lastNormalStates = {};
@@ -444,7 +445,8 @@
                     osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
                     osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
                     osData.appApiKeys.googleMaps = firebaseRemoteConfig.getString('google_maps_api_key');
-                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found", "Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found");
+                    osData.appApiKeys.openWeather = firebaseRemoteConfig.getString('openweather_api_key');
+                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found", "Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found", "OpenWeather Key:", osData.appApiKeys.openWeather ? "Loaded" : "Not found");
                     saveOsData();
                 } else {
                     console.warn("Firebase SDK or config not available. API keys will not be fetched.");
@@ -1324,6 +1326,9 @@
                         keyToSend = osData.appApiKeys.youtube;
                     } else if (service === 'googleMaps') {
                         keyToSend = osData.appApiKeys.googleMaps;
+                    } else if (appId === 'almanac') {
+                        keyToSend = osData.appApiKeys.openWeather;
+                        serviceToSend = 'openWeather';
                     }
 
                     if (keyToSend !== null) {
