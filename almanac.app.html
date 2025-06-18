@@ -240,7 +240,7 @@
         border: 2px solid #fff;
     }
 
-    /* Weather Styles */
+    /* New Weather Styles */
     .weather-info {
         font-size: 0.9em;
         display: flex;
@@ -261,24 +261,6 @@
         gap: 8px;
         align-items: center;
         margin-top: 0;
-    }
-    .hourly-weather {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        padding-left: 10px;
-        box-sizing: border-box;
-        font-size: 0.8em;
-        color: #333;
-        gap: 5px;
-    }
-    .hourly-weather .weather-emoji {
-        font-size: 1.2em;
     }
 
 </style>
@@ -322,11 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New Weather Variables ---
     let openWeatherApiKey = null;
     let userLocation = null; // { latitude, longitude }
-    // Cache for daily weather forecasts (8 days from current day) and hourly for current day.
-    const weatherDataCache = {
-        daily: {},
-        hourly: {}
-    };
+    const weatherDataCache = {};
 
 
     const controlsBar = document.getElementById('controlsBar');
@@ -412,161 +390,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Fetches weather data for a specific location. Uses a cache to be efficient.
-     * One API call fetches 8 days of daily forecast and 48 hours of hourly forecast.
+     * One API call fetches 8 days of forecast data.
      */
-    async function fetchWeatherData(date) {
+    async function fetchWeatherDataForDay(date) {
         if (!openWeatherApiKey || !userLocation) return null;
 
         const dateKey = getYYYYMMDD(date);
-        const nowKey = getYYYYMMDD(new Date());
+        if (weatherDataCache[dateKey]) {
+            return weatherDataCache[dateKey];
+        }
 
-        // Check if we have current daily forecast data already (covers 8 days ahead)
-        if (Object.keys(weatherDataCache.daily).length > 0 && weatherDataCache.daily[nowKey]) {
-            // Check if the requested date is within the cached daily forecast range
-            const requestedDateMs = new Date(dateKey).getTime();
-            const todayMs = new Date(nowKey).getTime();
-            const eightDaysLaterMs = todayMs + daysInMilliseconds(7); // Daily forecast is for 8 days including today.
-
-            if (requestedDateMs >= todayMs && requestedDateMs <= eightDaysLaterMs) {
-                // If it's a future date, we likely have it in daily cache.
-                // For day view, we need hourly, so check that too.
-                if (currentView === 'day-view' && weatherDataCache.hourly[dateKey]) {
-                     return { daily: weatherDataCache.daily[dateKey], hourly: weatherDataCache.hourly[dateKey] };
-                } else if (currentView !== 'day-view') {
-                    return { daily: weatherDataCache.daily[dateKey], hourly: null };
-                }
+        // Only make a new API call if we don't have any cached data at all.
+        // A single call will populate data for the next 8 days.
+        if (Object.keys(weatherDataCache).length > 0) {
+            // Check if ANY cached item is recent enough.
+            const mostRecentCacheKey = Object.keys(weatherDataCache).sort().pop();
+            const todayKey = getYYYYMMDD(new Date());
+            if (mostRecentCacheKey >= todayKey) {
+                return null; // We have future data, but not for this specific day. Don't re-fetch yet.
             }
-            // For past dates, check the 'historical' daily cache which is implicitly handled by the fetch below
-            // if we need to extend the daily forecast backwards.
         }
 
         const { latitude, longitude } = userLocation;
-        // Exclude minute and alerts to reduce payload if not needed for simplicity.
-        const API_URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric&exclude=minutely,alerts`;
+        const API_URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`;
 
         try {
-            console.log(`Fetching weather data for ${dateKey}...`);
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`Weather API Error: ${response.status}`);
             
             const data = await response.json();
             
-            // Clear old cache and populate with new forecast for daily
-            weatherDataCache.daily = {};
-            data.daily.forEach((dailyData) => {
-                const forecastDate = new Date(dailyData.dt * 1000); // Convert Unix timestamp to Date
+            // Clear old cache and populate with new forecast
+            Object.keys(weatherDataCache).forEach(key => delete weatherDataCache[key]);
+            
+            data.daily.forEach((dailyData, index) => {
+                const forecastDate = new Date();
+                forecastDate.setUTCHours(0,0,0,0);
+                forecastDate.setUTCDate(forecastDate.getUTCDate() + index);
                 const forecastDateKey = getYYYYMMDD(forecastDate);
-                weatherDataCache.daily[forecastDateKey] = {
+                
+                weatherDataCache[forecastDateKey] = {
+                    currentTemp: (index === 0) ? data.current.temp : null,
                     min: dailyData.temp.min,
                     max: dailyData.temp.max,
                     main: dailyData.weather[0].main,
-                    description: dailyData.weather[0].description
                 };
             });
-
-            // Populate hourly cache for the current and next 48 hours
-            weatherDataCache.hourly = {};
-            data.hourly.forEach((hourlyData) => {
-                const hourDate = new Date(hourlyData.dt * 1000);
-                const hourDateKey = getYYYYMMDD(hourDate);
-                if (!weatherDataCache.hourly[hourDateKey]) {
-                    weatherDataCache.hourly[hourDateKey] = [];
-                }
-                weatherDataCache.hourly[hourDateKey].push({
-                    time: hourDate,
-                    temp: hourlyData.temp,
-                    main: hourlyData.weather[0].main,
-                    description: hourlyData.weather[0].description
-                });
-            });
-
-            console.log("Weather data fetched and cached.");
             
-            // For historical data for quarter/cycle view, we need to make separate API calls
-            // as the One Call API 3.0 'daily' array only provides 8 days *forward*.
-            // We need to fetch 8 days *backwards* for phase and cycle views.
-            // This is done using the 'timemachine' endpoint.
-            const historicDailyPromises = [];
-            for (let i = 1; i <= 8; i++) { // Fetch previous 8 days
-                const pastDate = new Date(date.getTime() - daysInMilliseconds(i));
-                const pastDateKey = getYYYYMMDD(pastDate);
-                // Only fetch if not already in cache and not today (today is covered by main 'onecall' response)
-                if (!weatherDataCache.daily[pastDateKey] && pastDateKey !== nowKey) {
-                    historicDailyPromises.push(fetchHistoricalWeatherData(pastDate));
-                }
-            }
-            await Promise.all(historicDailyPromises);
-
-            return { 
-                daily: weatherDataCache.daily[dateKey], 
-                hourly: weatherDataCache.hourly[dateKey] 
-            };
+            console.log("Weather data fetched and cached for 8 days.");
+            return weatherDataCache[dateKey] || null;
 
         } catch (error) {
             console.error(`Failed to fetch weather data:`, error);
-            return null;
-        }
-    }
-
-    /**
-     * Fetches historical weather data for a specific date using the timemachine endpoint.
-     */
-    async function fetchHistoricalWeatherData(date) {
-        if (!openWeatherApiKey || !userLocation) return null;
-
-        const dateKey = getYYYYMMDD(date);
-        if (weatherDataCache.daily[dateKey]) { // Check daily cache for historical data
-            return weatherDataCache.daily[dateKey];
-        }
-
-        const { latitude, longitude } = userLocation;
-        const unixTimestamp = Math.floor(date.getTime() / 1000);
-        const API_URL = `https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=${latitude}&lon=${longitude}&dt=${unixTimestamp}&appid=${openWeatherApiKey}&units=metric`;
-
-        try {
-            console.log(`Fetching historical weather data for ${dateKey}...`);
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`Historical Weather API Error: ${response.status}`);
-            
-            const data = await response.json();
-            if (data.data && data.data.length > 0) {
-                // The timemachine API returns an array of hourly data for that day.
-                // We'll aggregate min/max temp and main weather condition for daily cache.
-                const dailyData = data.data;
-                let minTemp = Infinity;
-                let maxTemp = -Infinity;
-                let mainWeather = ''; // Will take the most frequent weather condition or first one
-
-                const weatherCounts = {};
-                dailyData.forEach(hour => {
-                    if (hour.temp < minTemp) minTemp = hour.temp;
-                    if (hour.temp > maxTemp) maxTemp = hour.temp;
-                    const weatherMain = hour.weather[0]?.main;
-                    if (weatherMain) {
-                        weatherCounts[weatherMain] = (weatherCounts[weatherMain] || 0) + 1;
-                    }
-                });
-
-                if (Object.keys(weatherCounts).length > 0) {
-                    mainWeather = Object.keys(weatherCounts).reduce((a, b) => weatherCounts[a] > weatherCounts[b] ? a : b);
-                } else if (dailyData.length > 0) {
-                    mainWeather = dailyData[0].weather[0]?.main || '';
-                }
-
-                weatherDataCache.daily[dateKey] = {
-                    min: minTemp === Infinity ? null : minTemp,
-                    max: maxTemp === -Infinity ? null : maxTemp,
-                    main: mainWeather,
-                    description: dailyData[0]?.weather[0]?.description || ''
-                };
-            } else {
-                weatherDataCache.daily[dateKey] = null; // No historical data for this day
-            }
-            return weatherDataCache.daily[dateKey];
-
-        } catch (error) {
-            console.error(`Failed to fetch historical weather data for ${dateKey}:`, error);
-            weatherDataCache.daily[dateKey] = null;
             return null;
         }
     }
@@ -765,16 +640,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         viewTitleDisplay.innerHTML = `<span>${emoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
         
-        // Add current weather to title
-        const weatherResponse = await fetchWeatherData(viewDate);
-        if (weatherResponse && weatherResponse.daily && weatherResponse.daily.main) {
-            const weatherEmoji = getWeatherEmoji(weatherResponse.daily.main);
-            // Use current temp if available for today, otherwise min/max from daily
-            const tempToDisplay = weatherResponse.hourly?.[0]?.temp || ((weatherResponse.daily.min + weatherResponse.daily.max) / 2);
-            const temp = Math.round(tempToDisplay);
+        // Add weather to title
+        const weatherData = await fetchWeatherDataForDay(viewDate);
+        if (weatherData && weatherData.currentTemp) {
+            const weatherEmoji = getWeatherEmoji(weatherData.main);
+            const temp = Math.round(weatherData.currentTemp);
             const weatherTitleEl = document.createElement('div');
             weatherTitleEl.className = 'weather-info';
-            weatherTitleEl.innerHTML = `<span class="weather-emoji" title="${weatherResponse.daily.description}">${weatherEmoji}</span> <span class="weather-temp">${temp}°C</span>`;
+            weatherTitleEl.innerHTML = `<span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span> <span class="weather-temp">${temp}°C</span>`;
             viewTitleDisplay.appendChild(weatherTitleEl);
         }
 
@@ -783,50 +656,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const table = document.createElement('table');
         table.className = 'day-schedule-table';
         const tbody = document.createElement('tbody');
-
-        // Render 24 hours
         for (let i = 0; i < 24; i++) {
             const tr = document.createElement('tr');
             const timeLabel = `${i === 0 ? '12' : (i > 12 ? i - 12 : i)} ${i < 12 ? 'AM' : 'PM'}`;
-            const scheduleCell = document.createElement('td');
-            scheduleCell.className = 'schedule-grid-cell';
-
-            // Add hourly weather forecast
-            if (weatherResponse && weatherResponse.hourly) {
-                const targetHour = new Date(viewDate);
-                targetHour.setHours(i, 0, 0, 0); // Set to the specific hour of the day
-                const hourlyDataForThisHour = weatherResponse.hourly.find(h => h.time.getHours() === i);
-                
-                if (hourlyDataForThisHour) {
-                    const hourlyWeatherEl = document.createElement('div');
-                    hourlyWeatherEl.className = 'hourly-weather';
-                    const hourlyWeatherEmoji = getWeatherEmoji(hourlyDataForThisHour.main);
-                    const hourlyTemp = Math.round(hourlyDataForThisHour.temp);
-                    hourlyWeatherEl.innerHTML = `
-                        <span class="weather-emoji" title="${hourlyDataForThisHour.description}">${hourlyWeatherEmoji}</span>
-                        <span class="weather-temp">${hourlyTemp}°C</span>
-                    `;
-                    scheduleCell.appendChild(hourlyWeatherEl);
-                }
-            }
-
-            tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td>`;
-            tr.appendChild(scheduleCell);
+            tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell"></td>`;
             tbody.appendChild(tr);
         }
         table.appendChild(tbody);
         viewContainer.innerHTML = `<div id="day-view-content"></div>`;
         viewContainer.firstChild.appendChild(table);
-
-        // Add moon events on top of weather
         todaysEvents.forEach((evt) => {
             const eventEl = document.createElement('div');
             eventEl.className = 'moon-event';
             eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             eventEl.innerHTML = `<span>${evt.emoji}</span>`;
-            // Calculate position within the cell
-            eventEl.style.top = `${(evt.date.getMinutes() / 60) * 100}%`; // Position vertically within the hour cell based on minutes
-
+            eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
             const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
             if (targetCell) {
                 targetCell.appendChild(eventEl);
@@ -856,30 +700,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewContainer = views['quarter-view'];
         viewContainer.innerHTML = ''; 
 
-        const daysToDisplay = [];
-        // Add 8 days before the start date
-        for (let i = 8; i > 0; i--) {
-            const prevDay = new Date(startDate.getTime() - daysInMilliseconds(i));
-            prevDay.setUTCHours(0,0,0,0);
-            daysToDisplay.push(prevDay);
-        }
-
-        // Add days within the quarter
+        const daysInQuarter = [];
         let d = new Date(startDate);
         d.setUTCHours(0,0,0,0);
         
         let normalizedEndDate = new Date(endDate);
         normalizedEndDate.setUTCHours(0,0,0,0);
         
-        while(d.getTime() <= normalizedEndDate.getTime()) { // Changed to <= to include the end day
-            daysToDisplay.push(new Date(d));
+        while(d.getTime() < normalizedEndDate.getTime()) {
+            daysInQuarter.push(new Date(d));
             d.setUTCDate(d.getUTCDate() + 1);
         }
-
-        // Fetch weather data for all relevant days concurrently
-        const weatherPromises = daysToDisplay.map(day => fetchWeatherData(day));
-        await Promise.all(weatherPromises);
-
 
         const headerContainer = document.createElement('div');
         headerContainer.id = 'quarter-grid-header-container';
@@ -887,9 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headerTable.className = 'quarter-header-table';
         const headerThead = document.createElement('thead');
         const headerTr = document.createElement('tr');
-        
-        // Render headers for all days
-        daysToDisplay.forEach(day => {
+        daysInQuarter.forEach(day => {
             const th = document.createElement('th');
             th.className = 'quarter-day-header';
             if(isSameUTCDay(day, today)) th.classList.add('today');
@@ -905,8 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentTbody = document.createElement('tbody');
         const contentTr = document.createElement('tr');
 
-        // Render content for all days
-        for (const day of daysToDisplay) {
+        for (const day of daysInQuarter) {
             const td = document.createElement('td');
             td.className = 'quarter-day-cell';
             const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
@@ -932,15 +760,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 td.innerHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
 
-            const weatherData = weatherDataCache.daily[getYYYYMMDD(day)];
-            if (weatherData && weatherData.min !== null && weatherData.max !== null) { // Ensure weather data exists for this day
+            const weatherData = await fetchWeatherDataForDay(day);
+            if (weatherData) {
                 const weatherEmoji = getWeatherEmoji(weatherData.main);
                 const minTemp = Math.round(weatherData.min);
                 const maxTemp = Math.round(weatherData.max);
                 const weatherCellEl = document.createElement('div');
                 weatherCellEl.className = 'weather-info';
                 weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.description}">${weatherEmoji}</span>
+                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
                     <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
                 `;
                 td.appendChild(weatherCellEl);
@@ -986,58 +814,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = table.createTBody();
         let currentTr = tbody.insertRow();
 
-        // Calculate days to display: 8 days before cycle start + all days in cycle
-        const daysToDisplay = [];
-        for (let i = 8; i > 0; i--) {
-            const prevDay = new Date(startDate.getTime() - daysInMilliseconds(i));
-            prevDay.setUTCHours(0,0,0,0);
-            daysToDisplay.push(prevDay);
-        }
-        
-        // Fill initial empty cells for alignment
-        for (let i = 0; i < daysToDisplay[0].getUTCDay(); i++) {
+        for (let i = 0; i < startDate.getUTCDay(); i++) {
             const cell = currentTr.insertCell();
             cell.className = 'cycle-day-cell other-month';
         }
-
+        
         let d = new Date(startDate.getTime());
         d.setUTCHours(0,0,0,0); 
 
         let normalizedEndDate = new Date(endDate.getTime());
         normalizedEndDate.setUTCHours(0,0,0,0);
 
-        while (d.getTime() <= normalizedEndDate.getTime()) { // Changed to <= to include the end day
-            daysToDisplay.push(new Date(d));
-            d.setUTCDate(d.getUTCDate() + 1);
-        }
-
-        // Fetch weather data for all relevant days concurrently
-        const weatherPromises = daysToDisplay.map(day => fetchWeatherData(day));
-        await Promise.all(weatherPromises);
-
-
-        // Re-calculate initial empty cells based on the actual start of the displayed range
-        currentTr = tbody.insertRow(); // Start a new row for actual content
-        for (let i = 0; i < daysToDisplay[0].getUTCDay(); i++) {
-            const cell = currentTr.insertCell();
-            cell.className = 'cycle-day-cell other-month';
-        }
-
-        // Render content for all days
-        for (const day of daysToDisplay) {
-            if (day.getUTCDay() === 0 && currentTr.cells.length > 0) { // If it's Sunday and not the very first day of the table
+        while (d.getTime() < normalizedEndDate.getTime()) {
+            if (d.getUTCDay() === 0 && currentTr.cells.length > 0) {
                 currentTr = tbody.insertRow();
             }
 
             const td = currentTr.insertCell();
             td.className = 'cycle-day-cell';
 
-            let dayNumberHTML = `<div class="day-number">${day.getUTCDate()}</div>`;
-            if (isSameUTCDay(day, today)) {
-                dayNumberHTML = `<div class="day-number today">${day.getUTCDate()}</div>`;
+            let dayNumberHTML = `<div class="day-number">${d.getUTCDate()}</div>`;
+            if (isSameUTCDay(d, today)) {
+                dayNumberHTML = `<div class="day-number today">${d.getUTCDate()}</div>`;
             }
 
-            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            const primaryEventOnDay = allMoonEvents.find(evt => isSameUTCDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
             let emoji, title;
 
             if (primaryEventOnDay) {
@@ -1045,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title = `${primaryEventOnDay.name} at ${primaryEventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             } else {
                 const cycleDuration = endEvent.date.getTime() - startEvent.date.getTime();
-                const age = day.getTime() - startEvent.date.getTime();
+                const age = d.getTime() - startEvent.date.getTime();
                 const currentAge = Math.max(0, age);
                 const phaseIndex = Math.floor((currentAge / cycleDuration) * 8) % 8;
                 emoji = PHASE_EMOJIS[phaseIndex];
@@ -1059,22 +860,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             td.innerHTML = dayNumberHTML + moonIconHTML;
 
-            // Add weather for cycle view
-            const weatherData = weatherDataCache.daily[getYYYYMMDD(day)];
-            if (weatherData && weatherData.min !== null && weatherData.max !== null) { // Ensure weather data exists for this day
+            // Add weather for cycle view as well
+            const weatherData = await fetchWeatherDataForDay(d);
+            if (weatherData) {
                 const weatherEmoji = getWeatherEmoji(weatherData.main);
                 const minTemp = Math.round(weatherData.min);
                 const maxTemp = Math.round(weatherData.max);
                 const weatherCellEl = document.createElement('div');
                 weatherCellEl.className = 'weather-info';
                 weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.description}">${weatherEmoji}</span>
+                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
                     <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
                 `;
                 td.appendChild(weatherCellEl);
             }
 
-            // Move to next day (already handled by loop iteration after `daysToDisplay` is populated)
+            d.setUTCDate(d.getUTCDate() + 1);
         }
         
         while (currentTr.cells.length > 0 && currentTr.cells.length < 7) {
