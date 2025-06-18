@@ -233,21 +233,22 @@
     .time-label-cell { width: 80px; text-align: right; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
     .schedule-grid-cell { position: relative; height: 60px; }
     
-    /* Repositioned moon event icon for Day View to be absolutely positioned within the cell */
+    /* Repositioned moon event icon for Day View for better centering */
     .day-schedule-table .moon-event-icon {
         position: absolute;
-        left: 15px;
-        transform: translateY(-50%); /* Vertically center based on top position */
+        left: 45%; /* Position at the first quarter mark of the cell */
+        transform: translate(-50%, -50%); /* Center the icon on the position point */
+        /* The 'top' property is set dynamically via JavaScript for precise time */
     }
     
-    /* Added styles for the hourly temperature forecast */
+    /* Styles for the hourly temperature forecast, centered in its own space */
     .hourly-temp-forecast {
         position: absolute;
-        right: 15px;
+        left: 55%; /* Position at the third quarter mark of the cell */
         top: 50%;
-        transform: translateY(-50%);
+        transform: translate(-50%, -50%); /* Center the text on the position point */
         font-size: 1em;
-        color: #555;
+        color: var(--text-color);
     }
 
     .weather-pattern-emoji {
@@ -289,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const WEATHER_EMOJIS = {
         'Thunderstorm': '⛈️', 'Drizzle': '🌧️', 'Rain': '🌨️', 'Snow': '❄️', 'Mist': '🌫️',
         'Smoke': '💨', 'Haze': ' 🌫️', 'Dust': '🌪️', 'Fog': ' 🌫️', 'Sand': '🏜️',
-        'Ash': '🌋', 'Squall': '🌬️', 'Tornado': '🌪️', 'Clear': '☀️', 'Clouds': '☁️', 'Sleet': '🌧️'
+        'Ash': '🌋', 'Squall': '🌬️', 'Tornado': '🌪️', 'Clear': '☀️', 'Clouds': '☁️', 'Sleet': '🌨️'
     };
 
     let viewDate = new Date();
