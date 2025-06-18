@@ -262,7 +262,57 @@
         align-items: center;
         margin-top: 0;
     }
+    /* Styles for hourly forecast in day view */
+    .hourly-forecast-grid {
+        display: grid;
+        grid-template-columns: auto 1fr; /* Time label column and forecast column */
+        width: 100%;
+        gap: 0px;
+        margin-top: 10px;
+    }
 
+    .hourly-forecast-grid .time-label {
+        text-align: right;
+        padding-right: 10px;
+        color: #555;
+        border-right: 1px solid var(--border-color);
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .hourly-forecast-grid .forecast-cell {
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        border-bottom: 1px solid #E0E0E0;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .hourly-forecast-grid .forecast-cell:last-child {
+        border-bottom: none;
+    }
+
+    .hourly-forecast-grid .weather-icon {
+        font-size: 1.8em;
+        margin-right: 8px;
+    }
+
+    .hourly-forecast-grid .temp-description {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hourly-forecast-grid .temperature {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .hourly-forecast-grid .description {
+        font-size: 0.85em;
+        color: #666;
+    }
 </style>
 
 <div class="moon-calendar-app">
@@ -304,8 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New Weather Variables ---
     let openWeatherApiKey = null;
     let userLocation = null; // { latitude, longitude }
-    const weatherDataCache = {};
-
+    const weatherDataCache = {}; // Cache for OpenWeather API responses, keyed by YYYY-MM-DD of the CURRENT day of the fetch
 
     const controlsBar = document.getElementById('controlsBar');
     const mainNavButtons = document.getElementById('main-nav-buttons');
@@ -381,64 +430,79 @@ document.addEventListener('DOMContentLoaded', () => {
     
     /**
      * Gets a date string in YYYY-MM-DD format for cache keys.
+     * Uses UTC to avoid timezone issues with date comparisons.
      */
-    function getYYYYMMDD(date) {
+    function getYYYYMMDD_UTC(date) {
         const d = new Date(date);
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().split('T')[0];
     }
 
     /**
      * Fetches weather data for a specific location. Uses a cache to be efficient.
-     * One API call fetches 8 days of forecast data.
+     * One API call fetches 8 days of daily forecast data and 48 hours of hourly data.
+     * The cache stores the full response for the date the fetch was made.
+     * Subsequent requests for dates within the 8-day or 48-hour window will use cached data.
      */
-    async function fetchWeatherDataForDay(date) {
-        if (!openWeatherApiKey || !userLocation) return null;
-
-        const dateKey = getYYYYMMDD(date);
-        if (weatherDataCache[dateKey]) {
-            return weatherDataCache[dateKey];
+    async function fetchWeatherData(forDate) {
+        if (!openWeatherApiKey || !userLocation) {
+            console.warn("Weather API key or user location not available.");
+            return null;
         }
 
-        // Only make a new API call if we don't have any cached data at all.
-        // A single call will populate data for the next 8 days.
-        if (Object.keys(weatherDataCache).length > 0) {
-            // Check if ANY cached item is recent enough.
-            const mostRecentCacheKey = Object.keys(weatherDataCache).sort().pop();
-            const todayKey = getYYYYMMDD(new Date());
-            if (mostRecentCacheKey >= todayKey) {
-                return null; // We have future data, but not for this specific day. Don't re-fetch yet.
+        const todayKey = getYYYYMMDD_UTC(new Date());
+        if (weatherDataCache[todayKey]) {
+            // Check if the cached data is still relevant for the requested date
+            const cachedHourly = weatherDataCache[todayKey].hourly || [];
+            const cachedDaily = weatherDataCache[todayKey].daily || [];
+
+            const requestedDateUTC = new Date(forDate.toISOString().split('T')[0]); // Get only date part in UTC
+
+            // Check if requested date is within the 48-hour hourly forecast
+            const earliestHourlyDT = cachedHourly.length > 0 ? new Date(cachedHourly[0].dt * 1000) : null;
+            const latestHourlyDT = cachedHourly.length > 0 ? new Date(cachedHourly[cachedHourly.length - 1].dt * 1000) : null;
+
+            let isHourlyCached = false;
+            if (earliestHourlyDT && latestHourlyDT) {
+                if (requestedDateUTC.getTime() >= earliestHourlyDT.getTime() && requestedDateUTC.getTime() <= latestHourlyDT.getTime()) {
+                    isHourlyCached = true;
+                }
+            }
+
+            // Check if requested date is within the 8-day daily forecast
+            const earliestDailyDT = cachedDaily.length > 0 ? new Date(cachedDaily[0].dt * 1000) : null;
+            const latestDailyDT = cachedDaily.length > 0 ? new Date(cachedDaily[cachedDaily.length - 1].dt * 1000) : null;
+
+            let isDailyCached = false;
+            if (earliestDailyDT && latestDailyDT) {
+                if (requestedDateUTC.getTime() >= earliestDailyDT.getTime() && requestedDateUTC.getTime() <= latestDailyDT.getTime()) {
+                    isDailyCached = true;
+                }
+            }
+
+            if (isHourlyCached || isDailyCached) {
+                console.log(`Using cached weather data for ${getYYYYMMDD_UTC(forDate)}.`);
+                return weatherDataCache[todayKey];
             }
         }
 
         const { latitude, longitude } = userLocation;
-        const API_URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`;
+        // Fetch current, hourly (48h), daily (8d) forecast
+        const API_URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric&exclude=minutely,alerts`;
 
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`Weather API Error: ${response.status}`);
+            if (!response.ok) throw new Error(`Weather API Error: ${response.status} - ${response.statusText}`);
             
             const data = await response.json();
             
-            // Clear old cache and populate with new forecast
+            // Clear old cache entries (though we only expect one `todayKey` entry)
             Object.keys(weatherDataCache).forEach(key => delete weatherDataCache[key]);
             
-            data.daily.forEach((dailyData, index) => {
-                const forecastDate = new Date();
-                forecastDate.setUTCHours(0,0,0,0);
-                forecastDate.setUTCDate(forecastDate.getUTCDate() + index);
-                const forecastDateKey = getYYYYMMDD(forecastDate);
-                
-                weatherDataCache[forecastDateKey] = {
-                    currentTemp: (index === 0) ? data.current.temp : null,
-                    min: dailyData.temp.min,
-                    max: dailyData.temp.max,
-                    main: dailyData.weather[0].main,
-                };
-            });
+            // Store the full response for the date it was fetched
+            weatherDataCache[todayKey] = data;
             
-            console.log("Weather data fetched and cached for 8 days.");
-            return weatherDataCache[dateKey] || null;
+            console.log("Weather data fetched and cached for current, hourly (48h), and daily (8d) forecasts.");
+            return data;
 
         } catch (error) {
             console.error(`Failed to fetch weather data:`, error);
@@ -450,16 +514,16 @@ document.addEventListener('DOMContentLoaded', () => {
      * Returns an emoji for a given weather condition string.
      */
     function getWeatherEmoji(weatherMain) {
-        if (!weatherMain) return '';
+        if (!weatherMain) return '❓';
         const lowerCaseMain = weatherMain.toLowerCase();
         if (lowerCaseMain.includes('thunderstorm')) return '⛈️';
-        if (lowerCaseMain.includes('drizzle')) return '💧';
+        if (lowerCaseMain.includes('drizzle')) return '�';
         if (lowerCaseMain.includes('rain')) return '🌧️';
         if (lowerCaseMain.includes('snow')) return '❄️';
         if (lowerCaseMain.includes('mist') || lowerCaseMain.includes('fog') || lowerCaseMain.includes('haze') || lowerCaseMain.includes('smoke')) return '🌫️';
         if (lowerCaseMain.includes('clear')) return '☀️';
         if (lowerCaseMain.includes('clouds')) return '☁️';
-        return '🌡️';
+        return '🌡️'; // Default emoji for unknown weather
     }
 
 
@@ -528,6 +592,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             }
         }
+        // If the date is after the last new moon, or before the first, find the nearest cycle
+        if (!startEvent && newMoons.length > 0) {
+            if (time < newMoons[0].date.getTime()) {
+                endEvent = newMoons[0];
+                startEvent = newMoons.find((_, i, arr) => arr[i+1] === endEvent); // find the one before endEvent
+            } else {
+                startEvent = newMoons[newMoons.length - 1];
+                endEvent = newMoons.find((_, i, arr) => arr[i-1] === startEvent); // find the one after startEvent
+            }
+        }
+
         return [startEvent, endEvent];
     }
 
@@ -542,6 +617,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             }
         }
+        // If the date is after the last major event, or before the first, find the nearest quarter
+        if (!startEvent && majorEvents.length > 0) {
+            if (time < majorEvents[0].date.getTime()) {
+                endEvent = majorEvents[0];
+                startEvent = majorEvents.find((_, i, arr) => arr[i+1] === endEvent);
+            } else {
+                startEvent = majorEvents[majorEvents.length - 1];
+                endEvent = majorEvents.find((_, i, arr) => arr[i-1] === startEvent);
+            }
+        }
         return [startEvent, endEvent];
     }
     
@@ -550,9 +635,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function isSameDay(d1, d2) { if (!d1 || !d2) return false; return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
     function isSameUTCDay(d1, d2) {
         if (!d1 || !d2) return false;
-        return d1.getUTCFullYear() === d2.getUTCFullYear() &&
-               d1.getUTCMonth() === d2.getUTCMonth() &&
-               d1.getUTCDate() === d2.getUTCDate();
+        // Normalize both dates to start of UTC day for comparison
+        const d1_utc = new Date(Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate()));
+        const d2_utc = new Date(Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate()));
+        return d1_utc.getTime() === d2_utc.getTime();
     }
     function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
     function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getUTCDate()}${getOrdinalSuffix(date.getUTCDate())}`; }
@@ -641,41 +727,99 @@ document.addEventListener('DOMContentLoaded', () => {
         viewTitleDisplay.innerHTML = `<span>${emoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>`;
         
         // Add weather to title
-        const weatherData = await fetchWeatherDataForDay(viewDate);
-        if (weatherData && weatherData.currentTemp) {
-            const weatherEmoji = getWeatherEmoji(weatherData.main);
-            const temp = Math.round(weatherData.currentTemp);
+        const weatherData = await fetchWeatherData(viewDate);
+        if (weatherData && weatherData.current) {
+            const weatherEmoji = getWeatherEmoji(weatherData.current.weather[0].main);
+            const temp = Math.round(weatherData.current.temp);
             const weatherTitleEl = document.createElement('div');
             weatherTitleEl.className = 'weather-info';
-            weatherTitleEl.innerHTML = `<span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span> <span class="weather-temp">${temp}°C</span>`;
+            weatherTitleEl.innerHTML = `<span class="weather-emoji" title="${weatherData.current.weather[0].description}">${weatherEmoji}</span> <span class="weather-temp">${temp}°C</span>`;
             viewTitleDisplay.appendChild(weatherTitleEl);
         }
 
         const viewContainer = views['day-view'];
         viewContainer.innerHTML = '';
-        const table = document.createElement('table');
-        table.className = 'day-schedule-table';
-        const tbody = document.createElement('tbody');
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.id = 'day-view-content';
+        viewContainer.appendChild(contentDiv);
+
+        // Moon events table (original structure)
+        const moonEventTable = document.createElement('table');
+        moonEventTable.className = 'day-schedule-table';
+        const moonEventTbody = document.createElement('tbody');
         for (let i = 0; i < 24; i++) {
             const tr = document.createElement('tr');
             const timeLabel = `${i === 0 ? '12' : (i > 12 ? i - 12 : i)} ${i < 12 ? 'AM' : 'PM'}`;
             tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell"></td>`;
-            tbody.appendChild(tr);
+            moonEventTbody.appendChild(tr);
         }
-        table.appendChild(tbody);
-        viewContainer.innerHTML = `<div id="day-view-content"></div>`;
-        viewContainer.firstChild.appendChild(table);
+        moonEventTable.appendChild(moonEventTbody);
+        
         todaysEvents.forEach((evt) => {
-            const eventEl = document.createElement('div');
-            eventEl.className = 'moon-event';
-            eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
-            eventEl.innerHTML = `<span>${evt.emoji}</span>`;
-            eventEl.style.top = `${(evt.date.getHours() * 60 + evt.date.getMinutes()) / (24*60) * 100}%`;
-            const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
-            if (targetCell) {
-                targetCell.appendChild(eventEl);
+            const eventHour = evt.date.getHours();
+            if (eventHour >= 0 && eventHour < 24) {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'moon-event';
+                eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+                eventEl.innerHTML = `<span>${evt.emoji}</span>`;
+                // Position based on minutes for more accuracy
+                const topPercentage = ((evt.date.getMinutes() / 60) * 100) - 50; // Adjust for vertical centering of icon
+                eventEl.style.top = `${topPercentage}%`;
+
+                const targetCell = moonEventTbody.children[eventHour]?.querySelector('.schedule-grid-cell');
+                if (targetCell) {
+                    targetCell.appendChild(eventEl);
+                }
             }
         });
+        contentDiv.appendChild(moonEventTable);
+
+        // Hourly Weather Forecast
+        if (weatherData && weatherData.hourly) {
+            const hourlyForecastDiv = document.createElement('div');
+            hourlyForecastDiv.className = 'hourly-forecast-grid';
+
+            const relevantHourlyData = weatherData.hourly.filter(hourData => {
+                const hourDate = new Date(hourData.dt * 1000);
+                return isSameUTCDay(hourDate, viewDate);
+            });
+
+            if (relevantHourlyData.length > 0) {
+                const hourlyHeader = document.createElement('h3');
+                hourlyHeader.textContent = "Hourly Forecast";
+                hourlyHeader.style.gridColumn = "1 / 3";
+                hourlyHeader.style.textAlign = "center";
+                hourlyHeader.style.marginTop = "20px";
+                hourlyHeader.style.marginBottom = "10px";
+                hourlyForecastDiv.appendChild(hourlyHeader);
+
+                relevantHourlyData.forEach(hourData => {
+                    const hourDate = new Date(hourData.dt * 1000);
+                    const timeLabel = hourDate.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
+                    const temp = Math.round(hourData.temp);
+                    const description = hourData.weather[0]?.description || 'N/A';
+                    const weatherEmoji = getWeatherEmoji(hourData.weather[0]?.main);
+
+                    const timeCell = document.createElement('div');
+                    timeCell.className = 'time-label';
+                    timeCell.textContent = timeLabel;
+                    hourlyForecastDiv.appendChild(timeCell);
+
+                    const forecastCell = document.createElement('div');
+                    forecastCell.className = 'forecast-cell';
+                    forecastCell.innerHTML = `
+                        <span class="weather-icon">${weatherEmoji}</span>
+                        <div class="temp-description">
+                            <span class="temperature">${temp}°C</span>
+                            <span class="description">${description}</span>
+                        </div>
+                    `;
+                    hourlyForecastDiv.appendChild(forecastCell);
+                });
+                contentDiv.appendChild(hourlyForecastDiv);
+            }
+        }
     }
     
     async function renderQuarterView() {
@@ -707,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let normalizedEndDate = new Date(endDate);
         normalizedEndDate.setUTCHours(0,0,0,0);
         
-        while(d.getTime() < normalizedEndDate.getTime()) {
+        while(d.getTime() <= normalizedEndDate.getTime()) { // Include the end date
             daysInQuarter.push(new Date(d));
             d.setUTCDate(d.getUTCDate() + 1);
         }
@@ -717,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerTable = document.createElement('table');
         headerTable.className = 'quarter-header-table';
         const headerThead = document.createElement('thead');
-        const headerTr = document.createElement('tr');
+        const headerTr = headerThead.insertRow();
         daysInQuarter.forEach(day => {
             const th = document.createElement('th');
             th.className = 'quarter-day-header';
@@ -732,7 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentTable = document.createElement('table');
         contentTable.className = 'calendar-table';
         const contentTbody = document.createElement('tbody');
-        const contentTr = document.createElement('tr');
+        const contentTr = contentTbody.insertRow();
 
         for (const day of daysInQuarter) {
             const td = document.createElement('td');
@@ -760,18 +904,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 td.innerHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
 
-            const weatherData = await fetchWeatherDataForDay(day);
-            if (weatherData) {
-                const weatherEmoji = getWeatherEmoji(weatherData.main);
-                const minTemp = Math.round(weatherData.min);
-                const maxTemp = Math.round(weatherData.max);
-                const weatherCellEl = document.createElement('div');
-                weatherCellEl.className = 'weather-info';
-                weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
-                    <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
-                `;
-                td.appendChild(weatherCellEl);
+            const fullWeatherData = await fetchWeatherData(day); // Fetch full weather data
+            if (fullWeatherData && fullWeatherData.daily) {
+                // Find the daily forecast for the specific 'day'
+                const dailyForecast = fullWeatherData.daily.find(data => isSameUTCDay(new Date(data.dt * 1000), day));
+                if (dailyForecast) {
+                    const weatherEmoji = getWeatherEmoji(dailyForecast.weather[0].main);
+                    const minTemp = Math.round(dailyForecast.temp.min);
+                    const maxTemp = Math.round(dailyForecast.temp.max);
+                    const weatherCellEl = document.createElement('div');
+                    weatherCellEl.className = 'weather-info';
+                    weatherCellEl.innerHTML = `
+                        <span class="weather-emoji" title="${dailyForecast.weather[0].description}">${weatherEmoji}</span>
+                        <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°C</span>
+                    `;
+                    td.appendChild(weatherCellEl);
+                }
             }
 
             contentTr.appendChild(td);
@@ -825,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let normalizedEndDate = new Date(endDate.getTime());
         normalizedEndDate.setUTCHours(0,0,0,0);
 
-        while (d.getTime() < normalizedEndDate.getTime()) {
+        while (d.getTime() <= normalizedEndDate.getTime()) { // Include the end date
             if (d.getUTCDay() === 0 && currentTr.cells.length > 0) {
                 currentTr = tbody.insertRow();
             }
@@ -860,19 +1008,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             td.innerHTML = dayNumberHTML + moonIconHTML;
 
-            // Add weather for cycle view as well
-            const weatherData = await fetchWeatherDataForDay(d);
-            if (weatherData) {
-                const weatherEmoji = getWeatherEmoji(weatherData.main);
-                const minTemp = Math.round(weatherData.min);
-                const maxTemp = Math.round(weatherData.max);
-                const weatherCellEl = document.createElement('div');
-                weatherCellEl.className = 'weather-info';
-                weatherCellEl.innerHTML = `
-                    <span class="weather-emoji" title="${weatherData.main}">${weatherEmoji}</span>
-                    <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°</span>
-                `;
-                td.appendChild(weatherCellEl);
+            // Add weather for cycle view
+            const fullWeatherData = await fetchWeatherData(d); // Fetch full weather data
+            if (fullWeatherData && fullWeatherData.daily) {
+                const dailyForecast = fullWeatherData.daily.find(data => isSameUTCDay(new Date(data.dt * 1000), d));
+                if (dailyForecast) {
+                    const weatherEmoji = getWeatherEmoji(dailyForecast.weather[0].main);
+                    const minTemp = Math.round(dailyForecast.temp.min);
+                    const maxTemp = Math.round(dailyForecast.temp.max);
+                    const weatherCellEl = document.createElement('div');
+                    weatherCellEl.className = 'weather-info';
+                    weatherCellEl.innerHTML = `
+                        <span class="weather-emoji" title="${dailyForecast.weather[0].description}">${weatherEmoji}</span>
+                        <span class="weather-temp" title="Min/Max temperature">${minTemp}° / ${maxTemp}°C</span>
+                    `;
+                    td.appendChild(weatherCellEl);
+                }
             }
 
             d.setUTCDate(d.getUTCDate() + 1);
