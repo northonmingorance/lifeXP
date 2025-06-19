@@ -17,7 +17,7 @@
         --primary-color: #005CFE;
         --today-highlight-bg: #005CFE;
         --today-highlight-text: #FFFFFF;
-        --current-hour-bg: #FFFFE0; /* Light yellow for current hour */
+        --current-hour-bg: #FFFFE0;
     }
 
     body {
@@ -163,7 +163,7 @@
 
     .cycle-day-cell {
         position: relative;
-        padding-bottom: 30px; /* Add padding to avoid overlap with weather info */
+        padding-bottom: 30px;
     }
 
     .quarter-day-cell {
@@ -204,14 +204,13 @@
         align-items: center;
     }
 
-    /* Style for weather info specifically in the cycle view to position it */
     .cycle-day-cell .weather-info {
         position: absolute;
         bottom: 10%;
         left: 0;
         right: 0;
         font-size: 0.8em;
-        flex-direction: column; /* Display temp and emoji side-by-side */
+        flex-direction: column;
         justify-content: center;
     }
 
@@ -255,8 +254,12 @@
     .day-schedule-table td { border: none; border-bottom: 1px solid #E0E0E0; }
     .time-label-cell { width: 80px; font-size: 0.8em; text-align: center; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
     .schedule-grid-cell { position: relative; height: 60px; }
-    .schedule-grid-cell.current-hour {
+    .schedule-grid-cell.current-hour,
+    .time-label-cell.current-hour {
         background-color: var(--current-hour-bg);
+    }
+    .time-label-cell.current-hour {
+        font-weight: bold;
     }
     
     .day-schedule-table .moon-event-icon {
@@ -313,14 +316,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // --- CONSTANTS ---
     const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const FULL_PHASE_NAMES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
     const PHASE_EMOJIS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
     const PRIMARY_PHASE_NAMES = ["New Moon", "First Quarter", "Full Moon", "Last Quarter"];
     const NEW_FULL_MOON_NAMES = ["New Moon", "Full Moon"];
 
-    // --- STATE VARIABLES ---
     let viewDate = new Date();
     let currentView = 'day-view';
     let allMoonEvents = [];
@@ -331,9 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let isLoading = false;
     let userLocation = null;
-    let hourHighlightInterval = null; // To hold the timer
+    let hourHighlightInterval = null;
 
-    // --- DOM ELEMENTS ---
     const controlsBar = document.getElementById('controlsBar');
     const mainNavButtons = document.getElementById('main-nav-buttons');
     const viewTitleDisplay = document.getElementById('view-title-display');
@@ -344,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'cycle-view': document.getElementById('cycle-view')
     };
     
-    // --- INITIALIZATION ---
     function getUserLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -354,35 +353,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         longitude: position.coords.longitude
                     };
                     console.log("User location obtained:", userLocation);
-                    updateAllViews(); // Trigger view update after getting location
+                    updateAllViews();
                 },
                 (error) => {
                     console.error("Geolocation error:", error);
                     displayErrorMessage("Could not get your location for weather data.");
-                    updateAllViews(); // Still update views, but without weather
+                    updateAllViews();
                 }
             );
         } else {
             displayErrorMessage("Geolocation is not supported. Weather data unavailable.");
-            updateAllViews(); // Still update views, but without weather
+            updateAllViews();
         }
     }
 
     function displayErrorMessage(message) {
-        // A simple way to show errors to the user in the title area.
         viewTitleDisplay.innerHTML = `<span style="color: red; font-size: 0.9em;">${message}</span>`;
     }
     
-    // --- WEATHER DATA HANDLING ---
-
-    /**
-     * Fetches weather data from Open-Meteo API for a wide range (past and future).
-     * Caches the raw forecast for 5 minutes to avoid hitting API limits.
-     * Processes the data into a more usable format (a Map keyed by date).
-     * @param {number} latitude - The latitude for the weather forecast.
-     * @param {number} longitude - The longitude for the weather forecast.
-     * @returns {Promise<boolean>} A promise that resolves to true on success, false on failure.
-     */
     async function fetchWeatherData(latitude, longitude) {
         if (!latitude || !longitude) {
             console.warn("Location not available for weather fetch.");
@@ -406,11 +394,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const data = await response.json();
             
-            // Process the flat arrays from the API into a Map for easier daily lookups.
             const processedData = new Map();
             if (data.hourly && data.hourly.time) {
                 data.hourly.time.forEach((timestamp, index) => {
-                    const dateKey = timestamp.substring(0, 10); // Format: "YYYY-MM-DD"
+                    const dateKey = timestamp.substring(0, 10);
                     if (!processedData.has(dateKey)) {
                         processedData.set(dateKey, []);
                     }
@@ -430,41 +417,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Failed to fetch or process weather data:", error.message || error);
             displayErrorMessage(`Could not fetch weather data.`);
-            meteoCache.data = null; // Invalidate cache on error
+            meteoCache.data = null;
             return false;
         }
     }
 
-    /**
-     * Retrieves the stored weather forecast for a specific day from the cache.
-     * @param {Date} date - The date for which to retrieve weather data.
-     * @returns {Array|null} An array of hourly forecast objects or null if not found.
-     */
     function getDailyWeatherData(date) {
         if (!meteoCache.data) return null;
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         return meteoCache.data.get(dateKey) || null;
     }
 
-    /**
-     * Interprets a WMO weather code and returns a corresponding emoji.
-     * @param {number} code - The WMO weather code.
-     * @returns {string} The corresponding emoji character.
-     */
     function getWeatherEmojiFromWMO(code) {
-        if (code === 0) return '☀️'; // Clear sky
-        if (code >= 1 && code <= 3) return '☁️'; // Mainly clear, partly cloudy, overcast
-        if (code === 45 || code === 48) return '🌫️'; // Fog and depositing rime fog
-        if (code >= 51 && code <= 57) return '🌧️'; // Drizzle (Light, moderate, dense) & Freezing Drizzle
-        if (code >= 61 && code <= 67) return '🌨️'; // Rain (Slight, moderate, heavy) & Freezing Rain
-        if (code >= 71 && code <= 77) return '❄️'; // Snow fall & Snow grains
-        if (code >= 80 && code <= 82) return '🌨️'; // Rain showers (Slight, moderate, violent)
-        if (code >= 85 && code <= 86) return '❄️'; // Snow showers (slight and heavy)
-        if (code >= 95) return '⛈️'; // Thunderstorm
-        return '❓'; // Default case
+        if (code === 0) return '☀️';
+        if (code >= 1 && code <= 3) return '☁️';
+        if (code === 45 || code === 48) return '🌫️';
+        if (code >= 51 && code <= 57) return '🌧️';
+        if (code >= 61 && code <= 67) return '🌨️';
+        if (code >= 71 && code <= 77) return '❄️';
+        if (code >= 80 && code <= 82) return '🌨️';
+        if (code >= 85 && code <= 86) return '❄️';
+        if (code >= 95) return '⛈️';
+        return '❓';
     }
     
-    // --- MOON DATA HANDLING ---
     async function fetchAndProcessMoonData(year) {
         if (moonDataCache[year]) return moonDataCache[year];
         const API_URL = `https://aa.usno.navy.mil/api/moon/phases/year?year=${year}`;
@@ -515,7 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isLoading = false;
     }
 
-    // --- DATE & TIME UTILITIES ---
     function getCycleBoundaries(date) {
         const time = date.getTime();
         const newMoons = allMoonEvents.filter(e => e.name === "New Moon");
@@ -558,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return "th";
     }
     
-    // --- UI RENDERING & CONTROLS ---
     function checkControlsBarLayout() {
         if (!controlsBar || !controlsBar.clientWidth) return;
         const children = [
@@ -616,24 +590,23 @@ document.addEventListener('DOMContentLoaded', () => {
          setTimeout(checkControlsBarLayout, 0);
     }
     
-    // --- NEW: Function to highlight the current hour ---
     function updateCurrentHourHighlight() {
         const now = new Date();
         const currentHour = now.getHours();
 
-        // Remove previous highlight
-        const previouslyHighlighted = document.querySelector('.schedule-grid-cell.current-hour');
-        if (previouslyHighlighted) {
-            previouslyHighlighted.classList.remove('current-hour');
-        }
+        const previouslyHighlighted = document.querySelectorAll('.current-hour');
+        previouslyHighlighted.forEach(cell => cell.classList.remove('current-hour'));
 
-        // Add new highlight if we are viewing today
         if (currentView === 'day-view' && isSameDay(viewDate, now)) {
             const table = views['day-view'].querySelector('.day-schedule-table');
             if (table && table.rows.length > currentHour) {
-                const cell = table.rows[currentHour].querySelector('.schedule-grid-cell');
-                if (cell) {
-                    cell.classList.add('current-hour');
+                const row = table.rows[currentHour];
+                if (row) {
+                    const timeCell = row.querySelector('.time-label-cell');
+                    const gridCell = row.querySelector('.schedule-grid-cell');
+                    
+                    if (timeCell) timeCell.classList.add('current-hour');
+                    if (gridCell) gridCell.classList.add('current-hour');
                 }
             }
         }
@@ -721,7 +694,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // After rendering the day view, apply the highlight.
         updateCurrentHourHighlight();
     }
     
@@ -845,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Fetch weather data if the user's location is available
         if(userLocation) {
             await fetchWeatherData(userLocation.latitude, userLocation.longitude);
         }
@@ -915,7 +886,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 moonHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
             
-            // --- NEW: Weather logic for cycle view cell ---
             let weatherHtml = '';
             const dayForecast = getDailyWeatherData(d);
 
@@ -928,7 +898,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
             }
 
-            // Combine all HTML parts for the cell
             td.innerHTML = dayNumberHTML + moonHTML + weatherHtml;
 
             d.setDate(d.getDate() + 1);
@@ -951,10 +920,9 @@ document.addEventListener('DOMContentLoaded', () => {
             views[key].classList.toggle('active', key === viewId);
         }
         
-        // Manage the timer based on the view
         if (viewId === 'day-view') {
             if (!hourHighlightInterval) {
-                hourHighlightInterval = setInterval(updateCurrentHourHighlight, 60000); // Check every minute
+                hourHighlightInterval = setInterval(updateCurrentHourHighlight, 60000);
             }
         } else {
             if (hourHighlightInterval) {
@@ -967,8 +935,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateAllViews() {
-        await loadRequiredMoonData(viewDate); // Load moon data first
-        updateControls(); // Then update controls
+        await loadRequiredMoonData(viewDate);
+        updateControls();
         const renderFunction = {
             'day-view': renderDayView,
             'quarter-view': renderQuarterView,
@@ -976,9 +944,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }[currentView];
 
         if(renderFunction) {
-            await renderFunction(); // Render the active view
+            await renderFunction();
         }
-        checkControlsBarLayout(); // Adjust layout after rendering
+        checkControlsBarLayout();
     }
 
     mainNavButtons.addEventListener('click', (event) => {
@@ -989,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     async function init() {
-        getUserLocation(); // Kicks off the process
+        getUserLocation();
         await switchView('day-view');
         window.addEventListener('resize', checkControlsBarLayout);
     }
