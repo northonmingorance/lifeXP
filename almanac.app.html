@@ -132,13 +132,14 @@
         position: relative;
         border: 1px solid var(--border-highlight-color);
         background-color: var(--surface-color);
+        padding: 3px;
+        box-sizing: border-box;
     }
 
     .app-view {
         display: none;
         width: 100%;
         height: 100%;
-        padding: 3px;
         box-sizing: border-box;
     }
 
@@ -152,7 +153,6 @@
         font-size: 1.2em;
         table-layout: fixed;
         border-collapse: collapse;
-        padding: 8px;
         text-align: center;
         vertical-align: top;
     }
@@ -162,11 +162,21 @@
     }
 
     .cycle-day-cell {
-        position: relative;
-        padding-bottom: 30px;
         min-width: 100px;
-        min-height: 100px;
+        height: 120px;
+        padding: 5px;
+        box-sizing: border-box;
+        vertical-align: top;
     }
+
+    .cycle-day-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        height: 100%;
+    }
+
 
     .quarter-day-cell {
         position: relative;
@@ -200,20 +210,10 @@
 
     .weather-info {
         font-size: 0.9em;
-        margin-top: 5px;
+        margin-top: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
-    }
-
-    .cycle-day-cell .weather-info {
-        position: absolute;
-        bottom: 10%;
-        left: 0;
-        right: 0;
-        font-size: 0.8em;
-        flex-direction: column;
-        justify-content: center;
     }
 
     .day-number { font-weight: bold; font-size: 1.2em;  }
@@ -227,6 +227,7 @@
         border-radius: 50%;
         display: inline-flex;
         justify-content: center;
+        align-items: center;
         padding: 3px;
         box-sizing: border-box;
     }
@@ -236,11 +237,7 @@
         background-color: var(--today-highlight-bg);
         color: var(--today-highlight-text);
     }
-
-    .cycle-day-cell .day-number { position: relative; top: -10%; }
-
-    .cycle-day-cell .moon-event-icon { position: relative; bottom: 5%; }
-
+    
     .moon-event-details { font-size: 0.9em; margin-top: 5px; }
 
     #quarter-grid-header-container {
@@ -916,8 +913,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const weatherMeaning = getWeatherMeaningFromWMO(noonEntry.code);
                 weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji" title="${weatherMeaning}">${weatherEmoji}</span></div>`;
             }
-
-            td.innerHTML = dayNumberHTML + moonHTML + weatherHtml;
+            
+            td.innerHTML = `<div class="cycle-day-content">${dayNumberHTML}${moonHTML}${weatherHtml}</div>`;
 
             d.setDate(d.getDate() + 1);
         }
