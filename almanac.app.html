@@ -237,8 +237,7 @@
     .day-schedule-table .moon-event-icon {
         position: absolute;
         left: 45%; /* Position at the first quarter mark of the cell */
-        transform: translate(-50%, -50%); /* Center the icon on the position point */
-        /* The 'top' property is set dynamically via JavaScript for precise time */
+        transform: translate(-50%, -15%); /* Center the icon on the position point */
     }
     
     /* Styles for the hourly temperature forecast, centered in its own space */
@@ -733,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mainWeatherEntry = forecastList.find(item => new Date(item.dt * 1000).getHours() >= 12) || forecastList[0];
                     const weatherPattern = mainWeatherEntry.weather[0].main;
                     const weatherEmoji = getWeatherEmoji(weatherPattern);
-                    weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
+                    weatherHtml = `<div class="weather-info">${minTemp}°C \ ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
                 }
             }
 
