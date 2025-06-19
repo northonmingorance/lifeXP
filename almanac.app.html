@@ -164,6 +164,8 @@
     .cycle-day-cell {
         position: relative;
         padding-bottom: 30px;
+        min-width: 100px;
+        min-height: 100px;
     }
 
     .quarter-day-cell {
@@ -265,7 +267,7 @@
     .day-schedule-table .moon-event-icon {
         position: absolute;
         left: 38%;
-        transform: translate(-50%, -10%);
+        transform: translate(-50%, 0%);
         font-size: 18px;
     }
     
@@ -352,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude
                     };
-                    console.log("User location obtained:", userLocation);
                     updateAllViews();
                 },
                 (error) => {
@@ -379,11 +380,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fiveMinutes = 5 * 60 * 1000;
         if (meteoCache.data && (Date.now() - meteoCache.lastFetched < fiveMinutes)) {
-            console.log("Using cached weather data.");
             return true;
         }
 
-        console.log("Fetching new weather data from Open-Meteo...");
         const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weather_code&past_days=16&forecast_days=16&timezone=auto`;
 
         try {
@@ -411,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             meteoCache.data = processedData;
             meteoCache.lastFetched = Date.now();
-            console.log("Weather data fetched and cached successfully.");
             return true;
 
         } catch (error) {
@@ -439,6 +437,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (code >= 85 && code <= 86) return '❄️';
         if (code >= 95) return '⛈️';
         return '❓';
+    }
+
+    function getWeatherMeaningFromWMO(code) {
+        const meanings = {
+            0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+            45: 'Fog', 48: 'Depositing rime fog',
+            51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+            56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
+            61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+            66: 'Light freezing rain', 67: 'Heavy freezing rain',
+            71: 'Slight snow fall', 73: 'Moderate snow fall', 75: 'Heavy snow fall',
+            77: 'Snow grains',
+            80: 'Slight rain showers', 81: 'Moderate rain showers', 82: 'Violent rain showers',
+            85: 'Slight snow showers', 86: 'Heavy snow showers',
+            95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail',
+        };
+        return meanings[code] || 'Unknown weather code';
     }
     
     async function fetchAndProcessMoonData(year) {
@@ -644,7 +659,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  if(currentHourEntry) {
                     const currentTemp = Math.round(currentHourEntry.temp);
                     const weatherEmoji = getWeatherEmojiFromWMO(currentHourEntry.code);
-                    weatherHtml = `<span style="margin-left: 10px;">${currentTemp}°C ${weatherEmoji}</span>`;
+                    const weatherMeaning = getWeatherMeaningFromWMO(currentHourEntry.code);
+                    weatherHtml = `<span style="margin-left: 10px;">${currentTemp}°C <span title="${weatherMeaning}">${weatherEmoji}</span></span>`;
                  }
             }
         }
@@ -667,9 +683,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (forecastEntry) {
                     const temp = Math.round(forecastEntry.temp);
                     const weatherEmoji = getWeatherEmojiFromWMO(forecastEntry.code);
+                    const weatherMeaning = getWeatherMeaningFromWMO(forecastEntry.code);
                     hourlyWeatherHtml = `
                         <div class="hourly-temp-forecast">${temp}°C</div>
-                        <div class="hourly-weather-emoji" title="Weather Code: ${forecastEntry.code}">${weatherEmoji}</div>
+                        <div class="hourly-weather-emoji" title="${weatherMeaning}">${weatherEmoji}</div>
                     `;
                 }
             }
@@ -793,7 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const maxTemp = Math.round(Math.max(...temps));
                 const noonEntry = dayForecast.find(item => new Date(item.time).getHours() >= 12) || dayForecast[0];
                 const weatherEmoji = getWeatherEmojiFromWMO(noonEntry.code);
-                weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
+                const weatherMeaning = getWeatherMeaningFromWMO(noonEntry.code);
+                weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji" title="${weatherMeaning}">${weatherEmoji}</span></div>`;
             }
 
             contentWrapper.innerHTML = `<div class="moon-event-icon" title="${moonTitle}">${moonEmoji || ''}</div>${weatherHtml}`;
@@ -895,7 +913,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const maxTemp = Math.round(Math.max(...temps));
                 const noonEntry = dayForecast.find(item => new Date(item.time).getHours() >= 12) || dayForecast[0];
                 const weatherEmoji = getWeatherEmojiFromWMO(noonEntry.code);
-                weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji">${weatherEmoji}</span></div>`;
+                const weatherMeaning = getWeatherMeaningFromWMO(noonEntry.code);
+                weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji" title="${weatherMeaning}">${weatherEmoji}</span></div>`;
             }
 
             td.innerHTML = dayNumberHTML + moonHTML + weatherHtml;
