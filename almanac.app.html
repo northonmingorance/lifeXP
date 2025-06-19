@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Almanac.app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     :root {
         --bg-color: #ECE9D8;
@@ -12,6 +17,7 @@
         --primary-color: #005CFE;
         --today-highlight-bg: #005CFE;
         --today-highlight-text: #FFFFFF;
+        --current-hour-bg: #FFFFE0; /* Light yellow for current hour */
     }
 
     body {
@@ -249,6 +255,9 @@
     .day-schedule-table td { border: none; border-bottom: 1px solid #E0E0E0; }
     .time-label-cell { width: 80px; font-size: 0.8em; text-align: center; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
     .schedule-grid-cell { position: relative; height: 60px; }
+    .schedule-grid-cell.current-hour {
+        background-color: var(--current-hour-bg);
+    }
     
     .day-schedule-table .moon-event-icon {
         position: absolute;
@@ -279,7 +288,8 @@
     }
 
 </style>
-
+</head>
+<body>
 <div class="moon-calendar-app">
     <header class="controls-bar" id="controlsBar">
          <div class="date-navigation" id="date-nav-controls">
@@ -321,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let isLoading = false;
     let userLocation = null;
+    let hourHighlightInterval = null; // To hold the timer
 
     // --- DOM ELEMENTS ---
     const controlsBar = document.getElementById('controlsBar');
@@ -604,6 +615,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
          setTimeout(checkControlsBarLayout, 0);
     }
+    
+    // --- NEW: Function to highlight the current hour ---
+    function updateCurrentHourHighlight() {
+        const now = new Date();
+        const currentHour = now.getHours();
+
+        // Remove previous highlight
+        const previouslyHighlighted = document.querySelector('.schedule-grid-cell.current-hour');
+        if (previouslyHighlighted) {
+            previouslyHighlighted.classList.remove('current-hour');
+        }
+
+        // Add new highlight if we are viewing today
+        if (currentView === 'day-view' && isSameDay(viewDate, now)) {
+            const table = views['day-view'].querySelector('.day-schedule-table');
+            if (table && table.rows.length > currentHour) {
+                const cell = table.rows[currentHour].querySelector('.schedule-grid-cell');
+                if (cell) {
+                    cell.classList.add('current-hour');
+                }
+            }
+        }
+    }
 
     async function renderDayView() {
         const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
@@ -686,6 +720,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetCell.appendChild(eventEl);
             }
         });
+        
+        // After rendering the day view, apply the highlight.
+        updateCurrentHourHighlight();
     }
     
     async function renderQuarterView() {
@@ -913,6 +950,19 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const key in views) {
             views[key].classList.toggle('active', key === viewId);
         }
+        
+        // Manage the timer based on the view
+        if (viewId === 'day-view') {
+            if (!hourHighlightInterval) {
+                hourHighlightInterval = setInterval(updateCurrentHourHighlight, 60000); // Check every minute
+            }
+        } else {
+            if (hourHighlightInterval) {
+                clearInterval(hourHighlightInterval);
+                hourHighlightInterval = null;
+            }
+        }
+        
         await updateAllViews();
     }
 
@@ -947,3 +997,5 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
 });
 </script>
+</body>
+</html>
