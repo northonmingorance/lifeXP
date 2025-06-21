@@ -139,7 +139,6 @@
     .app-view {
         display: none;
         width: 100%;
-        height: 100%;
         box-sizing: border-box;
     }
 
@@ -147,9 +146,12 @@
         display: block;
     }
 
+    #day-view.active {
+        height: 100%;
+    }
+
     .calendar-table {
         width: 100%;
-        height: 100%;
         font-size: 1.2em;
         table-layout: fixed;
         border-collapse: collapse;
@@ -197,10 +199,17 @@
         box-sizing: border-box;
         padding: 8px;
     }
-
+    
+    #cycle-view.active,
     #quarter-view.active {
         display: flex;
         flex-direction: column;
+        min-height: 100%;
+    }
+
+    #cycle-view > .calendar-table,
+    #quarter-view > .calendar-table {
+        flex-grow: 1;
     }
 
     .moon-event-icon { 
@@ -242,6 +251,7 @@
 
     #quarter-grid-header-container {
         position: sticky;
+        top: 0;
         background: var(--surface-color);
         z-index: 9;
     }
@@ -264,7 +274,7 @@
     .day-schedule-table .moon-event-icon {
         position: absolute;
         left: 38%;
-        transform: translate(-50%, 0%);
+        transform: translate(-50%, -50%);
         font-size: 18px;
     }
     
@@ -479,6 +489,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function calculateIntermediaryPhases(primaryEvents) {
+        const allPhases = [];
+        if (primaryEvents.length < 2) return primaryEvents;
+
+        const phaseMap = {
+            "New Moon":      { name: "Waxing Crescent",  emoji: '🌒' },
+            "First Quarter": { name: "Waxing Gibbous",   emoji: '🌔' },
+            "Full Moon":     { name: "Waning Gibbous",   emoji: '🌖' },
+            "Last Quarter":  { name: "Waning Crescent",  emoji: '🌘' }
+        };
+
+        for (let i = 0; i < primaryEvents.length - 1; i++) {
+            const startEvent = primaryEvents[i];
+            const endEvent = primaryEvents[i+1];
+
+            allPhases.push(startEvent);
+
+            if (phaseMap[startEvent.name]) {
+                const midpointTime = startEvent.date.getTime() + (endEvent.date.getTime() - startEvent.date.getTime()) / 2;
+                
+                const intermediaryPhase = {
+                    name: phaseMap[startEvent.name].name,
+                    date: new Date(midpointTime),
+                    emoji: phaseMap[startEvent.name].emoji
+                };
+                allPhases.push(intermediaryPhase);
+            }
+        }
+        allPhases.push(primaryEvents[primaryEvents.length - 1]);
+
+        return allPhases;
+    }
+
     async function loadRequiredMoonData(date) {
         if (isLoading) return;
         isLoading = true;
@@ -497,15 +540,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        const uniqueEvents = Array.from(new Map(combinedEvents.map(event => [event.date.toISOString(), event])).values());
-        allMoonEvents = uniqueEvents.sort((a, b) => a.date - b.date);
+        const uniquePrimaryEvents = Array.from(new Map(combinedEvents.map(event => 
+            [event.date.toISOString(), event]
+        )).values()).sort((a, b) => a.date - b.date);
+
+        allMoonEvents = calculateIntermediaryPhases(uniquePrimaryEvents);
 
         isLoading = false;
     }
 
     function getCycleBoundaries(date) {
         const time = date.getTime();
-        const newMoons = allMoonEvents.filter(e => e.name === "New Moon");
+        const newMoons = allMoonEvents.filter(e => e.name === "New Moon").sort((a, b) => a.date - b.date);
         let startEvent, endEvent;
         for (let i = 0; i < newMoons.length - 1; i++) {
             if (time >= newMoons[i].date.getTime() && time < newMoons[i+1].date.getTime()) {
@@ -519,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getQuarterBoundaries(date) {
         const time = date.getTime();
-        const majorEvents = allMoonEvents.filter(e => NEW_FULL_MOON_NAMES.includes(e.name));
+        const majorEvents = allMoonEvents.filter(e => NEW_FULL_MOON_NAMES.includes(e.name)).sort((a, b) => a.date - b.date);
         let startEvent, endEvent;
         for (let i = 0; i < majorEvents.length - 1; i++) {
              if (time >= majorEvents[i].date.getTime() && time < majorEvents[i+1].date.getTime()) {
@@ -626,6 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function renderDayView() {
         const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
+        
         const primaryEventToday = todaysEvents.find(evt => PRIMARY_PHASE_NAMES.includes(evt.name));
         let moonEmoji;
         if (primaryEventToday) {
@@ -666,6 +713,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const viewContainer = views['day-view'];
         viewContainer.innerHTML = '';
+
+        const dayContent = document.createElement('div');
+        dayContent.id = 'day-view-content';
+
         const table = document.createElement('table');
         table.className = 'day-schedule-table';
         const tbody = document.createElement('tbody');
@@ -691,22 +742,25 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell">${hourlyWeatherHtml}</td>`;
             tbody.appendChild(tr);
         }
-        table.appendChild(tbody);
-        viewContainer.innerHTML = `<div id="day-view-content"></div>`;
-        viewContainer.firstChild.appendChild(table);
         
         todaysEvents.forEach((evt) => {
             const eventEl = document.createElement('div');
             eventEl.className = 'moon-event-icon';
             eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             eventEl.innerHTML = `<span>${evt.emoji}</span>`;
-            eventEl.style.top = `${(evt.date.getMinutes() / 60) * 100}%`; 
             
-            const targetCell = tbody.children[evt.date.getHours()]?.querySelector('.schedule-grid-cell');
-            if (targetCell) {
-                targetCell.appendChild(eventEl);
+            const targetRow = tbody.children[evt.date.getHours()];
+            if (targetRow) {
+                const targetCell = targetRow.querySelector('.schedule-grid-cell');
+                if (targetCell) {
+                    targetCell.appendChild(eventEl);
+                }
             }
         });
+
+        table.appendChild(tbody);
+        dayContent.appendChild(table);
+        viewContainer.appendChild(dayContent);
         
         updateCurrentHourHighlight();
     }
@@ -763,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         headerThead.appendChild(headerTr);
         headerTable.appendChild(headerThead);
-        headerContainer.appendChild(headerTable);
         
         const contentTable = document.createElement('table');
         contentTable.className = 'calendar-table';
@@ -777,12 +830,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const contentWrapper = document.createElement('div');
             contentWrapper.className = 'quarter-day-content-wrapper';
             
-            const primaryEventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, day) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            const eventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, day));
             let moonEmoji, moonTitle;
 
-            if (primaryEventOnDay) {
-                moonEmoji = primaryEventOnDay.emoji;
-                moonTitle = `${primaryEventOnDay.name} at ${primaryEventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+            if (eventOnDay) {
+                moonEmoji = eventOnDay.emoji;
+                moonTitle = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             } else {
                 const [startCycle, endCycle] = getCycleBoundaries(day);
                 if (startCycle && endCycle) {
@@ -881,12 +934,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayNumberHTML = `<div class="day-number today">${d.getDate()}</div>`;
             }
 
-            const primaryEventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, d) && PRIMARY_PHASE_NAMES.includes(evt.name));
+            const eventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, d));
             let emoji, title;
 
-            if (primaryEventOnDay) {
-                emoji = primaryEventOnDay.emoji;
-                title = `${primaryEventOnDay.name} at ${primaryEventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+            if (eventOnDay) {
+                emoji = eventOnDay.emoji;
+                title = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             } else {
                 const cycleDuration = endEvent.date.getTime() - startEvent.date.getTime();
                 const age = d.getTime() - startEvent.date.getTime();
