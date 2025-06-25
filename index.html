@@ -477,6 +477,38 @@
             window.addEventListener('message', handleIframeMessages);
         }
 
+        function reorderDesktopIcons() {
+            const icons = Array.from(DOM.desktop.querySelectorAll('.desktop-icon'));
+            const windowHeight = window.innerHeight;
+            const iconHeight = 100;
+            const iconWidth = 90;
+            const verticalPadding = 20;
+            const horizontalPadding = 10;
+
+            const iconsPerColumn = Math.floor((windowHeight - verticalPadding * 2) / iconHeight);
+
+            if (iconsPerColumn <= 0) return;
+
+            let col = 0;
+            let row = 0;
+            icons.forEach(icon => {
+                const x = col * (iconWidth + horizontalPadding) + horizontalPadding;
+                const y = row * iconHeight + verticalPadding;
+
+                icon.style.left = `${x}px`;
+                icon.style.top = `${y}px`;
+
+                osData.iconPositions[icon.dataset.appId] = { x, y };
+
+                row++;
+                if (row >= iconsPerColumn) {
+                    row = 0;
+                    col++;
+                }
+            });
+            saveOsData();
+        }
+
         function initDesktopIcons() {
             DOM.desktop.innerHTML = '';
             appManifest.forEach((app, index) => {
@@ -499,25 +531,11 @@
 
                 iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
 
-                const defaultX = 0;
-                const defaultY = index * 100;
-
-                if (osData.iconPositions && osData.iconPositions[app.id]) {
-                    iconElement.style.left = osData.iconPositions[app.id].x + 'px';
-                    iconElement.style.top = osData.iconPositions[app.id].y + 'px';
-                } else {
-                    const { x: finalX, y: finalY } = findNonCollidingPosition(iconElement, defaultX, defaultY);
-                    iconElement.style.left = finalX + 'px';
-                    iconElement.style.top = finalY + 'px';
-                    if (!osData.iconPositions) osData.iconPositions = {};
-                    osData.iconPositions[app.id] = { x: finalX, y: finalY };
-                }
-
                 iconElement.addEventListener('mousedown', handleIconMouseDown);
                 iconElement.addEventListener('dblclick', handleIconDoubleClick);
                 DOM.desktop.appendChild(iconElement);
             });
-            saveOsData();
+            reorderDesktopIcons();
         }
 
         function handleIconMouseDown(e) {
@@ -1299,14 +1317,19 @@
                 });
             });
 
+            let resizeTimer;
             window.addEventListener('resize', () => {
-                appManifest.forEach(appConfig => {
-                    const win = getById(`window-${appConfig.id}`);
-                    if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
-                         setWindowDefaults(appConfig.id, true, appConfig);
-                    }
-                });
-                saveOsData();
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    reorderDesktopIcons();
+                    appManifest.forEach(appConfig => {
+                        const win = getById(`window-${appConfig.id}`);
+                        if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
+                             setWindowDefaults(appConfig.id, true, appConfig);
+                        }
+                    });
+                    saveOsData();
+                }, 250);
             });
         }
 
