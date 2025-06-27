@@ -401,6 +401,7 @@
         let iconDragOffsetX, iconDragOffsetY;
         let appManifest = [];
         let firebaseRemoteConfig;
+        let hasDragged = false;
 
 
         const DOM = {
@@ -541,6 +542,7 @@
         function handleIconMouseDown(e) {
             if (e.button !== 0 || activeDragWindow || activeResizeWindow) return;
             activeDragIcon = e.currentTarget;
+            hasDragged = false;
             const appId = activeDragIcon.dataset.appId;
             const windowEl = getById(`window-${appId}`);
             if(windowEl && windowEl.style.display !== 'none' && !windowEl.classList.contains('minimized')) {
@@ -556,6 +558,7 @@
         }
 
         function handleIconMouseMove(e) {
+            hasDragged = true;
             if (!activeDragIcon) return;
             let newX = e.clientX - iconDragOffsetX;
             let newY = e.clientY - iconDragOffsetY;
@@ -642,6 +645,17 @@
 
         function handleIconMouseUp(e) {
             if (!activeDragIcon) return;
+
+            document.removeEventListener('mousemove', handleIconMouseMove);
+            document.removeEventListener('mouseup', handleIconMouseUp);
+
+            if (!hasDragged) {
+                activeDragIcon.style.zIndex = '5';
+                activeDragIcon.style.cursor = 'grab';
+                activeDragIcon = null;
+                return;
+            }
+            
             activeDragIcon.style.zIndex = '5';
             let finalX = activeDragIcon.offsetLeft;
             let finalY = activeDragIcon.offsetTop;
@@ -670,8 +684,6 @@
 
             activeDragIcon.style.cursor = 'grab';
             activeDragIcon = null;
-            document.removeEventListener('mousemove', handleIconMouseMove);
-            document.removeEventListener('mouseup', handleIconMouseUp);
         }
 
         function handleIconDoubleClick(e) {
