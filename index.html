@@ -185,6 +185,19 @@
             filter: hue-rotate(140deg) saturate(1000%);
             mix-blend-mode: luminosity;
         }
+        .desktop-icon.outlineIconStyle .icon-image {
+            position: relative;
+        }
+        .desktop-icon.outlineIconStyle .icon-overlay {
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            transform: scaleY(-1);
+            font-size: 38px;
+            opacity: 0.9;
+            text-align: center;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -570,16 +583,29 @@
                 iconElement.dataset.appId = app.id;
                 iconElement.title = `Open ${app.name}`;
 
-                let iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`;
+                let iconHTML;
 
-                if (app.customIconClass && app.id === 'playJockey') {
+                if (app.customIconClass) {
                     iconElement.classList.add(app.customIconClass);
-                    iconHTML = `
-                        <div class="icon-image">
-                            <span class="icon-image-base">${app.icon}</span>
-                            <span class="icon-image-overlay">${app.icon}</span>
-                        </div>`;
+                    if (app.id === 'playJockey') {
+                        iconHTML = `
+                            <div class="icon-image">
+                                <span class="icon-image-base">${app.icon}</span>
+                                <span class="icon-image-overlay">${app.icon}</span>
+                            </div>`;
+                    } else if (app.id === 'outline') {
+                        iconHTML = `
+                            <div class="icon-image">
+                                <span>${app.icon}</span>
+                                <span class="icon-overlay">✏️</span>
+                            </div>`;
+                    } else {
+                        iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`;
+                    }
+                } else {
+                    iconHTML = `<div class="icon-image"><span>${app.icon}</span></div>`;
                 }
+
 
                 iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
 
