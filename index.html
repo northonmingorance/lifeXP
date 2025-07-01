@@ -477,24 +477,27 @@
 
             window.addEventListener('message', handleIframeMessages);
         }
-
+        
         function reorderDesktopIcons() {
             const icons = Array.from(DOM.desktop.querySelectorAll('.desktop-icon'));
             const windowHeight = window.innerHeight;
-            const iconHeight = 100;
-            const iconWidth = 90;
-            const verticalPadding = 20;
-            const horizontalPadding = 10;
 
-            const iconsPerColumn = Math.floor((windowHeight - verticalPadding * 2) / iconHeight);
+            const cellWidth = 4 * ICON_GRID_SIZE;
+            const cellHeight = 5 * ICON_GRID_SIZE;
+            const padding = 1 * ICON_GRID_SIZE;
 
-            if (iconsPerColumn <= 0) return;
+            const iconsPerColumn = Math.floor((windowHeight - padding * 2) / cellHeight);
+
+            if (iconsPerColumn <= 0) {
+                console.warn("Not enough vertical space for desktop icons.");
+                return;
+            }
 
             let col = 0;
             let row = 0;
             icons.forEach(icon => {
-                const x = col * (iconWidth + horizontalPadding) + horizontalPadding;
-                const y = row * iconHeight + verticalPadding;
+                const x = col * cellWidth + padding;
+                const y = row * cellHeight + padding;
 
                 icon.style.left = `${x}px`;
                 icon.style.top = `${y}px`;
@@ -532,10 +535,17 @@
 
                 iconElement.innerHTML = `${iconHTML}<div class="icon-label">${app.name}</div>`;
 
+                const savedPosition = osData.iconPositions[app.id];
+                if (savedPosition && typeof savedPosition.x === 'number' && typeof savedPosition.y === 'number') {
+                    iconElement.style.left = savedPosition.x + 'px';
+                    iconElement.style.top = savedPosition.y + 'px';
+                }
+
                 iconElement.addEventListener('mousedown', handleIconMouseDown);
                 iconElement.addEventListener('dblclick', handleIconDoubleClick);
                 DOM.desktop.appendChild(iconElement);
             });
+            
             reorderDesktopIcons();
         }
 
@@ -1179,7 +1189,16 @@
 
         function saveOsData() {
             try {
-                localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(osData));
+                const dataToSave = { ...osData };
+                const positionedIcons = {};
+                for (const appId in dataToSave.iconPositions) {
+                    const pos = dataToSave.iconPositions[appId];
+                    if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+                        positionedIcons[appId] = pos;
+                    }
+                }
+                dataToSave.iconPositions = positionedIcons;
+                localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(dataToSave));
             } catch (error) {
                 console.error("Could not save OS data:", error);
                 if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
@@ -1340,7 +1359,6 @@
                              setWindowDefaults(appConfig.id, true, appConfig);
                         }
                     });
-                    saveOsData();
                 }, 250);
             });
         }
