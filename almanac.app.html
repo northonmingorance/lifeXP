@@ -174,7 +174,7 @@
     .cycle-day-content {
         display: flex;
         flex-direction: column;
-        justify-content: space-evenly;
+        justify-content: space-between;
         align-items: center;
         height: 100%;
     }
@@ -223,6 +223,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
+        min-height: 30px;
     }
 
     .day-number { font-weight: bold; font-size: 1.2em;  }
@@ -817,7 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         headerThead.appendChild(headerTr);
         headerTable.appendChild(headerThead);
-        headerContainer.appendChild(headerTable);
         
         const contentTable = document.createElement('table');
         contentTable.className = 'calendar-table';
@@ -851,8 +852,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     moonTitle = '';
                 }
             }
-
-            let weatherHtml = '';
+            
+            let weatherHtml = '<div class="weather-info"></div>';
             const dayForecast = getDailyWeatherData(day);
 
             if (dayForecast && dayForecast.length > 0) {
@@ -955,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 moonHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
             }
             
-            let weatherHtml = '';
+            let weatherHtml = '<div class="weather-info"></div>';
             const dayForecast = getDailyWeatherData(d);
 
             if (dayForecast && dayForecast.length > 0) {
