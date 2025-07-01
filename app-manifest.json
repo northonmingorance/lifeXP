@@ -43,12 +43,13 @@
   {
     "id": "outline",
     "name": "Outline",
-    "icon": "🎨",
+    "icon": "📐",
     "file": "outline.app.html",
     "minWidth": 375,
     "minHeight": 250,
     "defaultWidth": 650,
-    "defaultHeight": 500
+    "defaultHeight": 500,
+    "customIconClass": "outlineIconStyle"
   },
   {
     "id": "capture",
