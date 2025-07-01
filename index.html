@@ -478,7 +478,55 @@
             window.addEventListener('message', handleIframeMessages);
         }
         
-        function reorderDesktopIcons() {
+        function placeNewIcons() {
+            const allIcons = Array.from(DOM.desktop.querySelectorAll('.desktop-icon'));
+            const iconsToPlace = allIcons.filter(icon => !icon.style.left);
+
+            if (iconsToPlace.length === 0) return;
+
+            const windowHeight = window.innerHeight;
+            const cellWidth = 4 * ICON_GRID_SIZE;
+            const cellHeight = 5 * ICON_GRID_SIZE;
+            const padding = 1 * ICON_GRID_SIZE;
+            const iconsPerColumn = Math.floor((windowHeight - padding * 2) / cellHeight);
+
+            if (iconsPerColumn <= 0) return;
+
+            const occupiedSlots = new Set();
+            allIcons.forEach(icon => {
+                if (icon.style.left && icon.style.top) {
+                    const x = parseInt(icon.style.left, 10);
+                    const y = parseInt(icon.style.top, 10);
+                    const col = Math.round(x / cellWidth);
+                    const row = Math.round(y / cellHeight);
+                    occupiedSlots.add(`${col},${row}`);
+                }
+            });
+
+            let col = 0;
+            let row = 0;
+            iconsToPlace.forEach(icon => {
+                while (occupiedSlots.has(`${col},${row}`)) {
+                    row++;
+                    if (row >= iconsPerColumn) {
+                        row = 0;
+                        col++;
+                    }
+                }
+
+                const x = col * cellWidth + padding;
+                const y = row * cellHeight + padding;
+
+                icon.style.left = `${x}px`;
+                icon.style.top = `${y}px`;
+                osData.iconPositions[icon.dataset.appId] = { x, y };
+                occupiedSlots.add(`${col},${row}`);
+            });
+
+            saveOsData();
+        }
+
+        function reorderAllIcons() {
             const icons = Array.from(DOM.desktop.querySelectorAll('.desktop-icon'));
             const windowHeight = window.innerHeight;
 
@@ -546,7 +594,7 @@
                 DOM.desktop.appendChild(iconElement);
             });
             
-            reorderDesktopIcons();
+            placeNewIcons();
         }
 
         function handleIconMouseDown(e) {
@@ -1352,7 +1400,7 @@
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
-                    reorderDesktopIcons();
+                    reorderAllIcons();
                     appManifest.forEach(appConfig => {
                         const win = getById(`window-${appConfig.id}`);
                         if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
