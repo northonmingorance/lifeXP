@@ -41,10 +41,10 @@
     "defaultHeight": 705
   },
   {
-    "id": "pixelCraft",
-    "name": "Pixel Craft",
+    "id": "outline",
+    "name": "Outline",
     "icon": "🎨",
-    "file": "pixel-craft.app.html",
+    "file": "outline.app.html",
     "minWidth": 375,
     "minHeight": 250,
     "defaultWidth": 650,
