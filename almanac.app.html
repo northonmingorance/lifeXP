@@ -179,7 +179,6 @@
         height: 100%;
     }
 
-
     .quarter-day-cell {
         position: relative;
         overflow: hidden;
@@ -249,6 +248,27 @@
         color: var(--today-highlight-text);
     }
     
+    .quarter-day-cell > .day-number {
+        position: absolute;
+        top: 4px;
+        right: 5px;
+        font-size: 0.8em;
+        opacity: 0.7;
+        font-weight: normal;
+        background-color: transparent;
+        color: var(--text-color);
+        width: auto;
+        height: auto;
+        padding: 0;
+        border-radius: 0;
+    }
+
+    .quarter-day-cell > .day-number.today {
+        opacity: 1;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
     .moon-event-details { font-size: 0.9em; margin-top: 5px; }
 
     #quarter-grid-header-container {
@@ -264,7 +284,7 @@
     .day-schedule-table { width: 100%; border-collapse: collapse; }
     .day-schedule-table td { border: none; border-bottom: 1px solid #E0E0E0; }
     .time-label-cell { width: 80px; font-size: 0.8em; text-align: center; padding-right: 10px; color: #555; border-right: 1px solid var(--border-color); }
-    .schedule-grid-cell { position: relative; height: 60px; }
+    .schedule-grid-cell { position: relative; height: 60px; padding: 2px 5px; box-sizing: border-box; }
     .schedule-grid-cell.current-hour,
     .time-label-cell.current-hour {
         background-color: var(--current-hour-bg);
@@ -301,13 +321,74 @@
         font-size: 1.5em;
     }
 
+    .bottom-controls-bar {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px;
+        margin-top: 15px;
+        border: 1px solid var(--border-color);
+        background-color: var(--surface-color);
+        flex-shrink: 0;
+    }
+
+    .xp-tracker-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
+    .xp-tracker-modal-content { background-color: #ECE9D8; margin: auto; padding: 0; border: 1px solid #000; width: 80%; max-width: 450px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); animation: xpTrackerFadeIn 0.3s; display: flex; flex-direction: column; }
+    .xp-tracker-modal-title-bar { background: linear-gradient(to bottom, #005CFE, #0039A9); color: white; padding: 5px 8px; font-weight: bold; border-bottom: 1px solid #000; display: flex; justify-content: space-between; align-items: center; height: 28px; box-sizing: border-box; flex-shrink: 0; }
+    .xp-tracker-modal-close-button { color: white; font-size: 16px; font-family: "Marlett", "Webdings", sans-serif; font-weight: normal; background: #E04343; border: 1px outset white; width: 22px; height: 18px; text-align: center; line-height: 16px; padding: 0; cursor: pointer; }
+    .xp-tracker-modal-close-button:hover, .xp-tracker-modal-close-button:focus { background: #FF6363; }
+    .xp-tracker-modal-close-button:active { border-style: inset; }
+    .xp-tracker-modal-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
+    .xp-tracker-modal-body p { margin-top: 0; margin-bottom: 10px; }
+    .xp-tracker-modal-body label { display: block; margin-bottom: 5px; margin-top: 12px; }
+    .xp-tracker-modal-body input[type="text"], .xp-tracker-modal-body input[type="number"], .xp-tracker-modal-body textarea, .xp-tracker-modal-body select, .xp-tracker-modal-body input[type="color"], .xp-tracker-modal-body input[type="date"], .xp-tracker-modal-body input[type="time"] { width: calc(100% - 12px); padding: 5px; margin-bottom: 10px; border: 1px solid #ACA899; box-sizing: border-box; }
+    .xp-tracker-modal-footer { padding: 10px 15px; text-align: right; background-color: #F0F0F0; border-top: 1px solid #ACA899; flex-shrink: 0; }
+    @keyframes xpTrackerFadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+
+    .quest-item { padding: 8px; border: 1px solid #ACA899; margin-bottom: 8px; background-color: #FFF; border-radius: 3px; position: relative; }
+    .quest-item.completed { background-color: #DFF0D8; text-decoration: line-through; color: #508a50; }
+    .quest-item.completed .quest-title { color: #006400; }
+    .quest-title { font-weight: bold; margin-bottom: 5px; color: #0039A9; }
+    .quest-details { font-size: 0.95em; margin-bottom: 3px; }
+    .quest-progress { font-size: 0.85em; color: #555; margin-top: 3px; margin-bottom: 5px; }
+
+    .achievement-list { list-style: none; padding: 0; margin: 5px 0; }
+    .achievement-item { display: flex; align-items: center; margin-bottom: 4px; font-size: 0.9em; position: relative; padding-right: 50px; }
+    .achievement-color-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+    .achievement-actions { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: none; }
+    .achievement-item:hover .achievement-actions { display: block; }
+    .action-btn { cursor: pointer; font-size: 14px; margin-left: 5px; }
+    
+    .achievements-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        padding-top: 4px;
+    }
+
+    .achievement-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .area-stats { font-size: 0.9em; margin-top: 5px; color: #333; }
+    .area-stats span { display: flex; align-items: center; }
+    .area-level { margin-left: 4px; }
+    .xp-bar-container { width: 100%; height: 12px; background-color: #BDBDBD; border: 1px solid #7F7F7F; margin-top: 3px; position: relative; border-radius: 2px; overflow: hidden; }
+    .xp-bar { height: 100%; background-color: #008000; transition: width 0.3s ease; border-radius: 1px; }
+    .xp-bar-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; line-height: 12px; color: white; text-shadow: 1px 1px 0px black; font-weight: bold; z-index: 1; }
+
 </style>
 </head>
 <body>
 <div class="moon-calendar-app">
     <header class="controls-bar" id="controlsBar">
-         <div class="date-navigation" id="date-nav-controls">
-            </div>
+         <div class="date-navigation" id="date-nav-controls"></div>
         <div class="controls-group">
             <div class="view-title" id="view-title-display">Loading...</div>
         </div>
@@ -318,10 +399,94 @@
         </div>
     </header>
 
-    <div class="app-view-container">
+    <div class="app-view-container" id="appViewContainer">
         <div id="day-view" class="app-view active"></div>
         <div id="quarter-view" class="app-view"></div>
         <div id="cycle-view" class="app-view"></div>
+    </div>
+
+    <footer class="bottom-controls-bar">
+        <button id="manageAreasBtn" class="xp-button">Manage Areas</button>
+        <button id="addAchievementBtn" class="xp-button">New Achievement</button>
+        <button id="showQuestsBtn" class="xp-button">Quests</button>
+    </footer>
+</div>
+
+<div id="xpManageAreasModal" class="xp-tracker-modal">
+    <div class="xp-tracker-modal-content">
+        <div class="xp-tracker-modal-title-bar">
+            <span id="xpManageAreaModalTitle">Manage Areas</span>
+            <span class="xp-tracker-modal-close-button" data-modal-id="xpManageAreasModal">r</span>
+        </div>
+        <div class="xp-tracker-modal-body">
+            <input type="hidden" id="xpAreaEditId">
+            <label for="xpAreaNameInput">Area Name:</label>
+            <input type="text" id="xpAreaNameInput" placeholder="e.g., Fitness, Learning">
+            <label for="xpAreaColorInput">Area Color:</label>
+            <input type="color" id="xpAreaColorInput" value="#4a90e2">
+            <div id="existingAreasListContainer" style="margin-top: 15px;">
+                <label>Existing Areas:</label>
+                <div id="existingAreasList" style="max-height: 150px; overflow-y: auto; border: 1px inset; padding: 8px; background-color: #FFFFFF;">
+                </div>
+            </div>
+        </div>
+        <div class="xp-tracker-modal-footer">
+            <button id="xpSaveAreaBtn" class="xp-button">Save New Area</button>
+            <button class="xp-button xp-tracker-modal-cancel-btn" data-modal-id="xpManageAreasModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="xpAddAchievementModal" class="xp-tracker-modal">
+    <div class="xp-tracker-modal-content">
+        <div class="xp-tracker-modal-title-bar">
+            <span id="xpAddAchievementModalTitle">Add Achievement</span>
+            <span class="xp-tracker-modal-close-button" data-modal-id="xpAddAchievementModal">r</span>
+        </div>
+        <div class="xp-tracker-modal-body">
+            <input type="hidden" id="xpAchievementEditId">
+            <label for="xpAchievementAreaSelect">Area:</label>
+            <select id="xpAchievementAreaSelect"></select>
+            <label for="xpAchievementDescriptionInput">Description:</label>
+            <textarea id="xpAchievementDescriptionInput" rows="3"></textarea>
+            <label for="xpAchievementDateInput">Date:</label>
+            <input type="date" id="xpAchievementDateInput">
+            <label for="xpAchievementTimeInput">Time:</label>
+            <input type="time" id="xpAchievementTimeInput">
+        </div>
+        <div class="xp-tracker-modal-footer">
+            <button id="xpSaveAchievementBtn" class="xp-button">Save Achievement</button>
+            <button class="xp-button xp-tracker-modal-cancel-btn" data-modal-id="xpAddAchievementModal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="xpQuestsModal" class="xp-tracker-modal">
+    <div class="xp-tracker-modal-content" style="max-width: 550px;">
+        <div class="xp-tracker-modal-title-bar">
+            <span id="xpQuestsModalTitle">Quarterly Quests</span>
+            <span class="xp-tracker-modal-close-button" data-modal-id="xpQuestsModal">r</span>
+        </div>
+        <div class="xp-tracker-modal-body" id="xpQuestsListBody"></div>
+        <div class="xp-tracker-modal-footer">
+            <button class="xp-button xp-tracker-modal-cancel-btn" data-modal-id="xpQuestsModal">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationModal" class="xp-tracker-modal">
+    <div class="xp-tracker-modal-content" style="max-width: 350px;">
+        <div class="xp-tracker-modal-title-bar">
+            <span>Confirmation</span>
+             <span class="xp-tracker-modal-close-button" data-modal-id="confirmationModal">r</span>
+        </div>
+        <div class="xp-tracker-modal-body">
+            <p id="confirmationMessage"></p>
+        </div>
+        <div class="xp-tracker-modal-footer">
+            <button id="confirmBtn" class="xp-button">OK</button>
+            <button id="cancelBtn" class="xp-button">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -332,29 +497,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const PHASE_EMOJIS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
     const PRIMARY_PHASE_NAMES = ["New Moon", "First Quarter", "Full Moon", "Last Quarter"];
     const NEW_FULL_MOON_NAMES = ["New Moon", "Full Moon"];
+    const ALMANAC_STORAGE_KEY = 'almanacAppData_v1.9_quests';
+    const XP_PER_REGULAR_ACHIEVEMENT = 10;
 
     let viewDate = new Date();
     let currentView = 'day-view';
     let allMoonEvents = [];
     const moonDataCache = {};
-    const meteoCache = {
-        data: null,
-        lastFetched: 0
-    };
+    const meteoCache = { data: null, lastFetched: 0 };
     let isLoading = false;
     let userLocation = null;
     let hourHighlightInterval = null;
+
+    let appData = {
+        areas: [],
+        achievements: [],
+        quests: {},
+    };
 
     const controlsBar = document.getElementById('controlsBar');
     const mainNavButtons = document.getElementById('main-nav-buttons');
     const viewTitleDisplay = document.getElementById('view-title-display');
     const dateNavControls = document.getElementById('date-nav-controls');
+    const appViewContainer = document.getElementById('appViewContainer');
     const views = {
         'day-view': document.getElementById('day-view'),
         'quarter-view': document.getElementById('quarter-view'),
         'cycle-view': document.getElementById('cycle-view')
     };
-    
+
+    function loadAppData() {
+        const stored = localStorage.getItem(ALMANAC_STORAGE_KEY);
+        if (stored) {
+            appData = JSON.parse(stored);
+            if (!appData.areas) appData.areas = [];
+            if (!appData.achievements) appData.achievements = [];
+            if (!appData.quests) appData.quests = {};
+            appData.achievements.forEach(ach => {
+                if (!ach.id) ach.id = new Date(ach.timestamp).getTime().toString() + Math.random().toString(36).substr(2, 9);
+            });
+             appData.areas.forEach(area => {
+                if (!area.id) area.id = area.name;
+            });
+        }
+    }
+
+    function saveAppData() {
+        localStorage.setItem(ALMANAC_STORAGE_KEY, JSON.stringify(appData));
+    }
+
     function getUserLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -382,33 +573,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function fetchWeatherData(latitude, longitude) {
-        if (!latitude || !longitude) {
-            console.warn("Location not available for weather fetch.");
-            return false;
-        }
-
+        if (!latitude || !longitude) return false;
         const fiveMinutes = 5 * 60 * 1000;
-        if (meteoCache.data && (Date.now() - meteoCache.lastFetched < fiveMinutes)) {
-            return true;
-        }
-
+        if (meteoCache.data && (Date.now() - meteoCache.lastFetched < fiveMinutes)) return true;
         const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weather_code&past_days=16&forecast_days=16&timezone=auto`;
-
         try {
             const response = await fetch(apiUrl);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.reason || `HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-            
             const processedData = new Map();
             if (data.hourly && data.hourly.time) {
                 data.hourly.time.forEach((timestamp, index) => {
                     const dateKey = timestamp.substring(0, 10);
-                    if (!processedData.has(dateKey)) {
-                        processedData.set(dateKey, []);
-                    }
+                    if (!processedData.has(dateKey)) processedData.set(dateKey, []);
                     processedData.get(dateKey).push({
                         time: timestamp,
                         temp: data.hourly.temperature_2m[index],
@@ -416,13 +593,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
             }
-
             meteoCache.data = processedData;
             meteoCache.lastFetched = Date.now();
             return true;
-
         } catch (error) {
-            console.error("Failed to fetch or process weather data:", error.message || error);
+            console.error("Failed to fetch or process weather data:", error);
             displayErrorMessage(`Could not fetch weather data.`);
             meteoCache.data = null;
             return false;
@@ -472,7 +647,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const data = await response.json();
-            
             const processedData = data.phasedata.map(evt => {
                 const dateStr = `${evt.year}-${String(evt.month).padStart(2, '0')}-${String(evt.day).padStart(2, '0')}T${evt.time}:00Z`;
                 return {
@@ -481,7 +655,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     emoji: PHASE_EMOJIS[PRIMARY_PHASE_NAMES.indexOf(evt.phase) * 2] || '❓'
                 };
             });
-            
             moonDataCache[year] = processedData;
             return processedData;
         } catch (error) {
@@ -494,23 +667,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateIntermediaryPhases(primaryEvents) {
         const allPhases = [];
         if (primaryEvents.length < 2) return primaryEvents;
-
         const phaseMap = {
             "New Moon":      { name: "Waxing Crescent",  emoji: '🌒' },
             "First Quarter": { name: "Waxing Gibbous",   emoji: '🌔' },
             "Full Moon":     { name: "Waning Gibbous",   emoji: '🌖' },
             "Last Quarter":  { name: "Waning Crescent",  emoji: '🌘' }
         };
-
         for (let i = 0; i < primaryEvents.length - 1; i++) {
             const startEvent = primaryEvents[i];
             const endEvent = primaryEvents[i+1];
-
             allPhases.push(startEvent);
-
             if (phaseMap[startEvent.name]) {
                 const midpointTime = startEvent.date.getTime() + (endEvent.date.getTime() - startEvent.date.getTime()) / 2;
-                
                 const intermediaryPhase = {
                     name: phaseMap[startEvent.name].name,
                     date: new Date(midpointTime),
@@ -520,7 +688,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         allPhases.push(primaryEvents[primaryEvents.length - 1]);
-
         return allPhases;
     }
 
@@ -528,26 +695,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLoading) return;
         isLoading = true;
         viewTitleDisplay.innerHTML = "Loading...";
-
         const year = date.getFullYear();
         const requiredYears = [year - 1, year, year + 1];
-        
         const promises = requiredYears.map(y => fetchAndProcessMoonData(y));
         await Promise.all(promises);
-
         let combinedEvents = [];
         for (const y of requiredYears) {
             if(moonDataCache[y]) {
                 combinedEvents.push(...moonDataCache[y]);
             }
         }
-        
         const uniquePrimaryEvents = Array.from(new Map(combinedEvents.map(event => 
             [event.date.toISOString(), event]
         )).values()).sort((a, b) => a.date - b.date);
-
         allMoonEvents = calculateIntermediaryPhases(uniquePrimaryEvents);
-
         isLoading = false;
     }
 
@@ -567,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getQuarterBoundaries(date) {
         const time = date.getTime();
-        const majorEvents = allMoonEvents.filter(e => NEW_FULL_MOON_NAMES.includes(e.name)).sort((a, b) => a.date - b.date);
+        const majorEvents = allMoonEvents.filter(e => PRIMARY_PHASE_NAMES.includes(e.name)).sort((a, b) => a.date - b.date);
         let startEvent, endEvent;
         for (let i = 0; i < majorEvents.length - 1; i++) {
              if (time >= majorEvents[i].date.getTime() && time < majorEvents[i+1].date.getTime()) {
@@ -580,9 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function daysInMilliseconds(days) { return days * 24 * 60 * 60 * 1000; }
-    
     function isSameDay(d1, d2) { if (!d1 || !d2) return false; return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); }
-
     function getMonthName(date) { return date.toLocaleDateString(undefined, { month: 'long' }); }
     function formatQuarterTitleDate(date) { return `${getMonthName(date)} ${date.getDate()}${getOrdinalSuffix(date.getDate())}`; }
     function getOrdinalSuffix(i) {
@@ -601,7 +760,6 @@ document.addEventListener('DOMContentLoaded', () => {
             controlsBar.querySelector('.view-actions')
         ].filter(el => el);
         if (children.length === 0) return;
-        
         const originalClasses = controlsBar.className;
         controlsBar.className = 'controls-bar layout-single-row';
         let totalChildrenWidth = 0;
@@ -610,9 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalChildrenWidth += child.scrollWidth + parseFloat(childStyle.marginLeft) + parseFloat(childStyle.marginRight);
         });
         controlsBar.className = originalClasses;
-
         const controlsBarClientWidth = controlsBar.clientWidth - (parseFloat(getComputedStyle(controlsBar).paddingLeft) + parseFloat(getComputedStyle(controlsBar).paddingRight));
-
         if (totalChildrenWidth > controlsBarClientWidth && controlsBarClientWidth > 0) {
             controlsBar.classList.add('layout-multi-row');
             controlsBar.classList.remove('layout-single-row');
@@ -631,9 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', clickHandler);
             dateNavControls.appendChild(button);
         };
-
         const goBackToToday = () => { viewDate = new Date(); updateAllViews(); };
-
         if (currentView === 'day-view') {
             addNavButton('< Prev Day', () => { viewDate.setDate(viewDate.getDate() - 1); updateAllViews(); });
             addNavButton('Today', goBackToToday);
@@ -653,10 +807,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCurrentHourHighlight() {
         const now = new Date();
         const currentHour = now.getHours();
-
         const previouslyHighlighted = document.querySelectorAll('.current-hour');
         previouslyHighlighted.forEach(cell => cell.classList.remove('current-hour'));
-
         if (currentView === 'day-view' && isSameDay(viewDate, now)) {
             const table = views['day-view'].querySelector('.day-schedule-table');
             if (table && table.rows.length > currentHour) {
@@ -664,7 +816,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (row) {
                     const timeCell = row.querySelector('.time-label-cell');
                     const gridCell = row.querySelector('.schedule-grid-cell');
-                    
                     if (timeCell) timeCell.classList.add('current-hour');
                     if (gridCell) gridCell.classList.add('current-hour');
                 }
@@ -672,9 +823,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function renderAchievementsForDay(container, date) {
+        const achievementsForDay = appData.achievements
+            .filter(ach => isSameDay(new Date(ach.timestamp), date))
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (achievementsForDay.length > 0) {
+            const achievementsContainer = document.createElement('div');
+            achievementsContainer.className = 'achievements-grid';
+
+            achievementsForDay.forEach(ach => {
+                const area = appData.areas.find(a => a.id === ach.areaId);
+                if (area) {
+                    const dot = document.createElement('div');
+                    dot.className = 'achievement-dot';
+                    dot.style.backgroundColor = area.color || '#4a90e2';
+                    
+                    const achDate = new Date(ach.timestamp);
+                    const timeString = achDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    dot.title = `${timeString}: ${ach.description}`;
+                    
+                    achievementsContainer.appendChild(dot);
+                }
+            });
+            container.appendChild(achievementsContainer);
+        }
+    }
+
     async function renderDayView() {
         const todaysEvents = allMoonEvents.filter(evt => isSameDay(evt.date, viewDate));
-        
         const primaryEventToday = todaysEvents.find(evt => PRIMARY_PHASE_NAMES.includes(evt.name));
         let moonEmoji;
         if (primaryEventToday) {
@@ -688,20 +865,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 moonEmoji = PHASE_EMOJIS[phaseIndex];
             } else { moonEmoji = '❓'; }
         }
-        
         let weatherHtml = '';
         let dayForecast = null;
         if (userLocation) {
             await fetchWeatherData(userLocation.latitude, userLocation.longitude);
             dayForecast = getDailyWeatherData(viewDate);
-
             if (dayForecast) {
                  const now = new Date();
                  let currentHourEntry = dayForecast.find(entry => new Date(entry.time).getHours() === now.getHours() && isSameDay(viewDate, now));
-                 if (!currentHourEntry) {
-                     currentHourEntry = dayForecast.find(entry => new Date(entry.time).getHours() >= 12) || dayForecast[0];
-                 }
-
+                 if (!currentHourEntry) currentHourEntry = dayForecast.find(entry => new Date(entry.time).getHours() >= 12) || dayForecast[0];
                  if(currentHourEntry) {
                     const currentTemp = Math.round(currentHourEntry.temp);
                     const weatherEmoji = getWeatherEmojiFromWMO(currentHourEntry.code);
@@ -710,23 +882,17 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
             }
         }
-
         viewTitleDisplay.innerHTML = `<span>${moonEmoji}</span> <span>${viewDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>${weatherHtml}`;
-        
         const viewContainer = views['day-view'];
         viewContainer.innerHTML = '';
-
         const dayContent = document.createElement('div');
         dayContent.id = 'day-view-content';
-
         const table = document.createElement('table');
         table.className = 'day-schedule-table';
         const tbody = document.createElement('tbody');
-        
         for (let i = 0; i < 24; i++) {
             const tr = document.createElement('tr');
             const timeLabel = `${i === 0 ? '12' : (i > 12 ? i - 12 : i)} ${i < 12 ? 'AM' : 'PM'}`;
-            
             let hourlyWeatherHtml = '';
             if (dayForecast) {
                 const forecastEntry = dayForecast.find(entry => new Date(entry.time).getHours() === i);
@@ -740,22 +906,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 }
             }
-
             tr.innerHTML = `<td class="time-label-cell">${timeLabel}</td><td class="schedule-grid-cell">${hourlyWeatherHtml}</td>`;
             tbody.appendChild(tr);
         }
-        
         todaysEvents.forEach((evt) => {
             const eventEl = document.createElement('div');
             eventEl.className = 'moon-event-icon';
             eventEl.title = `${evt.name} at ${evt.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             eventEl.innerHTML = `<span>${evt.emoji}</span>`;
-            
             const targetRow = tbody.children[evt.date.getHours()];
             if (targetRow) {
                 const targetCell = targetRow.querySelector('.schedule-grid-cell');
+                if (targetCell) targetCell.appendChild(eventEl);
+            }
+        });
+        
+        appData.achievements.filter(ach => isSameDay(new Date(ach.timestamp), viewDate)).forEach(ach => {
+            const achDate = new Date(ach.timestamp);
+            const hour = achDate.getHours();
+            const area = appData.areas.find(a => a.id === ach.areaId);
+            if (area && tbody.rows[hour]) {
+                const targetCell = tbody.rows[hour].querySelector('.schedule-grid-cell');
                 if (targetCell) {
-                    targetCell.appendChild(eventEl);
+                    const achElement = document.createElement('div');
+                    achElement.className = 'achievement-item';
+                    achElement.dataset.achievementId = ach.id;
+                    achElement.style.paddingLeft = '5px';
+                    achElement.innerHTML = `
+                        <div class="achievement-color-dot" style="background-color: ${area.color || '#4a90e2'};"></div>
+                        <span>${ach.description}</span>
+                        <div class="achievement-actions">
+                            <span class="action-btn edit-achievement-btn" title="Edit">✏️</span>
+                            <span class="action-btn delete-achievement-btn" title="Delete">🗑️</span>
+                        </div>`;
+                    targetCell.appendChild(achElement);
                 }
             }
         });
@@ -763,47 +947,36 @@ document.addEventListener('DOMContentLoaded', () => {
         table.appendChild(tbody);
         dayContent.appendChild(table);
         viewContainer.appendChild(dayContent);
-        
         updateCurrentHourHighlight();
     }
     
     async function renderQuarterView() {
         const today = new Date();
         const boundaries = getQuarterBoundaries(viewDate);
-
         if (!boundaries || !boundaries[0] || !boundaries[1]) {
             views['quarter-view'].innerHTML = "Not enough quarter data available for this date.";
             viewTitleDisplay.innerHTML = "Quarter Data Unavailable";
             return;
         }
-
         const startEvent = boundaries[0];
         const endEvent = boundaries[1];
         const startDate = startEvent.date;
         const endDate = endEvent.date;
-
         const startTitle = formatQuarterTitleDate(startDate);
         const endTitle = formatQuarterTitleDate(endDate);
         viewTitleDisplay.innerHTML = `<span>${startEvent.emoji}</span> <span>${startTitle} - ${endTitle} Quarter</span> <span>${endEvent.emoji}</span>`;
-        
         const viewContainer = views['quarter-view'];
         viewContainer.innerHTML = ''; 
-
-        if(userLocation) {
-            await fetchWeatherData(userLocation.latitude, userLocation.longitude);
-        }
-
+        if(userLocation) await fetchWeatherData(userLocation.latitude, userLocation.longitude);
         const daysInQuarter = [];
         let d = new Date(startDate);
         d.setHours(0,0,0,0);
         let normalizedEndDate = new Date(endDate);
         normalizedEndDate.setHours(0,0,0,0);
-        
         while(d.getTime() < normalizedEndDate.getTime()) {
             daysInQuarter.push(new Date(d));
             d.setDate(d.getDate() + 1);
         }
-
         const headerContainer = document.createElement('div');
         headerContainer.id = 'quarter-grid-header-container';
         const headerTable = document.createElement('table');
@@ -820,22 +993,17 @@ document.addEventListener('DOMContentLoaded', () => {
         headerThead.appendChild(headerTr);
         headerTable.appendChild(headerThead);
         headerContainer.appendChild(headerTable);
-        
         const contentTable = document.createElement('table');
         contentTable.className = 'calendar-table';
         const contentTbody = document.createElement('tbody');
         const contentTr = document.createElement('tr');
-
         for (const day of daysInQuarter) {
             const td = document.createElement('td');
             td.className = 'quarter-day-cell';
-
             const contentWrapper = document.createElement('div');
             contentWrapper.className = 'quarter-day-content-wrapper';
-            
             const eventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, day));
             let moonEmoji, moonTitle;
-
             if (eventOnDay) {
                 moonEmoji = eventOnDay.emoji;
                 moonTitle = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
@@ -853,10 +1021,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     moonTitle = '';
                 }
             }
-            
             let weatherHtml = '<div class="weather-info"></div>';
             const dayForecast = getDailyWeatherData(day);
-
             if (dayForecast && dayForecast.length > 0) {
                 const temps = dayForecast.map(item => item.temp);
                 const minTemp = Math.round(Math.min(...temps));
@@ -866,14 +1032,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const weatherMeaning = getWeatherMeaningFromWMO(noonEntry.code);
                 weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji" title="${weatherMeaning}">${weatherEmoji}</span></div>`;
             }
-
             contentWrapper.innerHTML = `<div class="moon-event-icon" title="${moonTitle}">${moonEmoji || ''}</div>${weatherHtml}`;
+            renderAchievementsForDay(contentWrapper, day);
             td.appendChild(contentWrapper);
             contentTr.appendChild(td);
         }
         contentTbody.appendChild(contentTr);
         contentTable.appendChild(contentTbody);
-        
         viewContainer.appendChild(headerContainer);
         viewContainer.appendChild(contentTable);
     }
@@ -881,65 +1046,44 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderCycleView() {
         const today = new Date();
         const [startEvent, endEvent] = getCycleBoundaries(viewDate);
-
         if (!startEvent || !endEvent) {
             views['cycle-view'].innerHTML = "Cycle Data Unavailable"; 
             viewTitleDisplay.innerHTML = "Cycle Data Unavailable";
             return;
         }
-
-        if(userLocation) {
-            await fetchWeatherData(userLocation.latitude, userLocation.longitude);
-        }
-
+        if(userLocation) await fetchWeatherData(userLocation.latitude, userLocation.longitude);
         const startDate = startEvent.date;
         const endDate = endEvent.date;
-
         const startMonth = getMonthName(startDate);
         const endMonth = getMonthName(endDate);
         const titleYear = startDate.getFullYear();
         const titleText = startMonth === endMonth ? `${startMonth} ${titleYear} Cycle` : `${startMonth} - ${endMonth} ${titleYear} Cycle`;
         viewTitleDisplay.innerHTML = `<span>${titleText}</span>`;
-        
         const viewContainer = views['cycle-view'];
         viewContainer.innerHTML = '';
         const table = document.createElement('table');
         table.className = 'calendar-table';
-        
         const thead = table.createTHead();
         const headerTr = thead.insertRow();
         DAY_NAMES_SHORT.forEach(name => { headerTr.innerHTML += `<th>${name}</th>`; });
-        
         const tbody = table.createTBody();
         let currentTr = tbody.insertRow();
-
         for (let i = 0; i < startDate.getDay(); i++) {
             const cell = currentTr.insertCell();
             cell.className = 'cycle-day-cell other-month';
         }
-        
         let d = new Date(startDate.getTime());
         d.setHours(0,0,0,0);
-
         let normalizedEndDate = new Date(endDate.getTime());
         normalizedEndDate.setHours(0,0,0,0);
-
         while (d.getTime() < normalizedEndDate.getTime()) {
-            if (d.getDay() === 0 && currentTr.cells.length > 0) {
-                currentTr = tbody.insertRow();
-            }
-
+            if (d.getDay() === 0 && currentTr.cells.length > 0) currentTr = tbody.insertRow();
             const td = currentTr.insertCell();
             td.className = 'cycle-day-cell';
-
             let dayNumberHTML = `<div class="day-number">${d.getDate()}</div>`;
-            if (isSameDay(d, today)) {
-                dayNumberHTML = `<div class="day-number today">${d.getDate()}</div>`;
-            }
-
+            if (isSameDay(d, today)) dayNumberHTML = `<div class="day-number today">${d.getDate()}</div>`;
             const eventOnDay = allMoonEvents.find(evt => isSameDay(evt.date, d));
             let emoji, title;
-
             if (eventOnDay) {
                 emoji = eventOnDay.emoji;
                 title = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
@@ -951,15 +1095,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 emoji = PHASE_EMOJIS[phaseIndex];
                 title = FULL_PHASE_NAMES[phaseIndex];
             }
-
-            let moonHTML = '';
-            if (emoji) {
-                moonHTML = `<div class="moon-event-icon" title="${title}">${emoji}</div>`;
-            }
-            
+            let moonHTML = emoji ? `<div class="moon-event-icon" title="${title}">${emoji}</div>` : '';
             let weatherHtml = '<div class="weather-info"></div>';
             const dayForecast = getDailyWeatherData(d);
-
             if (dayForecast && dayForecast.length > 0) {
                 const temps = dayForecast.map(item => item.temp);
                 const minTemp = Math.round(Math.min(...temps));
@@ -969,17 +1107,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const weatherMeaning = getWeatherMeaningFromWMO(noonEntry.code);
                 weatherHtml = `<div class="weather-info">${minTemp}°C / ${maxTemp}°C <span class="weather-pattern-emoji" title="${weatherMeaning}">${weatherEmoji}</span></div>`;
             }
-            
-            td.innerHTML = `<div class="cycle-day-content">${dayNumberHTML}${moonHTML}${weatherHtml}</div>`;
-
+            const dayContentDiv = document.createElement('div');
+            dayContentDiv.className = 'cycle-day-content';
+            dayContentDiv.innerHTML = `${dayNumberHTML}${moonHTML}${weatherHtml}`;
+            renderAchievementsForDay(dayContentDiv, d);
+            td.appendChild(dayContentDiv);
+            currentTr.appendChild(td);
             d.setDate(d.getDate() + 1);
         }
-        
         while (currentTr.cells.length > 0 && currentTr.cells.length < 7) {
             const cell = currentTr.insertCell();
             cell.className = 'cycle-day-cell other-month';
         }
-
         viewContainer.appendChild(table);
     }
 
@@ -991,18 +1130,14 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const key in views) {
             views[key].classList.toggle('active', key === viewId);
         }
-        
         if (viewId === 'day-view') {
-            if (!hourHighlightInterval) {
-                hourHighlightInterval = setInterval(updateCurrentHourHighlight, 60000);
-            }
+            if (!hourHighlightInterval) hourHighlightInterval = setInterval(updateCurrentHourHighlight, 60000);
         } else {
             if (hourHighlightInterval) {
                 clearInterval(hourHighlightInterval);
                 hourHighlightInterval = null;
             }
         }
-        
         await updateAllViews();
     }
 
@@ -1014,23 +1149,410 @@ document.addEventListener('DOMContentLoaded', () => {
             'quarter-view': renderQuarterView,
             'cycle-view': renderCycleView
         }[currentView];
-
-        if(renderFunction) {
-            await renderFunction();
-        }
+        if(renderFunction) await renderFunction();
         checkControlsBarLayout();
     }
 
-    mainNavButtons.addEventListener('click', (event) => {
-        if (event.target.matches('.xp-button')) {
-            const viewId = event.target.dataset.view;
-            if(viewId) switchView(viewId);
+    function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
+    function showConfirmation(message, onConfirm) {
+        const modal = document.getElementById('confirmationModal');
+        document.getElementById('confirmationMessage').textContent = message;
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const closeBtn = modal.querySelector('.xp-tracker-modal-close-button');
+
+        const confirmHandler = () => {
+            onConfirm();
+            closeModal('confirmationModal');
+            cleanup();
+        };
+
+        const cancelHandler = () => {
+            closeModal('confirmationModal');
+            cleanup();
+        };
+
+        function cleanup() {
+            confirmBtn.removeEventListener('click', confirmHandler);
+            cancelBtn.removeEventListener('click', cancelHandler);
+            closeBtn.removeEventListener('click', cancelHandler);
         }
-    });
+
+        confirmBtn.addEventListener('click', confirmHandler);
+        cancelBtn.addEventListener('click', cancelHandler);
+        closeBtn.addEventListener('click', cancelHandler);
+
+        openModal('confirmationModal');
+    }
+
+    function xpForNextLevel(currentLevel) {
+        if (currentLevel <= 0) return 50;
+        return Math.floor(50 * Math.pow(currentLevel, 1.5));
+    }
+
+    function addXpToArea(areaId, xpAmount) {
+        const area = appData.areas.find(a => a.id === areaId);
+        if (area) {
+            area.xp = (area.xp || 0) + xpAmount;
+            let requiredForNext = xpForNextLevel(area.level || 1);
+            while (area.xp >= requiredForNext && requiredForNext > 0) {
+                area.xp -= requiredForNext;
+                area.level = (area.level || 1) + 1;
+                requiredForNext = xpForNextLevel(area.level);
+            }
+        }
+    }
     
+    function resetAreaForm() {
+        document.getElementById('xpAreaEditId').value = '';
+        document.getElementById('xpAreaNameInput').value = '';
+        document.getElementById('xpAreaColorInput').value = '#4a90e2';
+        document.getElementById('xpManageAreaModalTitle').textContent = 'Manage Areas';
+        document.getElementById('xpSaveAreaBtn').textContent = 'Save New Area';
+    }
+
+    function populateAreaList() {
+        const existingAreasList = document.getElementById('existingAreasList');
+        existingAreasList.innerHTML = '';
+        if (appData.areas.length === 0) {
+            existingAreasList.innerHTML = '<span style="color: #555; font-style: italic;">No areas created yet.</span>';
+        } else {
+            appData.areas.forEach(area => {
+                const areaElement = document.createElement('div');
+                areaElement.style.display = 'flex';
+                areaElement.style.alignItems = 'center';
+                areaElement.style.marginBottom = '5px';
+                areaElement.style.fontSize = '11px';
+                const currentXP = area.xp || 0;
+                const currentLevel = area.level || 1;
+                const xpToNext = xpForNextLevel(currentLevel);
+                const percentage = xpToNext > 0 ? Math.min((currentXP / xpToNext) * 100, 100) : (currentXP > 0 ? 100 : 0);
+                areaElement.innerHTML = `
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${area.color || '#4a90e2'}; margin-right: 8px; flex-shrink: 0; border: 1px solid #7F7F7F;"></div>
+                    <div style="flex-grow: 1;">
+                        <span>${area.name} (Lvl: ${currentLevel})</span>
+                         <div class="xp-bar-container" style="height:10px; margin-top:2px;">
+                            <div class="xp-bar" style="width: ${percentage}%;"></div>
+                            <div class="xp-bar-text" style="font-size:8px; line-height:10px;">${currentXP} / ${xpToNext}</div>
+                        </div>
+                    </div>
+                    <div class="area-actions" style="margin-left: 10px;">
+                        <span class="action-btn edit-area-btn" data-area-id="${area.id}" title="Edit">✏️</span>
+                        <span class="action-btn delete-area-btn" data-area-id="${area.id}" title="Delete">🗑️</span>
+                    </div>
+                `;
+                existingAreasList.appendChild(areaElement);
+            });
+        }
+    }
+
+    function handleSaveArea() {
+        const nameInput = document.getElementById('xpAreaNameInput');
+        const colorInput = document.getElementById('xpAreaColorInput');
+        const editIdInput = document.getElementById('xpAreaEditId');
+        const name = nameInput.value.trim();
+        const color = colorInput.value;
+        const editId = editIdInput.value;
+
+        if (!name) { alert("Area name cannot be empty."); return; }
+
+        if (editId) {
+            const area = appData.areas.find(a => a.id === editId);
+            if (area) {
+                if (appData.areas.some(a => a.name.toLowerCase() === name.toLowerCase() && a.id !== editId)) {
+                    alert("Another area with this name already exists.");
+                    return;
+                }
+                area.name = name;
+                area.color = color;
+            }
+        } else {
+            if (appData.areas.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+                alert("Area with this name already exists.");
+                return;
+            }
+            appData.areas.push({ id: Date.now().toString(), name, color, level: 1, xp: 0 });
+        }
+        
+        saveAppData();
+        resetAreaForm();
+        populateAreaList();
+        updateAllViews();
+    }
+
+    function handleDeleteArea(areaId) {
+        showConfirmation("Are you sure you want to delete this area and all its achievements? This cannot be undone.", () => {
+            appData.areas = appData.areas.filter(a => a.id !== areaId);
+            appData.achievements = appData.achievements.filter(ach => ach.areaId !== areaId);
+            saveAppData();
+            populateAreaList();
+            updateAllViews();
+        });
+    }
+
+    function handleSaveAchievement() {
+        const areaSelect = document.getElementById('xpAchievementAreaSelect');
+        const descriptionInput = document.getElementById('xpAchievementDescriptionInput');
+        const dateInput = document.getElementById('xpAchievementDateInput');
+        const timeInput = document.getElementById('xpAchievementTimeInput');
+        const editIdInput = document.getElementById('xpAchievementEditId');
+
+        const areaId = areaSelect.value;
+        const description = descriptionInput.value.trim();
+        const dateValue = dateInput.value;
+        const timeValue = timeInput.value;
+        const editId = editIdInput.value;
+
+        if (!areaId || !description || !dateValue) return;
+
+        let achievementDate;
+        const [year, month, day] = dateValue.split('-').map(Number);
+        const [hours, minutes] = timeValue ? timeValue.split(':').map(Number) : [new Date().getHours(), new Date().getMinutes()];
+        achievementDate = new Date(year, month - 1, day, hours, minutes);
+        
+        if (editId) {
+            const achievement = appData.achievements.find(ach => ach.id === editId);
+            if (achievement) {
+                achievement.areaId = areaId;
+                achievement.description = description;
+                achievement.timestamp = achievementDate.toISOString();
+            }
+        } else {
+            const newAchievement = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                areaId,
+                description,
+                timestamp: achievementDate.toISOString(),
+                xp: XP_PER_REGULAR_ACHIEVEMENT,
+                xpAwarded: false
+            };
+            appData.achievements.push(newAchievement);
+        }
+        
+        checkAndAwardXpForPastAchievements();
+        saveAppData();
+        updateAllViews();
+        closeModal('xpAddAchievementModal');
+    }
+
+    function handleDeleteAchievement(achievementId) {
+        showConfirmation("Are you sure you want to delete this achievement?", () => {
+            appData.achievements = appData.achievements.filter(ach => ach.id !== achievementId);
+            saveAppData();
+            updateAllViews();
+        });
+    }
+    
+    function checkAndAwardXpForPastAchievements() {
+        const now = new Date();
+        let changed = false;
+        appData.achievements.forEach(ach => {
+            if (!ach.xpAwarded) {
+                const achDate = new Date(ach.timestamp);
+                if (achDate <= now) {
+                    addXpToArea(ach.areaId, ach.xp);
+                    updateQuestProgress(ach.areaId, ach.xp);
+                    ach.xpAwarded = true;
+                    changed = true;
+                }
+            }
+        });
+        if (changed) saveAppData();
+    }
+
+    function getQuarterId(date) {
+        const [startEvent] = getQuarterBoundaries(date);
+        if (!startEvent) return null;
+        return startEvent.date.toISOString().split('T')[0];
+    }
+
+    function generateQuestsForQuarter(quarterId) {
+        if (!appData.quests[quarterId] || (appData.quests[quarterId].length === 0 && appData.areas.length > 0)) {
+            appData.quests[quarterId] = [];
+            const shuffledAreas = [...appData.areas].sort(() => 0.5 - Math.random());
+            const questsToGenerate = Math.min(3, shuffledAreas.length);
+
+            for (let i = 0; i < questsToGenerate; i++) {
+                const area = shuffledAreas[i];
+                const targetXP = Math.floor(xpForNextLevel(area.level || 1) * 0.75);
+                const rewardXP = Math.floor(targetXP * 0.75);
+                appData.quests[quarterId].push({
+                    id: `quest_${quarterId}_${area.id}`,
+                    areaId: area.id,
+                    description: `Earn ${targetXP} XP in "${area.name}"`,
+                    targetXP,
+                    currentXP: 0,
+                    rewardXP,
+                    completed: false
+                });
+            }
+            saveAppData();
+        }
+    }
+
+    function updateQuestProgress(areaId, xpGained) {
+        const quarterId = getQuarterId(new Date());
+        if (quarterId && appData.quests[quarterId]) {
+            const quest = appData.quests[quarterId].find(q => q.areaId === areaId && !q.completed);
+            if (quest) {
+                quest.currentXP += xpGained;
+                if (quest.currentXP >= quest.targetXP) {
+                    quest.completed = true;
+                    quest.currentXP = quest.targetXP;
+                    addXpToArea(areaId, quest.rewardXP);
+                }
+                saveAppData();
+            }
+        }
+    }
+    
+    function showQuests() {
+        const quarterId = getQuarterId(viewDate);
+        const questsListBody = document.getElementById('xpQuestsListBody');
+        questsListBody.innerHTML = '';
+
+        if (!quarterId) {
+            questsListBody.innerHTML = '<p>No quest data for this period.</p>';
+            openModal('xpQuestsModal');
+            return;
+        }
+
+        generateQuestsForQuarter(quarterId);
+        const quests = appData.quests[quarterId];
+
+        if (!quests || quests.length === 0) {
+            questsListBody.innerHTML = '<p>No quests for this quarter.</p>';
+        } else {
+            quests.forEach(quest => {
+                const area = appData.areas.find(a => a.id === quest.areaId);
+                const questDiv = document.createElement('div');
+                questDiv.className = 'quest-item' + (quest.completed ? ' completed' : '');
+                questDiv.innerHTML = `
+                    <div class="quest-title" style="color: ${area ? (area.color || '#0039A9') : '#0039A9'};">${area ? area.name : 'Unknown Area'} Quest</div>
+                    <div class="quest-details">${quest.description}</div>
+                    <div class="quest-progress">Progress: ${quest.currentXP} / ${quest.targetXP} XP. Reward: ${quest.rewardXP} XP.</div>
+                `;
+                questsListBody.appendChild(questDiv);
+            });
+        }
+        openModal('xpQuestsModal');
+    }
+
+    function setupEventListeners() {
+        mainNavButtons.addEventListener('click', (event) => {
+            if (event.target.matches('.xp-button')) {
+                const viewId = event.target.dataset.view;
+                if(viewId) switchView(viewId);
+            }
+        });
+
+        document.getElementById('manageAreasBtn').addEventListener('click', () => {
+            resetAreaForm();
+            populateAreaList();
+            openModal('xpManageAreasModal');
+        });
+
+        document.getElementById('existingAreasList').addEventListener('click', e => {
+            if (e.target.classList.contains('edit-area-btn')) {
+                const areaId = e.target.dataset.areaId;
+                const area = appData.areas.find(a => a.id === areaId);
+                if (area) {
+                    document.getElementById('xpAreaEditId').value = area.id;
+                    document.getElementById('xpAreaNameInput').value = area.name;
+                    document.getElementById('xpAreaColorInput').value = area.color;
+                    document.getElementById('xpManageAreaModalTitle').textContent = 'Edit Area';
+                    document.getElementById('xpSaveAreaBtn').textContent = 'Update Area';
+                }
+            } else if (e.target.classList.contains('delete-area-btn')) {
+                handleDeleteArea(e.target.dataset.areaId);
+            }
+        });
+
+        appViewContainer.addEventListener('click', e => {
+            const editBtn = e.target.closest('.edit-achievement-btn');
+            const deleteBtn = e.target.closest('.delete-achievement-btn');
+            
+            if (editBtn) {
+                const achievementId = editBtn.closest('.achievement-item').dataset.achievementId;
+                const achievement = appData.achievements.find(ach => ach.id === achievementId);
+                if (achievement) {
+                    document.getElementById('xpAchievementEditId').value = achievement.id;
+                    const areaSelect = document.getElementById('xpAchievementAreaSelect');
+                    areaSelect.innerHTML = '';
+                    appData.areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                    areaSelect.value = achievement.areaId;
+                    document.getElementById('xpAchievementDescriptionInput').value = achievement.description;
+                    const achDate = new Date(achievement.timestamp);
+                    const yyyy = achDate.getFullYear();
+                    const mm = String(achDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(achDate.getDate()).padStart(2, '0');
+                    document.getElementById('xpAchievementDateInput').value = `${yyyy}-${mm}-${dd}`;
+                    const hh = String(achDate.getHours()).padStart(2, '0');
+                    const min = String(achDate.getMinutes()).padStart(2, '0');
+                    document.getElementById('xpAchievementTimeInput').value = `${hh}:${min}`;
+                    document.getElementById('xpAddAchievementModalTitle').textContent = 'Edit Achievement';
+                    document.getElementById('xpSaveAchievementBtn').textContent = 'Update Achievement';
+                    openModal('xpAddAchievementModal');
+                }
+            } else if (deleteBtn) {
+                const achievementId = deleteBtn.closest('.achievement-item').dataset.achievementId;
+                handleDeleteAchievement(achievementId);
+            }
+        });
+
+        document.getElementById('addAchievementBtn').addEventListener('click', () => {
+            if (appData.areas.length === 0) {
+                showConfirmation("Please create an Area first before adding an achievement.", () => openModal('xpManageAreasModal'));
+                return;
+            }
+            document.getElementById('xpAchievementEditId').value = '';
+            const areaSelect = document.getElementById('xpAchievementAreaSelect');
+            areaSelect.innerHTML = '';
+            appData.areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id;
+                option.textContent = area.name;
+                areaSelect.appendChild(option);
+            });
+            const yyyy = viewDate.getFullYear();
+            const mm = String(viewDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(viewDate.getDate()).padStart(2, '0');
+            document.getElementById('xpAchievementDateInput').value = `${yyyy}-${mm}-${dd}`;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('xpAchievementTimeInput').value = `${hh}:${min}`;
+            document.getElementById('xpAchievementDescriptionInput').value = '';
+            document.getElementById('xpAddAchievementModalTitle').textContent = 'Add Achievement';
+            document.getElementById('xpSaveAchievementBtn').textContent = 'Save Achievement';
+            openModal('xpAddAchievementModal');
+        });
+        document.getElementById('showQuestsBtn').addEventListener('click', showQuests);
+
+        document.getElementById('xpSaveAreaBtn').addEventListener('click', handleSaveArea);
+        document.getElementById('xpSaveAchievementBtn').addEventListener('click', handleSaveAchievement);
+
+        document.querySelectorAll('.xp-tracker-modal-close-button, .xp-tracker-modal-cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                const modalId = event.target.dataset.modalId;
+                if(modalId) closeModal(modalId);
+            });
+        });
+    }
+
     async function init() {
+        loadAppData();
+        checkAndAwardXpForPastAchievements();
         getUserLocation();
         await switchView('day-view');
+        setupEventListeners();
         window.addEventListener('resize', checkControlsBarLayout);
     }
 
