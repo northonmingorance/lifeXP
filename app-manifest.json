@@ -10,14 +10,14 @@
     "defaultHeight": 705
   },
   {
-    "id": "xpTracker",
-    "name": "XP Tracker",
-    "icon": "✅",
-    "file": "xp-tracker.app.html",
+    "id": "almanac",
+    "name": "Almanac",
+    "icon": "🌙",
+    "file": "almanac.app.html",
     "minWidth": 375,
-    "minHeight": 250,
-    "defaultWidth": 905,
-    "defaultHeight": 705
+    "minHeight": 330,
+    "defaultWidth": 600,
+    "defaultHeight": 580
   },
   {
     "id": "playJockey",
@@ -98,16 +98,6 @@
     "file": "compass.app.html",
     "minWidth": 600,
     "minHeight": 580,
-    "defaultWidth": 600,
-    "defaultHeight": 580
-  },
-  {
-    "id": "almanac",
-    "name": "Almanac",
-    "icon": "🌙",
-    "file": "almanac.app.html",
-    "minWidth": 375,
-    "minHeight": 330,
     "defaultWidth": 600,
     "defaultHeight": 580
   }
