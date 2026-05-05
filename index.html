@@ -397,8 +397,7 @@
             customBgColor: null,
             appApiKeys: {
                 youtube: "",
-                gemini: "",
-                googleMaps: ""
+                gemini: ""
             }
         };
         let lastNormalStates = {};
@@ -445,15 +444,13 @@
                     firebaseRemoteConfig = firebase.remoteConfig();
                     firebaseRemoteConfig.defaultConfig = {
                         'youtube_api_key': '',
-                        'gemini_api_key': '',
-                        'Maps_api_key': ''
+                        'gemini_api_key': ''
                     };
                     firebaseRemoteConfig.settings.minimumFetchIntervalMillis = 3600000;
                     await firebaseRemoteConfig.fetchAndActivate();
                     osData.appApiKeys.youtube = firebaseRemoteConfig.getString('youtube_api_key');
                     osData.appApiKeys.gemini = firebaseRemoteConfig.getString('gemini_api_key');
-                    osData.appApiKeys.googleMaps = firebaseRemoteConfig.getString('Maps_api_key');
-                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found", "Google Maps Key:", osData.appApiKeys.googleMaps ? "Loaded" : "Not found");
+                    console.log("Firebase Remote Config fetched. YouTube Key:", osData.appApiKeys.youtube ? "Loaded" : "Not found", "Gemini Key:", osData.appApiKeys.gemini ? "Loaded" : "Not found");
                     saveOsData();
                 } else {
                     console.warn("Firebase SDK or config not available. API keys will not be fetched.");
@@ -883,9 +880,6 @@
             } else if (appId === 'playJockey') {
                 service = 'youtube';
                 key = osData.appApiKeys.youtube;
-            } else if (appId === 'compass') {
-                service = 'googleMaps';
-                key = osData.appApiKeys.googleMaps;
             }
 
             if(service && key) {
@@ -1285,7 +1279,7 @@
                 iconPositions: {},
                 customBgImage: null,
                 customBgColor: null,
-                appApiKeys: { youtube: "", gemini: "", googleMaps: "" }
+                appApiKeys: { youtube: "", gemini: "" }
             };
             if (storedData) {
                 try {
@@ -1436,7 +1430,7 @@
 
         function handleIframeMessages(event) {
             const { type, service, appId } = event.data;
-            const validServices = ['gemini', 'youtube', 'googleMaps'];
+            const validServices = ['gemini', 'youtube'];
 
             if (type === 'requestApiKey' && appId && validServices.includes(service)) {
                 const iframe = document.getElementById(`iframe-${appId}`);
