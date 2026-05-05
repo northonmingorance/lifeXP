@@ -663,32 +663,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return [];
         }
     }
-    
-    function calculateIntermediaryPhases(primaryEvents) {
-        const allPhases = [];
-        if (primaryEvents.length < 2) return primaryEvents;
-        const phaseMap = {
-            "New Moon":      { name: "Waxing Crescent",  emoji: '🌒' },
-            "First Quarter": { name: "Waxing Gibbous",   emoji: '🌔' },
-            "Full Moon":     { name: "Waning Gibbous",   emoji: '🌖' },
-            "Last Quarter":  { name: "Waning Crescent",  emoji: '🌘' }
-        };
-        for (let i = 0; i < primaryEvents.length - 1; i++) {
-            const startEvent = primaryEvents[i];
-            const endEvent = primaryEvents[i+1];
-            allPhases.push(startEvent);
-            if (phaseMap[startEvent.name]) {
-                const midpointTime = startEvent.date.getTime() + (endEvent.date.getTime() - startEvent.date.getTime()) / 2;
-                const intermediaryPhase = {
-                    name: phaseMap[startEvent.name].name,
-                    date: new Date(midpointTime),
-                    emoji: phaseMap[startEvent.name].emoji
-                };
-                allPhases.push(intermediaryPhase);
+
+    function getIntermediaryPhase(date) {
+        let previousEvent = null;
+        for (let i = allMoonEvents.length - 1; i >= 0; i--) {
+            if (allMoonEvents[i].date.getTime() <= date.getTime()) {
+                previousEvent = allMoonEvents[i];
+                break;
             }
         }
-        allPhases.push(primaryEvents[primaryEvents.length - 1]);
-        return allPhases;
+        if (previousEvent) {
+            const phaseMap = {
+                "New Moon": { index: 1, name: "Waxing Crescent" },
+                "First Quarter": { index: 3, name: "Waxing Gibbous" },
+                "Full Moon": { index: 5, name: "Waning Gibbous" },
+                "Last Quarter": { index: 7, name: "Waning Crescent" }
+            };
+            const mapped = phaseMap[previousEvent.name];
+            if (mapped) {
+                return { emoji: PHASE_EMOJIS[mapped.index], title: mapped.name };
+            }
+        }
+        return { emoji: '', title: '' };
     }
 
     async function loadRequiredMoonData(date) {
@@ -708,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uniquePrimaryEvents = Array.from(new Map(combinedEvents.map(event => 
             [event.date.toISOString(), event]
         )).values()).sort((a, b) => a.date - b.date);
-        allMoonEvents = calculateIntermediaryPhases(uniquePrimaryEvents);
+        allMoonEvents = uniquePrimaryEvents;
         isLoading = false;
     }
 
@@ -857,13 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (primaryEventToday) {
             moonEmoji = primaryEventToday.emoji;
         } else {
-            const [startCycle, endCycle] = getCycleBoundaries(viewDate);
-            if (startCycle && endCycle) {
-                const cycleDuration = endCycle.date.getTime() - startCycle.date.getTime();
-                const age = viewDate.getTime() - startCycle.date.getTime();
-                const phaseIndex = Math.floor((age / cycleDuration) * 8) % 8;
-                moonEmoji = PHASE_EMOJIS[phaseIndex];
-            } else { moonEmoji = '❓'; }
+            moonEmoji = getIntermediaryPhase(viewDate).emoji || '❓';
         }
         let weatherHtml = '';
         let dayForecast = null;
@@ -1008,18 +998,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 moonEmoji = eventOnDay.emoji;
                 moonTitle = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             } else {
-                const [startCycle, endCycle] = getCycleBoundaries(day);
-                if (startCycle && endCycle) {
-                    const cycleDuration = endCycle.date.getTime() - startCycle.date.getTime();
-                    const age = day.getTime() - startCycle.date.getTime();
-                    const currentAge = Math.max(0, age);
-                    const phaseIndex = Math.floor((currentAge / cycleDuration) * 8) % 8;
-                    moonEmoji = PHASE_EMOJIS[phaseIndex];
-                    moonTitle = FULL_PHASE_NAMES[phaseIndex];
-                } else {
-                    moonEmoji = '';
-                    moonTitle = '';
-                }
+                const intermediary = getIntermediaryPhase(day);
+                moonEmoji = intermediary.emoji;
+                moonTitle = intermediary.title;
             }
             let weatherHtml = '<div class="weather-info"></div>';
             const dayForecast = getDailyWeatherData(day);
@@ -1088,12 +1069,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 emoji = eventOnDay.emoji;
                 title = `${eventOnDay.name} at ${eventOnDay.date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
             } else {
-                const cycleDuration = endEvent.date.getTime() - startEvent.date.getTime();
-                const age = d.getTime() - startEvent.date.getTime();
-                const currentAge = Math.max(0, age);
-                const phaseIndex = Math.floor((currentAge / cycleDuration) * 8) % 8;
-                emoji = PHASE_EMOJIS[phaseIndex];
-                title = FULL_PHASE_NAMES[phaseIndex];
+                const intermediary = getIntermediaryPhase(d);
+                emoji = intermediary.emoji;
+                title = intermediary.title;
             }
             let moonHTML = emoji ? `<div class="moon-event-icon" title="${title}">${emoji}</div>` : '';
             let weatherHtml = '<div class="weather-info"></div>';
