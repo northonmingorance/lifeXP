@@ -199,9 +199,6 @@
             }
         }
         const dataToSave = { ...outlineData };
-        if (!saveCanvasContent) {
-            delete dataToSave.canvasContent; 
-        }
         localStorage.setItem(OUTLINE_STORAGE_KEY, JSON.stringify(dataToSave));
     }
     
