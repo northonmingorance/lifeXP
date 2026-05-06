@@ -1418,40 +1418,74 @@
 
             let resizeTimer;
             window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
+                if (resizeTimer) cancelAnimationFrame(resizeTimer);
+                
+                resizeTimer = requestAnimationFrame(() => {
                     reorderAllIcons();
+                    
                     appManifest.forEach(appConfig => {
                         const win = getById(`window-${appConfig.id}`);
-                        if (win && win.style.display !== 'none' && !win.classList.contains('true-maximized')) {
+                        
+                        if (win && win.style.display !== 'none' && !win.classList.contains('true-maximized') && !win.classList.contains('minimized')) {
+                            
                             let currentWidth = win.offsetWidth;
                             let currentHeight = win.offsetHeight;
                             let currentLeft = win.offsetLeft;
                             let currentTop = win.offsetTop;
                             let adjusted = false;
 
-                            if (currentWidth > window.innerWidth) {
-                                currentWidth = window.innerWidth - 10;
-                                currentLeft = 5;
+                            const minW = appConfig.minWidth || 150;
+                            const minH = appConfig.minHeight || 100;
+
+                            if (currentLeft + currentWidth > window.innerWidth) {
+                                currentWidth = window.innerWidth - currentLeft;
+                                
+                                if (currentWidth < minW) {
+                                    currentWidth = minW;
+                                    currentLeft = window.innerWidth - currentWidth;
+                                    
+                                    if (currentLeft < 0) {
+                                        currentLeft = 0;
+                                        currentWidth = window.innerWidth;
+                                    }
+                                }
                                 adjusted = true;
                             }
-                            if (currentHeight > window.innerHeight) {
-                                currentHeight = window.innerHeight - 10;
-                                currentTop = 5;
+
+                            if (currentTop + currentHeight > window.innerHeight) {
+                                currentHeight = window.innerHeight - currentTop;
+                                
+                                if (currentHeight < minH) {
+                                    currentHeight = minH;
+                                    currentTop = window.innerHeight - currentHeight;
+                                    
+                                    if (currentTop < 0) {
+                                        currentTop = 0;
+                                        currentHeight = window.innerHeight;
+                                    }
+                                }
                                 adjusted = true;
                             }
+
+                            if (currentLeft < 0) { currentLeft = 0; adjusted = true; }
+                            if (currentTop < 0) { currentTop = 0; adjusted = true; }
 
                             if (adjusted) {
                                 win.style.width = currentWidth + 'px';
                                 win.style.height = currentHeight + 'px';
                                 win.style.left = currentLeft + 'px';
                                 win.style.top = currentTop + 'px';
+                                
+                                if (osData.windowStates[appConfig.id]) {
+                                    osData.windowStates[appConfig.id].width = currentWidth;
+                                    osData.windowStates[appConfig.id].height = currentHeight;
+                                    osData.windowStates[appConfig.id].x = currentLeft;
+                                    osData.windowStates[appConfig.id].y = currentTop;
+                                }
                             }
-                            
-                            setWindowDefaults(appConfig.id, true, appConfig);
                         }
                     });
-                }, 250);
+                });
             });
         }
 
