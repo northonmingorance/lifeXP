@@ -150,6 +150,11 @@
             box-sizing: border-box;
             z-index: 5;
         }
+        .desktop-icon.selected {
+            background-color: rgba(173, 216, 230, 0.3);
+            outline: 2px solid rgba(173, 216, 230, 0.7);
+            border-radius: 4px;
+        }
         .desktop-icon:active {
             cursor: grabbing;
         }
@@ -575,7 +580,6 @@
                 iconElement.className = 'desktop-icon';
                 iconElement.id = `icon-${app.id}`;
                 iconElement.dataset.appId = app.id;
-                iconElement.title = `Open ${app.name}`;
 
                 let iconHTML;
 
@@ -619,6 +623,8 @@
 
         function handleIconMouseDown(e) {
             if (e.button !== 0 || activeDragWindow || activeResizeWindow) return;
+            document.querySelectorAll('.desktop-icon.selected').forEach(el => el.classList.remove('selected'));
+            e.currentTarget.classList.add('selected');
             activeDragIcon = e.currentTarget;
             hasDragged = false;
             const appId = activeDragIcon.dataset.appId;
@@ -820,7 +826,6 @@
                 <div class="title-bar" id="title-bar-${appConfig.id}">
                     <span class="title-bar-text">${appConfig.name}</span>
                     <div class="title-bar-controls">
-                        <button id="minimize-btn-${appConfig.id}" title="Minimize">0</button>
                         <button id="maximize-btn-${appConfig.id}" title="Maximize">1</button>
                         <button id="close-btn-${appConfig.id}" title="Close">r</button>
                     </div>
@@ -954,7 +959,6 @@
                 });
             }
 
-            getById(`minimize-btn-${appId}`).addEventListener('click', () => minimizeWindow(appId));
             getById(`maximize-btn-${appId}`).addEventListener('click', () => maximizeWindow(appId, appConfig));
             getById(`close-btn-${appId}`).addEventListener('click', () => closeWindow(appId));
         }
@@ -1204,21 +1208,15 @@
 
         function updateMinMaxButtonStates(appId) {
             const win = getById(`window-${appId}`);
-            const minimizeBtn = getById(`minimize-btn-${appId}`);
             const maximizeBtn = getById(`maximize-btn-${appId}`);
 
-            if (!win || !minimizeBtn || !maximizeBtn) return;
+            if (!win || !maximizeBtn) return;
 
-            const isMinimized = win.classList.contains('minimized');
             const isTrueMaximized = win.classList.contains('true-maximized');
 
-            minimizeBtn.disabled = isMinimized;
             maximizeBtn.disabled = false;
 
-            if (isMinimized) {
-                maximizeBtn.textContent = '1';
-                maximizeBtn.title = "Restore";
-            } else if (isTrueMaximized) {
+            if (isTrueMaximized) {
                 maximizeBtn.textContent = '2';
                 maximizeBtn.title = "Restore Down";
             } else {
@@ -1345,6 +1343,11 @@
         }
 
         function addEventListeners() {
+            document.addEventListener('mousedown', (e) => {
+                if (!e.target.closest('.desktop-icon')) {
+                    document.querySelectorAll('.desktop-icon.selected').forEach(el => el.classList.remove('selected'));
+                }
+            });
             document.body.addEventListener('contextmenu', function(event) {
                 if (event.target === document.body || event.target === DOM.desktop) {
                     event.preventDefault();
@@ -1420,8 +1423,32 @@
                     reorderAllIcons();
                     appManifest.forEach(appConfig => {
                         const win = getById(`window-${appConfig.id}`);
-                        if (win && win.style.display !== 'none' && (!osData.windowStates[appConfig.id] || !osData.windowStates[appConfig.id].minimized)) {
-                             setWindowDefaults(appConfig.id, true, appConfig);
+                        if (win && win.style.display !== 'none' && !win.classList.contains('true-maximized')) {
+                            let currentWidth = win.offsetWidth;
+                            let currentHeight = win.offsetHeight;
+                            let currentLeft = win.offsetLeft;
+                            let currentTop = win.offsetTop;
+                            let adjusted = false;
+
+                            if (currentWidth > window.innerWidth) {
+                                currentWidth = window.innerWidth - 10;
+                                currentLeft = 5;
+                                adjusted = true;
+                            }
+                            if (currentHeight > window.innerHeight) {
+                                currentHeight = window.innerHeight - 10;
+                                currentTop = 5;
+                                adjusted = true;
+                            }
+
+                            if (adjusted) {
+                                win.style.width = currentWidth + 'px';
+                                win.style.height = currentHeight + 'px';
+                                win.style.left = currentLeft + 'px';
+                                win.style.top = currentTop + 'px';
+                            }
+                            
+                            setWindowDefaults(appConfig.id, true, appConfig);
                         }
                     });
                 }, 250);
