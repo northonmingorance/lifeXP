@@ -135,6 +135,7 @@
         canvasHeight: 400, 
         canvasContent: null 
     };
+    let isAppInitializing = false;
 
     const DOM_PC = {
         menuBar: document.getElementById('outlineMenuBar'),
@@ -190,21 +191,30 @@
     }
 
     function saveOutlineData(saveCanvasContent = true) {
+        if (isAppInitializing) return;
+
         if (saveCanvasContent && DOM_PC.canvas && DOM_PC.canvas.width > 0 && DOM_PC.canvas.height > 0) {
             try {
                 outlineData.canvasContent = DOM_PC.canvas.toDataURL('image/png');
             } catch (e) {
-                console.warn("Could not save canvas content to localStorage (possibly too large or canvas tainted):", e.message);
-                outlineData.canvasContent = null; 
+                console.warn("Could not save canvas content:", e.message);
             }
         }
+        
         const dataToSave = { ...outlineData };
-        localStorage.setItem(OUTLINE_STORAGE_KEY, JSON.stringify(dataToSave));
+        
+        try {
+            localStorage.setItem(OUTLINE_STORAGE_KEY, JSON.stringify(dataToSave));
+        } catch(e) {
+            console.error("Storage full, could not save state:", e);
+        }
     }
     
     function initOutlineApp() {
+        isAppInitializing = true;
         if (!DOM_PC.canvas || !DOM_PC.tempCanvas) {
             console.error("Outline : Canvas elements not found on init.");
+            isAppInitializing = false;
             return;
         }
         outlineCtx = DOM_PC.canvas.getContext('2d');
@@ -249,6 +259,7 @@
 
         setOutlineTool(outlineData.currentTool);
         addOutlineEventListeners();
+        isAppInitializing = false;
     }
 
     function setOutlineTool(tool) {
